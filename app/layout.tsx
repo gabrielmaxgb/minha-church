@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { DM_Sans, Geist_Mono, Syne } from "next/font/google";
 
 import { QueryProvider } from "@/providers/query-provider";
-import { siteConfig } from "@/constants/navigation";
+import { defaultMetadata } from "@/lib/metadata";
 
 import icon from "./icon.png";
 import "./globals.css";
@@ -25,11 +25,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: {
-    default: siteConfig.name,
-    template: `%s | ${siteConfig.name}`,
-  },
-  description: siteConfig.description,
+  ...defaultMetadata,
   icons: {
     icon: [{ url: icon.src, type: "image/png" }],
     apple: [{ url: icon.src, type: "image/png" }],

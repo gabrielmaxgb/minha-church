@@ -4,6 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 
 import { queries } from "@/lib/api/queries";
 
-export function usePlans() {
-  return useQuery(queries.plans.all);
+export function usePricing() {
+  return useQuery(queries.pricing.current);
 }

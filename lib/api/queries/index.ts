@@ -1,8 +1,8 @@
 import { mergeQueryKeys } from "@lukemorales/query-key-factory";
 
-import { plansKeys } from "@/lib/api/queries/plans.keys";
+import { pricingKeys } from "@/lib/api/queries/pricing.keys";
 
-export const queries = mergeQueryKeys(plansKeys);
+export const queries = mergeQueryKeys(pricingKeys);
 
-export { plansKeys } from "@/lib/api/queries/plans.keys";
-export { usePlans } from "@/lib/api/queries/use-plans";
+export { pricingKeys } from "@/lib/api/queries/pricing.keys";
+export { usePricing } from "@/lib/api/queries/use-pricing";

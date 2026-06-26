@@ -70,7 +70,7 @@ export function RecursosContent() {
 
           <div className="mt-16 text-center">
             <Button asChild>
-              <Link href="/planos">Começar grátis</Link>
+              <Link href="/preco">Começar grátis</Link>
             </Button>
           </div>
         </Container>

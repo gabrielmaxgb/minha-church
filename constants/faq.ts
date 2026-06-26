@@ -22,7 +22,7 @@ export const generalFaq: FaqItem[] = [
   {
     question: "Como funciona o período gratuito?",
     answer:
-      "O plano Gratuito é permanente para igrejas com até 50 membros. Nos planos pagos, você pode testar todos os recursos por 14 dias sem cartão de crédito.",
+      "Você testa todas as funcionalidades por 14 dias, sem cartão. Depois escolhe a faixa de membros e o ciclo de cobrança (mensal ou anual).",
   },
   {
     question: "Funciona para igrejas pequenas?",
@@ -40,17 +40,12 @@ export const billingFaq: FaqItem[] = [
   {
     question: "Preciso de cartão de crédito para começar?",
     answer:
-      "Não. O plano Gratuito não exige cartão. Nos planos pagos, o teste de 14 dias também é sem cartão.",
-  },
-  {
-    question: "Posso mudar de plano depois?",
-    answer:
-      "Sim. Você pode fazer upgrade ou downgrade a qualquer momento. A diferença é calculada proporcionalmente.",
+      "Não. O teste de 14 dias é gratuito e não exige cartão de crédito.",
   },
   {
     question: "Quais formas de pagamento são aceitas?",
     answer:
-      "Aceitamos cartão de crédito, boleto bancário e PIX para planos mensais e anuais.",
+      "Aceitamos cartão de crédito, boleto bancário e PIX — no ciclo mensal ou anual.",
   },
   {
     question: "Existe desconto no plano anual?",
@@ -58,8 +53,18 @@ export const billingFaq: FaqItem[] = [
       "Sim. No plano anual você economiza o equivalente a 2 meses em relação ao pagamento mensal.",
   },
   {
-    question: "O que acontece se eu ultrapassar o limite de membros?",
+    question: "O preço inclui todas as funcionalidades?",
     answer:
-      "Avisamos quando você estiver próximo do limite. Você pode fazer upgrade para um plano superior ou entrar em contato conosco.",
+      "Sim. Todas as faixas incluem as mesmas funcionalidades — a diferença é apenas a quantidade de membros cadastrados.",
+  },
+  {
+    question: "O que acontece se minha igreja crescer?",
+    answer:
+      "Quando você ultrapassar o limite da faixa atual, avisamos e você migra para a próxima. A cobrança é ajustada proporcionalmente.",
+  },
+  {
+    question: "Posso mudar de mensal para anual depois?",
+    answer:
+      "Sim. Você pode alternar entre cobrança mensal e anual a qualquer momento pelo painel da conta.",
   },
 ];

@@ -39,16 +39,3 @@ export const aboutStory = {
   vision:
     "Queremos que toda igreja, independente do tamanho, tenha acesso a ferramentas profissionais de gestão sem precisar de um time de TI.",
 };
-
-export const team = [
-  {
-    name: "Gabriel Max",
-    role: "Fundador & Produto",
-    bio: "Desenvolvedor e líder de louvor que viu de perto os desafios de administrar uma igreja em crescimento.",
-  },
-  {
-    name: "Equipe Minha Church",
-    role: "Engenharia & Suporte",
-    bio: "Time dedicado a construir e manter a plataforma, com suporte em português para igrejas de todo o Brasil.",
-  },
-];

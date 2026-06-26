@@ -40,10 +40,10 @@ export function Header() {
 
           <div className="hidden items-center gap-2 md:flex">
             <Button variant="ghost" size="sm" asChild>
-              <Link href="#">Entrar</Link>
+              <Link href="/login">Entrar</Link>
             </Button>
             <Button size="sm" asChild>
-              <Link href="/planos">Começar grátis</Link>
+              <Link href="/preco">Começar grátis</Link>
             </Button>
           </div>
 
@@ -76,12 +76,12 @@ export function Header() {
             ))}
             <div className="mt-2 flex flex-col gap-2 px-3">
               <Button variant="outline" size="sm" asChild>
-                <Link href="#" onClick={() => setMobileOpen(false)}>
+                <Link href="/login" onClick={() => setMobileOpen(false)}>
                   Entrar
                 </Link>
               </Button>
               <Button size="sm" asChild>
-                <Link href="/planos" onClick={() => setMobileOpen(false)}>
+                <Link href="/preco" onClick={() => setMobileOpen(false)}>
                   Começar grátis
                 </Link>
               </Button>

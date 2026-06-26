@@ -39,7 +39,7 @@ export function FaqContent() {
         <Container>
           <SectionHeader
             label="Cobrança"
-            title="Planos e pagamento"
+            title="Preço e pagamento"
             align="left"
             className="max-w-2xl"
           />

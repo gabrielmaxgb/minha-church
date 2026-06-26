@@ -3,11 +3,11 @@ import type { Metadata } from "next";
 import { PricingSection } from "@/components/marketing/pricing-section";
 
 export const metadata: Metadata = {
-  title: "Planos",
+  title: "Preço",
   description:
-    "Escolha o plano ideal para sua igreja. Planos flexíveis para comunidades de todos os tamanhos.",
+    "Um plano, tudo incluído. Preço por faixa de membros — conheça os valores do Minha Church.",
 };
 
-export default function PlanosPage() {
+export default function PrecoPage() {
   return <PricingSection />;
 }

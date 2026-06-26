@@ -1,14 +1,25 @@
 export type BillingPeriod = "monthly" | "yearly";
 
-export interface Plan {
+export interface PricingTier {
   id: string;
   name: string;
-  description: string;
+  memberRange: string;
+  memberCountForPricePerMember: number;
   monthlyPrice: number;
   yearlyPrice: number;
-  features: string[];
   highlighted?: boolean;
+}
+
+export interface Pricing {
+  name: string;
+  description: string;
+  benefits: string[];
+  valueAnchor: {
+    headline: string;
+    example: string;
+  };
   cta: string;
+  tiers: PricingTier[];
 }
 
 export interface NavLink {

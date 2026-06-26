@@ -4,7 +4,7 @@ import { Container } from "@/components/layout/container";
 import { CtaBanner } from "@/components/marketing/cta-banner";
 import { MotionSection } from "@/components/motion/motion-section";
 import { Heading, SectionHeader, SectionLabel } from "@/components/ui/heading";
-import { aboutStory, team } from "@/constants/about";
+import { aboutStory } from "@/constants/about";
 import { fadeInUp, staggerContainer, staggerItem } from "@/lib/motion";
 import { motion } from "motion/react";
 
@@ -78,46 +78,6 @@ export function AboutContent() {
                 <Heading as="h3">{value.title}</Heading>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                   {value.description}
-                </p>
-              </motion.div>
-            ))}
-          </MotionSection>
-        </Container>
-      </section>
-
-      <section className="py-24 sm:py-32">
-        <Container>
-          <SectionHeader
-            label="Equipe"
-            title="Quem está por trás"
-            description="Pessoas que entendem a realidade das igrejas brasileiras."
-          />
-
-          <MotionSection
-            className="mt-16 grid gap-6 sm:grid-cols-2"
-            variants={staggerContainer}
-          >
-            {team.map((member) => (
-              <motion.div
-                key={member.name}
-                variants={staggerItem}
-                className="rounded-lg border border-border p-6"
-              >
-                <div className="flex size-12 items-center justify-center rounded-full bg-muted text-sm font-bold">
-                  {member.name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .slice(0, 2)}
-                </div>
-                <Heading as="h3" className="mt-4">
-                  {member.name}
-                </Heading>
-                <p className="text-sm font-medium text-muted-foreground">
-                  {member.role}
-                </p>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  {member.bio}
                 </p>
               </motion.div>
             ))}

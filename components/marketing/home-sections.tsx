@@ -47,7 +47,7 @@ export function HeroSection() {
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Button size="lg" asChild>
-              <Link href="/planos">Começar grátis</Link>
+              <Link href="/preco">Começar grátis</Link>
             </Button>
             <Button size="lg" variant="outline" asChild>
               <Link href="/recursos">Ver recursos</Link>
@@ -60,7 +60,7 @@ export function HeroSection() {
       </Container>
 
       <div className="border-t border-border bg-muted/30">
-        <div className="flex justify-center px-4 py-4 sm:px-6 lg:px-8">
+        <div className="flex justify-start items-center px-4 py-4 sm:px-6 lg:px-8">
           <button
             type="button"
             onClick={() => setShowDashboard((prev) => !prev)}
@@ -203,7 +203,7 @@ export function CtaSection() {
               className="bg-background text-foreground hover:bg-background/90"
               asChild
             >
-              <Link href="/planos">Começar grátis</Link>
+              <Link href="/preco">Começar grátis</Link>
             </Button>
             <Button
               size="lg"

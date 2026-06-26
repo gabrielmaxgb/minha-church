@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Check } from "lucide-react";
 import { useState } from "react";
 
@@ -7,7 +8,6 @@ import { billingFaq } from "@/constants/faq";
 import { Container } from "@/components/layout/container";
 import { CtaBanner } from "@/components/marketing/cta-banner";
 import { FaqList } from "@/components/marketing/faq-list";
-import { PlanComparison } from "@/components/marketing/plan-comparison";
 import { MotionSection } from "@/components/motion/motion-section";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,58 +21,205 @@ import {
 } from "@/components/ui/card";
 import { Heading, SectionHeader, SectionLabel } from "@/components/ui/heading";
 import { Skeleton } from "@/components/ui/skeleton";
-import { usePlans } from "@/lib/api/queries/use-plans";
+import { usePricing } from "@/lib/api/queries/use-pricing";
+import {
+  formatPricePerMember,
+  getPricePerMember,
+  getTierBillingComparison,
+} from "@/lib/pricing";
 import { staggerContainer, staggerItem } from "@/lib/motion";
-import type { BillingPeriod } from "@/types";
-import { cn } from "@/lib/utils";
+import type { BillingPeriod, PricingTier } from "@/types";
+import { cn, formatCurrency } from "@/lib/utils";
 import { motion } from "motion/react";
 
-function formatPrice(price: number, period: BillingPeriod) {
-  if (price === 0) return "Grátis";
-  const suffix = period === "monthly" ? "/mês" : "/ano";
-  return `R$ ${price}${suffix}`;
+function TierPriceComparison({
+  tier,
+  period,
+  highlighted,
+}: {
+  tier: PricingTier;
+  period: BillingPeriod;
+  highlighted?: boolean;
+}) {
+  const {
+    monthlyTotalYear,
+    savings,
+    monthsFree,
+    effectiveMonthlyFromYearly,
+    discountPercent,
+  } = getTierBillingComparison(tier);
+
+  const muted = highlighted ? "text-background/70" : "text-muted-foreground";
+  const subtle = highlighted ? "text-background/50" : "text-muted-foreground";
+  const emphasis = highlighted ? "text-background" : "text-foreground";
+  const border = highlighted ? "border-background/20" : "border-border";
+  const pricePerMember = getPricePerMember(tier, period);
+
+  if (period === "yearly") {
+    return (
+      <div className="space-y-2">
+        <div>
+          <p className="font-display text-2xl font-bold tracking-tight">
+            {formatCurrency(effectiveMonthlyFromYearly)}
+            <span className={cn("text-base font-normal", muted)}>/mês</span>
+          </p>
+          <p className={cn("mt-1 text-xs", muted)}>
+            {formatCurrency(tier.yearlyPrice)} cobrados uma vez por ano
+          </p>
+          <p className={cn("mt-2 text-sm font-medium", emphasis)}>
+            {formatPricePerMember(pricePerMember)} por membro
+          </p>
+        </div>
+        <div className={cn("space-y-1 border-t pt-2 text-xs", border)}>
+          <p className={muted}>
+            <span className="line-through">
+              {formatCurrency(tier.monthlyPrice)}/mês
+            </span>{" "}
+            no plano mensal
+          </p>
+          <p className={cn("font-medium", emphasis)}>
+            Economize {formatCurrency(savings)} · {monthsFree} meses grátis (
+            {discountPercent}%)
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <div>
+        <p className="font-display text-2xl font-bold tracking-tight">
+          {formatCurrency(tier.monthlyPrice)}
+          <span className={cn("text-base font-normal", muted)}>/mês</span>
+        </p>
+        <p className={cn("mt-1 text-xs", muted)}>
+          {formatCurrency(monthlyTotalYear)}/ano no ciclo mensal
+        </p>
+        <p className={cn("mt-2 text-sm font-medium", emphasis)}>
+          {formatPricePerMember(pricePerMember)} por membro
+        </p>
+      </div>
+      <div className={cn("border-t pt-2 text-xs", border, subtle)}>
+        <p>
+          No anual:{" "}
+          <span className={cn("font-medium", emphasis)}>
+            {formatCurrency(effectiveMonthlyFromYearly)}/mês
+          </span>{" "}
+          · {monthsFree} meses grátis ({formatCurrency(savings)} de economia)
+        </p>
+      </div>
+    </div>
+  );
 }
 
-function PlansSkeleton() {
+function IncludedBenefits({
+  benefits,
+  className,
+}: {
+  benefits: string[];
+  className?: string;
+}) {
   return (
-    <div className="mt-16 grid gap-6 lg:grid-cols-3">
-      {Array.from({ length: 3 }).map((_, i) => (
-        <Card key={i} className="flex flex-col shadow-none">
-          <CardHeader>
-            <Skeleton className="h-5 w-24" />
-            <Skeleton className="h-4 w-full" />
-          </CardHeader>
-          <CardContent className="flex-1 space-y-3">
-            <Skeleton className="h-9 w-28" />
-            {Array.from({ length: 4 }).map((__, j) => (
-              <Skeleton key={j} className="h-4 w-full" />
-            ))}
-          </CardContent>
-          <CardFooter>
-            <Skeleton className="h-10 w-full" />
-          </CardFooter>
-        </Card>
-      ))}
+    <div
+      className={cn(
+        "mx-auto max-w-3xl rounded-lg border border-border bg-muted/30 p-6 sm:p-8",
+        className,
+      )}
+    >
+      <p className="text-center font-display text-lg font-semibold tracking-tight">
+        Tudo incluído em qualquer faixa
+      </p>
+      <p className="mx-auto mt-2 max-w-xl text-center text-sm text-muted-foreground">
+        Troque planilhas, grupos de WhatsApp e sistemas fragmentados por um
+        lugar só — com o mesmo pacote completo em todas as faixas.
+      </p>
+      <ul className="mt-6 grid gap-3 sm:grid-cols-2">
+        {benefits.map((benefit) => (
+          <li
+            key={benefit}
+            className="flex items-start gap-2.5 text-sm text-foreground"
+          >
+            <Check className="mt-0.5 size-4 shrink-0" />
+            {benefit}
+          </li>
+        ))}
+      </ul>
+      <p className="mt-6 text-center text-xs text-muted-foreground">
+        14 dias grátis · sem fidelidade · cancele quando quiser
+      </p>
     </div>
+  );
+}
+
+function ValueAnchor({
+  headline,
+  example,
+  className,
+}: {
+  headline: string;
+  example: string;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "mx-auto max-w-2xl rounded-lg border border-dashed border-border px-6 py-5 text-center",
+        className,
+      )}
+    >
+      <p className="text-sm leading-relaxed text-foreground">{headline}</p>
+      <p className="mt-2 text-sm font-medium text-muted-foreground">
+        {example}
+      </p>
+    </div>
+  );
+}
+
+function PricingSkeleton() {
+  return (
+    <>
+      <Skeleton className="mx-auto mt-12 h-48 max-w-3xl rounded-lg" />
+      <Skeleton className="mx-auto mt-6 h-24 max-w-2xl rounded-lg" />
+      <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:items-center">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Card
+            key={i}
+            className={cn("shadow-none", i === 1 && "lg:min-h-[22rem]")}
+          >
+            <CardHeader>
+              <Skeleton className="h-5 w-28" />
+              <Skeleton className="h-4 w-full" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-9 w-24" />
+            </CardContent>
+            <CardFooter>
+              <Skeleton className="h-10 w-full" />
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
+    </>
   );
 }
 
 export function PricingSection() {
   const [period, setPeriod] = useState<BillingPeriod>("monthly");
-  const { data: plans, isLoading, isError } = usePlans();
+  const { data: pricing, isLoading, isError } = usePricing();
 
   return (
     <>
       <section className="py-24 sm:py-32">
         <Container>
           <div className="mx-auto max-w-2xl text-center">
-            <SectionLabel>Planos</SectionLabel>
+            <SectionLabel>Preço</SectionLabel>
             <Heading as="h1" className="mt-3">
-              Escolha o plano ideal para sua igreja
+              Pague de acordo com o tamanho da sua igreja
             </Heading>
             <p className="mt-4 text-muted-foreground">
-              Comece grátis e evolua conforme sua comunidade cresce. Teste os
-              planos pagos por 14 dias, sem cartão.
+              Todas as funcionalidades incluídas em qualquer faixa. Teste grátis
+              por 14 dias, sem cartão de crédito.
             </p>
 
             <div className="mt-8 inline-flex rounded-lg border border-border p-1">
@@ -99,105 +246,130 @@ export function PricingSection() {
                 )}
               >
                 Anual
-                <span className="ml-1.5 text-xs opacity-70">−2 meses</span>
+                <span
+                  className={cn(
+                    "ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                    period === "yearly"
+                      ? "bg-background/20 text-background"
+                      : "bg-foreground/10 text-foreground",
+                  )}
+                >
+                  2 meses grátis
+                </span>
               </button>
             </div>
           </div>
 
-          {isLoading && <PlansSkeleton />}
+          {isLoading && <PricingSkeleton />}
 
           {isError && (
             <p className="mt-16 text-center text-muted-foreground">
-              Não foi possível carregar os planos. Tente novamente mais tarde.
+              Não foi possível carregar os preços. Tente novamente mais tarde.
             </p>
           )}
 
-          {plans && (
-            <MotionSection
-              className="mt-16 grid gap-6 lg:grid-cols-3"
-              variants={staggerContainer}
-            >
-              {plans.map((plan) => (
-                <motion.div key={plan.id} variants={staggerItem}>
-                  <Card
+          {pricing && (
+            <>
+              <IncludedBenefits benefits={pricing.benefits} className="mt-12" />
+
+              <ValueAnchor
+                headline={pricing.valueAnchor.headline}
+                example={pricing.valueAnchor.example}
+                className="mt-6"
+              />
+
+              <MotionSection
+                className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:items-center"
+                variants={staggerContainer}
+              >
+                {pricing.tiers.map((tier) => (
+                  <motion.div
+                    key={tier.id}
+                    variants={staggerItem}
                     className={cn(
-                      "relative flex h-full flex-col shadow-none",
-                      plan.highlighted && "border-foreground",
+                      tier.highlighted && "sm:col-span-2 lg:col-span-1",
                     )}
                   >
-                    {plan.highlighted && (
-                      <Badge className="absolute -top-2.5 left-1/2 -translate-x-1/2">
-                        Mais popular
-                      </Badge>
-                    )}
-                    <CardHeader>
-                      <CardTitle>{plan.name}</CardTitle>
-                      <CardDescription>{plan.description}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex-1">
-                      <p className="font-display text-3xl font-bold tracking-tight">
-                        {formatPrice(
-                          period === "monthly"
-                            ? plan.monthlyPrice
-                            : plan.yearlyPrice,
-                          period,
-                        )}
-                      </p>
-                      <ul className="mt-6 space-y-3">
-                        {plan.features.map((feature) => (
-                          <li
-                            key={feature}
-                            className="flex items-start gap-2.5 text-sm text-muted-foreground"
-                          >
-                            <Check className="mt-0.5 size-4 shrink-0 text-foreground" />
-                            {feature}
-                          </li>
-                        ))}
-                      </ul>
-                    </CardContent>
-                    <CardFooter>
-                      <Button
-                        className="w-full"
-                        variant={plan.highlighted ? "default" : "outline"}
-                      >
-                        {plan.cta}
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                </motion.div>
-              ))}
-            </MotionSection>
+                    <Card
+                      className={cn(
+                        "relative flex h-full flex-col shadow-none transition-shadow",
+                        tier.highlighted
+                          ? "border-foreground bg-foreground text-background lg:scale-[1.06] lg:shadow-2xl"
+                          : "border-border",
+                      )}
+                    >
+                      {tier.highlighted && (
+                        <Badge
+                          variant="secondary"
+                          className="absolute -top-3 left-1/2 -translate-x-1/2 bg-background text-foreground"
+                        >
+                          Mais comum
+                        </Badge>
+                      )}
+                      <CardHeader className={cn(tier.highlighted && "pb-4")}>
+                        <CardTitle
+                          className={cn(
+                            "font-display tracking-tight",
+                            tier.highlighted
+                              ? "text-xl font-bold"
+                              : "text-base font-semibold",
+                          )}
+                        >
+                          {tier.name}
+                        </CardTitle>
+                        <CardDescription
+                          className={cn(
+                            "text-xs leading-relaxed",
+                            tier.highlighted
+                              ? "text-background/70"
+                              : "text-muted-foreground",
+                          )}
+                        >
+                          {tier.memberRange}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="flex-1">
+                        <TierPriceComparison
+                          tier={tier}
+                          period={period}
+                          highlighted={tier.highlighted}
+                        />
+                      </CardContent>
+                      <CardFooter>
+                        <Button
+                          className={cn(
+                            "w-full",
+                            tier.highlighted &&
+                              "bg-background text-foreground hover:bg-background/90",
+                          )}
+                          variant={tier.highlighted ? "secondary" : "outline"}
+                        >
+                          {pricing.cta}
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  </motion.div>
+                ))}
+              </MotionSection>
+            </>
           )}
         </Container>
       </section>
 
       <section className="border-t border-border bg-muted/30 py-24 sm:py-32">
         <Container>
-          <SectionHeader
-            label="Comparação"
-            title="Compare os planos lado a lado"
-            description="Veja qual plano atende melhor o tamanho e as necessidades da sua igreja."
-          />
-          <div className="mt-12">
-            <PlanComparison />
-          </div>
-        </Container>
-      </section>
-
-      <section className="py-24 sm:py-32">
-        <Container>
-          <SectionHeader
-            label="Dúvidas"
-            title="Perguntas sobre cobrança"
-          />
+          <SectionHeader label="Dúvidas" title="Perguntas sobre cobrança" />
           <div className="mx-auto mt-12 max-w-2xl">
             <FaqList items={billingFaq} />
           </div>
           <p className="mt-6 text-center text-sm text-muted-foreground">
             Mais perguntas? Veja nossa{" "}
-            <a href="/faq" className="font-medium text-foreground underline-offset-4 hover:underline">
+            <Link
+              href="/faq"
+              className="font-medium text-foreground underline-offset-4 hover:underline"
+            >
               página de FAQ
-            </a>
+            </Link>
             .
           </p>
         </Container>
@@ -205,9 +377,9 @@ export function PricingSection() {
 
       <CtaBanner
         title="Teste grátis por 14 dias"
-        description="Sem cartão de crédito. Cancele quando quiser."
+        description="Todas as funcionalidades incluídas. Sem cartão de crédito."
         primaryLabel="Começar grátis"
-        primaryHref="/planos"
+        primaryHref="/preco"
         secondaryLabel="Ver recursos"
         secondaryHref="/recursos"
       />
