@@ -2,12 +2,8 @@
 
 import { useQuery } from "@tanstack/react-query";
 
-import { fetchPlans } from "@/constants/plans";
-import { queryKeys } from "@/lib/api/queries/keys";
+import { queries } from "@/lib/api/queries";
 
 export function usePlans() {
-  return useQuery({
-    queryKey: queryKeys.plans,
-    queryFn: fetchPlans,
-  });
+  return useQuery(queries.plans.all);
 }
