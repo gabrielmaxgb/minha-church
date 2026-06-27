@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Sans, Geist_Mono, Syne } from "next/font/google";
 
+import { AuthProvider } from "@/providers/auth-provider";
 import { QueryProvider } from "@/providers/query-provider";
 import { defaultMetadata } from "@/lib/metadata";
 
@@ -47,7 +48,9 @@ export default function RootLayout({
         className="flex min-h-full flex-col"
         suppressHydrationWarning
       >
-        <QueryProvider>{children}</QueryProvider>
+        <QueryProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </QueryProvider>
       </body>
     </html>
   );

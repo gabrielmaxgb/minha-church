@@ -1,3 +1,14 @@
+export type {
+  AuthResponse,
+  AuthSession,
+  AuthTokens,
+  Church,
+  JwtPayload,
+  LoginCredentials,
+  User,
+  UserRole,
+} from "@/types/auth";
+
 export type BillingPeriod = "monthly" | "yearly";
 
 export interface PricingTier {
