@@ -234,13 +234,7 @@ export function PricingSection() {
 
           {pricing && (
             <>
-              <IncludedBenefits benefits={pricing.benefits} className="mt-12" />
-
-              <ValueAnchor
-                headline={pricing.valueAnchor.headline}
-                example={pricing.valueAnchor.example}
-                className="mt-6"
-              />
+              
 
             <div className="mx-auto max-w-3xl text-center">
               <div className=" mx-auto max-w-3xl text-center mt-8 inline-flex rounded-lg border border-border p-1">
@@ -346,6 +340,14 @@ export function PricingSection() {
                   </motion.div>
                 ))}
               </MotionSection>
+
+              <IncludedBenefits benefits={pricing.benefits} className="mt-12" />
+
+              <ValueAnchor
+                headline={pricing.valueAnchor.headline}
+                example={pricing.valueAnchor.example}
+                className="mt-6"
+              />
             </>
           )}
         </Container>
