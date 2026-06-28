@@ -5,6 +5,7 @@ import { Check } from "lucide-react";
 import { useState } from "react";
 
 import { billingFaq } from "@/constants/faq";
+import { PUBLIC_ROUTES } from "@/constants/routes";
 import { Container } from "@/components/layout/container";
 import { CtaBanner } from "@/components/marketing/cta-banner";
 import { FaqList } from "@/components/marketing/faq-list";
@@ -221,43 +222,6 @@ export function PricingSection() {
               Todas as funcionalidades incluídas em qualquer faixa. Teste grátis
               por 14 dias, sem cartão de crédito.
             </p>
-
-            <div className="mt-8 inline-flex rounded-lg border border-border p-1">
-              <button
-                type="button"
-                onClick={() => setPeriod("monthly")}
-                className={cn(
-                  "rounded-md px-4 py-1.5 text-sm font-medium transition-colors",
-                  period === "monthly"
-                    ? "bg-foreground text-background"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                Mensal
-              </button>
-              <button
-                type="button"
-                onClick={() => setPeriod("yearly")}
-                className={cn(
-                  "rounded-md px-4 py-1.5 text-sm font-medium transition-colors",
-                  period === "yearly"
-                    ? "bg-foreground text-background"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                Anual
-                <span
-                  className={cn(
-                    "ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-                    period === "yearly"
-                      ? "bg-background/20 text-background"
-                      : "bg-foreground/10 text-foreground",
-                  )}
-                >
-                  2 meses grátis
-                </span>
-              </button>
-            </div>
           </div>
 
           {isLoading && <PricingSkeleton />}
@@ -277,6 +241,45 @@ export function PricingSection() {
                 example={pricing.valueAnchor.example}
                 className="mt-6"
               />
+
+            <div className="mx-auto max-w-3xl text-center">
+              <div className=" mx-auto max-w-3xl text-center mt-8 inline-flex rounded-lg border border-border p-1">
+                <button
+                  type="button"
+                  onClick={() => setPeriod("monthly")}
+                  className={cn(
+                    "rounded-md px-4 py-1.5 text-sm font-medium transition-colors cursor-pointer",
+                    period === "monthly"
+                      ? "bg-foreground text-background"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  Mensal
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPeriod("yearly")}
+                  className={cn(
+                    "rounded-md px-4 py-1.5 text-sm font-medium transition-colors cursor-pointer",
+                    period === "yearly"
+                      ? "bg-foreground text-background"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  Anual
+                  <span
+                    className={cn(
+                      "ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                      period === "yearly"
+                        ? "bg-background/20 text-background"
+                        : "bg-foreground/10 text-foreground",
+                    )}
+                  >
+                    2 meses grátis
+                  </span>
+                </button>
+              </div>
+            </div>
 
               <MotionSection
                 className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:items-center"
@@ -298,15 +301,7 @@ export function PricingSection() {
                           : "border-border",
                       )}
                     >
-                      {tier.highlighted && (
-                        <Badge
-                          variant="secondary"
-                          className="absolute -top-3 left-1/2 -translate-x-1/2 bg-background text-foreground"
-                        >
-                          Mais comum
-                        </Badge>
-                      )}
-                      <CardHeader className={cn(tier.highlighted && "pb-4")}>
+                      <CardHeader>
                         <CardTitle
                           className={cn(
                             "font-display tracking-tight",
@@ -365,7 +360,7 @@ export function PricingSection() {
           <p className="mt-6 text-center text-sm text-muted-foreground">
             Mais perguntas? Veja nossa{" "}
             <Link
-              href="/faq"
+              href={PUBLIC_ROUTES.faq}
               className="font-medium text-foreground underline-offset-4 hover:underline"
             >
               página de FAQ
@@ -379,9 +374,9 @@ export function PricingSection() {
         title="Teste grátis por 14 dias"
         description="Todas as funcionalidades incluídas. Sem cartão de crédito."
         primaryLabel="Começar grátis"
-        primaryHref="/preco"
+        primaryHref={PUBLIC_ROUTES.pricing}
         secondaryLabel="Ver recursos"
-        secondaryHref="/recursos"
+        secondaryHref={PUBLIC_ROUTES.resources}
       />
     </>
   );

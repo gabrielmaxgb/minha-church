@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+import {
+  AUTH_ROUTES,
+  isProtectedAreaPath,
+  PUBLIC_ROUTES,
+} from "@/constants/routes";
 import { AUTH_COOKIE } from "@/lib/auth/constants";
 import { decodeJwtPayload } from "@/lib/auth/jwt";
-
-const APP_PREFIX = "/app";
-const LOGIN_ROUTE = "/login";
 
 function isTokenPresent(token: string | undefined): boolean {
   if (!token) {
@@ -25,17 +27,17 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get(AUTH_COOKIE)?.value;
   const isAuthenticated = isTokenPresent(token);
-  const isAppRoute = pathname === APP_PREFIX || pathname.startsWith(`${APP_PREFIX}/`);
-  const isLoginRoute = pathname === LOGIN_ROUTE;
+  const requiresAuth = isProtectedAreaPath(pathname);
+  const isLoginRoute = pathname === PUBLIC_ROUTES.login;
 
-  if (isAppRoute && !isAuthenticated) {
-    const loginUrl = new URL(LOGIN_ROUTE, request.url);
+  if (requiresAuth && !isAuthenticated) {
+    const loginUrl = new URL(PUBLIC_ROUTES.login, request.url);
     loginUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
   if (isLoginRoute && isAuthenticated) {
-    return NextResponse.redirect(new URL(`${APP_PREFIX}/dashboard`, request.url));
+    return NextResponse.redirect(new URL(AUTH_ROUTES.dashboard, request.url));
   }
 
   return NextResponse.next();

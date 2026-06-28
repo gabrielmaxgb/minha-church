@@ -9,7 +9,7 @@ import {
   Wallet,
 } from "lucide-react";
 
-import { APP_ROUTES } from "@/lib/auth/constants";
+import { AUTH_ROUTES } from "@/constants/routes";
 
 export interface DashboardNavItem {
   label: string;
@@ -21,37 +21,37 @@ export interface DashboardNavItem {
 export const dashboardNavItems: DashboardNavItem[] = [
   {
     label: "Dashboard",
-    href: APP_ROUTES.dashboard,
+    href: AUTH_ROUTES.dashboard,
     icon: LayoutDashboard,
     description: "Visão geral da igreja",
   },
   {
     label: "Membros",
-    href: APP_ROUTES.members,
+    href: AUTH_ROUTES.members,
     icon: Users,
     description: "Cadastro e histórico pastoral",
   },
   {
     label: "Cultos",
-    href: APP_ROUTES.events,
+    href: AUTH_ROUTES.events,
     icon: Calendar,
     description: "Cultos, eventos e escalas",
   },
   {
     label: "Finanças",
-    href: APP_ROUTES.finances,
+    href: AUTH_ROUTES.finances,
     icon: Wallet,
     description: "Entradas, saídas e prestação de contas",
   },
   {
     label: "Comunicação",
-    href: APP_ROUTES.communication,
+    href: AUTH_ROUTES.communication,
     icon: Mail,
     description: "E-mails e avisos",
   },
   {
     label: "Relatórios",
-    href: APP_ROUTES.reports,
+    href: AUTH_ROUTES.reports,
     icon: BarChart3,
     description: "Indicadores e exportações",
   },
@@ -60,7 +60,7 @@ export const dashboardNavItems: DashboardNavItem[] = [
 export const dashboardSecondaryNavItems: DashboardNavItem[] = [
   {
     label: "Configurações",
-    href: APP_ROUTES.settings,
+    href: AUTH_ROUTES.settings,
     icon: Settings,
     description: "Igreja, usuários e preferências",
   },

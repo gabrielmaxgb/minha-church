@@ -8,6 +8,7 @@ import {
   dashboardNavItems,
   dashboardSecondaryNavItems,
 } from "@/constants/dashboard-nav";
+import { AUTH_ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
 
 interface DashboardSidebarProps {
@@ -29,7 +30,7 @@ export function DashboardSidebar({
       )}
     >
       <div className="border-b border-border px-5 py-4">
-        <Logo href="/app/dashboard" size="md" />
+        <Logo href={AUTH_ROUTES.dashboard} size="md" />
       </div>
 
       <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">

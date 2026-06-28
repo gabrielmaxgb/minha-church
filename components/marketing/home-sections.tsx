@@ -6,6 +6,7 @@ import { Check, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 
 import { homeFeatures } from "@/constants/features";
+import { PUBLIC_ROUTES } from "@/constants/routes";
 import { Container } from "@/components/layout/container";
 import { MotionDiv, MotionSection } from "@/components/motion/motion-section";
 import { ProductShowcase } from "@/components/marketing/product-showcase";
@@ -47,10 +48,10 @@ export function HeroSection() {
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Button size="lg" asChild>
-              <Link href="/preco">Começar grátis</Link>
+              <Link href={PUBLIC_ROUTES.pricing}>Começar grátis</Link>
             </Button>
             <Button size="lg" variant="outline" asChild>
-              <Link href="/recursos">Ver recursos</Link>
+              <Link href={PUBLIC_ROUTES.resources}>Ver recursos</Link>
             </Button>
           </div>
           <p className="mt-4 text-sm text-muted-foreground">
@@ -150,7 +151,7 @@ export function FeaturesSection() {
 
         <div className="mt-10 text-center">
           <Button variant="outline" asChild>
-            <Link href="/recursos">Ver todos os recursos</Link>
+            <Link href={PUBLIC_ROUTES.resources}>Ver todos os recursos</Link>
           </Button>
         </div>
       </Container>
@@ -203,7 +204,7 @@ export function CtaSection() {
               className="bg-background text-foreground hover:bg-background/90"
               asChild
             >
-              <Link href="/preco">Começar grátis</Link>
+                <Link href={PUBLIC_ROUTES.pricing}>Começar grátis</Link>
             </Button>
             <Button
               size="lg"
@@ -211,7 +212,7 @@ export function CtaSection() {
               className="border-background/30 bg-transparent text-background hover:bg-background/10"
               asChild
             >
-              <Link href="/recursos">Ver recursos</Link>
+              <Link href={PUBLIC_ROUTES.resources}>Ver recursos</Link>
             </Button>
           </div>
         </MotionSection>

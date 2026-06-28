@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Container } from "@/components/layout/container";
+import { PUBLIC_ROUTES } from "@/constants/routes";
 import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import { cn } from "@/lib/utils";
@@ -19,7 +20,7 @@ export function CtaBanner({
   title = "Pronto para organizar sua igreja?",
   description = "Comece grátis hoje — sem cartão de crédito, sem instalação.",
   primaryLabel = "Começar grátis",
-  primaryHref = "/preco",
+  primaryHref = PUBLIC_ROUTES.pricing,
   secondaryLabel,
   secondaryHref,
   className,

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 import { Logo } from "@/components/layout/logo";
+import { PUBLIC_ROUTES } from "@/constants/routes";
 
 export default function AuthLayout({
   children,
@@ -17,7 +18,7 @@ export default function AuthLayout({
       {children}
 
       <Link
-        href="/"
+        href={PUBLIC_ROUTES.home}
         className="mt-8 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
         <ArrowLeft className="size-4" />

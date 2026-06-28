@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Shield } from "lucide-react";
 
 import { securityFeatures } from "@/constants/about";
+import { PUBLIC_ROUTES } from "@/constants/routes";
 import { Container } from "@/components/layout/container";
 import { CtaBanner } from "@/components/marketing/cta-banner";
 import { MotionSection } from "@/components/motion/motion-section";
@@ -66,7 +67,7 @@ export function SegurancaContent() {
           />
           <div className="mt-8">
             <Button variant="outline" asChild>
-              <Link href="/faq">Ver perguntas frequentes</Link>
+              <Link href={PUBLIC_ROUTES.faq}>Ver perguntas frequentes</Link>
             </Button>
           </div>
         </Container>

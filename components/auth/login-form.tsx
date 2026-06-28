@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { APP_ROUTES } from "@/lib/auth/constants";
+import { PUBLIC_ROUTES, resolvePostLoginRedirect } from "@/constants/routes";
 import { useAuth } from "@/providers/auth-provider";
 
 function LoginFormContent() {
@@ -47,12 +47,7 @@ function LoginFormContent() {
 
     try {
       await login({ email: email.trim(), password });
-      const redirectParam = searchParams.get("redirect");
-      const redirect =
-        redirectParam?.startsWith("/app") === true
-          ? redirectParam
-          : APP_ROUTES.dashboard;
-      router.push(redirect);
+      router.push(resolvePostLoginRedirect(searchParams.get("redirect")));
     } catch (error) {
       setError(
         error instanceof Error
@@ -151,7 +146,7 @@ function LoginFormContent() {
           <p className="text-center text-sm text-muted-foreground">
             Ainda não tem conta?{" "}
             <Link
-              href="/preco"
+              href={PUBLIC_ROUTES.pricing}
               className="font-medium text-foreground underline-offset-4 hover:underline"
             >
               Começar grátis

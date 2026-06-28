@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Container } from "@/components/layout/container";
 import { Logo } from "@/components/layout/logo";
 import { mainNavLinks } from "@/constants/navigation";
+import { PUBLIC_ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
 
 export function Header() {
@@ -40,10 +41,10 @@ export function Header() {
 
           <div className="hidden items-center gap-2 md:flex">
             <Button variant="ghost" size="sm" asChild>
-              <Link href="/login">Entrar</Link>
+              <Link href={PUBLIC_ROUTES.login}>Entrar</Link>
             </Button>
             <Button size="sm" asChild>
-              <Link href="/preco">Começar grátis</Link>
+              <Link href={PUBLIC_ROUTES.pricing}>Começar grátis</Link>
             </Button>
           </div>
 
@@ -76,12 +77,12 @@ export function Header() {
             ))}
             <div className="mt-2 flex flex-col gap-2 px-3">
               <Button variant="outline" size="sm" asChild>
-                <Link href="/login" onClick={() => setMobileOpen(false)}>
+                <Link href={PUBLIC_ROUTES.login} onClick={() => setMobileOpen(false)}>
                   Entrar
                 </Link>
               </Button>
               <Button size="sm" asChild>
-                <Link href="/preco" onClick={() => setMobileOpen(false)}>
+                <Link href={PUBLIC_ROUTES.pricing} onClick={() => setMobileOpen(false)}>
                   Começar grátis
                 </Link>
               </Button>

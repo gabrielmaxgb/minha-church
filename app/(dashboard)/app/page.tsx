@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
-import { APP_ROUTES } from "@/lib/auth/constants";
+import { AUTH_ROUTES } from "@/constants/routes";
 
 export default function AppIndexPage() {
-  redirect(APP_ROUTES.dashboard);
+  redirect(AUTH_ROUTES.dashboard);
 }

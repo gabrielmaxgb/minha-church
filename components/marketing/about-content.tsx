@@ -5,6 +5,7 @@ import { CtaBanner } from "@/components/marketing/cta-banner";
 import { MotionSection } from "@/components/motion/motion-section";
 import { Heading, SectionHeader, SectionLabel } from "@/components/ui/heading";
 import { aboutStory } from "@/constants/about";
+import { PUBLIC_ROUTES } from "@/constants/routes";
 import { fadeInUp, staggerContainer, staggerItem } from "@/lib/motion";
 import { motion } from "motion/react";
 
@@ -87,7 +88,7 @@ export function AboutContent() {
 
       <CtaBanner
         secondaryLabel="Ver recursos"
-        secondaryHref="/recursos"
+        secondaryHref={PUBLIC_ROUTES.resources}
       />
     </>
   );

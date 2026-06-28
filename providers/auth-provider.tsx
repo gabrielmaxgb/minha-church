@@ -20,12 +20,12 @@ import {
   getStoredChurchId,
   persistAuthSession,
 } from "@/lib/auth/cookies";
-import { APP_ROUTES, LOGIN_ROUTE } from "@/lib/auth/constants";
+import { AUTH_ROUTES, PUBLIC_ROUTES } from "@/constants/routes";
 import { isTokenExpired } from "@/lib/auth/jwt";
 import type { Church, LoginCredentials, User } from "@/types/auth";
 
 function redirectToLogin() {
-  window.location.replace(LOGIN_ROUTE);
+  window.location.replace(PUBLIC_ROUTES.login);
 }
 
 interface AuthContextValue {
@@ -191,4 +191,4 @@ export function useRequireAuth() {
   return auth;
 }
 
-export { APP_ROUTES };
+export { AUTH_ROUTES, PUBLIC_ROUTES } from "@/constants/routes";

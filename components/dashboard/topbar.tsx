@@ -6,7 +6,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { roleLabels } from "@/constants/dashboard-nav";
-import { APP_ROUTES } from "@/lib/auth/constants";
+import { AUTH_ROUTES } from "@/constants/routes";
 import { useAuth } from "@/providers/auth-provider";
 import { cn } from "@/lib/utils";
 
@@ -146,7 +146,7 @@ export function DashboardTopbar({
                       </p>
                     </div>
                     <Link
-                      href={APP_ROUTES.settings}
+                      href={AUTH_ROUTES.settings}
                       className="flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-muted"
                       onClick={() => setMenuOpen(false)}
                     >

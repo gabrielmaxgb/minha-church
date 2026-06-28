@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Check } from "lucide-react";
 
 import { resourceSections } from "@/constants/features";
+import { PUBLIC_ROUTES } from "@/constants/routes";
 import { Container } from "@/components/layout/container";
 import { CtaBanner } from "@/components/marketing/cta-banner";
 import { MotionSection } from "@/components/motion/motion-section";
@@ -70,7 +71,7 @@ export function RecursosContent() {
 
           <div className="mt-16 text-center">
             <Button asChild>
-              <Link href="/preco">Começar grátis</Link>
+              <Link href={PUBLIC_ROUTES.pricing}>Começar grátis</Link>
             </Button>
           </div>
         </Container>
