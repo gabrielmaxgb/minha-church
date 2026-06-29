@@ -20,7 +20,7 @@ import {
   getStoredChurchId,
   persistAuthSession,
 } from "@/lib/auth/cookies";
-import { AUTH_ROUTES, PUBLIC_ROUTES } from "@/constants/routes";
+import { PUBLIC_ROUTES } from "@/constants/routes";
 import { isTokenExpired } from "@/lib/auth/jwt";
 import type { Church, LoginCredentials, User } from "@/types/auth";
 
@@ -41,54 +41,75 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+function getValidAccessToken(): string | null {
+  const token = getAccessToken();
+
+  if (!token || isTokenExpired(token)) {
+    clearAuthSession();
+    return null;
+  }
+
+  return token;
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [church, setChurch] = useState<Church | null>(null);
   const [churches, setChurches] = useState<Church[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => getValidAccessToken() !== null);
 
-  const hydrateSession = useCallback(async () => {
-    const token = getAccessToken();
+  useEffect(() => {
+    const token = getValidAccessToken();
 
-    if (!token || isTokenExpired(token)) {
-      clearAuthSession();
-      setUser(null);
-      setChurch(null);
-      setChurches([]);
-      setIsLoading(false);
+    if (!token) {
       return;
     }
 
-    try {
-      const session = await getSessionRequest(token);
-      const storedChurchId = getStoredChurchId();
-      const activeChurch =
-        session.churches.find((item) => item.id === storedChurchId) ??
-        session.church;
-      const accessToken = session.tokens.accessToken || token;
+    let cancelled = false;
 
-      setUser(session.user);
-      setChurch(activeChurch);
-      setChurches(session.churches);
-      persistAuthSession(
-        accessToken,
-        activeChurch.id,
-        session.tokens.refreshToken,
-        session.tokens.expiresIn,
-      );
-    } catch {
-      clearAuthSession();
-      setUser(null);
-      setChurch(null);
-      setChurches([]);
-    } finally {
-      setIsLoading(false);
-    }
+    void (async () => {
+      try {
+        const session = await getSessionRequest(token);
+
+        if (cancelled) {
+          return;
+        }
+
+        const storedChurchId = getStoredChurchId();
+        const activeChurch =
+          session.churches.find((item) => item.id === storedChurchId) ??
+          session.church;
+        const accessToken = session.tokens.accessToken || token;
+
+        setUser(session.user);
+        setChurch(activeChurch);
+        setChurches(session.churches);
+        persistAuthSession(
+          accessToken,
+          activeChurch.id,
+          session.tokens.refreshToken,
+          session.tokens.expiresIn,
+        );
+      } catch {
+        if (cancelled) {
+          return;
+        }
+
+        clearAuthSession();
+        setUser(null);
+        setChurch(null);
+        setChurches([]);
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
-
-  useEffect(() => {
-    void hydrateSession();
-  }, [hydrateSession]);
 
   const login = useCallback(async (credentials: LoginCredentials) => {
     const session = await loginRequest(credentials);
