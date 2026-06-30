@@ -5,12 +5,14 @@ import { Plus } from "lucide-react";
 
 import { ActivityEventCard } from "@/components/dashboard/activities/activity-event-card";
 import { CreateActivityModal } from "@/components/dashboard/activities/create-activity-modal";
+import { EditActivityModal } from "@/components/dashboard/activities/edit-activity-modal";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useChurchEvents, useMinistries } from "@/lib/api/queries";
-import { canCreateAnyActivity } from "@/lib/permissions";
+import { canCreateAnyActivity, canManageActivity } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
+import type { ChurchEvent } from "@/types/events";
 
 type ActivityFilter = "all" | "church" | string;
 
@@ -18,6 +20,7 @@ export function ActivitiesContent() {
   const { permissions } = useAuth();
   const [filter, setFilter] = useState<ActivityFilter>("all");
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<ChurchEvent | null>(null);
 
   const { data: ministries } = useMinistries();
   const activeMinistries = useMemo(
@@ -56,6 +59,10 @@ export function ActivitiesContent() {
 
   const defaultMinistryId =
     filter !== "all" && filter !== "church" ? filter : "";
+
+  function canManageEvent(event: ChurchEvent) {
+    return permissions ? canManageActivity(permissions, event) : false;
+  }
 
   return (
     <>
@@ -136,7 +143,13 @@ export function ActivitiesContent() {
               <section className="space-y-3">
                 <h2 className="text-sm font-medium">Destaques da igreja</h2>
                 {churchWideEvents.map((event) => (
-                  <ActivityEventCard key={event.id} event={event} highlighted />
+                  <ActivityEventCard
+                    key={event.id}
+                    event={event}
+                    highlighted
+                    canManage={canManageEvent(event)}
+                    onEdit={setEditingEvent}
+                  />
                 ))}
               </section>
             )}
@@ -147,7 +160,12 @@ export function ActivitiesContent() {
                   <h2 className="text-sm font-medium">Por ministério</h2>
                 )}
                 {(filter === "all" ? ministryEvents : sortedEvents).map((event) => (
-                  <ActivityEventCard key={event.id} event={event} />
+                  <ActivityEventCard
+                    key={event.id}
+                    event={event}
+                    canManage={canManageEvent(event)}
+                    onEdit={setEditingEvent}
+                  />
                 ))}
               </section>
             )}
@@ -159,6 +177,12 @@ export function ActivitiesContent() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         defaultMinistryId={defaultMinistryId}
+      />
+
+      <EditActivityModal
+        event={editingEvent}
+        open={editingEvent !== null}
+        onClose={() => setEditingEvent(null)}
       />
     </>
   );

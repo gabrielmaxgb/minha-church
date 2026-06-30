@@ -35,7 +35,7 @@ export function DashboardTopbar({
   const [churchMenuOpen, setChurchMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur">
+    <header className="z-20 shrink-0 border-b border-border bg-background/95 backdrop-blur">
       <div className="flex h-16 items-center justify-between gap-4 px-4 sm:px-6">
         <div className="flex min-w-0 items-center gap-3">
           <Button

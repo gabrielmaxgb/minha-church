@@ -22,3 +22,11 @@ export interface CreateChurchEventPayload {
   startsAt: string;
   endsAt?: string;
 }
+
+export interface UpdateChurchEventPayload {
+  name?: string;
+  description?: string | null;
+  location?: string | null;
+  startsAt?: string;
+  endsAt?: string | null;
+}

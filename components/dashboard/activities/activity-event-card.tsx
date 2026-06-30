@@ -1,19 +1,24 @@
 "use client";
 
-import { Calendar, MapPin, Sparkles } from "lucide-react";
+import { Calendar, MapPin, Pencil, Sparkles } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { cn, formatDateTime } from "@/lib/utils";
 import type { ChurchEvent } from "@/types/events";
 
 interface ActivityEventCardProps {
   event: ChurchEvent;
   highlighted?: boolean;
+  canManage?: boolean;
+  onEdit?: (event: ChurchEvent) => void;
 }
 
 export function ActivityEventCard({
   event,
   highlighted = event.isChurchWide,
+  canManage = false,
+  onEdit,
 }: ActivityEventCardProps) {
   return (
     <article
@@ -42,9 +47,23 @@ export function ActivityEventCard({
           )}
         </div>
 
-        {!event.isChurchWide && event.ministryName && (
-          <Badge variant="secondary">{event.ministryName}</Badge>
-        )}
+        <div className="flex items-center gap-2">
+          {!event.isChurchWide && event.ministryName && (
+            <Badge variant="secondary">{event.ministryName}</Badge>
+          )}
+          {canManage && onEdit && (
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="shrink-0"
+              onClick={() => onEdit(event)}
+            >
+              <Pencil className="size-4" />
+              Editar
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="mt-4 flex flex-col gap-2 text-sm text-muted-foreground sm:flex-row sm:gap-6">

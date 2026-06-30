@@ -1,10 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Calendar, MapPin, Plus, Trash2, UserPlus } from "lucide-react";
+import { Calendar, MapPin, Pencil, Plus, Trash2, UserPlus } from "lucide-react";
 
 import { AddMinistryMemberModal } from "@/components/dashboard/ministries/add-ministry-member-modal";
 import { CreateMinistryEventModal } from "@/components/dashboard/ministries/create-ministry-event-modal";
+import { EditActivityModal } from "@/components/dashboard/activities/edit-activity-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,11 +25,12 @@ import {
 } from "@/lib/api/queries";
 import {
   canCreateMinistryActivity,
+  canManageActivity,
   canManageMembers,
 } from "@/lib/permissions";
 import { formatDateTime } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
-import type { Ministry } from "@/types/ministries";
+import type { Ministry, MinistryEvent } from "@/types/ministries";
 
 interface MinistryDashboardSectionProps {
   ministry: Ministry;
@@ -65,11 +67,11 @@ export function MinistryDashboardSection({
 
   const [eventModalOpen, setEventModalOpen] = useState(false);
   const [memberModalOpen, setMemberModalOpen] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<MinistryEvent | null>(null);
 
   const canAddMembers = permissions ? canManageMembers(permissions) : false;
-  const canCreateEvents =
-    permissions !== null &&
-    canCreateMinistryActivity(permissions, ministry.id);
+  const canManageEvents =
+    permissions !== null && canCreateMinistryActivity(permissions, ministry.id);
 
   const now = Date.now();
   const upcomingEvents = useMemo(
@@ -119,7 +121,7 @@ export function MinistryDashboardSection({
               Adicionar membro
             </Button>
           )}
-          {canCreateEvents && (
+          {canManageEvents && (
             <Button size="sm" variant="outline" onClick={() => setEventModalOpen(true)}>
               <Calendar className="size-4" />
               Novo evento
@@ -148,31 +150,50 @@ export function MinistryDashboardSection({
             {!eventsLoading && upcomingEvents.length === 0 && (
               <p className="text-sm text-muted-foreground">
                 Nenhum evento agendado.
-                {canCreateEvents && " Crie o primeiro com o botão acima."}
+                {canManageEvents && " Crie o primeiro com o botão acima."}
               </p>
             )}
 
             {!eventsLoading &&
-              upcomingEvents.map((event) => (
-                <div
-                  key={event.id}
-                  className="flex flex-col gap-2 rounded-lg border border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div className="min-w-0">
-                    <p className="font-medium">{event.name}</p>
-                    <p className="mt-0.5 flex items-center gap-1.5 text-sm text-muted-foreground">
-                      <Calendar className="size-3.5" />
-                      {formatDateTime(event.startsAt)}
-                    </p>
+              upcomingEvents.map((event) => {
+                const canEdit =
+                  permissions !== null && canManageActivity(permissions, event);
+
+                return (
+                  <div
+                    key={event.id}
+                    className="flex flex-col gap-2 rounded-lg border border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="min-w-0">
+                      <p className="font-medium">{event.name}</p>
+                      <p className="mt-0.5 flex items-center gap-1.5 text-sm text-muted-foreground">
+                        <Calendar className="size-3.5" />
+                        {formatDateTime(event.startsAt)}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      {event.location && (
+                        <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                          <MapPin className="size-3.5 shrink-0" />
+                          {event.location}
+                        </p>
+                      )}
+                      {canEdit && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setEditingEvent(event)}
+                        >
+                          <Pencil className="size-4" />
+                          Editar
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                  {event.location && (
-                    <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                      <MapPin className="size-3.5 shrink-0" />
-                      {event.location}
-                    </p>
-                  )}
-                </div>
-              ))}
+                );
+              })}
           </CardContent>
         </Card>
       </div>
@@ -189,6 +210,12 @@ export function MinistryDashboardSection({
         ministryName={ministry.name}
         open={eventModalOpen}
         onClose={() => setEventModalOpen(false)}
+      />
+
+      <EditActivityModal
+        event={editingEvent}
+        open={editingEvent !== null}
+        onClose={() => setEditingEvent(null)}
       />
     </>
   );

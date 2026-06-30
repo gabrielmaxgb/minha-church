@@ -38,9 +38,9 @@ export function DashboardShell({
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <div className="hidden lg:flex">
-        <DashboardSidebar />
+    <div className="flex h-screen overflow-hidden bg-background">
+      <div className="hidden h-screen shrink-0 lg:block">
+        <DashboardSidebar className="h-full" />
       </div>
 
       {sidebarOpen && (
@@ -54,19 +54,21 @@ export function DashboardShell({
           <div className="fixed inset-y-0 left-0 z-40 h-full w-64 shadow-2xl lg:hidden">
             <DashboardSidebar
               onNavigate={() => setSidebarOpen(false)}
-              className="h-full min-h-screen bg-background"
+              className="h-full bg-background"
             />
           </div>
         </>
       )}
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <DashboardTopbar
           title={title}
           subtitle={subtitle ?? church?.name}
           onOpenSidebar={() => setSidebarOpen(true)}
         />
-        <main className="flex-1 px-4 py-6 sm:px-6">{children}</main>
+        <main className="min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6">
+          {children}
+        </main>
       </div>
     </div>
   );

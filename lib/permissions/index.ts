@@ -40,6 +40,21 @@ export function canCreateAnyActivity(permissions: UserPermissions) {
   );
 }
 
+export function canManageActivity(
+  permissions: UserPermissions,
+  event: { isChurchWide: boolean; ministryId: string | null },
+) {
+  if (event.isChurchWide) {
+    return canCreateChurchWideActivity(permissions);
+  }
+
+  if (event.ministryId) {
+    return canCreateMinistryActivity(permissions, event.ministryId);
+  }
+
+  return false;
+}
+
 export function canAccessNav(
   permissions: UserPermissions,
   key: NavPermissionKey,

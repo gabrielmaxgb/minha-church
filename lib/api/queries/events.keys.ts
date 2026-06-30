@@ -1,7 +1,11 @@
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
 import { apiClient, buildTenantPath } from "@/lib/api/client";
-import type { ChurchEvent, CreateChurchEventPayload } from "@/types/events";
+import type {
+  ChurchEvent,
+  CreateChurchEventPayload,
+  UpdateChurchEventPayload,
+} from "@/types/events";
 
 export interface ListChurchEventsParams {
   ministryId?: string;
@@ -49,6 +53,31 @@ async function createChurchEvent(
   });
 }
 
+async function updateChurchEvent(
+  churchId: string,
+  eventId: string,
+  payload: UpdateChurchEventPayload,
+): Promise<ChurchEvent> {
+  return apiClient<ChurchEvent>(
+    buildTenantPath(churchId, `/events/${eventId}`),
+    {
+      churchId,
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    },
+  );
+}
+
+async function deleteChurchEvent(
+  churchId: string,
+  eventId: string,
+): Promise<void> {
+  await apiClient<void>(buildTenantPath(churchId, `/events/${eventId}`), {
+    churchId,
+    method: "DELETE",
+  });
+}
+
 export const eventsKeys = createQueryKeys("events", {
   list: (churchId: string, params: ListChurchEventsParams = {}) => ({
     queryKey: [churchId, params],
@@ -56,6 +85,6 @@ export const eventsKeys = createQueryKeys("events", {
   }),
 });
 
-export { createChurchEvent, fetchChurchEvents };
+export { createChurchEvent, deleteChurchEvent, fetchChurchEvents, updateChurchEvent };
 
-export type { CreateChurchEventPayload };
+export type { CreateChurchEventPayload, UpdateChurchEventPayload };

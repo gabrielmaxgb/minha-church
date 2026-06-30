@@ -1,0 +1,482 @@
+"use client";
+
+import { useEffect, useId, useMemo, useState } from "react";
+import {
+  Calendar,
+  Clock,
+  Loader2,
+  MapPin,
+  Sparkles,
+  Trash2,
+  X,
+} from "lucide-react";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  useDeleteChurchEvent,
+  useUpdateChurchEvent,
+} from "@/lib/api/queries";
+import { toDatetimeLocalValue } from "@/lib/activities/datetime";
+import { cn, formatDateTime } from "@/lib/utils";
+import type { ChurchEvent } from "@/types/events";
+
+interface EditActivityModalProps {
+  event: ChurchEvent | null;
+  open: boolean;
+  onClose: () => void;
+}
+
+function FormSection({
+  title,
+  description,
+  children,
+  className,
+}: {
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <section className={cn("space-y-5", className)}>
+      <div className="space-y-1">
+        <h3 className="text-sm font-semibold tracking-tight">{title}</h3>
+        {description && (
+          <p className="text-sm text-muted-foreground">{description}</p>
+        )}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function Field({
+  label,
+  htmlFor,
+  hint,
+  children,
+}: {
+  label: string;
+  htmlFor: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-2.5">
+      <Label htmlFor={htmlFor} className="text-sm font-medium">
+        {label}
+      </Label>
+      {children}
+      {hint && <p className="text-xs leading-relaxed text-muted-foreground">{hint}</p>}
+    </div>
+  );
+}
+
+export function EditActivityModal({
+  event,
+  open,
+  onClose,
+}: EditActivityModalProps) {
+  const titleId = useId();
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [location, setLocation] = useState("");
+  const [startsAt, setStartsAt] = useState("");
+  const [endsAt, setEndsAt] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const updateEvent = useUpdateChurchEvent(event?.id ?? "");
+  const deleteEvent = useDeleteChurchEvent(event?.id ?? "");
+  const isPending = updateEvent.isPending || deleteEvent.isPending;
+
+  const hasChanges = useMemo(() => {
+    if (!event) {
+      return false;
+    }
+
+    return (
+      name.trim() !== event.name ||
+      (description.trim() || "") !== (event.description ?? "") ||
+      (location.trim() || "") !== (event.location ?? "") ||
+      startsAt !== toDatetimeLocalValue(event.startsAt) ||
+      (endsAt || "") !==
+        (event.endsAt ? toDatetimeLocalValue(event.endsAt) : "")
+    );
+  }, [event, name, description, location, startsAt, endsAt]);
+
+  useEffect(() => {
+    if (!open || !event) {
+      setName("");
+      setDescription("");
+      setLocation("");
+      setStartsAt("");
+      setEndsAt("");
+      setError(null);
+      setConfirmDelete(false);
+      return;
+    }
+
+    setName(event.name);
+    setDescription(event.description ?? "");
+    setLocation(event.location ?? "");
+    setStartsAt(toDatetimeLocalValue(event.startsAt));
+    setEndsAt(event.endsAt ? toDatetimeLocalValue(event.endsAt) : "");
+    setError(null);
+    setConfirmDelete(false);
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [open, event]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    function handleKeyDown(keyboardEvent: KeyboardEvent) {
+      if (keyboardEvent.key === "Escape" && !isPending) {
+        onClose();
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open, onClose, isPending]);
+
+  if (!open || !event) {
+    return null;
+  }
+
+  async function handleSubmit(submitEvent: React.FormEvent<HTMLFormElement>) {
+    submitEvent.preventDefault();
+    setError(null);
+
+    if (!name.trim()) {
+      setError("Informe o nome da atividade.");
+      return;
+    }
+
+    try {
+      await updateEvent.mutateAsync({
+        name: name.trim(),
+        description: description.trim() || null,
+        location: location.trim() || null,
+        startsAt: new Date(startsAt).toISOString(),
+        endsAt: endsAt ? new Date(endsAt).toISOString() : null,
+      });
+      onClose();
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : "Não foi possível salvar a atividade.",
+      );
+    }
+  }
+
+  async function handleDelete() {
+    setError(null);
+
+    try {
+      await deleteEvent.mutateAsync();
+      onClose();
+    } catch (deleteError) {
+      setError(
+        deleteError instanceof Error
+          ? deleteError.message
+          : "Não foi possível excluir a atividade.",
+      );
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-6">
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        aria-label="Fechar modal"
+        disabled={isPending}
+        onClick={() => {
+          if (!isPending) {
+            onClose();
+          }
+        }}
+      />
+
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="relative z-10 flex max-h-[min(94dvh,860px)] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl border border-border/80 bg-background shadow-2xl sm:rounded-3xl"
+      >
+        <header className="relative border-b border-border/80 bg-muted/20 px-6 pb-6 pt-7 sm:px-8 sm:pt-8">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isPending}
+            className="absolute right-5 top-5 rounded-full p-2.5 text-muted-foreground transition-colors hover:bg-background hover:text-foreground disabled:opacity-50 sm:right-6 sm:top-6"
+            aria-label="Fechar"
+          >
+            <X className="size-4" />
+          </button>
+
+          <div className="flex flex-col gap-5 pr-12 sm:flex-row sm:items-start sm:gap-6">
+            <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-foreground text-background shadow-sm">
+              <Calendar className="size-6" aria-hidden />
+            </div>
+
+            <div className="min-w-0 space-y-3">
+              <div className="flex flex-wrap items-center gap-2">
+                {event.isChurchWide ? (
+                  <Badge className="gap-1.5 px-2.5 py-1">
+                    <Sparkles className="size-3" />
+                    Igreja inteira
+                  </Badge>
+                ) : (
+                  <Badge variant="secondary" className="px-2.5 py-1">
+                    {event.ministryName ?? "Ministério"}
+                  </Badge>
+                )}
+                {hasChanges && (
+                  <Badge variant="outline" className="border-amber-500/40 text-amber-700 dark:text-amber-300">
+                    Alterações não salvas
+                  </Badge>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <h2
+                  id={titleId}
+                  className="font-display text-2xl font-semibold tracking-tight sm:text-[1.75rem]"
+                >
+                  Editar atividade
+                </h2>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  Atualize os detalhes de{" "}
+                  <span className="font-medium text-foreground">{event.name}</span>.
+                  Agendada para{" "}
+                  <span className="font-medium text-foreground">
+                    {formatDateTime(event.startsAt)}
+                  </span>
+                  .
+                </p>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+          <div className="space-y-10 overflow-y-auto px-6 py-8 sm:px-8">
+            {error && (
+              <div
+                role="alert"
+                className="rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3.5 text-sm text-destructive"
+              >
+                {error}
+              </div>
+            )}
+
+            <FormSection
+              title="Informações principais"
+              description="Nome, descrição e local onde a atividade acontece."
+            >
+              <div className="space-y-6 rounded-2xl border border-border/80 bg-muted/10 p-5 sm:p-6">
+                <Field label="Nome da atividade" htmlFor="edit-activity-name">
+                  <Input
+                    id="edit-activity-name"
+                    value={name}
+                    onChange={(inputEvent) => setName(inputEvent.target.value)}
+                    placeholder="Ex.: Culto de domingo, Ensaio de louvor"
+                    disabled={isPending}
+                    autoFocus
+                    className="h-12 rounded-xl border-border/80 bg-background px-4 text-base"
+                  />
+                </Field>
+
+                <Field
+                  label="Descrição"
+                  htmlFor="edit-activity-description"
+                  hint="Opcional. Use para orientar a equipe ou os participantes."
+                >
+                  <Textarea
+                    id="edit-activity-description"
+                    value={description}
+                    onChange={(inputEvent) => setDescription(inputEvent.target.value)}
+                    placeholder="Detalhes, observações ou instruções..."
+                    rows={4}
+                    disabled={isPending}
+                    className="min-h-[120px] resize-y rounded-xl border-border/80 bg-background px-4 py-3 text-base leading-relaxed"
+                  />
+                </Field>
+
+                <Field label="Local" htmlFor="edit-activity-location">
+                  <div className="relative">
+                    <MapPin className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="edit-activity-location"
+                      value={location}
+                      onChange={(inputEvent) => setLocation(inputEvent.target.value)}
+                      placeholder="Ex.: Templo principal, Sala 2"
+                      disabled={isPending}
+                      className="h-12 rounded-xl border-border/80 bg-background pl-11 pr-4 text-base"
+                    />
+                  </div>
+                </Field>
+              </div>
+            </FormSection>
+
+            <FormSection
+              title="Data e horário"
+              description="Defina quando a atividade começa e, se quiser, quando termina."
+            >
+              <div className="grid gap-4 rounded-2xl border border-border/80 bg-muted/10 p-5 sm:grid-cols-2 sm:gap-5 sm:p-6">
+                <Field
+                  label="Início"
+                  htmlFor="edit-activity-starts-at"
+                  hint="Data e hora de começo."
+                >
+                  <div className="relative">
+                    <Clock className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="edit-activity-starts-at"
+                      type="datetime-local"
+                      value={startsAt}
+                      onChange={(inputEvent) => setStartsAt(inputEvent.target.value)}
+                      disabled={isPending}
+                      required
+                      className="h-12 rounded-xl border-border/80 bg-background pl-11 pr-4 text-base"
+                    />
+                  </div>
+                </Field>
+
+                <Field
+                  label="Término"
+                  htmlFor="edit-activity-ends-at"
+                  hint="Deixe em branco se não houver horário de fim."
+                >
+                  <div className="relative">
+                    <Clock className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="edit-activity-ends-at"
+                      type="datetime-local"
+                      value={endsAt}
+                      onChange={(inputEvent) => setEndsAt(inputEvent.target.value)}
+                      disabled={isPending}
+                      className="h-12 rounded-xl border-border/80 bg-background pl-11 pr-4 text-base"
+                    />
+                  </div>
+                </Field>
+              </div>
+            </FormSection>
+
+            <FormSection
+              title="Zona de perigo"
+              description="A exclusão remove a atividade da agenda. Essa ação não pode ser desfeita."
+              className="border-t border-border/80 pt-2"
+            >
+              <div className="rounded-2xl border border-destructive/15 bg-destructive/3 p-5 sm:p-6">
+                {confirmDelete ? (
+                  <div className="space-y-5">
+                    <div className="space-y-1.5">
+                      <p className="text-sm font-medium text-foreground">
+                        Excluir &quot;{event.name}&quot;?
+                      </p>
+                      <p className="text-sm leading-relaxed text-muted-foreground">
+                        A atividade deixará de aparecer em Atividades e no painel do ministério.
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        disabled={isPending}
+                        onClick={handleDelete}
+                        className="h-11 rounded-xl px-5"
+                      >
+                        {deleteEvent.isPending ? (
+                          <>
+                            <Loader2 className="size-4 animate-spin" />
+                            Excluindo...
+                          </>
+                        ) : (
+                          <>
+                            <Trash2 className="size-4" />
+                            Confirmar exclusão
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={isPending}
+                        onClick={() => setConfirmDelete(false)}
+                        className="h-11 rounded-xl px-5"
+                      >
+                        Manter atividade
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    disabled={isPending}
+                    onClick={() => setConfirmDelete(true)}
+                    className="h-11 rounded-xl px-4 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  >
+                    <Trash2 className="size-4" />
+                    Excluir atividade
+                  </Button>
+                )}
+              </div>
+            </FormSection>
+          </div>
+
+          <footer className="flex flex-col-reverse gap-3 border-t border-border/80 bg-muted/20 px-6 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+            <p className="hidden text-sm text-muted-foreground sm:block">
+              {hasChanges
+                ? "Você tem alterações pendentes."
+                : "Nenhuma alteração pendente."}
+            </p>
+
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                disabled={isPending}
+                className="h-11 w-full rounded-xl px-6 sm:w-auto"
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                disabled={isPending || !name.trim() || !hasChanges}
+                className="h-11 w-full rounded-xl px-6 sm:w-auto"
+              >
+                {updateEvent.isPending ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    Salvando...
+                  </>
+                ) : (
+                  "Salvar alterações"
+                )}
+              </Button>
+            </div>
+          </footer>
+        </form>
+      </div>
+    </div>
+  );
+}
