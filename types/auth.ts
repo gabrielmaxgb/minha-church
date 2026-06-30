@@ -7,6 +7,19 @@ export type UserRole =
   | "leader"
   | "member";
 
+export interface UserPermissions {
+  members: { manage: boolean };
+  ministries: { manage: boolean };
+  activities: {
+    createChurchWide: boolean;
+    ministryIds: string[];
+  };
+  finances: { access: boolean };
+  communication: { access: boolean };
+  reports: { access: boolean };
+  settings: { access: boolean };
+}
+
 export interface Church {
   id: string;
   name: string;
@@ -32,7 +45,8 @@ export interface JwtPayload {
 }
 
 export interface AuthTokens {
-  accessToken: string;
+  /** Ausente quando tokens estão em cookies httpOnly */
+  accessToken?: string;
   refreshToken?: string;
   expiresIn: number;
 }
@@ -41,6 +55,7 @@ export interface AuthSession {
   user: User;
   church: Church;
   churches: Church[];
+  permissions: UserPermissions;
   tokens: AuthTokens;
 }
 
@@ -53,5 +68,6 @@ export interface AuthResponse {
   user: User;
   church: Church;
   churches: Church[];
+  permissions: UserPermissions;
   tokens: AuthTokens;
 }

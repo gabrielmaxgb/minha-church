@@ -1,8 +1,4 @@
-import {
-  clearAuthSession,
-  getAccessToken,
-  getStoredChurchId,
-} from "@/lib/auth/cookies";
+import { clearAuthSession, getStoredChurchId } from "@/lib/auth/cookies";
 
 export interface ApiRequestOptions extends RequestInit {
   churchId?: string | null;
@@ -32,22 +28,37 @@ function getApiBaseUrl(): string {
   return baseURL;
 }
 
+async function parseErrorMessage(response: Response): Promise<string> {
+  try {
+    const body = (await response.json()) as {
+      message?: string | string[];
+    };
+
+    if (Array.isArray(body.message)) {
+      return body.message.join(", ");
+    }
+
+    if (typeof body.message === "string") {
+      return body.message;
+    }
+  } catch {
+    // Ignora corpo inválido.
+  }
+
+  return `API error: ${response.status}`;
+}
+
 export async function apiClient<T>(
   endpoint: string,
   options: ApiRequestOptions = {},
 ): Promise<T> {
   const url = `${getApiBaseUrl()}${endpoint}`;
-  const token = getAccessToken();
   const tenantId = options.churchId ?? getStoredChurchId();
 
   const headers = new Headers(options.headers);
 
   if (!headers.has("Content-Type") && options.body) {
     headers.set("Content-Type", "application/json");
-  }
-
-  if (token && !options.skipAuth) {
-    headers.set("Authorization", `Bearer ${token}`);
   }
 
   if (tenantId) {
@@ -61,7 +72,8 @@ export async function apiClient<T>(
   });
 
   if (!response.ok) {
-    throw new ApiError(`API error: ${response.status}`, response.status);
+    const message = await parseErrorMessage(response);
+    throw new ApiError(message, response.status);
   }
 
   if (response.status === 204) {
@@ -74,3 +86,5 @@ export async function apiClient<T>(
 export function buildTenantPath(churchId: string, path: string): string {
   return `/churches/${churchId}${path}`;
 }
+
+export { clearAuthSession };

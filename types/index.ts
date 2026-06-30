@@ -9,6 +9,16 @@ export type {
   UserRole,
 } from "@/types/auth";
 
+export type {
+  ListMembersParams,
+  Member,
+  MemberStatus,
+  MembersListResponse,
+  MEMBER_STATUS_LABELS,
+} from "@/types/members";
+
+export type { Ministry, MinistryEvent, MinistryRole } from "@/types/ministries";
+
 export type BillingPeriod = "monthly" | "yearly";
 
 export interface PricingTier {

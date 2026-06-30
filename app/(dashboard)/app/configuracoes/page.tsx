@@ -1,5 +1,7 @@
 "use client";
 
+import { RequirePermission } from "@/components/auth/require-permission";
+import { ChurchMembershipsSettings } from "@/components/dashboard/settings/church-memberships-settings";
 import { roleLabels } from "@/constants/dashboard-nav";
 import { DashboardPage } from "@/components/dashboard/dashboard-shell";
 import { useAuth, useTenant } from "@/providers/auth-provider";
@@ -9,8 +11,11 @@ export default function ConfiguracoesPage() {
   const { church, churchId, churches } = useTenant();
 
   return (
-    <DashboardPage title="Configurações" subtitle="Igreja, usuários e preferências">
+    <RequirePermission permission="settings">
+      <DashboardPage title="Configurações" subtitle="Igreja, usuários e preferências">
       <div className="grid gap-4 lg:grid-cols-2">
+        <ChurchMembershipsSettings />
+
         <section className="rounded-xl border border-border p-5">
           <h2 className="font-display text-lg font-semibold">Igreja ativa</h2>
           <dl className="mt-4 space-y-3 text-sm">
@@ -52,5 +57,6 @@ export default function ConfiguracoesPage() {
         </section>
       </div>
     </DashboardPage>
+    </RequirePermission>
   );
 }

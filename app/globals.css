@@ -87,6 +87,21 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
   }
+
+  button:not(:disabled),
+  a[href],
+  summary,
+  label:has(input[type="checkbox"]:not(:disabled)),
+  label:has(input[type="radio"]:not(:disabled)),
+  select:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    @apply cursor-pointer;
+  }
+
+  button:disabled,
+  [aria-disabled="true"] {
+    @apply cursor-not-allowed;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -11,26 +11,17 @@ export async function loginRequest(
   });
 }
 
-export async function getSessionRequest(
-  accessToken: string,
-): Promise<AuthResponse> {
-  return apiClient<AuthResponse>("/auth/me", {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
+export async function getSessionRequest(): Promise<AuthResponse> {
+  return apiClient<AuthResponse>("/auth/me");
 }
 
 export async function logoutRequest(): Promise<void> {
   await apiClient<void>("/auth/logout", { method: "POST" });
 }
 
-export async function refreshTokenRequest(
-  refreshToken: string,
-): Promise<AuthResponse["tokens"]> {
+export async function refreshTokenRequest(): Promise<AuthResponse["tokens"]> {
   return apiClient<AuthResponse["tokens"]>("/auth/refresh", {
     method: "POST",
-    body: JSON.stringify({ refreshToken }),
     skipAuth: true,
   });
 }

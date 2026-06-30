@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useMemo } from "react";
 
 import { Logo } from "@/components/layout/logo";
 import {
@@ -9,7 +10,9 @@ import {
   dashboardSecondaryNavItems,
 } from "@/constants/dashboard-nav";
 import { AUTH_ROUTES } from "@/constants/routes";
+import { canAccessNav } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/providers/auth-provider";
 
 interface DashboardSidebarProps {
   onNavigate?: () => void;
@@ -21,6 +24,27 @@ export function DashboardSidebar({
   className,
 }: DashboardSidebarProps) {
   const pathname = usePathname();
+  const { permissions } = useAuth();
+
+  const visibleNavItems = useMemo(() => {
+    if (!permissions) {
+      return dashboardNavItems;
+    }
+
+    return dashboardNavItems.filter(
+      (item) => !item.permission || canAccessNav(permissions, item.permission),
+    );
+  }, [permissions]);
+
+  const visibleSecondaryNavItems = useMemo(() => {
+    if (!permissions) {
+      return dashboardSecondaryNavItems;
+    }
+
+    return dashboardSecondaryNavItems.filter(
+      (item) => !item.permission || canAccessNav(permissions, item.permission),
+    );
+  }, [permissions]);
 
   return (
     <aside
@@ -37,7 +61,7 @@ export function DashboardSidebar({
         <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           Menu
         </p>
-        {dashboardNavItems.map((item) => {
+        {visibleNavItems.map((item) => {
           const isActive =
             pathname === item.href || pathname.startsWith(`${item.href}/`);
           const Icon = item.icon;
@@ -62,7 +86,7 @@ export function DashboardSidebar({
 
         <div className="my-3 border-t border-border" />
 
-        {dashboardSecondaryNavItems.map((item) => {
+        {visibleSecondaryNavItems.map((item) => {
           const isActive =
             pathname === item.href || pathname.startsWith(`${item.href}/`);
           const Icon = item.icon;

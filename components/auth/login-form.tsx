@@ -16,7 +16,13 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  DEMO_ACCOUNTS,
+  DEMO_PASSWORD,
+  SHOW_DEMO_ACCOUNTS,
+} from "@/constants/demo-accounts";
 import { PUBLIC_ROUTES, resolvePostLoginRedirect } from "@/constants/routes";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 
 function LoginFormContent() {
@@ -27,11 +33,31 @@ function LoginFormContent() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingEmail, setLoadingEmail] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  async function performLogin(loginEmail: string, loginPassword: string) {
     setError(null);
+    setIsLoading(true);
+    setLoadingEmail(loginEmail);
+
+    try {
+      await login({ email: loginEmail.trim(), password: loginPassword });
+      router.push(resolvePostLoginRedirect(searchParams.get("redirect")));
+    } catch (loginError) {
+      setError(
+        loginError instanceof Error
+          ? loginError.message
+          : "Não foi possível entrar. Tente novamente.",
+      );
+    } finally {
+      setIsLoading(false);
+      setLoadingEmail(null);
+    }
+  }
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
 
     if (!email.trim()) {
       setError("Informe seu e-mail.");
@@ -43,24 +69,17 @@ function LoginFormContent() {
       return;
     }
 
-    setIsLoading(true);
+    await performLogin(email, password);
+  }
 
-    try {
-      await login({ email: email.trim(), password });
-      router.push(resolvePostLoginRedirect(searchParams.get("redirect")));
-    } catch (error) {
-      setError(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível entrar. Tente novamente.",
-      );
-    } finally {
-      setIsLoading(false);
-    }
+  async function handleQuickLogin(loginEmail: string) {
+    setEmail(loginEmail);
+    setPassword(DEMO_PASSWORD);
+    await performLogin(loginEmail, DEMO_PASSWORD);
   }
 
   return (
-    <Card className="w-full max-w-sm border-border shadow-none">
+    <Card className="w-full max-w-md border-border shadow-none">
       <CardHeader className="text-center">
         <CardTitle className="font-display text-2xl">Entrar</CardTitle>
         <CardDescription>Acesse o painel da sua igreja</CardDescription>
@@ -82,10 +101,10 @@ function LoginFormContent() {
             <Input
               id="email"
               type="email"
-              placeholder="demo@igreja.com.br"
+              placeholder="pastor@igreja.com.br"
               autoComplete="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(event) => setEmail(event.target.value)}
               disabled={isLoading}
               required
             />
@@ -108,11 +127,11 @@ function LoginFormContent() {
                 placeholder="••••••••"
                 autoComplete="current-password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              disabled={isLoading}
-              required
-              className="pr-10"
-            />
+                onChange={(event) => setPassword(event.target.value)}
+                disabled={isLoading}
+                required
+                className="pr-10"
+              />
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
@@ -135,6 +154,37 @@ function LoginFormContent() {
               no <code className="text-foreground">.env.local</code> apontando para
               o backend Nest.
             </p>
+          )}
+
+          {SHOW_DEMO_ACCOUNTS && (
+            <div className="rounded-lg border border-border bg-muted/20 p-3">
+              <p className="text-xs font-medium text-foreground">
+                Contas de teste
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Senha de todas: <code className="text-foreground">{DEMO_PASSWORD}</code>
+              </p>
+
+              <div className="mt-3 grid gap-2">
+                {DEMO_ACCOUNTS.map((account) => (
+                  <button
+                    key={account.email}
+                    type="button"
+                    disabled={isLoading}
+                    onClick={() => handleQuickLogin(account.email)}
+                    className={cn(
+                      "flex w-full items-center justify-between gap-3 rounded-md border border-border bg-background px-3 py-2 text-left text-sm transition-colors hover:bg-muted/60",
+                      loadingEmail === account.email && "opacity-70",
+                    )}
+                  >
+                    <span className="font-medium">{account.label}</span>
+                    <span className="truncate text-xs text-muted-foreground">
+                      {account.email}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
           )}
         </CardContent>
 

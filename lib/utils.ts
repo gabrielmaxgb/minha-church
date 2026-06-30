@@ -11,3 +11,31 @@ export function formatCurrency(value: number): string {
     currency: "BRL",
   }).format(value);
 }
+
+export function formatDate(value: string | null | undefined): string {
+  if (!value) {
+    return "—";
+  }
+
+  const date = new Date(value.includes("T") ? value : `${value}T12:00:00`);
+
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(date);
+}
+
+export function formatDateTime(value: string | null | undefined): string {
+  if (!value) {
+    return "—";
+  }
+
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+}

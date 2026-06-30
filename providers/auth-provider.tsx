@@ -16,13 +16,12 @@ import {
 } from "@/lib/api/auth";
 import {
   clearAuthSession,
-  getAccessToken,
   getStoredChurchId,
-  persistAuthSession,
+  persistActiveChurch,
 } from "@/lib/auth/cookies";
 import { PUBLIC_ROUTES } from "@/constants/routes";
-import { isTokenExpired } from "@/lib/auth/jwt";
-import type { Church, LoginCredentials, User } from "@/types/auth";
+import { permissionsFromRole } from "@/lib/permissions";
+import type { Church, LoginCredentials, User, UserPermissions } from "@/types/auth";
 
 function redirectToLogin() {
   window.location.replace(PUBLIC_ROUTES.login);
@@ -32,6 +31,7 @@ interface AuthContextValue {
   user: User | null;
   church: Church | null;
   churches: Church[];
+  permissions: UserPermissions | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
@@ -41,55 +41,43 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-function getValidAccessToken(): string | null {
-  const token = getAccessToken();
+function resolveActiveChurch(session: {
+  church: Church;
+  churches: Church[];
+}): Church {
+  const storedChurchId = getStoredChurchId();
 
-  if (!token || isTokenExpired(token)) {
-    clearAuthSession();
-    return null;
-  }
-
-  return token;
+  return (
+    session.churches.find((item) => item.id === storedChurchId) ??
+    session.church
+  );
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [church, setChurch] = useState<Church | null>(null);
   const [churches, setChurches] = useState<Church[]>([]);
-  const [isLoading, setIsLoading] = useState(() => getValidAccessToken() !== null);
+  const [permissions, setPermissions] = useState<UserPermissions | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const token = getValidAccessToken();
-
-    if (!token) {
-      return;
-    }
-
     let cancelled = false;
 
     void (async () => {
       try {
-        const session = await getSessionRequest(token);
+        const session = await getSessionRequest();
 
         if (cancelled) {
           return;
         }
 
-        const storedChurchId = getStoredChurchId();
-        const activeChurch =
-          session.churches.find((item) => item.id === storedChurchId) ??
-          session.church;
-        const accessToken = session.tokens.accessToken || token;
+        const activeChurch = resolveActiveChurch(session);
 
         setUser(session.user);
         setChurch(activeChurch);
         setChurches(session.churches);
-        persistAuthSession(
-          accessToken,
-          activeChurch.id,
-          session.tokens.refreshToken,
-          session.tokens.expiresIn,
-        );
+        setPermissions(session.permissions);
+        persistActiveChurch(activeChurch.id, session.tokens.expiresIn);
       } catch {
         if (cancelled) {
           return;
@@ -99,6 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(null);
         setChurch(null);
         setChurches([]);
+        setPermissions(null);
       } finally {
         if (!cancelled) {
           setIsLoading(false);
@@ -113,17 +102,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = useCallback(async (credentials: LoginCredentials) => {
     const session = await loginRequest(credentials);
+    const activeChurch = resolveActiveChurch(session);
 
-    persistAuthSession(
-      session.tokens.accessToken,
-      session.church.id,
-      session.tokens.refreshToken,
-      session.tokens.expiresIn,
-    );
+    persistActiveChurch(activeChurch.id, session.tokens.expiresIn);
 
     setUser(session.user);
-    setChurch(session.church);
+    setChurch(activeChurch);
     setChurches(session.churches);
+    setPermissions(session.permissions);
     setIsLoading(false);
   }, []);
 
@@ -138,6 +124,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     setChurch(null);
     setChurches([]);
+    setPermissions(null);
     redirectToLogin();
   }, []);
 
@@ -149,14 +136,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      const token = getAccessToken();
-
-      if (!token) {
-        return;
-      }
-
       setChurch(nextChurch);
-      persistAuthSession(token, nextChurch.id);
+      persistActiveChurch(nextChurch.id);
+      setPermissions(permissionsFromRole(user.role));
     },
     [churches, user],
   );
@@ -166,13 +148,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user,
       church,
       churches,
+      permissions,
       isAuthenticated: Boolean(user && church),
       isLoading,
       login,
       logout,
       switchChurch,
     }),
-    [church, churches, isLoading, login, logout, switchChurch, user],
+    [church, churches, isLoading, login, logout, permissions, switchChurch, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,0 +1,190 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { Plus } from "lucide-react";
+
+import { ActivityEventCard } from "@/components/dashboard/activities/activity-event-card";
+import { CreateActivityModal } from "@/components/dashboard/activities/create-activity-modal";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useChurchEvents, useMinistries } from "@/lib/api/queries";
+import { canCreateAnyActivity } from "@/lib/permissions";
+import { cn } from "@/lib/utils";
+import { useAuth } from "@/providers/auth-provider";
+
+type ActivityFilter = "all" | "church" | string;
+
+export function ActivitiesContent() {
+  const { permissions } = useAuth();
+  const [filter, setFilter] = useState<ActivityFilter>("all");
+  const [modalOpen, setModalOpen] = useState(false);
+
+  const { data: ministries } = useMinistries();
+  const activeMinistries = useMemo(
+    () => ministries?.filter((ministry) => ministry.isActive) ?? [],
+    [ministries],
+  );
+
+  const queryParams = useMemo(() => {
+    if (filter === "church") {
+      return { churchWideOnly: true };
+    }
+
+    if (filter !== "all") {
+      return { ministryId: filter };
+    }
+
+    return {};
+  }, [filter]);
+
+  const { data: events, isLoading, isError } = useChurchEvents(queryParams);
+  const canCreate = permissions ? canCreateAnyActivity(permissions) : false;
+
+  const sortedEvents = useMemo(() => {
+    const now = Date.now();
+
+    return [...(events ?? [])]
+      .filter((event) => new Date(event.startsAt).getTime() >= now)
+      .sort(
+        (a, b) =>
+          new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
+      );
+  }, [events]);
+
+  const churchWideEvents = sortedEvents.filter((event) => event.isChurchWide);
+  const ministryEvents = sortedEvents.filter((event) => !event.isChurchWide);
+
+  const defaultMinistryId =
+    filter !== "all" && filter !== "church" ? filter : "";
+
+  return (
+    <>
+      <div className="space-y-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-muted-foreground">
+            Todas as atividades agendadas — cultos, ensaios, encontros e eventos da igreja.
+          </p>
+
+          {canCreate && (
+            <Button size="sm" onClick={() => setModalOpen(true)}>
+              <Plus className="size-4" />
+              Nova atividade
+            </Button>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Filtrar por ministério
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <FilterPill
+              active={filter === "all"}
+              onClick={() => setFilter("all")}
+            >
+              Todos
+            </FilterPill>
+            <FilterPill
+              active={filter === "church"}
+              onClick={() => setFilter("church")}
+            >
+              Igreja
+            </FilterPill>
+            {activeMinistries.map((ministry) => (
+              <FilterPill
+                key={ministry.id}
+                active={filter === ministry.id}
+                onClick={() => setFilter(ministry.id)}
+              >
+                {ministry.name}
+              </FilterPill>
+            ))}
+          </div>
+        </div>
+
+        {isLoading && (
+          <div className="space-y-3">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <Skeleton key={index} className="h-28 rounded-xl" />
+            ))}
+          </div>
+        )}
+
+        {isError && (
+          <div className="rounded-xl border border-border bg-muted/20 p-6 text-sm text-muted-foreground">
+            Não foi possível carregar as atividades.
+          </div>
+        )}
+
+        {!isLoading && !isError && sortedEvents.length === 0 && (
+          <div className="rounded-xl border border-dashed border-border bg-muted/20 p-8 text-center">
+            <p className="text-sm text-muted-foreground">
+              Nenhuma atividade agendada com os filtros atuais.
+            </p>
+            {canCreate && (
+              <Button className="mt-4" size="sm" onClick={() => setModalOpen(true)}>
+                <Plus className="size-4" />
+                Criar atividade
+              </Button>
+            )}
+          </div>
+        )}
+
+        {!isLoading && !isError && sortedEvents.length > 0 && (
+          <div className="space-y-6">
+            {filter === "all" && churchWideEvents.length > 0 && (
+              <section className="space-y-3">
+                <h2 className="text-sm font-medium">Destaques da igreja</h2>
+                {churchWideEvents.map((event) => (
+                  <ActivityEventCard key={event.id} event={event} highlighted />
+                ))}
+              </section>
+            )}
+
+            {(filter !== "all" || ministryEvents.length > 0) && (
+              <section className="space-y-3">
+                {filter === "all" && churchWideEvents.length > 0 && (
+                  <h2 className="text-sm font-medium">Por ministério</h2>
+                )}
+                {(filter === "all" ? ministryEvents : sortedEvents).map((event) => (
+                  <ActivityEventCard key={event.id} event={event} />
+                ))}
+              </section>
+            )}
+          </div>
+        )}
+      </div>
+
+      <CreateActivityModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        defaultMinistryId={defaultMinistryId}
+      />
+    </>
+  );
+}
+
+function FilterPill({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "rounded-full border px-3 py-1.5 text-sm transition-colors",
+        active
+          ? "border-foreground bg-foreground text-background"
+          : "border-border text-muted-foreground hover:text-foreground",
+      )}
+    >
+      {children}
+    </button>
+  );
+}

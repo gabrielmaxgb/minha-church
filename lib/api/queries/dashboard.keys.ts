@@ -2,11 +2,14 @@ import { createQueryKeys } from "@lukemorales/query-key-factory";
 
 import { apiClient, buildTenantPath } from "@/lib/api/client";
 
+import type { ChurchEvent } from "@/types/events";
+
 export interface DashboardSummary {
   memberCount: number;
   activeMembers: number;
   upcomingEvents: number;
   monthlyBalance: number;
+  featuredEvents: ChurchEvent[];
 }
 
 async function fetchDashboardSummary(
