@@ -5,7 +5,7 @@ import { ChevronDown, LogOut, Menu, User } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { roleLabels } from "@/constants/dashboard-nav";
+import { formatUserAccessLabel } from "@/lib/user-display";
 import { AUTH_ROUTES } from "@/constants/routes";
 import { useAuth } from "@/providers/auth-provider";
 import { cn } from "@/lib/utils";
@@ -142,7 +142,7 @@ export function DashboardTopbar({
                         {user.email}
                       </p>
                       <p className="mt-1 text-xs text-muted-foreground">
-                        {roleLabels[user.role]}
+                        {formatUserAccessLabel(user)}
                       </p>
                     </div>
                     <Link

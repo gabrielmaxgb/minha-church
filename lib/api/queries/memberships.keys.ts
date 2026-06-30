@@ -3,6 +3,7 @@ import { createQueryKeys } from "@lukemorales/query-key-factory";
 import { apiClient, buildTenantPath } from "@/lib/api/client";
 import type {
   ChurchMembership,
+  ChurchMembershipRole,
   UpdateMembershipPayload,
 } from "@/types/church-memberships";
 
@@ -30,11 +31,24 @@ async function updateChurchMembership(
   );
 }
 
+async function fetchAssignableRoles(
+  churchId: string,
+): Promise<ChurchMembershipRole[]> {
+  return apiClient<ChurchMembershipRole[]>(
+    buildTenantPath(churchId, "/memberships/assignable-roles"),
+    { churchId },
+  );
+}
+
 export const membershipsKeys = createQueryKeys("memberships", {
   list: (churchId: string) => ({
     queryKey: [churchId],
     queryFn: () => fetchChurchMemberships(churchId),
   }),
+  assignableRoles: (churchId: string) => ({
+    queryKey: [churchId, "assignable-roles"],
+    queryFn: () => fetchAssignableRoles(churchId),
+  }),
 });
 
-export { fetchChurchMemberships, updateChurchMembership };
+export { fetchAssignableRoles, fetchChurchMemberships, updateChurchMembership };

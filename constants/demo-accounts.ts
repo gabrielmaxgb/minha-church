@@ -1,21 +1,18 @@
-import type { UserRole } from "@/types/auth";
-
 export const DEMO_PASSWORD = "senha123";
 
 export interface DemoAccount {
   email: string;
-  role: UserRole;
   label: string;
 }
 
 export const DEMO_ACCOUNTS: DemoAccount[] = [
-  { email: "owner@igreja.com.br", role: "owner", label: "Proprietário" },
-  { email: "admin@igreja.com.br", role: "admin", label: "Administrador" },
-  { email: "pastor@igreja.com.br", role: "pastor", label: "Pastor" },
-  { email: "secretary@igreja.com.br", role: "secretary", label: "Secretário" },
-  { email: "treasurer@igreja.com.br", role: "treasurer", label: "Tesoureiro" },
-  { email: "leader@igreja.com.br", role: "leader", label: "Líder" },
-  { email: "member@igreja.com.br", role: "member", label: "Membro" },
+  { email: "owner@igreja.com.br", label: "Proprietário" },
+  { email: "admin@igreja.com.br", label: "Administrador" },
+  { email: "pastor@igreja.com.br", label: "Pastor" },
+  { email: "secretary@igreja.com.br", label: "Secretário" },
+  { email: "treasurer@igreja.com.br", label: "Tesoureiro" },
+  { email: "leader@igreja.com.br", label: "Líder" },
+  { email: "member@igreja.com.br", label: "Membro" },
 ];
 
 export const SHOW_DEMO_ACCOUNTS =

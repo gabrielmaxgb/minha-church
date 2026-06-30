@@ -1,4 +1,4 @@
-import type { UserPermissions, UserRole } from "@/types/auth";
+import type { UserPermissions } from "@/types/auth";
 
 export type NavPermissionKey =
   | "finances"
@@ -6,41 +6,20 @@ export type NavPermissionKey =
   | "reports"
   | "settings";
 
-export function permissionsFromRole(role: UserRole): UserPermissions {
-  const isMemberManager = ["owner", "admin", "pastor", "secretary"].includes(
-    role,
-  );
-  const isMinistryManager = ["owner", "admin", "pastor"].includes(role);
-  const isEventManager = ["owner", "admin", "pastor"].includes(role);
-
-  return {
-    members: { manage: isMemberManager },
-    ministries: { manage: isMinistryManager },
-    activities: {
-      createChurchWide: isEventManager,
-      ministryIds: [],
-    },
-    finances: {
-      access: ["owner", "admin", "pastor", "treasurer"].includes(role),
-    },
-    communication: {
-      access: ["owner", "admin", "pastor", "secretary"].includes(role),
-    },
-    reports: {
-      access: ["owner", "admin", "pastor", "treasurer"].includes(role),
-    },
-    settings: {
-      access: ["owner", "admin", "pastor"].includes(role),
-    },
-  };
-}
-
 export function canManageMembers(permissions: UserPermissions) {
   return permissions.members.manage;
 }
 
 export function canManageMinistries(permissions: UserPermissions) {
   return permissions.ministries.manage;
+}
+
+export function canManageChurchRoles(permissions: UserPermissions) {
+  return permissions.roles.manage;
+}
+
+export function canManageMemberships(permissions: UserPermissions) {
+  return permissions.memberships.manage;
 }
 
 export function canCreateChurchWideActivity(permissions: UserPermissions) {

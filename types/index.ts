@@ -3,10 +3,11 @@ export type {
   AuthSession,
   AuthTokens,
   Church,
+  ChurchPermissionKey,
   JwtPayload,
   LoginCredentials,
   User,
-  UserRole,
+  UserRoleSummary,
 } from "@/types/auth";
 
 export type {

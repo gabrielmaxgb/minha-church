@@ -1,0 +1,106 @@
+"use client";
+
+import { useMemo } from "react";
+
+import { cn } from "@/lib/utils";
+import { canManageChurchMemberships } from "@/lib/church-memberships/constants";
+import { canManageChurchRoles } from "@/lib/permissions";
+import type { UserPermissions } from "@/types/auth";
+
+export type SettingsSection = "roles" | "members" | "activity" | "general";
+
+export interface SettingsNavItem {
+  id: SettingsSection;
+  label: string;
+  description: string;
+}
+
+const ALL_ITEMS: SettingsNavItem[] = [
+  {
+    id: "roles",
+    label: "Cargos",
+    description: "Permissões por cargo",
+  },
+  {
+    id: "members",
+    label: "Usuários",
+    description: "Quem tem acesso",
+  },
+  {
+    id: "activity",
+    label: "Atividade",
+    description: "Histórico de mudanças",
+  },
+  {
+    id: "general",
+    label: "Geral",
+    description: "Igreja e sua conta",
+  },
+];
+
+export function useSettingsNav(permissions: UserPermissions | null) {
+  return useMemo(() => {
+    return ALL_ITEMS.filter((item) => {
+      if (item.id === "roles") {
+        return canManageChurchRoles(permissions ?? emptyPermissions);
+      }
+
+      if (item.id === "members") {
+        return canManageChurchMemberships(permissions);
+      }
+
+      return true;
+    });
+  }, [permissions]);
+}
+
+const emptyPermissions: UserPermissions = {
+  members: { manage: false },
+  ministries: { manage: false },
+  activities: { createChurchWide: false, ministryIds: [] },
+  finances: { access: false },
+  communication: { access: false },
+  reports: { access: false },
+  settings: { access: false },
+  roles: { manage: false },
+  memberships: { manage: false },
+};
+
+export function SettingsNav({
+  items,
+  active,
+  onChange,
+}: {
+  items: SettingsNavItem[];
+  active: SettingsSection;
+  onChange: (section: SettingsSection) => void;
+}) {
+  return (
+    <nav className="flex shrink-0 flex-col gap-0.5 sm:w-48">
+      {items.map((item) => (
+        <button
+          key={item.id}
+          type="button"
+          onClick={() => onChange(item.id)}
+          className={cn(
+            "rounded-lg px-3 py-2.5 text-left transition-colors",
+            active === item.id
+              ? "bg-muted text-foreground"
+              : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+          )}
+        >
+          <span className="block text-sm font-medium">{item.label}</span>
+          <span className="mt-0.5 block text-xs opacity-80">
+            {item.description}
+          </span>
+        </button>
+      ))}
+    </nav>
+  );
+}
+
+export function getDefaultSection(
+  items: SettingsNavItem[],
+): SettingsSection {
+  return items[0]?.id ?? "general";
+}

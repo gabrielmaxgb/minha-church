@@ -1,21 +1,3 @@
-import type { UserRole } from "@/types/auth";
-
-export const MINISTRY_MANAGER_ROLES: UserRole[] = ["owner", "admin", "pastor"];
-
-export const MINISTRY_EVENT_MANAGER_ROLES: UserRole[] = [
-  "owner",
-  "admin",
-  "pastor",
-];
-
-export function canManageMinistries(role: UserRole | undefined) {
-  return role !== undefined && MINISTRY_MANAGER_ROLES.includes(role);
-}
-
-export function canManageMinistryEvents(role: UserRole | undefined) {
-  return role !== undefined && MINISTRY_EVENT_MANAGER_ROLES.includes(role);
-}
-
 export type MinistrySettingsSection =
   | "dashboard"
   | "members"

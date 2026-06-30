@@ -13,3 +13,12 @@ export function useChurchMemberships() {
     enabled: Boolean(churchId),
   });
 }
+
+export function useAssignableRoles() {
+  const { churchId } = useTenant();
+
+  return useQuery({
+    ...membershipsKeys.assignableRoles(churchId ?? "unknown"),
+    enabled: Boolean(churchId),
+  });
+}

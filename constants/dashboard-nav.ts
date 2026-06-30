@@ -79,13 +79,3 @@ export const dashboardSecondaryNavItems: DashboardNavItem[] = [
     permission: "settings",
   },
 ];
-
-export const roleLabels = {
-  owner: "Proprietário",
-  admin: "Administrador",
-  pastor: "Pastor",
-  secretary: "Secretário",
-  treasurer: "Tesoureiro",
-  leader: "Líder",
-  member: "Membro",
-} as const;

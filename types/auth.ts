@@ -1,11 +1,8 @@
-export type UserRole =
-  | "owner"
-  | "admin"
-  | "pastor"
-  | "secretary"
-  | "treasurer"
-  | "leader"
-  | "member";
+export interface UserRoleSummary {
+  id: string;
+  name: string;
+  color?: string;
+}
 
 export interface UserPermissions {
   members: { manage: boolean };
@@ -18,6 +15,8 @@ export interface UserPermissions {
   communication: { access: boolean };
   reports: { access: boolean };
   settings: { access: boolean };
+  roles: { manage: boolean };
+  memberships: { manage: boolean };
 }
 
 export interface Church {
@@ -31,7 +30,8 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: UserRole;
+  isOwner: boolean;
+  roles: UserRoleSummary[];
   avatarUrl?: string;
 }
 
@@ -39,7 +39,6 @@ export interface JwtPayload {
   sub: string;
   email: string;
   churchId: string;
-  role: UserRole;
   exp: number;
   iat: number;
 }
@@ -71,3 +70,14 @@ export interface AuthResponse {
   permissions: UserPermissions;
   tokens: AuthTokens;
 }
+
+export type ChurchPermissionKey =
+  | "members_manage"
+  | "ministries_manage"
+  | "events_create_church_wide"
+  | "finances_access"
+  | "communication_access"
+  | "reports_access"
+  | "settings_access"
+  | "roles_manage"
+  | "memberships_manage";

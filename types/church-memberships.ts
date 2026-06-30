@@ -1,23 +1,28 @@
-import type { UserRole } from "@/types/auth";
-
-export interface ChurchMembershipUser {
+export interface ChurchMembershipRole {
   id: string;
   name: string;
-  email: string;
-  avatarUrl?: string;
+  color?: string;
+  isSystem: boolean;
 }
 
 export interface ChurchMembership {
   id: string;
   userId: string;
   churchId: string;
-  role: UserRole;
+  isOwner: boolean;
+  roles: ChurchMembershipRole[];
   createdAt: string;
-  user: ChurchMembershipUser;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    avatarUrl?: string;
+  };
   memberId?: string;
   memberName?: string;
 }
 
 export interface UpdateMembershipPayload {
-  role: UserRole;
+  roleIds?: string[];
+  isOwner?: boolean;
 }

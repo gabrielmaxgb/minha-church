@@ -1,217 +1,312 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Loader2, Shield } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
-import { roleLabels } from "@/constants/dashboard-nav";
-import { SelectField } from "@/components/ui/select-field";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  useAssignableRoles,
   useChurchMemberships,
   useUpdateChurchMembership,
 } from "@/lib/api/queries";
-import {
-  canManageChurchMemberships,
-  getEditableRolesForTarget,
-} from "@/lib/church-memberships/constants";
-import type { UserRole } from "@/types/auth";
+import { canManageChurchMemberships } from "@/lib/church-memberships/constants";
 import { useAuth } from "@/providers/auth-provider";
+import type { ChurchMembership } from "@/types/church-memberships";
 
-const ROLE_ORDER: UserRole[] = [
-  "owner",
-  "admin",
-  "pastor",
-  "secretary",
-  "treasurer",
-  "leader",
-  "member",
-];
+import {
+  SettingsAlert,
+  SettingsDetailHeader,
+  SettingsEmptyState,
+  SettingsPanel,
+  SettingsSaveBar,
+  SettingsSectionHeader,
+  SettingsSidebar,
+  SettingsSidebarItem,
+  SettingsSplitLayout,
+  SettingsToggleRow,
+} from "./settings-shared";
 
-function roleRank(role: UserRole) {
-  return ROLE_ORDER.indexOf(role);
+function roleIdsEqual(a: string[], b: string[]) {
+  if (a.length !== b.length) {
+    return false;
+  }
+
+  const sortedA = [...a].sort();
+  const sortedB = [...b].sort();
+
+  return sortedA.every((id, index) => id === sortedB[index]);
+}
+
+function formatMembershipLabel(membership: ChurchMembership) {
+  if (membership.isOwner) {
+    return "Proprietário";
+  }
+
+  if (membership.roles.length === 0) {
+    return "Sem cargo";
+  }
+
+  return membership.roles.map((role) => role.name).join(", ");
 }
 
 export function ChurchMembershipsSettings() {
-  const { user } = useAuth();
+  const { user, permissions } = useAuth();
   const { data: memberships, isLoading, isError } = useChurchMemberships();
+  const { data: assignableRoles } = useAssignableRoles();
   const updateMembership = useUpdateChurchMembership();
-  const [pendingUserId, setPendingUserId] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const actorRole = user?.role;
-  const canManage = actorRole ? canManageChurchMemberships(actorRole) : false;
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [drafts, setDrafts] = useState<Record<string, string[]>>({});
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const canManage = canManageChurchMemberships(permissions);
 
   const sortedMemberships = useMemo(
     () =>
-      [...(memberships ?? [])].sort(
-        (a, b) => roleRank(a.role) - roleRank(b.role) || a.user.name.localeCompare(b.user.name, "pt-BR"),
-      ),
+      [...(memberships ?? [])].sort((a, b) => {
+        if (a.isOwner !== b.isOwner) {
+          return a.isOwner ? -1 : 1;
+        }
+
+        return a.user.name.localeCompare(b.user.name, "pt-BR");
+      }),
     [memberships],
   );
+
+  const selectedMembership =
+    sortedMemberships.find((item) => item.userId === selectedUserId) ?? null;
+
+  useEffect(() => {
+    if (sortedMemberships.length === 0) {
+      setSelectedUserId(null);
+      return;
+    }
+
+    if (
+      !selectedUserId ||
+      !sortedMemberships.some((item) => item.userId === selectedUserId)
+    ) {
+      const firstEditable = sortedMemberships.find((item) =>
+        canEditMembership(item, user?.id, user?.isOwner),
+      );
+      setSelectedUserId(firstEditable?.userId ?? sortedMemberships[0].userId);
+    }
+  }, [selectedUserId, sortedMemberships, user?.id, user?.isOwner]);
+
+  useEffect(() => {
+    if (!memberships) {
+      return;
+    }
+
+    setDrafts((current) => {
+      const next = { ...current };
+
+      for (const membership of memberships) {
+        const draft = current[membership.userId];
+        const serverIds = membership.roles.map((role) => role.id);
+
+        if (draft && roleIdsEqual(draft, serverIds)) {
+          delete next[membership.userId];
+        }
+      }
+
+      return next;
+    });
+  }, [memberships]);
 
   if (!canManage) {
     return null;
   }
 
-  async function handleRoleChange(userId: string, role: UserRole) {
-    if (!actorRole) {
+  function getDraftRoleIds(membership: ChurchMembership): string[] {
+    return drafts[membership.userId] ?? membership.roles.map((role) => role.id);
+  }
+
+  function isMembershipDirty(membership: ChurchMembership): boolean {
+    const draft = drafts[membership.userId];
+
+    if (!draft) {
+      return false;
+    }
+
+    return !roleIdsEqual(
+      draft,
+      membership.roles.map((role) => role.id),
+    );
+  }
+
+  function toggleRole(membership: ChurchMembership, roleId: string) {
+    const current = getDraftRoleIds(membership);
+    const next = current.includes(roleId)
+      ? current.filter((id) => id !== roleId)
+      : [...current, roleId];
+
+    setDrafts((currentDrafts) => {
+      const serverIds = membership.roles.map((role) => role.id);
+
+      if (roleIdsEqual(next, serverIds)) {
+        const updated = { ...currentDrafts };
+        delete updated[membership.userId];
+        return updated;
+      }
+
+      return { ...currentDrafts, [membership.userId]: next };
+    });
+  }
+
+  function discardChanges(membership: ChurchMembership) {
+    setDrafts((current) => {
+      const next = { ...current };
+      delete next[membership.userId];
+      return next;
+    });
+    setErrorMessage(null);
+  }
+
+  async function saveChanges(membership: ChurchMembership) {
+    const draft = drafts[membership.userId];
+
+    if (!draft) {
       return;
     }
 
     setErrorMessage(null);
-    setPendingUserId(userId);
+    setIsSaving(true);
 
     try {
       await updateMembership.mutateAsync({
-        userId,
-        payload: { role },
+        userId: membership.userId,
+        payload: { roleIds: draft },
       });
     } catch (error) {
       setErrorMessage(
         error instanceof Error
           ? error.message
-          : "Não foi possível atualizar o perfil.",
+          : "Não foi possível salvar as alterações.",
       );
     } finally {
-      setPendingUserId(null);
+      setIsSaving(false);
     }
   }
 
+  const selectedDirty = selectedMembership
+    ? isMembershipDirty(selectedMembership)
+    : false;
+  const canEditSelected =
+    selectedMembership &&
+    canEditMembership(selectedMembership, user?.id, user?.isOwner);
+
   return (
-    <section className="rounded-xl border border-border p-5 lg:col-span-2">
-      <div className="flex items-start gap-3">
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted">
-          <Shield className="size-5 text-muted-foreground" aria-hidden />
-        </div>
-        <div className="min-w-0 flex-1">
-          <h2 className="font-display text-lg font-semibold">
-            Usuários e permissões
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Perfis de acesso ao sistema — tesoureiro, pastor, secretário e demais.
-            O usuário precisa ter conta vinculada para aparecer aqui.
-          </p>
-        </div>
-      </div>
+    <div>
+      <SettingsSectionHeader
+        title="Usuários"
+        description="Atribua cargos a quem tem conta no sistema."
+      />
 
-      {errorMessage && (
-        <div
-          role="alert"
-          className="mt-4 rounded-lg border border-border bg-muted/60 px-3 py-2.5 text-sm"
-        >
-          {errorMessage}
-        </div>
-      )}
+      {errorMessage && <SettingsAlert message={errorMessage} />}
 
-      <div className="mt-5 overflow-x-auto">
-        {isLoading ? (
-          <div className="space-y-3">
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-          </div>
-        ) : isError ? (
-          <p className="text-sm text-muted-foreground">
-            Não foi possível carregar os usuários da igreja.
-          </p>
-        ) : sortedMemberships.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Nenhum usuário com acesso a esta igreja.
-          </p>
-        ) : (
-          <table className="w-full min-w-[32rem] text-left text-sm">
-            <thead>
-              <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
-                <th className="pb-3 pr-4 font-medium">Usuário</th>
-                <th className="pb-3 pr-4 font-medium">Membro vinculado</th>
-                <th className="pb-3 font-medium">Perfil de acesso</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedMemberships.map((membership) => {
-                const isSelf = membership.userId === user?.id;
-                const editableRoles =
-                  actorRole && user
-                    ? getEditableRolesForTarget(
-                        actorRole,
-                        membership.role,
-                        membership.userId,
-                        user.id,
-                      )
-                    : [];
-                const canEdit = editableRoles.length > 0;
-                const isPending = pendingUserId === membership.userId;
-
-                return (
-                  <tr
-                    key={membership.id}
-                    className="border-b border-border/70 last:border-0"
-                  >
-                    <td className="py-3 pr-4 align-middle">
-                      <p className="font-medium">
-                        {membership.user.name}
-                        {isSelf && (
-                          <span className="ml-1.5 text-xs font-normal text-muted-foreground">
-                            (você)
-                          </span>
-                        )}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {membership.user.email}
-                      </p>
-                    </td>
-                    <td className="py-3 pr-4 align-middle text-muted-foreground">
-                      {membership.memberName ?? "—"}
-                    </td>
-                    <td className="py-3 align-middle">
-                      {canEdit ? (
-                        <div className="relative max-w-[14rem]">
-                          <SelectField
-                            value={membership.role}
-                            disabled={isPending}
-                            onChange={(event) => {
-                              const nextRole = event.target.value as UserRole;
-
-                              if (nextRole !== membership.role) {
-                                void handleRoleChange(membership.userId, nextRole);
-                              }
-                            }}
-                            className="h-9"
-                          >
-                            {editableRoles.map((role) => (
-                              <option key={role} value={role}>
-                                {roleLabels[role]}
-                              </option>
-                            ))}
-                          </SelectField>
-                          {isPending && (
-                            <Loader2
-                              className="absolute right-8 top-1/2 size-4 -translate-y-1/2 animate-spin text-muted-foreground"
-                              aria-hidden
-                            />
-                          )}
-                        </div>
-                      ) : (
-                        <span className="inline-flex rounded-md bg-muted px-2.5 py-1 text-xs font-medium">
-                          {roleLabels[membership.role]}
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
-      </div>
-
-      {actorRole && actorRole !== "owner" && (
-        <p className="mt-4 text-xs text-muted-foreground">
-          {actorRole === "admin"
-            ? "Como administrador, você pode alterar pastor, secretário, tesoureiro, líder e membro."
-            : "Como pastor, você pode alterar secretário, tesoureiro, líder e membro."}
+      {isLoading ? (
+        <Skeleton className="h-112 w-full rounded-xl" />
+      ) : isError ? (
+        <p className="text-sm text-muted-foreground">
+          Não foi possível carregar os usuários da igreja.
         </p>
+      ) : sortedMemberships.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          Nenhum usuário com acesso a esta igreja.
+        </p>
+      ) : (
+        <SettingsPanel>
+          <SettingsSplitLayout
+            sidebar={
+              <SettingsSidebar>
+                {sortedMemberships.map((membership) => (
+                  <SettingsSidebarItem
+                    key={membership.id}
+                    label={membership.user.name}
+                    hint={formatMembershipLabel(membership)}
+                    selected={membership.userId === selectedUserId}
+                    dirty={isMembershipDirty(membership)}
+                    onClick={() => setSelectedUserId(membership.userId)}
+                  />
+                ))}
+              </SettingsSidebar>
+            }
+          >
+            {selectedMembership ? (
+              <>
+                <SettingsDetailHeader
+                  title={selectedMembership.user.name}
+                  description={`${selectedMembership.user.email}${selectedMembership.memberName ? ` · ${selectedMembership.memberName}` : ""}`}
+                />
+
+                <div className="flex-1 overflow-y-auto px-5 py-2">
+                  {selectedMembership.isOwner && (
+                    <p className="mb-3 rounded-lg bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                      Proprietário da igreja — cargos adicionais são opcionais.
+                    </p>
+                  )}
+
+                  {!canEditSelected ? (
+                    <div className="space-y-2 py-4">
+                      <p className="text-sm text-muted-foreground">
+                        {selectedMembership.userId === user?.id
+                          ? "Você não pode alterar o próprio acesso."
+                          : "Você não pode alterar o acesso deste usuário."}
+                      </p>
+                      <p className="text-sm font-medium">
+                        {formatMembershipLabel(selectedMembership)}
+                      </p>
+                    </div>
+                  ) : assignableRoles && assignableRoles.length > 0 ? (
+                    <div className="divide-y divide-border/50">
+                      {assignableRoles.map((role) => (
+                        <SettingsToggleRow
+                          key={role.id}
+                          label={role.name}
+                          checked={getDraftRoleIds(selectedMembership).includes(
+                            role.id,
+                          )}
+                          onChange={() =>
+                            toggleRole(selectedMembership, role.id)
+                          }
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <SettingsEmptyState message="Nenhum cargo disponível para atribuir." />
+                  )}
+                </div>
+
+                <SettingsSaveBar
+                  visible={Boolean(canEditSelected && selectedDirty)}
+                  saving={isSaving}
+                  onDiscard={() => discardChanges(selectedMembership)}
+                  onSave={() => void saveChanges(selectedMembership)}
+                />
+              </>
+            ) : (
+              <SettingsEmptyState message="Selecione um usuário." />
+            )}
+          </SettingsSplitLayout>
+        </SettingsPanel>
       )}
-    </section>
+    </div>
   );
+}
+
+function canEditMembership(
+  membership: ChurchMembership,
+  actorUserId: string | undefined,
+  actorIsOwner: boolean | undefined,
+) {
+  if (!actorUserId || membership.userId === actorUserId) {
+    return false;
+  }
+
+  if (actorIsOwner) {
+    return true;
+  }
+
+  return !membership.isOwner;
 }
