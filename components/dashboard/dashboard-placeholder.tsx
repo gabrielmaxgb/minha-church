@@ -33,12 +33,21 @@ interface StatCardProps {
 
 export function StatCard({ label, value, hint, className }: StatCardProps) {
   return (
-    <div className={cn("rounded-xl border border-border bg-background p-5", className)}>
-      <p className="text-sm text-muted-foreground">{label}</p>
-      <p className="mt-2 font-display text-2xl font-bold tracking-tight">
+    <div
+      className={cn(
+        "group rounded-2xl border border-border/70 bg-card p-5 shadow-soft transition-all duration-300 hover:-translate-y-0.5 hover:shadow-elevated",
+        className,
+      )}
+    >
+      <p className="text-sm font-medium text-muted-foreground">{label}</p>
+      <p className="mt-2 font-display text-2xl font-bold tracking-tight text-foreground">
         {value}
       </p>
-      {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
+      {hint && (
+        <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground/90">
+          {hint}
+        </p>
+      )}
     </div>
   );
 }

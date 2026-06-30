@@ -28,9 +28,4 @@ export async function logoutRequest(): Promise<void> {
   await apiClient<void>("/auth/logout", { method: "POST" });
 }
 
-export async function refreshTokenRequest(): Promise<AuthResponse["tokens"]> {
-  return apiClient<AuthResponse["tokens"]>("/auth/refresh", {
-    method: "POST",
-    skipAuth: true,
-  });
-}
+export { refreshSessionRequest, refreshSessionDeduped } from "@/lib/api/session-refresh";

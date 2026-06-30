@@ -3,46 +3,54 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: #ffffff;
-  --foreground: #0a0a0a;
+  --background: #f5f5f2;
+  --foreground: #141413;
   --card: #ffffff;
-  --card-foreground: #0a0a0a;
+  --card-foreground: #141413;
   --popover: #ffffff;
-  --popover-foreground: #0a0a0a;
-  --primary: #0a0a0a;
-  --primary-foreground: #fafafa;
-  --secondary: #f5f5f5;
-  --secondary-foreground: #171717;
-  --muted: #f5f5f5;
-  --muted-foreground: #737373;
-  --accent: #f5f5f5;
-  --accent-foreground: #171717;
-  --destructive: #171717;
-  --border: #e5e5e5;
-  --input: #e5e5e5;
-  --ring: #0a0a0a;
-  --radius: 0.5rem;
+  --popover-foreground: #141413;
+  --surface: #ececea;
+  --surface-elevated: #fafaf8;
+  --primary: #1a1a18;
+  --primary-foreground: #f4f4f1;
+  --secondary: #e6e6e2;
+  --secondary-foreground: #2c2c2a;
+  --muted: #e8e8e4;
+  --muted-foreground: #6f6f6a;
+  --accent: #deded9;
+  --accent-foreground: #1a1a18;
+  --destructive: #8f4444;
+  --border: #d8d8d3;
+  --input: #d0d0cb;
+  --ring: #5c5c58;
+  --radius: 0.625rem;
+  --shadow-soft: 0 1px 2px rgb(20 20 19 / 0.04), 0 4px 16px rgb(20 20 19 / 0.06);
+  --shadow-elevated: 0 2px 4px rgb(20 20 19 / 0.05), 0 12px 32px rgb(20 20 19 / 0.08);
 }
 
 .dark {
-  --background: #0a0a0a;
-  --foreground: #fafafa;
-  --card: #171717;
-  --card-foreground: #fafafa;
-  --popover: #171717;
-  --popover-foreground: #fafafa;
-  --primary: #fafafa;
-  --primary-foreground: #0a0a0a;
-  --secondary: #262626;
-  --secondary-foreground: #fafafa;
-  --muted: #262626;
-  --muted-foreground: #a3a3a3;
-  --accent: #262626;
-  --accent-foreground: #fafafa;
-  --destructive: #fafafa;
-  --border: #262626;
-  --input: #262626;
-  --ring: #d4d4d4;
+  --background: #111110;
+  --foreground: #f0f0ec;
+  --card: #1a1a18;
+  --card-foreground: #f0f0ec;
+  --popover: #1a1a18;
+  --popover-foreground: #f0f0ec;
+  --surface: #161614;
+  --surface-elevated: #1f1f1c;
+  --primary: #f0f0ec;
+  --primary-foreground: #141413;
+  --secondary: #2a2a27;
+  --secondary-foreground: #f0f0ec;
+  --muted: #2a2a27;
+  --muted-foreground: #a3a39c;
+  --accent: #32322f;
+  --accent-foreground: #f0f0ec;
+  --destructive: #d48484;
+  --border: #2e2e2b;
+  --input: #353532;
+  --ring: #8a8a84;
+  --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.2), 0 4px 16px rgb(0 0 0 / 0.25);
+  --shadow-elevated: 0 2px 4px rgb(0 0 0 / 0.25), 0 12px 32px rgb(0 0 0 / 0.35);
 }
 
 @theme inline {
@@ -64,6 +72,10 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+  --shadow-soft: var(--shadow-soft);
+  --shadow-elevated: var(--shadow-elevated);
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) + 2px);
@@ -76,6 +88,27 @@
 @layer utilities {
   .font-display {
     font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  }
+
+  .shadow-soft {
+    box-shadow: var(--shadow-soft);
+  }
+
+  .shadow-elevated {
+    box-shadow: var(--shadow-elevated);
+  }
+
+  .dashboard-canvas {
+    background-color: var(--background);
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgb(255 255 255 / 0.7), transparent),
+      radial-gradient(ellipse 60% 40% at 100% 0%, rgb(230 230 226 / 0.5), transparent);
+  }
+
+  .dark .dashboard-canvas {
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgb(40 40 38 / 0.5), transparent),
+      radial-gradient(ellipse 60% 40% at 100% 0%, rgb(30 30 28 / 0.4), transparent);
   }
 }
 

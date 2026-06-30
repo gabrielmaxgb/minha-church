@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
+import { DashboardContentMotion } from "@/components/motion/dashboard-motion";
 import { useRequireAuth } from "@/providers/auth-provider";
 import { cn } from "@/lib/utils";
 
@@ -24,7 +25,7 @@ export function DashboardShell({
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <p className="text-sm text-muted-foreground">Carregando painel...</p>
+        <p className="animate-pulse text-sm text-muted-foreground">Carregando painel...</p>
       </div>
     );
   }
@@ -38,7 +39,7 @@ export function DashboardShell({
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className="flex h-screen overflow-hidden bg-surface">
       <div className="hidden h-screen shrink-0 lg:block">
         <DashboardSidebar className="h-full" />
       </div>
@@ -47,14 +48,14 @@ export function DashboardShell({
         <>
           <button
             type="button"
-            className="fixed inset-0 z-30 bg-black/50 lg:hidden"
+            className="fixed inset-0 z-30 bg-[#141413]/40 backdrop-blur-sm lg:hidden"
             aria-label="Fechar menu"
             onClick={() => setSidebarOpen(false)}
           />
-          <div className="fixed inset-y-0 left-0 z-40 h-full w-64 shadow-2xl lg:hidden">
+          <div className="fixed inset-y-0 left-0 z-40 h-full w-64 shadow-elevated lg:hidden">
             <DashboardSidebar
               onNavigate={() => setSidebarOpen(false)}
-              className="h-full bg-background"
+              className="h-full"
             />
           </div>
         </>
@@ -66,8 +67,8 @@ export function DashboardShell({
           subtitle={subtitle ?? church?.name}
           onOpenSidebar={() => setSidebarOpen(true)}
         />
-        <main className="min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6">
-          {children}
+        <main className="dashboard-canvas min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 sm:py-8">
+          <DashboardContentMotion>{children}</DashboardContentMotion>
         </main>
       </div>
     </div>

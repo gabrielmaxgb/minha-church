@@ -35,8 +35,8 @@ export function DashboardTopbar({
   const [churchMenuOpen, setChurchMenuOpen] = useState(false);
 
   return (
-    <header className="z-20 shrink-0 border-b border-border bg-background/95 backdrop-blur">
-      <div className="flex h-16 items-center justify-between gap-4 px-4 sm:px-6">
+    <header className="z-20 shrink-0 border-b border-border/70 bg-surface-elevated/90 shadow-soft backdrop-blur-md">
+      <div className="flex h-[4.25rem] items-center justify-between gap-4 px-4 sm:px-6">
         <div className="flex min-w-0 items-center gap-3">
           <Button
             type="button"
@@ -67,7 +67,7 @@ export function DashboardTopbar({
               <button
                 type="button"
                 onClick={() => setChurchMenuOpen((prev) => !prev)}
-                className="inline-flex max-w-[220px] items-center gap-2 rounded-lg border border-border px-3 py-2 text-left text-sm transition-colors hover:bg-muted"
+                className="inline-flex max-w-[220px] items-center gap-2 rounded-xl border border-border/80 bg-background/60 px-3 py-2 text-left text-sm shadow-soft transition-all duration-200 hover:bg-background hover:shadow-elevated"
                 aria-expanded={churchMenuOpen}
               >
                 <span className="truncate font-medium">{church.name}</span>
@@ -84,7 +84,7 @@ export function DashboardTopbar({
                     aria-label="Fechar seleção de igreja"
                     onClick={() => setChurchMenuOpen(false)}
                   />
-                  <div className="absolute right-0 z-20 mt-2 w-64 rounded-lg border border-border bg-background p-1 shadow-lg">
+                  <div className="absolute right-0 z-20 mt-2 w-64 rounded-xl border border-border/80 bg-surface-elevated p-1.5 shadow-elevated">
                     <p className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                       Trocar igreja
                     </p>
@@ -115,10 +115,10 @@ export function DashboardTopbar({
               <button
                 type="button"
                 onClick={() => setMenuOpen((prev) => !prev)}
-                className="inline-flex items-center gap-2 rounded-lg border border-border px-2 py-1.5 transition-colors hover:bg-muted sm:px-3"
+                className="inline-flex items-center gap-2 rounded-xl border border-border/80 bg-background/60 px-2 py-1.5 shadow-soft transition-all duration-200 hover:bg-background hover:shadow-elevated sm:px-3"
                 aria-expanded={menuOpen}
               >
-                <span className="flex size-8 items-center justify-center rounded-full bg-muted text-xs font-semibold">
+                <span className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-foreground">
                   {getInitials(user.name)}
                 </span>
                 <span className="hidden text-sm font-medium sm:inline">
@@ -135,7 +135,7 @@ export function DashboardTopbar({
                     aria-label="Fechar menu do usuário"
                     onClick={() => setMenuOpen(false)}
                   />
-                  <div className="absolute right-0 z-20 mt-2 w-56 rounded-lg border border-border bg-background p-1 shadow-lg">
+                  <div className="absolute right-0 z-20 mt-2 w-56 rounded-xl border border-border/80 bg-surface-elevated p-1.5 shadow-elevated">
                     <div className="border-b border-border px-3 py-2">
                       <p className="text-sm font-medium">{user.name}</p>
                       <p className="text-xs text-muted-foreground">

@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -13,6 +14,7 @@ import {
   getSessionRequest,
   loginRequest,
   logoutRequest,
+  refreshSessionDeduped,
   switchChurchRequest,
 } from "@/lib/api/auth";
 import {
@@ -21,7 +23,7 @@ import {
   persistActiveChurch,
 } from "@/lib/auth/cookies";
 import { PUBLIC_ROUTES } from "@/constants/routes";
-import type { Church, LoginCredentials, User, UserPermissions } from "@/types/auth";
+import type { AuthResponse, Church, LoginCredentials, User, UserPermissions } from "@/types/auth";
 
 function redirectToLogin() {
   window.location.replace(PUBLIC_ROUTES.login);
@@ -54,13 +56,7 @@ function resolveActiveChurch(session: {
 }
 
 function applySession(
-  session: {
-    user: User;
-    church: Church;
-    churches: Church[];
-    permissions: UserPermissions;
-    tokens: { expiresIn: number };
-  },
+  session: AuthResponse,
   preferredChurch?: Church,
 ) {
   const activeChurch = preferredChurch ?? resolveActiveChurch(session);
@@ -74,31 +70,94 @@ function applySession(
   };
 }
 
+function commitSession(
+  session: AuthResponse,
+  preferredChurch: Church | undefined,
+  setters: {
+    setUser: (user: User) => void;
+    setChurch: (church: Church) => void;
+    setChurches: (churches: Church[]) => void;
+    setPermissions: (permissions: UserPermissions) => void;
+  },
+) {
+  const next = applySession(session, preferredChurch);
+
+  setters.setUser(next.user);
+  setters.setChurch(next.church);
+  setters.setChurches(next.churches);
+  setters.setPermissions(next.permissions);
+  persistActiveChurch(next.church.id);
+
+  return next;
+}
+
+async function loadSession(): Promise<AuthResponse> {
+  try {
+    return await getSessionRequest();
+  } catch {
+    return refreshSessionDeduped();
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [church, setChurch] = useState<Church | null>(null);
   const [churches, setChurches] = useState<Church[]>([]);
   const [permissions, setPermissions] = useState<UserPermissions | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const sessionSetters = useMemo(
+    () => ({
+      setUser,
+      setChurch,
+      setChurches,
+      setPermissions,
+    }),
+    [],
+  );
+
+  const scheduleTokenRefresh = useCallback(
+    (expiresIn: number) => {
+      if (refreshTimerRef.current) {
+        clearTimeout(refreshTimerRef.current);
+      }
+
+      const refreshInMs = Math.max((expiresIn - 60) * 1000, 30_000);
+
+      refreshTimerRef.current = setTimeout(() => {
+        void (async () => {
+          try {
+            const session = await refreshSessionDeduped();
+            commitSession(session, undefined, sessionSetters);
+            scheduleTokenRefresh(session.tokens.expiresIn);
+          } catch {
+            clearAuthSession();
+            setUser(null);
+            setChurch(null);
+            setChurches([]);
+            setPermissions(null);
+            redirectToLogin();
+          }
+        })();
+      }, refreshInMs);
+    },
+    [sessionSetters],
+  );
 
   useEffect(() => {
     let cancelled = false;
 
     void (async () => {
       try {
-        const session = await getSessionRequest();
+        const session = await loadSession();
 
         if (cancelled) {
           return;
         }
 
-        const next = applySession(session);
-
-        setUser(next.user);
-        setChurch(next.church);
-        setChurches(next.churches);
-        setPermissions(next.permissions);
-        persistActiveChurch(next.church.id, next.expiresIn);
+        const next = commitSession(session, undefined, sessionSetters);
+        scheduleTokenRefresh(next.expiresIn);
       } catch {
         if (cancelled) {
           return;
@@ -118,23 +177,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       cancelled = true;
+
+      if (refreshTimerRef.current) {
+        clearTimeout(refreshTimerRef.current);
+      }
     };
-  }, []);
+  }, [scheduleTokenRefresh, sessionSetters]);
 
-  const login = useCallback(async (credentials: LoginCredentials) => {
-    const session = await loginRequest(credentials);
-    const next = applySession(session);
+  const login = useCallback(
+    async (credentials: LoginCredentials) => {
+      const session = await loginRequest(credentials);
+      const next = commitSession(session, undefined, sessionSetters);
 
-    persistActiveChurch(next.church.id, next.expiresIn);
-
-    setUser(next.user);
-    setChurch(next.church);
-    setChurches(next.churches);
-    setPermissions(next.permissions);
-    setIsLoading(false);
-  }, []);
+      scheduleTokenRefresh(next.expiresIn);
+      setIsLoading(false);
+    },
+    [scheduleTokenRefresh, sessionSetters],
+  );
 
   const logout = useCallback(async () => {
+    if (refreshTimerRef.current) {
+      clearTimeout(refreshTimerRef.current);
+    }
+
     try {
       await logoutRequest();
     } catch {
@@ -158,15 +223,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       const session = await switchChurchRequest(churchId);
-      const next = applySession(session, nextChurch);
+      const next = commitSession(session, nextChurch, sessionSetters);
 
-      setUser(next.user);
-      setChurch(next.church);
-      setChurches(next.churches);
-      setPermissions(next.permissions);
-      persistActiveChurch(next.church.id, next.expiresIn);
+      scheduleTokenRefresh(next.expiresIn);
     },
-    [churches, user],
+    [churches, sessionSetters, user, scheduleTokenRefresh],
   );
 
   const value = useMemo<AuthContextValue>(

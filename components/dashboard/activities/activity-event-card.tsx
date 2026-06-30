@@ -2,6 +2,7 @@
 
 import { Calendar, MapPin, Pencil, Sparkles } from "lucide-react";
 
+import { HoverLift } from "@/components/motion/dashboard-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn, formatDateTime } from "@/lib/utils";
@@ -21,64 +22,72 @@ export function ActivityEventCard({
   onEdit,
 }: ActivityEventCardProps) {
   return (
-    <article
-      className={cn(
-        "rounded-xl border bg-background p-5",
-        highlighted
-          ? "border-foreground/25 bg-muted/30 shadow-sm"
-          : "border-border",
-      )}
-    >
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="font-medium">{event.name}</h3>
-            {event.isChurchWide && (
-              <Badge className="gap-1">
-                <Sparkles className="size-3" />
-                Igreja
-              </Badge>
+    <HoverLift>
+      <article
+        className={cn(
+          "rounded-2xl border bg-card p-5 shadow-soft transition-shadow duration-300 hover:shadow-elevated",
+          highlighted
+            ? "border-primary/15 bg-gradient-to-br from-card to-muted/40"
+            : "border-border/70",
+        )}
+      >
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="font-medium tracking-tight text-foreground">
+                {event.name}
+              </h3>
+              {event.isChurchWide && (
+                <Badge className="gap-1.5">
+                  <Sparkles className="size-3" />
+                  Igreja
+                </Badge>
+              )}
+            </div>
+            {event.description && (
+              <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+                {event.description}
+              </p>
             )}
           </div>
-          {event.description && (
-            <p className="mt-1 text-sm text-muted-foreground">
-              {event.description}
-            </p>
-          )}
+
+          <div className="flex items-center gap-2">
+            {!event.isChurchWide && event.ministryName && (
+              <Badge variant="secondary">{event.ministryName}</Badge>
+            )}
+            {canManage && onEdit && (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="shrink-0"
+                onClick={() => onEdit(event)}
+              >
+                <Pencil className="size-4" />
+                Editar
+              </Button>
+            )}
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          {!event.isChurchWide && event.ministryName && (
-            <Badge variant="secondary">{event.ministryName}</Badge>
-          )}
-          {canManage && onEdit && (
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              className="shrink-0"
-              onClick={() => onEdit(event)}
-            >
-              <Pencil className="size-4" />
-              Editar
-            </Button>
-          )}
-        </div>
-      </div>
-
-      <div className="mt-4 flex flex-col gap-2 text-sm text-muted-foreground sm:flex-row sm:gap-6">
-        <span className="inline-flex items-center gap-2">
-          <Calendar className="size-4 shrink-0" />
-          {formatDateTime(event.startsAt)}
-          {event.endsAt && ` — ${formatDateTime(event.endsAt)}`}
-        </span>
-        {event.location && (
+        <div className="mt-4 flex flex-col gap-2 border-t border-border/50 pt-4 text-sm text-muted-foreground sm:flex-row sm:gap-6">
           <span className="inline-flex items-center gap-2">
-            <MapPin className="size-4 shrink-0" />
-            {event.location}
+            <span className="flex size-7 items-center justify-center rounded-lg bg-muted/80">
+              <Calendar className="size-3.5 shrink-0 text-foreground/70" />
+            </span>
+            {formatDateTime(event.startsAt)}
+            {event.endsAt && ` — ${formatDateTime(event.endsAt)}`}
           </span>
-        )}
-      </div>
-    </article>
+          {event.location && (
+            <span className="inline-flex items-center gap-2">
+              <span className="flex size-7 items-center justify-center rounded-lg bg-muted/80">
+                <MapPin className="size-3.5 shrink-0 text-foreground/70" />
+              </span>
+              {event.location}
+            </span>
+          )}
+        </div>
+      </article>
+    </HoverLift>
   );
 }

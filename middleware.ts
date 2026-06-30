@@ -6,10 +6,10 @@ import {
   isProtectedAreaPath,
   PUBLIC_ROUTES,
 } from "@/constants/routes";
-import { AUTH_COOKIE } from "@/lib/auth/constants";
+import { AUTH_COOKIE, REFRESH_COOKIE } from "@/lib/auth/constants";
 import { decodeJwtPayload } from "@/lib/auth/jwt";
 
-function isTokenPresent(token: string | undefined): boolean {
+function isTokenValid(token: string | undefined): boolean {
   if (!token) {
     return false;
   }
@@ -23,20 +23,29 @@ function isTokenPresent(token: string | undefined): boolean {
   return payload.exp * 1000 > Date.now();
 }
 
+function isAuthenticated(request: NextRequest): boolean {
+  const accessToken = request.cookies.get(AUTH_COOKIE)?.value;
+  if (isTokenValid(accessToken)) {
+    return true;
+  }
+
+  const refreshToken = request.cookies.get(REFRESH_COOKIE)?.value;
+  return isTokenValid(refreshToken);
+}
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const token = request.cookies.get(AUTH_COOKIE)?.value;
-  const isAuthenticated = isTokenPresent(token);
+  const isLoggedIn = isAuthenticated(request);
   const requiresAuth = isProtectedAreaPath(pathname);
   const isLoginRoute = pathname === PUBLIC_ROUTES.login;
 
-  if (requiresAuth && !isAuthenticated) {
+  if (requiresAuth && !isLoggedIn) {
     const loginUrl = new URL(PUBLIC_ROUTES.login, request.url);
     loginUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  if (isLoginRoute && isAuthenticated) {
+  if (isLoginRoute && isLoggedIn) {
     return NextResponse.redirect(new URL(AUTH_ROUTES.dashboard, request.url));
   }
 

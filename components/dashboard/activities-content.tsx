@@ -6,6 +6,7 @@ import { Plus } from "lucide-react";
 import { ActivityEventCard } from "@/components/dashboard/activities/activity-event-card";
 import { CreateActivityModal } from "@/components/dashboard/activities/create-activity-modal";
 import { EditActivityModal } from "@/components/dashboard/activities/edit-activity-modal";
+import { StaggerItem, StaggerList } from "@/components/motion/dashboard-motion";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useChurchEvents, useMinistries } from "@/lib/api/queries";
@@ -138,35 +139,45 @@ export function ActivitiesContent() {
         )}
 
         {!isLoading && !isError && sortedEvents.length > 0 && (
-          <div className="space-y-6">
+          <div className="space-y-8">
             {filter === "all" && churchWideEvents.length > 0 && (
-              <section className="space-y-3">
-                <h2 className="text-sm font-medium">Destaques da igreja</h2>
-                {churchWideEvents.map((event) => (
-                  <ActivityEventCard
-                    key={event.id}
-                    event={event}
-                    highlighted
-                    canManage={canManageEvent(event)}
-                    onEdit={setEditingEvent}
-                  />
-                ))}
+              <section className="space-y-4">
+                <h2 className="font-display text-sm font-semibold tracking-tight text-foreground/90">
+                  Destaques da igreja
+                </h2>
+                <StaggerList className="space-y-3">
+                  {churchWideEvents.map((event) => (
+                    <StaggerItem key={event.id}>
+                      <ActivityEventCard
+                        event={event}
+                        highlighted
+                        canManage={canManageEvent(event)}
+                        onEdit={setEditingEvent}
+                      />
+                    </StaggerItem>
+                  ))}
+                </StaggerList>
               </section>
             )}
 
             {(filter !== "all" || ministryEvents.length > 0) && (
-              <section className="space-y-3">
+              <section className="space-y-4">
                 {filter === "all" && churchWideEvents.length > 0 && (
-                  <h2 className="text-sm font-medium">Por ministério</h2>
+                  <h2 className="font-display text-sm font-semibold tracking-tight text-foreground/90">
+                    Por ministério
+                  </h2>
                 )}
-                {(filter === "all" ? ministryEvents : sortedEvents).map((event) => (
-                  <ActivityEventCard
-                    key={event.id}
-                    event={event}
-                    canManage={canManageEvent(event)}
-                    onEdit={setEditingEvent}
-                  />
-                ))}
+                <StaggerList className="space-y-3">
+                  {(filter === "all" ? ministryEvents : sortedEvents).map((event) => (
+                    <StaggerItem key={event.id}>
+                      <ActivityEventCard
+                        event={event}
+                        canManage={canManageEvent(event)}
+                        onEdit={setEditingEvent}
+                      />
+                    </StaggerItem>
+                  ))}
+                </StaggerList>
               </section>
             )}
           </div>
@@ -202,10 +213,10 @@ function FilterPill({
       type="button"
       onClick={onClick}
       className={cn(
-        "rounded-full border px-3 py-1.5 text-sm transition-colors",
+        "rounded-full border px-3.5 py-2 text-sm font-medium transition-all duration-200",
         active
-          ? "border-foreground bg-foreground text-background"
-          : "border-border text-muted-foreground hover:text-foreground",
+          ? "border-primary/20 bg-primary text-primary-foreground shadow-soft"
+          : "border-border/80 bg-card text-muted-foreground shadow-soft hover:bg-muted/60 hover:text-foreground",
       )}
     >
       {children}

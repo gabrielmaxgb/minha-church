@@ -5,6 +5,7 @@ import { Calendar, MapPin, Sparkles } from "lucide-react";
 
 import { StatCard } from "@/components/dashboard/dashboard-placeholder";
 import { DashboardPage } from "@/components/dashboard/dashboard-shell";
+import { StaggerItem, StaggerList } from "@/components/motion/dashboard-motion";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AUTH_ROUTES } from "@/constants/routes";
@@ -17,36 +18,44 @@ export default function DashboardHomePage() {
   return (
     <DashboardPage title="Dashboard" subtitle="Visão geral da sua igreja">
       <div className="space-y-6">
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StaggerList className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {isLoading ? (
             Array.from({ length: 4 }).map((_, index) => (
-              <Skeleton key={index} className="h-28 rounded-xl" />
+              <Skeleton key={index} className="h-28 rounded-2xl" />
             ))
           ) : (
             <>
-              <StatCard
-                label="Membros cadastrados"
-                value={String(data?.memberCount ?? 0)}
-              />
-              <StatCard
-                label="Membros ativos"
-                value={String(data?.activeMembers ?? 0)}
-                hint="Membros recebidos"
-              />
-              <StatCard
-                label="Próximas atividades"
-                value={String(data?.upcomingEvents ?? 0)}
-              />
-              <StatCard
-                label="Saldo do mês"
-                value={formatCurrency(data?.monthlyBalance ?? 0)}
-              />
+              <StaggerItem>
+                <StatCard
+                  label="Membros cadastrados"
+                  value={String(data?.memberCount ?? 0)}
+                />
+              </StaggerItem>
+              <StaggerItem>
+                <StatCard
+                  label="Membros ativos"
+                  value={String(data?.activeMembers ?? 0)}
+                  hint="Membros recebidos"
+                />
+              </StaggerItem>
+              <StaggerItem>
+                <StatCard
+                  label="Próximas atividades"
+                  value={String(data?.upcomingEvents ?? 0)}
+                />
+              </StaggerItem>
+              <StaggerItem>
+                <StatCard
+                  label="Saldo do mês"
+                  value={formatCurrency(data?.monthlyBalance ?? 0)}
+                />
+              </StaggerItem>
             </>
           )}
-        </div>
+        </StaggerList>
 
         {!isLoading && (data?.featuredEvents.length ?? 0) > 0 && (
-          <section className="rounded-xl border border-foreground/15 bg-muted/20 p-5">
+          <section className="rounded-2xl border border-border/70 bg-card p-6 shadow-soft">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <div>
                 <div className="flex items-center gap-2">
@@ -66,7 +75,7 @@ export default function DashboardHomePage() {
               {data?.featuredEvents.map((event) => (
                 <div
                   key={event.id}
-                  className="rounded-lg border border-border bg-background px-4 py-3"
+                  className="rounded-xl border border-border/60 bg-surface-elevated px-4 py-3 shadow-soft transition-shadow duration-200 hover:shadow-elevated"
                 >
                   <p className="font-medium">{event.name}</p>
                   <div className="mt-2 flex flex-col gap-1.5 text-sm text-muted-foreground sm:flex-row sm:gap-4">

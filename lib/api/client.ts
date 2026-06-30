@@ -65,11 +65,28 @@ export async function apiClient<T>(
     headers.set("X-Church-Id", tenantId);
   }
 
-  const response = await fetch(url, {
+  const fetchOptions: RequestInit = {
     ...options,
     headers,
     credentials: "include",
-  });
+  };
+
+  let response = await fetch(url, fetchOptions);
+
+  const canRefresh =
+    response.status === 401 &&
+    !options.skipAuth &&
+    !endpoint.startsWith("/auth/login") &&
+    !endpoint.startsWith("/auth/refresh");
+
+  if (canRefresh) {
+    const { tryRefreshSession } = await import("@/lib/api/session-refresh");
+    const refreshed = await tryRefreshSession();
+
+    if (refreshed) {
+      response = await fetch(url, fetchOptions);
+    }
+  }
 
   if (!response.ok) {
     const message = await parseErrorMessage(response);
