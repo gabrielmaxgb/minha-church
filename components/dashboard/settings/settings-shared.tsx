@@ -1,8 +1,9 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { ChevronDown, Loader2, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 export function SettingsSectionHeader({
@@ -63,15 +64,159 @@ export function SettingsSplitLayout({
 export function SettingsSidebar({
   children,
   footer,
+  header,
 }: {
   children: React.ReactNode;
   footer?: React.ReactNode;
+  header?: React.ReactNode;
 }) {
   return (
-    <aside className="flex w-44 shrink-0 flex-col border-r border-border/70 bg-muted/20 sm:w-56">
+    <aside className="flex w-52 shrink-0 flex-col border-r border-border/70 bg-muted/20 sm:w-64">
+      {header}
       <div className="flex-1 space-y-0.5 overflow-y-auto p-2">{children}</div>
       {footer && <div className="border-t border-border/70 p-2">{footer}</div>}
     </aside>
+  );
+}
+
+export function SettingsSidebarToolbar({
+  search,
+  onSearchChange,
+  placeholder = "Buscar...",
+  resultCount,
+  totalCount,
+}: {
+  search: string;
+  onSearchChange: (value: string) => void;
+  placeholder?: string;
+  resultCount: number;
+  totalCount: number;
+}) {
+  return (
+    <div className="space-y-2 px-3 py-3 sm:px-4">
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={search}
+          onChange={(event) => onSearchChange(event.target.value)}
+          placeholder={placeholder}
+          className="h-9 rounded-lg border-border/70 bg-background/80 pl-8 text-sm"
+        />
+      </div>
+      <p className="px-1 text-[11px] text-muted-foreground">
+        {resultCount === totalCount
+          ? `${totalCount} usuário${totalCount === 1 ? "" : "s"}`
+          : `${resultCount} de ${totalCount} usuários`}
+      </p>
+    </div>
+  );
+}
+
+export function SettingsFilterPills({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-wrap gap-1.5 px-3 py-3 sm:px-4">
+      {children}
+    </div>
+  );
+}
+
+export function SettingsFilterPill({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "rounded-full border px-2.5 py-1 text-[11px] font-medium transition-all duration-200",
+        active
+          ? "border-primary/20 bg-primary text-primary-foreground shadow-soft"
+          : "border-border/70 bg-background/60 text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+export function SettingsExpandableRow({
+  title,
+  subtitle,
+  badge,
+  expanded,
+  dirty,
+  onToggle,
+  children,
+}: {
+  title: string;
+  subtitle?: string;
+  badge?: string;
+  expanded: boolean;
+  dirty?: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-soft transition-shadow duration-200 hover:shadow-elevated">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-muted/20"
+      >
+        <ChevronDown
+          className={cn(
+            "size-4 shrink-0 text-muted-foreground transition-transform duration-200",
+            !expanded && "-rotate-90",
+          )}
+        />
+        <div className="min-w-0 flex-1">
+          <span className="flex items-center gap-2">
+            <span className="truncate font-medium">{title}</span>
+            {dirty && (
+              <span
+                className="size-1.5 shrink-0 rounded-full bg-amber-500"
+                aria-label="Alterações não salvas"
+              />
+            )}
+          </span>
+          {subtitle && (
+            <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+              {subtitle}
+            </span>
+          )}
+        </div>
+        {badge && (
+          <span className="hidden shrink-0 rounded-lg border border-border/70 bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-muted-foreground sm:inline">
+            {badge}
+          </span>
+        )}
+      </button>
+      {expanded && (
+        <div className="border-t border-border/70 bg-muted/10 px-4 py-4">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function SettingsListFilters({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="border-b border-border/70 bg-muted/10">{children}</div>
   );
 }
 

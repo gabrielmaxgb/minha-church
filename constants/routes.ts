@@ -18,6 +18,7 @@ export const AUTH_ROUTES = {
   communication: "/app/comunicacao",
   reports: "/app/relatorios",
   settings: "/app/configuracoes",
+  changePassword: "/app/alterar-senha",
 } as const;
 
 export function ministryDetailPath(ministryId: string): string {

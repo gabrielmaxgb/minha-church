@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { DashboardContentMotion } from "@/components/motion/dashboard-motion";
+import { AUTH_ROUTES } from "@/constants/routes";
 import { useRequireAuth } from "@/providers/auth-provider";
 import { cn } from "@/lib/utils";
 
@@ -19,8 +21,20 @@ export function DashboardShell({
   subtitle,
   children,
 }: DashboardShellProps) {
-  const { isLoading, isAuthenticated, church } = useRequireAuth();
+  const router = useRouter();
+  const pathname = usePathname();
+  const { isLoading, isAuthenticated, church, user } = useRequireAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    if (
+      !isLoading &&
+      user?.mustChangePassword &&
+      pathname !== AUTH_ROUTES.changePassword
+    ) {
+      router.replace(AUTH_ROUTES.changePassword);
+    }
+  }, [isLoading, pathname, router, user?.mustChangePassword]);
 
   if (isLoading) {
     return (

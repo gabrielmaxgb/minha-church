@@ -75,7 +75,6 @@ export const dashboardSecondaryNavItems: DashboardNavItem[] = [
     label: "Configurações",
     href: AUTH_ROUTES.settings,
     icon: Settings,
-    description: "Igreja, usuários e preferências",
-    permission: "settings",
+    description: "Perfil e preferências da igreja",
   },
 ];

@@ -30,9 +30,12 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  cpf?: string;
+  phone?: string | null;
   isOwner: boolean;
   roles: UserRoleSummary[];
   avatarUrl?: string;
+  mustChangePassword?: boolean;
 }
 
 export interface JwtPayload {
@@ -59,8 +62,19 @@ export interface AuthSession {
 }
 
 export interface LoginCredentials {
-  email: string;
+  identifier: string;
   password: string;
+}
+
+export interface ChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface UpdateProfilePayload {
+  name?: string;
+  email?: string | null;
+  phone?: string | null;
 }
 
 export interface AuthResponse {

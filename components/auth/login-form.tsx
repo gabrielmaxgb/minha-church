@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff } from "lucide-react";
 import { Suspense, useState } from "react";
+import { useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -14,14 +16,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { FormAlert, FormField, FormMessage } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   DEMO_ACCOUNTS,
   DEMO_PASSWORD,
   SHOW_DEMO_ACCOUNTS,
 } from "@/constants/demo-accounts";
-import { PUBLIC_ROUTES, resolvePostLoginRedirect } from "@/constants/routes";
+import { PUBLIC_ROUTES, AUTH_ROUTES, resolvePostLoginRedirect } from "@/constants/routes";
+import { loginSchema, type LoginFormValues } from "@/lib/validation/schemas";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 
@@ -29,52 +32,62 @@ function LoginFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login } = useAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [loadingEmail, setLoadingEmail] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [loadingIdentifier, setLoadingIdentifier] = useState<string | null>(null);
 
-  async function performLogin(loginEmail: string, loginPassword: string) {
-    setError(null);
+  const form = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { identifier: "", password: "" },
+    mode: "onBlur",
+  });
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    setError,
+    clearErrors,
+    formState: { errors },
+  } = form;
+
+  async function performLogin(loginIdentifierValue: string, loginPassword: string) {
+    clearErrors("root");
     setIsLoading(true);
-    setLoadingEmail(loginEmail);
+    setLoadingIdentifier(loginIdentifierValue);
 
     try {
-      await login({ email: loginEmail.trim(), password: loginPassword });
+      const session = await login({
+        identifier: loginIdentifierValue.trim(),
+        password: loginPassword,
+      });
+
+      if (session.user.mustChangePassword) {
+        router.push(AUTH_ROUTES.changePassword);
+        return;
+      }
+
       router.push(resolvePostLoginRedirect(searchParams.get("redirect")));
     } catch (loginError) {
-      setError(
-        loginError instanceof Error
-          ? loginError.message
-          : "Não foi possível entrar. Tente novamente.",
-      );
+      setError("root", {
+        message:
+          loginError instanceof Error
+            ? loginError.message
+            : "Não foi possível entrar. Tente novamente.",
+      });
     } finally {
       setIsLoading(false);
-      setLoadingEmail(null);
+      setLoadingIdentifier(null);
     }
   }
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    if (!email.trim()) {
-      setError("Informe seu e-mail.");
-      return;
-    }
-
-    if (password.length < 6) {
-      setError("A senha deve ter pelo menos 6 caracteres.");
-      return;
-    }
-
-    await performLogin(email, password);
-  }
+  const onSubmit = handleSubmit(async (values) => {
+    await performLogin(values.identifier, values.password);
+  });
 
   async function handleQuickLogin(loginEmail: string) {
-    setEmail(loginEmail);
-    setPassword(DEMO_PASSWORD);
+    setValue("identifier", loginEmail);
+    setValue("password", DEMO_PASSWORD);
     await performLogin(loginEmail, DEMO_PASSWORD);
   }
 
@@ -85,34 +98,38 @@ function LoginFormContent() {
         <CardDescription>Acesse o painel da sua igreja</CardDescription>
       </CardHeader>
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={onSubmit} noValidate>
         <CardContent className="space-y-4">
-          {error && (
-            <div
-              role="alert"
-              className="rounded-md border border-border bg-muted px-3 py-2 text-sm text-foreground"
-            >
-              {error}
-            </div>
-          )}
+          {errors.root?.message && <FormAlert>{errors.root.message}</FormAlert>}
 
-          <div className="space-y-2">
-            <Label htmlFor="email">E-mail</Label>
+          <FormField
+            label="E-mail ou CPF"
+            htmlFor="identifier"
+            error={errors.identifier?.message}
+            required
+          >
             <Input
-              id="email"
-              type="email"
-              placeholder="pastor@igreja.com.br"
-              autoComplete="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              id="identifier"
+              type="text"
+              placeholder="pastor@igreja.com.br ou CPF"
+              autoComplete="username"
               disabled={isLoading}
-              required
+              aria-invalid={errors.identifier ? true : undefined}
+              {...register("identifier")}
             />
-          </div>
+          </FormField>
 
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="password">Senha</Label>
+            <div className="flex items-center justify-between gap-2">
+              <label
+                htmlFor="password"
+                className="text-sm font-medium leading-none text-foreground"
+              >
+                Senha
+                <span className="ml-0.5 text-destructive" aria-hidden>
+                  *
+                </span>
+              </label>
               <Link
                 href="#"
                 className="text-xs text-muted-foreground transition-colors hover:text-foreground"
@@ -126,11 +143,10 @@ function LoginFormContent() {
                 type={showPassword ? "text" : "password"}
                 placeholder="••••••••"
                 autoComplete="current-password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
                 disabled={isLoading}
-                required
                 className="pr-10"
+                aria-invalid={errors.password ? true : undefined}
+                {...register("password")}
               />
               <button
                 type="button"
@@ -146,6 +162,7 @@ function LoginFormContent() {
                 )}
               </button>
             </div>
+            <FormMessage>{errors.password?.message}</FormMessage>
           </div>
 
           {!process.env.NEXT_PUBLIC_API_URL?.trim() && (
@@ -174,7 +191,7 @@ function LoginFormContent() {
                     onClick={() => handleQuickLogin(account.email)}
                     className={cn(
                       "flex w-full items-center justify-between gap-3 rounded-md border border-border bg-background px-3 py-2 text-left text-sm transition-colors hover:bg-muted/60",
-                      loadingEmail === account.email && "opacity-70",
+                      loadingIdentifier === account.email && "opacity-70",
                     )}
                   >
                     <span className="font-medium">{account.label}</span>

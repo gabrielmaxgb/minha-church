@@ -1,7 +1,10 @@
 "use client";
 
+import { useEffect } from "react";
+import { Controller, useFormContext } from "react-hook-form";
+
+import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { SelectField } from "@/components/ui/select-field";
 import {
   GENDER_LABELS,
@@ -9,13 +12,13 @@ import {
   MEMBER_STATUS_FORM_LABELS,
   type MemberFormValues,
 } from "@/lib/members/form";
+import { formatCpfInput } from "@/lib/validation/shared";
 import type { Gender, MaritalStatus, MemberStatus } from "@/types/members";
 
 interface MemberFormProps {
-  values: MemberFormValues;
-  onChange: (values: MemberFormValues) => void;
   disabled?: boolean;
   showStatus?: boolean;
+  requireLogin?: boolean;
 }
 
 function FieldGroup({
@@ -40,328 +43,325 @@ function FieldGroup({
   );
 }
 
-function updateField<K extends keyof MemberFormValues>(
-  values: MemberFormValues,
-  onChange: (values: MemberFormValues) => void,
-  field: K,
-  value: MemberFormValues[K],
+function errorMessage(
+  errors: ReturnType<typeof useFormContext<MemberFormValues>>["formState"]["errors"],
+  field: keyof MemberFormValues,
 ) {
-  const next = { ...values, [field]: value };
-
-  if (field === "maritalStatus" && value !== "married") {
-    next.weddingAnniversary = "";
-  }
-
-  onChange(next);
+  return errors[field]?.message as string | undefined;
 }
 
 export function MemberForm({
-  values,
-  onChange,
   disabled = false,
   showStatus = true,
+  requireLogin = false,
 }: MemberFormProps) {
+  const {
+    register,
+    control,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useFormContext<MemberFormValues>();
+
+  const status = watch("status");
+  const maritalStatus = watch("maritalStatus");
+
+  useEffect(() => {
+    if (maritalStatus !== "married") {
+      setValue("weddingAnniversary", "");
+    }
+  }, [maritalStatus, setValue]);
+
   return (
     <div className="space-y-8">
-      <FieldGroup title="Identificação" description="Dados principais de contato.">
-        <div className="space-y-2 sm:col-span-2">
-          <Label htmlFor="member-name">Nome completo</Label>
+      <FieldGroup
+        title="Identificação"
+        description={
+          requireLogin
+            ? "Informe e-mail ou CPF (obrigatório um dos dois) para criar o login de acesso."
+            : "Dados principais de contato."
+        }
+      >
+        <FormField
+          className="sm:col-span-2"
+          label="Nome completo"
+          htmlFor="member-name"
+          error={errorMessage(errors, "name")}
+          required
+        >
           <Input
             id="member-name"
-            value={values.name}
-            onChange={(event) =>
-              updateField(values, onChange, "name", event.target.value)
-            }
             placeholder="Nome da pessoa"
             disabled={disabled}
-            required
+            aria-invalid={errors.name ? true : undefined}
+            {...register("name")}
           />
-        </div>
+        </FormField>
 
         {showStatus && (
-          <div className="space-y-2">
-            <Label htmlFor="member-status">Status</Label>
+          <FormField label="Status" htmlFor="member-status">
             <SelectField
               id="member-status"
-              value={values.status}
-              onChange={(event) =>
-                updateField(
-                  values,
-                  onChange,
-                  "status",
-                  event.target.value as MemberStatus,
-                )
-              }
               disabled={disabled}
+              {...register("status")}
             >
               {(Object.keys(MEMBER_STATUS_FORM_LABELS) as MemberStatus[]).map(
-                (status) => (
-                  <option key={status} value={status}>
-                    {MEMBER_STATUS_FORM_LABELS[status]}
+                (item) => (
+                  <option key={item} value={item}>
+                    {MEMBER_STATUS_FORM_LABELS[item]}
                   </option>
                 ),
               )}
             </SelectField>
-          </div>
+          </FormField>
         )}
 
-        <div className="space-y-2">
-          <Label htmlFor="member-email">E-mail</Label>
+        <FormField
+          label="E-mail"
+          htmlFor="member-email"
+          error={errorMessage(errors, "email")}
+          hint={
+            requireLogin ? "Obrigatório se CPF não for informado." : undefined
+          }
+        >
           <Input
             id="member-email"
             type="email"
-            value={values.email}
-            onChange={(event) =>
-              updateField(values, onChange, "email", event.target.value)
-            }
             placeholder="email@exemplo.com"
             disabled={disabled}
+            aria-invalid={errors.email ? true : undefined}
+            {...register("email")}
           />
-        </div>
+        </FormField>
 
-        <div className="space-y-2">
-          <Label htmlFor="member-phone">Telefone</Label>
+        <FormField
+          label="CPF"
+          htmlFor="member-cpf"
+          error={errorMessage(errors, "cpf")}
+          hint={
+            requireLogin ? "Obrigatório se e-mail não for informado." : undefined
+          }
+        >
+          <Controller
+            name="cpf"
+            control={control}
+            render={({ field }) => (
+              <Input
+                id="member-cpf"
+                inputMode="numeric"
+                placeholder="000.000.000-00"
+                disabled={disabled}
+                aria-invalid={errors.cpf ? true : undefined}
+                value={field.value}
+                onBlur={field.onBlur}
+                onChange={(event) =>
+                  field.onChange(formatCpfInput(event.target.value))
+                }
+              />
+            )}
+          />
+        </FormField>
+
+        <FormField label="Telefone" htmlFor="member-phone">
           <Input
             id="member-phone"
-            value={values.phone}
-            onChange={(event) =>
-              updateField(values, onChange, "phone", event.target.value)
-            }
             placeholder="(00) 00000-0000"
             disabled={disabled}
+            {...register("phone")}
           />
-        </div>
+        </FormField>
 
-        <div className="space-y-2">
-          <Label htmlFor="member-phone-secondary">Telefone secundário</Label>
+        <FormField label="Telefone secundário" htmlFor="member-phone-secondary">
           <Input
             id="member-phone-secondary"
-            value={values.phoneSecondary}
-            onChange={(event) =>
-              updateField(values, onChange, "phoneSecondary", event.target.value)
-            }
             disabled={disabled}
+            {...register("phoneSecondary")}
           />
-        </div>
+        </FormField>
       </FieldGroup>
 
       <FieldGroup title="Dados pessoais">
-        <div className="space-y-2">
-          <Label htmlFor="member-birth-date">Data de nascimento</Label>
+        <FormField label="Data de nascimento" htmlFor="member-birth-date">
           <Input
             id="member-birth-date"
             type="date"
-            value={values.birthDate}
-            onChange={(event) =>
-              updateField(values, onChange, "birthDate", event.target.value)
-            }
             disabled={disabled}
+            {...register("birthDate")}
           />
-        </div>
+        </FormField>
 
-        <div className="space-y-2">
-          <Label htmlFor="member-gender">Gênero</Label>
-          <SelectField
-            id="member-gender"
-            value={values.gender}
-            onChange={(event) =>
-              updateField(
-                values,
-                onChange,
-                "gender",
-                event.target.value as Gender | "",
-              )
-            }
-            disabled={disabled}
-          >
-            <option value="">Não informado</option>
-            {(Object.keys(GENDER_LABELS) as Gender[]).map((gender) => (
-              <option key={gender} value={gender}>
-                {GENDER_LABELS[gender]}
-              </option>
-            ))}
-          </SelectField>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="member-marital-status">Estado civil</Label>
-          <SelectField
-            id="member-marital-status"
-            value={values.maritalStatus}
-            onChange={(event) =>
-              updateField(
-                values,
-                onChange,
-                "maritalStatus",
-                event.target.value as MaritalStatus | "",
-              )
-            }
-            disabled={disabled}
-          >
-            <option value="">Não informado</option>
-            {(Object.keys(MARITAL_STATUS_LABELS) as MaritalStatus[]).map(
-              (status) => (
-                <option key={status} value={status}>
-                  {MARITAL_STATUS_LABELS[status]}
-                </option>
-              ),
+        <FormField label="Gênero" htmlFor="member-gender">
+          <Controller
+            name="gender"
+            control={control}
+            render={({ field }) => (
+              <SelectField
+                id="member-gender"
+                disabled={disabled}
+                value={field.value}
+                onChange={(event) =>
+                  field.onChange(event.target.value as Gender | "")
+                }
+                onBlur={field.onBlur}
+              >
+                <option value="">Não informado</option>
+                {(Object.keys(GENDER_LABELS) as Gender[]).map((gender) => (
+                  <option key={gender} value={gender}>
+                    {GENDER_LABELS[gender]}
+                  </option>
+                ))}
+              </SelectField>
             )}
-          </SelectField>
-        </div>
+          />
+        </FormField>
 
-        {values.maritalStatus === "married" && (
-          <div className="space-y-2">
-            <Label htmlFor="member-wedding-anniversary">
-              Aniversário de casamento
-            </Label>
+        <FormField label="Estado civil" htmlFor="member-marital-status">
+          <Controller
+            name="maritalStatus"
+            control={control}
+            render={({ field }) => (
+              <SelectField
+                id="member-marital-status"
+                disabled={disabled}
+                value={field.value}
+                onChange={(event) =>
+                  field.onChange(event.target.value as MaritalStatus | "")
+                }
+                onBlur={field.onBlur}
+              >
+                <option value="">Não informado</option>
+                {(Object.keys(MARITAL_STATUS_LABELS) as MaritalStatus[]).map(
+                  (item) => (
+                    <option key={item} value={item}>
+                      {MARITAL_STATUS_LABELS[item]}
+                    </option>
+                  ),
+                )}
+              </SelectField>
+            )}
+          />
+        </FormField>
+
+        {maritalStatus === "married" && (
+          <FormField
+            label="Aniversário de casamento"
+            htmlFor="member-wedding-anniversary"
+          >
             <Input
               id="member-wedding-anniversary"
               type="date"
-              value={values.weddingAnniversary}
-              onChange={(event) =>
-                updateField(
-                  values,
-                  onChange,
-                  "weddingAnniversary",
-                  event.target.value,
-                )
-              }
               disabled={disabled}
+              {...register("weddingAnniversary")}
             />
-          </div>
+          </FormField>
         )}
       </FieldGroup>
 
       <FieldGroup title="Endereço">
-        <div className="space-y-2 sm:col-span-2">
-          <Label htmlFor="member-street">Rua</Label>
-          <Input
-            id="member-street"
-            value={values.street}
-            onChange={(event) =>
-              updateField(values, onChange, "street", event.target.value)
-            }
-            disabled={disabled}
-          />
-        </div>
+        <FormField className="sm:col-span-2" label="Rua" htmlFor="member-street">
+          <Input id="member-street" disabled={disabled} {...register("street")} />
+        </FormField>
 
-        <div className="space-y-2">
-          <Label htmlFor="member-number">Número</Label>
-          <Input
-            id="member-number"
-            value={values.number}
-            onChange={(event) =>
-              updateField(values, onChange, "number", event.target.value)
-            }
-            disabled={disabled}
-          />
-        </div>
+        <FormField label="Número" htmlFor="member-number">
+          <Input id="member-number" disabled={disabled} {...register("number")} />
+        </FormField>
 
-        <div className="space-y-2">
-          <Label htmlFor="member-complement">Complemento</Label>
+        <FormField label="Complemento" htmlFor="member-complement">
           <Input
             id="member-complement"
-            value={values.complement}
-            onChange={(event) =>
-              updateField(values, onChange, "complement", event.target.value)
-            }
             disabled={disabled}
+            {...register("complement")}
           />
-        </div>
+        </FormField>
 
-        <div className="space-y-2">
-          <Label htmlFor="member-neighborhood">Bairro</Label>
+        <FormField label="Bairro" htmlFor="member-neighborhood">
           <Input
             id="member-neighborhood"
-            value={values.neighborhood}
-            onChange={(event) =>
-              updateField(values, onChange, "neighborhood", event.target.value)
-            }
             disabled={disabled}
+            {...register("neighborhood")}
           />
-        </div>
+        </FormField>
 
-        <div className="space-y-2">
-          <Label htmlFor="member-city">Cidade</Label>
-          <Input
-            id="member-city"
-            value={values.city}
-            onChange={(event) =>
-              updateField(values, onChange, "city", event.target.value)
-            }
-            disabled={disabled}
+        <FormField label="Cidade" htmlFor="member-city">
+          <Input id="member-city" disabled={disabled} {...register("city")} />
+        </FormField>
+
+        <FormField
+          label="Estado"
+          htmlFor="member-state"
+          error={errorMessage(errors, "state")}
+          hint="Sigla com 2 letras"
+        >
+          <Controller
+            name="state"
+            control={control}
+            render={({ field }) => (
+              <Input
+                id="member-state"
+                placeholder="SP"
+                maxLength={2}
+                disabled={disabled}
+                aria-invalid={errors.state ? true : undefined}
+                value={field.value}
+                onBlur={field.onBlur}
+                onChange={(event) =>
+                  field.onChange(event.target.value.toUpperCase())
+                }
+              />
+            )}
           />
-        </div>
+        </FormField>
 
-        <div className="space-y-2">
-          <Label htmlFor="member-state">Estado</Label>
-          <Input
-            id="member-state"
-            value={values.state}
-            onChange={(event) =>
-              updateField(values, onChange, "state", event.target.value)
-            }
-            placeholder="SP"
-            maxLength={2}
-            disabled={disabled}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="member-zip-code">CEP</Label>
+        <FormField
+          label="CEP"
+          htmlFor="member-zip-code"
+          error={errorMessage(errors, "zipCode")}
+        >
           <Input
             id="member-zip-code"
-            value={values.zipCode}
-            onChange={(event) =>
-              updateField(values, onChange, "zipCode", event.target.value)
-            }
+            placeholder="00000-000"
             disabled={disabled}
+            aria-invalid={errors.zipCode ? true : undefined}
+            {...register("zipCode")}
           />
-        </div>
+        </FormField>
       </FieldGroup>
 
       <FieldGroup
         title="Vida na igreja"
         description="Datas importantes no histórico pastoral."
       >
-        <div className="space-y-2">
-          <Label htmlFor="member-visitor-since">Visitante desde</Label>
+        <FormField label="Visitante desde" htmlFor="member-visitor-since">
           <Input
             id="member-visitor-since"
             type="date"
-            value={values.visitorSince}
-            onChange={(event) =>
-              updateField(values, onChange, "visitorSince", event.target.value)
-            }
-            disabled={disabled || values.status !== "visitor"}
+            disabled={disabled || status !== "visitor"}
+            {...register("visitorSince")}
           />
-        </div>
+        </FormField>
 
-        <div className="space-y-2">
-          <Label htmlFor="member-membership-date">Membro desde</Label>
+        <FormField
+          label="Membro desde"
+          htmlFor="member-membership-date"
+          error={errorMessage(errors, "membershipDate")}
+        >
           <Input
             id="member-membership-date"
             type="date"
-            value={values.membershipDate}
-            onChange={(event) =>
-              updateField(values, onChange, "membershipDate", event.target.value)
-            }
-            disabled={disabled || values.status !== "active"}
+            disabled={disabled || status !== "active"}
+            aria-invalid={errors.membershipDate ? true : undefined}
+            {...register("membershipDate")}
           />
-        </div>
+        </FormField>
 
-        <div className="space-y-2">
-          <Label htmlFor="member-baptism-date">Data de batismo</Label>
+        <FormField label="Data de batismo" htmlFor="member-baptism-date">
           <Input
             id="member-baptism-date"
             type="date"
-            value={values.baptismDate}
-            onChange={(event) =>
-              updateField(values, onChange, "baptismDate", event.target.value)
-            }
             disabled={disabled}
+            {...register("baptismDate")}
           />
-        </div>
+        </FormField>
       </FieldGroup>
     </div>
   );

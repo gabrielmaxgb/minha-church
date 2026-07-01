@@ -1,14 +1,20 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Layers, Loader2, X } from "lucide-react";
+import { useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
+import { FormAlert, FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateMinistry } from "@/lib/api/queries";
+import {
+  createMinistrySchema,
+  type CreateMinistryFormValues,
+} from "@/lib/validation/schemas";
 import { cn } from "@/lib/utils";
 
 interface CreateMinistryModalProps {
@@ -22,20 +28,30 @@ export function CreateMinistryModal({ open, onClose }: CreateMinistryModalProps)
   const titleId = useId();
   const descriptionId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [error, setError] = useState<string | null>(null);
   const createMinistry = useCreateMinistry();
 
-  const trimmedName = name.trim();
-  const trimmedDescription = description.trim();
-  const canSubmit = trimmedName.length > 0 && !createMinistry.isPending;
+  const form = useForm<CreateMinistryFormValues>({
+    resolver: zodResolver(createMinistrySchema),
+    defaultValues: { name: "", description: "" },
+    mode: "onBlur",
+  });
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setError,
+    clearErrors,
+    watch,
+    formState: { errors },
+  } = form;
+
+  const description = watch("description");
 
   useEffect(() => {
     if (!open) {
-      setName("");
-      setDescription("");
-      setError(null);
+      reset({ name: "", description: "" });
+      clearErrors();
       return;
     }
 
@@ -45,7 +61,7 @@ export function CreateMinistryModal({ open, onClose }: CreateMinistryModalProps)
     return () => {
       document.body.style.overflow = previousOverflow;
     };
-  }, [open]);
+  }, [open, reset, clearErrors]);
 
   useEffect(() => {
     if (!open) {
@@ -67,30 +83,25 @@ export function CreateMinistryModal({ open, onClose }: CreateMinistryModalProps)
     return null;
   }
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError(null);
-
-    if (!trimmedName) {
-      setError("Informe um nome para o ministério.");
-      return;
-    }
+  const onSubmit = handleSubmit(async (values) => {
+    clearErrors("root");
 
     try {
       await createMinistry.mutateAsync({
-        name: trimmedName,
-        description: trimmedDescription || undefined,
+        name: values.name.trim(),
+        description: values.description.trim() || undefined,
       });
 
       onClose();
     } catch (submitError) {
-      setError(
-        submitError instanceof Error
-          ? submitError.message
-          : "Não foi possível criar o ministério. Tente novamente.",
-      );
+      setError("root", {
+        message:
+          submitError instanceof Error
+            ? submitError.message
+            : "Não foi possível criar o ministério. Tente novamente.",
+      });
     }
-  }
+  });
 
   return (
     <div
@@ -154,68 +165,46 @@ export function CreateMinistryModal({ open, onClose }: CreateMinistryModalProps)
 
         <Separator />
 
-        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+        <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col" noValidate>
           <div className="space-y-5 overflow-y-auto px-6 py-5">
-            {error && (
-              <div
-                role="alert"
-                className="rounded-lg border border-border bg-muted/60 px-3 py-2.5 text-sm text-foreground"
-              >
-                {error}
-              </div>
-            )}
+            {errors.root?.message && <FormAlert>{errors.root.message}</FormAlert>}
 
-            <div className="space-y-2">
-              <div className="flex items-baseline justify-between gap-3">
-                <Label htmlFor="create-ministry-name" className="text-sm font-medium">
-                  Nome do ministério
-                </Label>
-                <span className="text-xs text-muted-foreground">Obrigatório</span>
-              </div>
+            <FormField
+              label="Nome do ministério"
+              htmlFor="create-ministry-name"
+              error={errors.name?.message}
+              hint="Esse nome aparece na lista e na navegação do painel."
+              required
+            >
               <Input
                 id="create-ministry-name"
-                value={name}
-                onChange={(event) => setName(event.target.value)}
                 placeholder="Ex.: Louvor, Infantil, Recepção"
                 disabled={createMinistry.isPending}
                 autoFocus
                 autoComplete="off"
                 maxLength={80}
+                aria-invalid={errors.name ? true : undefined}
+                {...register("name")}
               />
-              <p className="text-xs text-muted-foreground">
-                Esse nome aparece na lista e na navegação do painel.
-              </p>
-            </div>
+            </FormField>
 
-            <div className="space-y-2">
-              <div className="flex items-baseline justify-between gap-3">
-                <Label
-                  htmlFor="create-ministry-description"
-                  className="text-sm font-medium"
-                >
-                  Descrição
-                </Label>
-                <span className="text-xs text-muted-foreground">Opcional</span>
-              </div>
+            <FormField
+              label="Descrição"
+              htmlFor="create-ministry-description"
+              hint="Ajuda a identificar o propósito da área na lista."
+            >
               <Textarea
                 id="create-ministry-description"
-                value={description}
-                onChange={(event) => {
-                  if (event.target.value.length <= DESCRIPTION_MAX_LENGTH) {
-                    setDescription(event.target.value);
-                  }
-                }}
                 placeholder="Ex.: Equipe responsável pela música e adoração nos cultos."
                 disabled={createMinistry.isPending}
                 rows={3}
+                maxLength={DESCRIPTION_MAX_LENGTH}
+                {...register("description")}
               />
-              <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
-                <span>Ajuda a identificar o propósito da área na lista.</span>
-                <span aria-live="polite">
-                  {description.length}/{DESCRIPTION_MAX_LENGTH}
-                </span>
-              </div>
-            </div>
+              <p className="text-right text-xs text-muted-foreground" aria-live="polite">
+                {description.length}/{DESCRIPTION_MAX_LENGTH}
+              </p>
+            </FormField>
           </div>
 
           <Separator />
@@ -232,7 +221,7 @@ export function CreateMinistryModal({ open, onClose }: CreateMinistryModalProps)
             </Button>
             <Button
               type="submit"
-              disabled={!canSubmit}
+              disabled={createMinistry.isPending}
               className="w-full sm:w-auto"
             >
               {createMinistry.isPending ? (

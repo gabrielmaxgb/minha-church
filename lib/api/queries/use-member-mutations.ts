@@ -1,7 +1,6 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
 
 import {
   createMember,
@@ -12,7 +11,6 @@ import {
   updateMember,
 } from "@/lib/api/queries/members.keys";
 import { queries } from "@/lib/api/queries";
-import { AUTH_ROUTES } from "@/constants/routes";
 import { useTenant } from "@/providers/auth-provider";
 
 function useInvalidateMembers() {
@@ -27,7 +25,6 @@ function useInvalidateMembers() {
 export function useCreateMember() {
   const { churchId } = useTenant();
   const invalidate = useInvalidateMembers();
-  const router = useRouter();
 
   return useMutation({
     mutationFn: (payload: CreateMemberPayload) => {
@@ -37,10 +34,7 @@ export function useCreateMember() {
 
       return createMember(churchId, payload);
     },
-    onSuccess: async () => {
-      await invalidate();
-      router.push(AUTH_ROUTES.members);
-    },
+    onSuccess: invalidate,
   });
 }
 

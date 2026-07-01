@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { useAuth } from "@/providers/auth-provider";
 
+import { ProfileSettings } from "./profile-settings";
 import { ChurchActivitySettings } from "./church-activity-settings";
 import { ChurchMembershipsSettings } from "./church-memberships-settings";
 import { ChurchRolesSettings } from "./church-roles-settings";
@@ -33,6 +34,7 @@ export function SettingsContent() {
       <SettingsNav items={navItems} active={active} onChange={setActive} />
 
       <div className="min-w-0 flex-1">
+        {active === "profile" && <ProfileSettings />}
         {active === "roles" && <ChurchRolesSettings />}
         {active === "members" && <ChurchMembershipsSettings />}
         {active === "activity" && <ChurchActivitySettings />}

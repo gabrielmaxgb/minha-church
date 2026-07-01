@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import {
   useAssignableRoles,
   useChurchMemberships,
@@ -14,16 +15,18 @@ import type { ChurchMembership } from "@/types/church-memberships";
 
 import {
   SettingsAlert,
-  SettingsDetailHeader,
   SettingsEmptyState,
+  SettingsExpandableRow,
+  SettingsFilterPill,
+  SettingsFilterPills,
+  SettingsListFilters,
   SettingsPanel,
-  SettingsSaveBar,
   SettingsSectionHeader,
-  SettingsSidebar,
-  SettingsSidebarItem,
-  SettingsSplitLayout,
+  SettingsSidebarToolbar,
   SettingsToggleRow,
 } from "./settings-shared";
+
+type RoleFilter = "all" | "owner" | "none" | string;
 
 function roleIdsEqual(a: string[], b: string[]) {
   if (a.length !== b.length) {
@@ -48,16 +51,53 @@ function formatMembershipLabel(membership: ChurchMembership) {
   return membership.roles.map((role) => role.name).join(", ");
 }
 
+function matchesSearch(membership: ChurchMembership, query: string) {
+  const normalized = query.trim().toLowerCase();
+
+  if (!normalized) {
+    return true;
+  }
+
+  return (
+    membership.user.name.toLowerCase().includes(normalized) ||
+    membership.user.email.toLowerCase().includes(normalized) ||
+    membership.memberName?.toLowerCase().includes(normalized)
+  );
+}
+
+function matchesRoleFilter(
+  membership: ChurchMembership,
+  roleFilter: RoleFilter,
+) {
+  if (roleFilter === "all") {
+    return true;
+  }
+
+  if (roleFilter === "owner") {
+    return membership.isOwner;
+  }
+
+  if (roleFilter === "none") {
+    return !membership.isOwner && membership.roles.length === 0;
+  }
+
+  return membership.roles.some((role) => role.id === roleFilter);
+}
+
 export function ChurchMembershipsSettings() {
   const { user, permissions } = useAuth();
   const { data: memberships, isLoading, isError } = useChurchMemberships();
   const { data: assignableRoles } = useAssignableRoles();
   const updateMembership = useUpdateChurchMembership();
 
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<string, string[]>>({});
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+  const [savingUserId, setSavingUserId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
+  const [expandedUserIds, setExpandedUserIds] = useState<Set<string>>(
+    () => new Set(),
+  );
 
   const canManage = canManageChurchMemberships(permissions);
 
@@ -73,25 +113,23 @@ export function ChurchMembershipsSettings() {
     [memberships],
   );
 
-  const selectedMembership =
-    sortedMemberships.find((item) => item.userId === selectedUserId) ?? null;
+  const sortedRoles = useMemo(
+    () =>
+      [...(assignableRoles ?? [])].sort((a, b) =>
+        a.name.localeCompare(b.name, "pt-BR"),
+      ),
+    [assignableRoles],
+  );
 
-  useEffect(() => {
-    if (sortedMemberships.length === 0) {
-      setSelectedUserId(null);
-      return;
-    }
-
-    if (
-      !selectedUserId ||
-      !sortedMemberships.some((item) => item.userId === selectedUserId)
-    ) {
-      const firstEditable = sortedMemberships.find((item) =>
-        canEditMembership(item, user?.id, user?.isOwner),
-      );
-      setSelectedUserId(firstEditable?.userId ?? sortedMemberships[0].userId);
-    }
-  }, [selectedUserId, sortedMemberships, user?.id, user?.isOwner]);
+  const filteredMemberships = useMemo(
+    () =>
+      sortedMemberships.filter(
+        (membership) =>
+          matchesSearch(membership, search) &&
+          matchesRoleFilter(membership, roleFilter),
+      ),
+    [roleFilter, search, sortedMemberships],
+  );
 
   useEffect(() => {
     if (!memberships) {
@@ -114,6 +152,21 @@ export function ChurchMembershipsSettings() {
     });
   }, [memberships]);
 
+  useEffect(() => {
+    setExpandedUserIds((current) => {
+      const visibleIds = new Set(filteredMemberships.map((item) => item.userId));
+      const next = new Set<string>();
+
+      for (const userId of current) {
+        if (visibleIds.has(userId)) {
+          next.add(userId);
+        }
+      }
+
+      return next;
+    });
+  }, [filteredMemberships]);
+
   if (!canManage) {
     return null;
   }
@@ -133,6 +186,20 @@ export function ChurchMembershipsSettings() {
       draft,
       membership.roles.map((role) => role.id),
     );
+  }
+
+  function toggleExpanded(userId: string) {
+    setExpandedUserIds((current) => {
+      const next = new Set(current);
+
+      if (next.has(userId)) {
+        next.delete(userId);
+      } else {
+        next.add(userId);
+      }
+
+      return next;
+    });
   }
 
   function toggleRole(membership: ChurchMembership, roleId: string) {
@@ -171,7 +238,7 @@ export function ChurchMembershipsSettings() {
     }
 
     setErrorMessage(null);
-    setIsSaving(true);
+    setSavingUserId(membership.userId);
 
     try {
       await updateMembership.mutateAsync({
@@ -185,22 +252,15 @@ export function ChurchMembershipsSettings() {
           : "Não foi possível salvar as alterações.",
       );
     } finally {
-      setIsSaving(false);
+      setSavingUserId(null);
     }
   }
-
-  const selectedDirty = selectedMembership
-    ? isMembershipDirty(selectedMembership)
-    : false;
-  const canEditSelected =
-    selectedMembership &&
-    canEditMembership(selectedMembership, user?.id, user?.isOwner);
 
   return (
     <div>
       <SettingsSectionHeader
         title="Usuários"
-        description="Atribua cargos a quem tem conta no sistema."
+        description="Aqui você define cargos e permissões de acesso."
       />
 
       {errorMessage && <SettingsAlert message={errorMessage} />}
@@ -217,78 +277,133 @@ export function ChurchMembershipsSettings() {
         </p>
       ) : (
         <SettingsPanel>
-          <SettingsSplitLayout
-            sidebar={
-              <SettingsSidebar>
-                {sortedMemberships.map((membership) => (
-                  <SettingsSidebarItem
+          <SettingsListFilters>
+            <SettingsSidebarToolbar
+              search={search}
+              onSearchChange={setSearch}
+              placeholder="Buscar nome ou e-mail..."
+              resultCount={filteredMemberships.length}
+              totalCount={sortedMemberships.length}
+            />
+            <SettingsFilterPills>
+              <SettingsFilterPill
+                active={roleFilter === "all"}
+                onClick={() => setRoleFilter("all")}
+              >
+                Todos
+              </SettingsFilterPill>
+              <SettingsFilterPill
+                active={roleFilter === "owner"}
+                onClick={() => setRoleFilter("owner")}
+              >
+                Proprietário
+              </SettingsFilterPill>
+              <SettingsFilterPill
+                active={roleFilter === "none"}
+                onClick={() => setRoleFilter("none")}
+              >
+                Sem cargo
+              </SettingsFilterPill>
+              {sortedRoles.map((role) => (
+                <SettingsFilterPill
+                  key={role.id}
+                  active={roleFilter === role.id}
+                  onClick={() => setRoleFilter(role.id)}
+                >
+                  {role.name}
+                </SettingsFilterPill>
+              ))}
+            </SettingsFilterPills>
+          </SettingsListFilters>
+
+          <div className="max-h-[min(62vh,560px)] space-y-2 overflow-y-auto p-3 sm:p-4">
+            {filteredMemberships.length === 0 ? (
+              <SettingsEmptyState message="Nenhum usuário encontrado com os filtros atuais." />
+            ) : (
+              filteredMemberships.map((membership) => {
+                const expanded = expandedUserIds.has(membership.userId);
+                const dirty = isMembershipDirty(membership);
+                const canEdit = canEditMembership(
+                  membership,
+                  user?.id,
+                  user?.isOwner,
+                );
+                const isSaving = savingUserId === membership.userId;
+
+                return (
+                  <SettingsExpandableRow
                     key={membership.id}
-                    label={membership.user.name}
-                    hint={formatMembershipLabel(membership)}
-                    selected={membership.userId === selectedUserId}
-                    dirty={isMembershipDirty(membership)}
-                    onClick={() => setSelectedUserId(membership.userId)}
-                  />
-                ))}
-              </SettingsSidebar>
-            }
-          >
-            {selectedMembership ? (
-              <>
-                <SettingsDetailHeader
-                  title={selectedMembership.user.name}
-                  description={`${selectedMembership.user.email}${selectedMembership.memberName ? ` · ${selectedMembership.memberName}` : ""}`}
-                />
+                    title={membership.user.name}
+                    subtitle={membership.user.email}
+                    badge={formatMembershipLabel(membership)}
+                    expanded={expanded}
+                    dirty={dirty}
+                    onToggle={() => toggleExpanded(membership.userId)}
+                  >
+                    {membership.memberName && (
+                      <p className="mb-3 text-xs text-muted-foreground">
+                        Membro vinculado: {membership.memberName}
+                      </p>
+                    )}
 
-                <div className="flex-1 overflow-y-auto px-5 py-2">
-                  {selectedMembership.isOwner && (
-                    <p className="mb-3 rounded-lg bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-                      Proprietário da igreja — cargos adicionais são opcionais.
-                    </p>
-                  )}
+                    {membership.isOwner && (
+                      <p className="mb-3 rounded-lg bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                        Proprietário da igreja — cargos adicionais são opcionais.
+                      </p>
+                    )}
 
-                  {!canEditSelected ? (
-                    <div className="space-y-2 py-4">
+                    {!canEdit ? (
                       <p className="text-sm text-muted-foreground">
-                        {selectedMembership.userId === user?.id
+                        {membership.userId === user?.id
                           ? "Você não pode alterar o próprio acesso."
                           : "Você não pode alterar o acesso deste usuário."}
                       </p>
-                      <p className="text-sm font-medium">
-                        {formatMembershipLabel(selectedMembership)}
+                    ) : assignableRoles && assignableRoles.length > 0 ? (
+                      <div className="divide-y divide-border/50 rounded-lg border border-border/60 bg-card px-2">
+                        {assignableRoles.map((role) => (
+                          <SettingsToggleRow
+                            key={role.id}
+                            label={role.name}
+                            checked={getDraftRoleIds(membership).includes(
+                              role.id,
+                            )}
+                            disabled={isSaving}
+                            onChange={() => toggleRole(membership, role.id)}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        Nenhum cargo disponível para atribuir.
                       </p>
-                    </div>
-                  ) : assignableRoles && assignableRoles.length > 0 ? (
-                    <div className="divide-y divide-border/50">
-                      {assignableRoles.map((role) => (
-                        <SettingsToggleRow
-                          key={role.id}
-                          label={role.name}
-                          checked={getDraftRoleIds(selectedMembership).includes(
-                            role.id,
-                          )}
-                          onChange={() =>
-                            toggleRole(selectedMembership, role.id)
-                          }
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <SettingsEmptyState message="Nenhum cargo disponível para atribuir." />
-                  )}
-                </div>
+                    )}
 
-                <SettingsSaveBar
-                  visible={Boolean(canEditSelected && selectedDirty)}
-                  saving={isSaving}
-                  onDiscard={() => discardChanges(selectedMembership)}
-                  onSave={() => void saveChanges(selectedMembership)}
-                />
-              </>
-            ) : (
-              <SettingsEmptyState message="Selecione um usuário." />
+                    {canEdit && dirty && (
+                      <div className="mt-4 flex justify-end gap-2">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          disabled={isSaving}
+                          onClick={() => discardChanges(membership)}
+                        >
+                          Descartar
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          disabled={isSaving}
+                          onClick={() => void saveChanges(membership)}
+                        >
+                          {isSaving ? "Salvando..." : "Salvar alterações"}
+                        </Button>
+                      </div>
+                    )}
+                  </SettingsExpandableRow>
+                );
+              })
             )}
-          </SettingsSplitLayout>
+          </div>
         </SettingsPanel>
       )}
     </div>

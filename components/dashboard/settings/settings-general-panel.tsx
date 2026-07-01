@@ -1,7 +1,6 @@
 "use client";
 
-import { formatUserAccessLabel } from "@/lib/user-display";
-import { useAuth, useTenant } from "@/providers/auth-provider";
+import { useTenant } from "@/providers/auth-provider";
 
 import {
   SettingsPanel,
@@ -9,14 +8,13 @@ import {
 } from "./settings-shared";
 
 export function SettingsGeneralPanel() {
-  const { user } = useAuth();
   const { church, churchId, churches } = useTenant();
 
   return (
     <div>
       <SettingsSectionHeader
         title="Geral"
-        description="Informações da igreja ativa e da sua conta."
+        description="Informações da igreja ativa."
       />
 
       <div className="space-y-4">
@@ -43,22 +41,6 @@ export function SettingsGeneralPanel() {
                   .join(", ")}
               />
             )}
-          </div>
-        </SettingsPanel>
-
-        <SettingsPanel>
-          <div className="border-b border-border/70 px-5 py-4">
-            <h3 className="text-sm font-medium">Sua conta</h3>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              {user?.email ?? "—"}
-            </p>
-          </div>
-          <div className="divide-y divide-border/50 px-5 py-2">
-            <SettingsReadOnlyRow label="Nome" value={user?.name ?? "—"} />
-            <SettingsReadOnlyRow
-              label="Acesso"
-              value={user ? formatUserAccessLabel(user) : "—"}
-            />
           </div>
         </SettingsPanel>
       </div>

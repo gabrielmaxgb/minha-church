@@ -11,11 +11,13 @@ import {
 } from "react";
 
 import {
+  changePasswordRequest,
   getSessionRequest,
   loginRequest,
   logoutRequest,
   refreshSessionDeduped,
   switchChurchRequest,
+  updateProfileRequest,
 } from "@/lib/api/auth";
 import {
   clearAuthSession,
@@ -23,7 +25,7 @@ import {
   persistActiveChurch,
 } from "@/lib/auth/cookies";
 import { PUBLIC_ROUTES } from "@/constants/routes";
-import type { AuthResponse, Church, LoginCredentials, User, UserPermissions } from "@/types/auth";
+import type { AuthResponse, ChangePasswordPayload, Church, LoginCredentials, UpdateProfilePayload, User, UserPermissions } from "@/types/auth";
 
 function redirectToLogin() {
   window.location.replace(PUBLIC_ROUTES.login);
@@ -36,9 +38,11 @@ interface AuthContextValue {
   permissions: UserPermissions | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (credentials: LoginCredentials) => Promise<void>;
+  login: (credentials: LoginCredentials) => Promise<AuthResponse>;
   logout: () => Promise<void>;
   switchChurch: (churchId: string) => Promise<void>;
+  changePassword: (payload: ChangePasswordPayload) => Promise<void>;
+  updateProfile: (payload: UpdateProfilePayload) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -191,6 +195,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       scheduleTokenRefresh(next.expiresIn);
       setIsLoading(false);
+
+      return session;
+    },
+    [scheduleTokenRefresh, sessionSetters],
+  );
+
+  const changePassword = useCallback(
+    async (payload: ChangePasswordPayload) => {
+      const session = await changePasswordRequest(payload);
+      const next = commitSession(session, undefined, sessionSetters);
+
+      scheduleTokenRefresh(next.expiresIn);
+    },
+    [scheduleTokenRefresh, sessionSetters],
+  );
+
+  const updateProfile = useCallback(
+    async (payload: UpdateProfilePayload) => {
+      const session = await updateProfileRequest(payload);
+      const next = commitSession(session, undefined, sessionSetters);
+
+      scheduleTokenRefresh(next.expiresIn);
     },
     [scheduleTokenRefresh, sessionSetters],
   );
@@ -241,8 +267,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       login,
       logout,
       switchChurch,
+      changePassword,
+      updateProfile,
     }),
-    [church, churches, isLoading, login, logout, permissions, switchChurch, user],
+    [changePassword, church, churches, isLoading, login, logout, permissions, switchChurch, updateProfile, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

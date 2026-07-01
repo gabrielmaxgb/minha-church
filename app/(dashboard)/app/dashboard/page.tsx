@@ -63,7 +63,7 @@ export default function DashboardHomePage() {
                   <h2 className="font-medium">Destaques da igreja</h2>
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Atividades da igreja inteira — não vinculadas a um ministério.
+                  Atividades da igreja.
                 </p>
               </div>
               <Button variant="outline" size="sm" asChild>

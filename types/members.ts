@@ -20,6 +20,7 @@ export interface Member {
   churchId: string;
   name: string;
   email: string | null;
+  cpf: string | null;
   phone: string | null;
   phoneSecondary: string | null;
   birthDate: string | null;
@@ -57,6 +58,16 @@ export interface ListMembersParams {
   search?: string;
   page?: number;
   limit?: number;
+}
+
+export interface MemberAccountCredentials {
+  login: string;
+  temporaryPassword: string;
+  mustChangePassword: true;
+}
+
+export interface CreateMemberResponse extends Member {
+  account: MemberAccountCredentials;
 }
 
 export const MEMBER_STATUS_LABELS: Record<MemberStatus, string> = {

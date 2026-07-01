@@ -6,6 +6,7 @@ import type {
   UpdateMemberPayload,
 } from "@/lib/members/form";
 import type {
+  CreateMemberResponse,
   ListMembersParams,
   Member,
   MembersListResponse,
@@ -51,8 +52,8 @@ async function fetchMember(
 async function createMember(
   churchId: string,
   payload: CreateMemberPayload,
-): Promise<Member> {
-  return apiClient<Member>(buildTenantPath(churchId, "/members"), {
+): Promise<CreateMemberResponse> {
+  return apiClient<CreateMemberResponse>(buildTenantPath(churchId, "/members"), {
     churchId,
     method: "POST",
     body: JSON.stringify(payload),

@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { formatUserAccessLabel } from "@/lib/user-display";
+import { getUserLoginLabel } from "@/lib/user-profile";
 import { AUTH_ROUTES } from "@/constants/routes";
 import { useAuth } from "@/providers/auth-provider";
 import { cn } from "@/lib/utils";
@@ -139,7 +140,7 @@ export function DashboardTopbar({
                     <div className="border-b border-border px-3 py-2">
                       <p className="text-sm font-medium">{user.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {user.email}
+                        {getUserLoginLabel(user)}
                       </p>
                       <p className="mt-1 text-xs text-muted-foreground">
                         {formatUserAccessLabel(user)}

@@ -7,7 +7,7 @@ import { canManageChurchMemberships } from "@/lib/church-memberships/constants";
 import { canManageChurchRoles } from "@/lib/permissions";
 import type { UserPermissions } from "@/types/auth";
 
-export type SettingsSection = "roles" | "members" | "activity" | "general";
+export type SettingsSection = "profile" | "roles" | "members" | "activity" | "general";
 
 export interface SettingsNavItem {
   id: SettingsSection;
@@ -17,6 +17,11 @@ export interface SettingsNavItem {
 
 const ALL_ITEMS: SettingsNavItem[] = [
   {
+    id: "profile",
+    label: "Perfil",
+    description: "Seus dados pessoais",
+  },
+  {
     id: "roles",
     label: "Cargos",
     description: "Permissões por cargo",
@@ -24,7 +29,7 @@ const ALL_ITEMS: SettingsNavItem[] = [
   {
     id: "members",
     label: "Usuários",
-    description: "Quem tem acesso",
+    description: "Cargos e permissões",
   },
   {
     id: "activity",
@@ -34,13 +39,17 @@ const ALL_ITEMS: SettingsNavItem[] = [
   {
     id: "general",
     label: "Geral",
-    description: "Igreja e sua conta",
+    description: "Informações da igreja",
   },
 ];
 
 export function useSettingsNav(permissions: UserPermissions | null) {
   return useMemo(() => {
     return ALL_ITEMS.filter((item) => {
+      if (item.id === "profile") {
+        return true;
+      }
+
       if (item.id === "roles") {
         return canManageChurchRoles(permissions ?? emptyPermissions);
       }
@@ -49,7 +58,11 @@ export function useSettingsNav(permissions: UserPermissions | null) {
         return canManageChurchMemberships(permissions);
       }
 
-      return true;
+      if (item.id === "activity" || item.id === "general") {
+        return permissions?.settings.access ?? false;
+      }
+
+      return false;
     });
   }, [permissions]);
 }
@@ -102,5 +115,5 @@ export function SettingsNav({
 export function getDefaultSection(
   items: SettingsNavItem[],
 ): SettingsSection {
-  return items[0]?.id ?? "general";
+  return items.find((item) => item.id === "profile")?.id ?? items[0]?.id ?? "profile";
 }

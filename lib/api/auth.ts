@@ -1,4 +1,9 @@
-import type { AuthResponse, LoginCredentials } from "@/types/auth";
+import type {
+  AuthResponse,
+  ChangePasswordPayload,
+  LoginCredentials,
+  UpdateProfilePayload,
+} from "@/types/auth";
 import { apiClient } from "@/lib/api/client";
 
 export async function loginRequest(
@@ -8,6 +13,24 @@ export async function loginRequest(
     method: "POST",
     body: JSON.stringify(credentials),
     skipAuth: true,
+  });
+}
+
+export async function changePasswordRequest(
+  payload: ChangePasswordPayload,
+): Promise<AuthResponse> {
+  return apiClient<AuthResponse>("/auth/change-password", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateProfileRequest(
+  payload: UpdateProfilePayload,
+): Promise<AuthResponse> {
+  return apiClient<AuthResponse>("/auth/me", {
+    method: "PATCH",
+    body: JSON.stringify(payload),
   });
 }
 

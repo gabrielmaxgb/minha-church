@@ -8,6 +8,7 @@ import type {
 export interface MemberFormValues {
   name: string;
   email: string;
+  cpf: string;
   phone: string;
   phoneSecondary: string;
   birthDate: string;
@@ -30,6 +31,7 @@ export interface MemberFormValues {
 export interface CreateMemberPayload {
   name: string;
   email?: string;
+  cpf?: string;
   phone?: string;
   phoneSecondary?: string;
   birthDate?: string;
@@ -52,6 +54,7 @@ export interface CreateMemberPayload {
 export interface UpdateMemberPayload {
   name?: string;
   email?: string | null;
+  cpf?: string | null;
   phone?: string | null;
   phoneSecondary?: string | null;
   birthDate?: string | null;
@@ -97,6 +100,7 @@ export function emptyMemberFormValues(
   return {
     name: "",
     email: "",
+    cpf: "",
     phone: "",
     phoneSecondary: "",
     birthDate: "",
@@ -121,6 +125,7 @@ export function memberToFormValues(member: Member): MemberFormValues {
   return {
     name: member.name,
     email: member.email ?? "",
+    cpf: member.cpf ?? "",
     phone: member.phone ?? "",
     phoneSecondary: member.phoneSecondary ?? "",
     birthDate: toDateInputValue(member.birthDate),
@@ -141,12 +146,17 @@ export function memberToFormValues(member: Member): MemberFormValues {
   };
 }
 
+function normalizeCpf(value: string): string {
+  return value.replace(/\D/g, "");
+}
+
 export function formValuesToCreatePayload(
   values: MemberFormValues,
 ): CreateMemberPayload {
   return {
     name: values.name.trim(),
     email: optionalString(values.email),
+    cpf: optionalString(normalizeCpf(values.cpf)) || undefined,
     phone: optionalString(values.phone),
     phoneSecondary: optionalString(values.phoneSecondary),
     birthDate: optionalString(values.birthDate),
@@ -176,6 +186,7 @@ export function formValuesToUpdatePayload(
   return {
     name: values.name.trim(),
     email: nullableString(values.email),
+    cpf: nullableString(normalizeCpf(values.cpf)),
     phone: nullableString(values.phone),
     phoneSecondary: nullableString(values.phoneSecondary),
     birthDate: nullableString(values.birthDate),

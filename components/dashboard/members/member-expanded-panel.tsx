@@ -1,10 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Trash2 } from "lucide-react";
+import { FormProvider, useForm } from "react-hook-form";
 
 import { MemberForm } from "@/components/dashboard/members/member-form";
 import { Button } from "@/components/ui/button";
+import { FormAlert } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -15,7 +18,9 @@ import {
 import {
   formValuesToUpdatePayload,
   memberToFormValues,
+  type MemberFormValues,
 } from "@/lib/members/form";
+import { createMemberFormSchema } from "@/lib/validation/schemas";
 import { formatDate } from "@/lib/utils";
 import type { Member } from "@/types/members";
 import { MEMBER_STATUS_LABELS } from "@/types/members";
@@ -90,53 +95,55 @@ export function MemberExpandedPanel({
   member,
   canManage,
 }: MemberExpandedPanelProps) {
-  const [values, setValues] = useState(() => memberToFormValues(member));
-  const [error, setError] = useState<string | null>(null);
   const [confirmName, setConfirmName] = useState("");
   const [isEditing, setIsEditing] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const form = useForm<MemberFormValues>({
+    resolver: zodResolver(createMemberFormSchema({ requireLogin: false })),
+    defaultValues: memberToFormValues(member),
+    mode: "onBlur",
+  });
 
   const updateMember = useUpdateMember(member.id);
   const deleteMember = useDeleteMember(member.id);
   const receiveMember = useReceiveMember();
 
   useEffect(() => {
-    setValues(memberToFormValues(member));
+    form.reset(memberToFormValues(member));
     setConfirmName("");
-    setError(null);
-  }, [member]);
+    setDeleteError(null);
+    form.clearErrors("root");
+  }, [member, form]);
 
   const canDelete = confirmName.trim() === member.name;
 
-  async function handleSave(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError(null);
-
-    if (!values.name.trim()) {
-      setError("Informe o nome da pessoa.");
-      return;
-    }
-
+  const onSubmit = form.handleSubmit(async (values) => {
     try {
       await updateMember.mutateAsync(formValuesToUpdatePayload(values));
       setIsEditing(false);
+      form.clearErrors("root");
     } catch (submitError) {
-      setError(
-        submitError instanceof Error
-          ? submitError.message
-          : "Não foi possível salvar as alterações.",
-      );
+      form.setError("root", {
+        message:
+          submitError instanceof Error
+            ? submitError.message
+            : "Não foi possível salvar as alterações.",
+      });
     }
-  }
+  });
 
   async function handleDelete() {
     if (!canDelete) {
       return;
     }
 
+    setDeleteError(null);
+
     try {
       await deleteMember.mutateAsync();
     } catch (submitError) {
-      setError(
+      setDeleteError(
         submitError instanceof Error
           ? submitError.message
           : "Não foi possível excluir o cadastro.",
@@ -175,21 +182,15 @@ export function MemberExpandedPanel({
   }
 
   return (
-    <form onSubmit={handleSave} className="space-y-6">
-      {error && (
-        <div
-          role="alert"
-          className="rounded-lg border border-border bg-muted/60 px-3 py-2.5 text-sm"
-        >
-          {error}
-        </div>
-      )}
+    <FormProvider {...form}>
+      <form onSubmit={onSubmit} className="space-y-6" noValidate>
+        {form.formState.errors.root?.message && (
+          <FormAlert>{form.formState.errors.root.message}</FormAlert>
+        )}
 
-      <MemberForm
-        values={values}
-        onChange={setValues}
-        disabled={updateMember.isPending || deleteMember.isPending}
-      />
+        <MemberForm
+          disabled={updateMember.isPending || deleteMember.isPending}
+        />
 
       {member.ministries.length > 0 && (
         <div>
@@ -212,7 +213,7 @@ export function MemberExpandedPanel({
         <Button
           type="submit"
           size="sm"
-          disabled={updateMember.isPending || !values.name.trim()}
+          disabled={updateMember.isPending}
         >
           {updateMember.isPending ? (
             <>
@@ -230,9 +231,9 @@ export function MemberExpandedPanel({
           variant="outline"
           disabled={updateMember.isPending}
           onClick={() => {
-            setValues(memberToFormValues(member));
+            form.reset(memberToFormValues(member));
             setIsEditing(false);
-            setError(null);
+            form.clearErrors("root");
           }}
         >
           Cancelar
@@ -252,6 +253,8 @@ export function MemberExpandedPanel({
       </div>
 
       <Separator />
+
+      {deleteError && <FormAlert>{deleteError}</FormAlert>}
 
       <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
         <p className="text-sm font-medium text-destructive">Excluir cadastro</p>
@@ -281,5 +284,6 @@ export function MemberExpandedPanel({
         </div>
       </div>
     </form>
+    </FormProvider>
   );
 }
