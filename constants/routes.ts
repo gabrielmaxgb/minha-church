@@ -6,6 +6,8 @@ export const PUBLIC_ROUTES = {
   faq: "/faq",
   security: "/seguranca",
   login: "/login",
+  forgotPassword: "/recuperar-senha",
+  resetPassword: "/redefinir-senha",
 } as const;
 
 export const AUTH_ROUTES = {
@@ -27,6 +29,12 @@ export function ministryDetailPath(ministryId: string): string {
 
 export function memberDetailPath(memberId: string): string {
   return `${AUTH_ROUTES.members}/${memberId}`;
+}
+
+export function settingsSectionPath(
+  section: "password-reset-requests" | "pending-users",
+): string {
+  return `${AUTH_ROUTES.settings}?section=${section}`;
 }
 
 export const MEMBER_CREATE_ROUTE = `${AUTH_ROUTES.members}/novo` as const;

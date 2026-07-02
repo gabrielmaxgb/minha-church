@@ -4,7 +4,9 @@ import { apiClient, buildTenantPath } from "@/lib/api/client";
 import type {
   ChurchMembership,
   ChurchMembershipRole,
+  PasswordResetRequest,
   PendingAccessUser,
+  ResetMemberPasswordResult,
   UpdateMembershipPayload,
 } from "@/types/church-memberships";
 
@@ -50,6 +52,28 @@ async function fetchPendingAccessUsers(
   );
 }
 
+async function fetchPasswordResetRequests(
+  churchId: string,
+): Promise<PasswordResetRequest[]> {
+  return apiClient<PasswordResetRequest[]>(
+    buildTenantPath(churchId, "/memberships/password-reset-requests"),
+    { churchId },
+  );
+}
+
+async function resetMemberPassword(
+  churchId: string,
+  userId: string,
+): Promise<ResetMemberPasswordResult> {
+  return apiClient<ResetMemberPasswordResult>(
+    buildTenantPath(churchId, `/memberships/${userId}/reset-password`),
+    {
+      churchId,
+      method: "POST",
+    },
+  );
+}
+
 export const membershipsKeys = createQueryKeys("memberships", {
   list: (churchId: string) => ({
     queryKey: [churchId],
@@ -63,11 +87,17 @@ export const membershipsKeys = createQueryKeys("memberships", {
     queryKey: [churchId, "pending-access"],
     queryFn: () => fetchPendingAccessUsers(churchId),
   }),
+  passwordResetRequests: (churchId: string) => ({
+    queryKey: [churchId, "password-reset-requests"],
+    queryFn: () => fetchPasswordResetRequests(churchId),
+  }),
 });
 
 export {
   fetchAssignableRoles,
   fetchChurchMemberships,
+  fetchPasswordResetRequests,
   fetchPendingAccessUsers,
+  resetMemberPassword,
   updateChurchMembership,
 };

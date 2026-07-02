@@ -97,7 +97,7 @@ export function PendingUsersSettings() {
     <div>
       <SettingsSectionHeader
         title="Últimos usuários adicionados"
-        description="Pessoas que ainda não trocaram a senha temporária. Use esta lista para repassar o acesso caso o usuário perca a senha."
+        description="Pessoas que ainda não trocaram a senha temporária. Use esta lista para repassar o acesso. Para quem já trocou e perdeu a senha, veja Solicitações de senha ou use Gerar nova senha quando disponível."
       />
 
       <SettingsPanel>

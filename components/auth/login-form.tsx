@@ -35,6 +35,7 @@ function LoginFormContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingIdentifier, setLoadingIdentifier] = useState<string | null>(null);
+  const passwordResetSuccess = searchParams.get("reset") === "success";
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -100,6 +101,12 @@ function LoginFormContent() {
 
       <form onSubmit={onSubmit} noValidate>
         <CardContent className="space-y-4">
+          {passwordResetSuccess && (
+            <FormAlert variant="success">
+              Senha redefinida com sucesso. Faça login com sua nova senha.
+            </FormAlert>
+          )}
+
           {errors.root?.message && <FormAlert>{errors.root.message}</FormAlert>}
 
           <FormField
@@ -131,7 +138,7 @@ function LoginFormContent() {
                 </span>
               </label>
               <Link
-                href="#"
+                href={PUBLIC_ROUTES.forgotPassword}
                 className="text-xs text-muted-foreground transition-colors hover:text-foreground"
               >
                 Esqueceu a senha?

@@ -44,7 +44,8 @@ export {
   useDeleteChurchRole,
   useUpdateChurchRole,
 } from "@/lib/api/queries/use-church-role-mutations";
-export { useChurchMemberships, useAssignableRoles, usePendingAccessUsers } from "@/lib/api/queries/use-church-memberships";
+export { useChurchMemberships, useAssignableRoles, usePasswordResetRequests, usePendingAccessUsers } from "@/lib/api/queries/use-church-memberships";
+export { useResetMemberPassword } from "@/lib/api/queries/use-reset-member-password";
 export { useUpdateChurchMembership } from "@/lib/api/queries/use-membership-mutations";
 export { useMinistries, useMinistry, useMinistryEvents, useMinistryMembers } from "@/lib/api/queries/use-ministries";
 export {

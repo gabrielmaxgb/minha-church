@@ -53,5 +53,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/app", "/app/:path*", "/login"],
+  matcher: ["/app", "/app/:path*", "/login", "/recuperar-senha", "/redefinir-senha"],
 };

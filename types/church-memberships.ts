@@ -37,3 +37,23 @@ export interface PendingAccessUser {
   temporaryPassword: string;
   createdAt: string;
 }
+
+export interface PasswordResetRequest {
+  id: string;
+  userId: string;
+  name: string;
+  login: string;
+  email: string | null;
+  cpf: string | null;
+  phone: string | null;
+  createdAt: string;
+}
+
+export interface ResetMemberPasswordResult {
+  userId: string;
+  name: string;
+  login: string;
+  email: string | null;
+  cpf: string | null;
+  temporaryPassword: string;
+}

@@ -10,6 +10,7 @@ import type { UserPermissions } from "@/types/auth";
 export type SettingsSection =
   | "profile"
   | "pending-users"
+  | "password-reset-requests"
   | "roles"
   | "members"
   | "activity"
@@ -43,6 +44,11 @@ const ALL_ITEMS: SettingsNavItem[] = [
     description: "Senhas temporárias pendentes",
   },
   {
+    id: "password-reset-requests",
+    label: "Solicitações de senha",
+    description: "Recuperação sem e-mail",
+  },
+  {
     id: "activity",
     label: "Atividade",
     description: "Histórico de mudanças",
@@ -65,7 +71,7 @@ export function useSettingsNav(permissions: UserPermissions | null) {
         return canManageChurchRoles(permissions ?? emptyPermissions);
       }
 
-      if (item.id === "members" || item.id === "pending-users") {
+      if (item.id === "members" || item.id === "pending-users" || item.id === "password-reset-requests") {
         return canManageChurchMemberships(permissions);
       }
 
@@ -127,4 +133,8 @@ export function getDefaultSection(
   items: SettingsNavItem[],
 ): SettingsSection {
   return items.find((item) => item.id === "profile")?.id ?? items[0]?.id ?? "profile";
+}
+
+export function isSettingsSection(value: string): value is SettingsSection {
+  return ALL_ITEMS.some((item) => item.id === value);
 }

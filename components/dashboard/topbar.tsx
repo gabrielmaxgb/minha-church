@@ -5,6 +5,7 @@ import { ChevronDown, LogOut, Menu, User } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { NotificationsBell } from "@/components/dashboard/notifications-bell";
 import { formatUserAccessLabel } from "@/lib/user-display";
 import { getUserLoginLabel } from "@/lib/user-profile";
 import { AUTH_ROUTES } from "@/constants/routes";
@@ -63,6 +64,8 @@ export function DashboardTopbar({
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
+          <NotificationsBell />
+
           {church && (
             <div className="relative hidden sm:block">
               <button
