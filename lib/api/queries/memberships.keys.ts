@@ -4,6 +4,7 @@ import { apiClient, buildTenantPath } from "@/lib/api/client";
 import type {
   ChurchMembership,
   ChurchMembershipRole,
+  PendingAccessUser,
   UpdateMembershipPayload,
 } from "@/types/church-memberships";
 
@@ -40,6 +41,15 @@ async function fetchAssignableRoles(
   );
 }
 
+async function fetchPendingAccessUsers(
+  churchId: string,
+): Promise<PendingAccessUser[]> {
+  return apiClient<PendingAccessUser[]>(
+    buildTenantPath(churchId, "/memberships/pending-access"),
+    { churchId },
+  );
+}
+
 export const membershipsKeys = createQueryKeys("memberships", {
   list: (churchId: string) => ({
     queryKey: [churchId],
@@ -49,6 +59,15 @@ export const membershipsKeys = createQueryKeys("memberships", {
     queryKey: [churchId, "assignable-roles"],
     queryFn: () => fetchAssignableRoles(churchId),
   }),
+  pendingAccess: (churchId: string) => ({
+    queryKey: [churchId, "pending-access"],
+    queryFn: () => fetchPendingAccessUsers(churchId),
+  }),
 });
 
-export { fetchAssignableRoles, fetchChurchMemberships, updateChurchMembership };
+export {
+  fetchAssignableRoles,
+  fetchChurchMemberships,
+  fetchPendingAccessUsers,
+  updateChurchMembership,
+};

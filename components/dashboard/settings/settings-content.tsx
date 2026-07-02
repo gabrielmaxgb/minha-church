@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/providers/auth-provider";
 
 import { ProfileSettings } from "./profile-settings";
+import { PendingUsersSettings } from "./pending-users-settings";
 import { ChurchActivitySettings } from "./church-activity-settings";
 import { ChurchMembershipsSettings } from "./church-memberships-settings";
 import { ChurchRolesSettings } from "./church-roles-settings";
@@ -35,6 +36,7 @@ export function SettingsContent() {
 
       <div className="min-w-0 flex-1">
         {active === "profile" && <ProfileSettings />}
+        {active === "pending-users" && <PendingUsersSettings />}
         {active === "roles" && <ChurchRolesSettings />}
         {active === "members" && <ChurchMembershipsSettings />}
         {active === "activity" && <ChurchActivitySettings />}

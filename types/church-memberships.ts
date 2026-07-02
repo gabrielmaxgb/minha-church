@@ -26,3 +26,14 @@ export interface UpdateMembershipPayload {
   roleIds?: string[];
   isOwner?: boolean;
 }
+
+export interface PendingAccessUser {
+  userId: string;
+  name: string;
+  login: string;
+  email: string | null;
+  cpf: string | null;
+  phone: string | null;
+  temporaryPassword: string;
+  createdAt: string;
+}

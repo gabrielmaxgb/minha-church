@@ -154,7 +154,7 @@ function ProfileSettingsForm({
               >
                 <Input
                   id="profile-cpf"
-                  value={formatCpf(user.cpf)}
+                  defaultValue={formatCpf(user.cpf)}
                   disabled
                   readOnly
                 />

@@ -10,7 +10,7 @@ import {
   type UpdateMemberPayload,
   updateMember,
 } from "@/lib/api/queries/members.keys";
-import { queries } from "@/lib/api/queries";
+import { membershipsKeys, queries } from "@/lib/api/queries";
 import { useTenant } from "@/providers/auth-provider";
 
 function useInvalidateMembers() {
@@ -24,6 +24,7 @@ function useInvalidateMembers() {
 
 export function useCreateMember() {
   const { churchId } = useTenant();
+  const queryClient = useQueryClient();
   const invalidate = useInvalidateMembers();
 
   return useMutation({
@@ -34,7 +35,10 @@ export function useCreateMember() {
 
       return createMember(churchId, payload);
     },
-    onSuccess: invalidate,
+    onSuccess: async () => {
+      await invalidate();
+      await queryClient.invalidateQueries({ queryKey: membershipsKeys._def });
+    },
   });
 }
 

@@ -22,3 +22,12 @@ export function useAssignableRoles() {
     enabled: Boolean(churchId),
   });
 }
+
+export function usePendingAccessUsers() {
+  const { churchId } = useTenant();
+
+  return useQuery({
+    ...membershipsKeys.pendingAccess(churchId ?? "unknown"),
+    enabled: Boolean(churchId),
+  });
+}

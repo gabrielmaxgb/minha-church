@@ -7,7 +7,13 @@ import { canManageChurchMemberships } from "@/lib/church-memberships/constants";
 import { canManageChurchRoles } from "@/lib/permissions";
 import type { UserPermissions } from "@/types/auth";
 
-export type SettingsSection = "profile" | "roles" | "members" | "activity" | "general";
+export type SettingsSection =
+  | "profile"
+  | "pending-users"
+  | "roles"
+  | "members"
+  | "activity"
+  | "general";
 
 export interface SettingsNavItem {
   id: SettingsSection;
@@ -32,6 +38,11 @@ const ALL_ITEMS: SettingsNavItem[] = [
     description: "Cargos e permissões",
   },
   {
+    id: "pending-users",
+    label: "Últimos usuários adicionados",
+    description: "Senhas temporárias pendentes",
+  },
+  {
     id: "activity",
     label: "Atividade",
     description: "Histórico de mudanças",
@@ -54,7 +65,7 @@ export function useSettingsNav(permissions: UserPermissions | null) {
         return canManageChurchRoles(permissions ?? emptyPermissions);
       }
 
-      if (item.id === "members") {
+      if (item.id === "members" || item.id === "pending-users") {
         return canManageChurchMemberships(permissions);
       }
 

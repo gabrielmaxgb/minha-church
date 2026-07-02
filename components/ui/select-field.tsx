@@ -338,6 +338,16 @@ export const SelectField = forwardRef<HTMLSelectElement, SelectFieldProps>(
           ref={hiddenSelectRef}
           name={name}
           value={selectedValue}
+          onChange={(event) => {
+            const nextValue = event.target.value;
+
+            if (value === undefined) {
+              setUncontrolledValue(nextValue);
+            }
+
+            onChange?.(event);
+          }}
+          onBlur={onBlur}
           required={required}
           disabled={disabled}
           tabIndex={-1}
