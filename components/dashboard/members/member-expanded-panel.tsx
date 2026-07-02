@@ -6,6 +6,7 @@ import { Loader2, Trash2 } from "lucide-react";
 import { FormProvider, useForm } from "react-hook-form";
 
 import { MemberForm } from "@/components/dashboard/members/member-form";
+import { MemberMinistriesSection } from "@/components/dashboard/members/member-ministries-section";
 import { Button } from "@/components/ui/button";
 import { FormAlert } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
@@ -30,7 +31,13 @@ interface MemberExpandedPanelProps {
   canManage: boolean;
 }
 
-function ReadOnlyDetails({ member }: { member: Member }) {
+function ReadOnlyDetails({
+  member,
+  showMinistries = true,
+}: {
+  member: Member;
+  showMinistries?: boolean;
+}) {
   const address = [
     member.street,
     member.number,
@@ -71,7 +78,7 @@ function ReadOnlyDetails({ member }: { member: Member }) {
         </div>
       </dl>
 
-      {member.ministries.length > 0 && (
+      {showMinistries && member.ministries.length > 0 && (
         <div>
           <p className="text-xs text-muted-foreground">Ministérios</p>
           <ul className="mt-2 flex flex-wrap gap-2">
@@ -158,7 +165,9 @@ export function MemberExpandedPanel({
   if (!isEditing) {
     return (
       <div className="space-y-4">
-        <ReadOnlyDetails member={member} />
+        <ReadOnlyDetails member={member} showMinistries={!canManage} />
+
+        {canManage && <MemberMinistriesSection member={member} />}
 
         <div className="flex flex-wrap gap-2">
           <Button type="button" size="sm" onClick={() => setIsEditing(true)}>
@@ -192,22 +201,10 @@ export function MemberExpandedPanel({
           disabled={updateMember.isPending || deleteMember.isPending}
         />
 
-      {member.ministries.length > 0 && (
-        <div>
-          <p className="text-xs font-medium text-muted-foreground">Ministérios</p>
-          <ul className="mt-2 flex flex-wrap gap-2">
-            {member.ministries.map((link) => (
-              <li
-                key={link.id}
-                className="rounded-md border border-border bg-background px-2.5 py-1 text-xs"
-              >
-                {link.ministryName}
-                {link.ministryRoleName ? ` · ${link.ministryRoleName}` : ""}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+        <MemberMinistriesSection
+          member={member}
+          disabled={updateMember.isPending || deleteMember.isPending}
+        />
 
       <div className="flex flex-wrap gap-2">
         <Button

@@ -49,6 +49,8 @@ export { useUpdateChurchMembership } from "@/lib/api/queries/use-membership-muta
 export { useMinistries, useMinistry, useMinistryEvents, useMinistryMembers } from "@/lib/api/queries/use-ministries";
 export {
   useAssignMemberToMinistry,
+  useMemberMinistryAssignment,
+  useMemberMinistryRemoval,
   useRemoveMemberFromMinistry,
   useUpdateMemberMinistryRole,
 } from "@/lib/api/queries/use-member-ministry-mutations";

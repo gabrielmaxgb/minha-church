@@ -4,10 +4,10 @@ import { useEffect, useId, useMemo, useState } from "react";
 import { Loader2, UserPlus, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SelectField } from "@/components/ui/select-field";
 import { Separator } from "@/components/ui/separator";
+import { TypeaheadSelect } from "@/components/ui/typeahead-select";
 import { useAssignMemberToMinistry, useMembers } from "@/lib/api/queries";
 import type { Ministry, MinistryMember } from "@/types/ministries";
 
@@ -25,7 +25,6 @@ export function AddMinistryMemberModal({
   onClose,
 }: AddMinistryMemberModalProps) {
   const titleId = useId();
-  const [search, setSearch] = useState("");
   const [memberId, setMemberId] = useState("");
   const [roleId, setRoleId] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -43,27 +42,24 @@ export function AddMinistryMemberModal({
 
     return members
       .filter((member) => !assignedIds.has(member.id))
-      .filter((member) => {
-        if (!search.trim()) {
-          return true;
-        }
-
-        const query = search.trim().toLowerCase();
-
-        return (
-          member.name.toLowerCase().includes(query) ||
-          member.email?.toLowerCase().includes(query) ||
-          member.phone?.includes(query)
-        );
-      })
       .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
-  }, [membersData, assignedIds, search]);
+  }, [membersData, assignedIds]);
+
+  const memberOptions = useMemo(
+    () =>
+      availableMembers.map((member) => ({
+        value: member.id,
+        label: member.name,
+        description: member.email ?? member.phone ?? undefined,
+        searchText: [member.email, member.phone, member.cpf].filter(Boolean).join(" "),
+      })),
+    [availableMembers],
+  );
 
   const roles = [...ministry.roles].sort((a, b) => a.sortOrder - b.sortOrder);
 
   useEffect(() => {
     if (!open) {
-      setSearch("");
       setMemberId("");
       setRoleId("");
       setError(null);
@@ -142,17 +138,17 @@ export function AddMinistryMemberModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative z-10 flex max-h-[min(92dvh,640px)] w-full max-w-lg flex-col rounded-t-2xl border border-border bg-background shadow-2xl sm:rounded-2xl"
+        className="relative z-10 flex w-full max-w-3xl flex-col rounded-t-2xl border border-border bg-background shadow-2xl sm:max-h-[min(90dvh,720px)] sm:rounded-2xl"
       >
-        <header className="flex items-start gap-4 px-6 pb-4 pt-6">
-          <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+        <header className="flex items-start gap-4 px-8 pb-5 pt-8">
+          <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             <UserPlus className="size-5" aria-hidden />
           </div>
           <div className="min-w-0 flex-1 pt-0.5">
-            <h2 id={titleId} className="font-display text-xl font-semibold tracking-tight">
+            <h2 id={titleId} className="font-display text-2xl font-semibold tracking-tight">
               Adicionar membro
             </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1.5 text-sm text-muted-foreground">
               Vincule alguém ao ministério <span className="font-medium text-foreground">{ministry.name}</span>
             </p>
           </div>
@@ -169,8 +165,8 @@ export function AddMinistryMemberModal({
 
         <Separator />
 
-        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
-          <div className="space-y-4 overflow-y-auto px-6 py-5">
+        <form onSubmit={handleSubmit} className="flex flex-col">
+          <div className="space-y-6 px-8 py-8">
             {error && (
               <div
                 role="alert"
@@ -181,40 +177,24 @@ export function AddMinistryMemberModal({
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="member-search">Buscar membro</Label>
-              <Input
-                id="member-search"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Nome, e-mail ou telefone"
-                disabled={assignMember.isPending}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="member-select">Membro</Label>
-              <SelectField
-                id="member-select"
+              <Label htmlFor="member-typeahead">Membro</Label>
+              <TypeaheadSelect
+                id="member-typeahead"
                 value={memberId}
-                onChange={(event) => setMemberId(event.target.value)}
-                disabled={assignMember.isPending || isLoading}
+                onChange={setMemberId}
+                options={memberOptions}
+                placeholder="Nome, e-mail ou telefone"
+                listClassName="max-h-80"
+                emptyMessage={
+                  isLoading
+                    ? "Carregando membros..."
+                    : "Nenhum membro disponível para adicionar."
+                }
+                loading={isLoading}
+                disabled={assignMember.isPending}
                 required
-              >
-                <option value="">
-                  {isLoading ? "Carregando..." : "Selecione um membro"}
-                </option>
-                {availableMembers.map((member) => (
-                  <option key={member.id} value={member.id}>
-                    {member.name}
-                    {member.email ? ` · ${member.email}` : ""}
-                  </option>
-                ))}
-              </SelectField>
-              {!isLoading && availableMembers.length === 0 && (
-                <p className="text-xs text-muted-foreground">
-                  Nenhum membro disponível para adicionar.
-                </p>
-              )}
+                aria-invalid={error === "Selecione um membro." ? true : undefined}
+              />
             </div>
 
             <div className="space-y-2">
@@ -240,9 +220,7 @@ export function AddMinistryMemberModal({
             </div>
           </div>
 
-          <Separator />
-
-          <footer className="flex flex-col-reverse gap-2 px-6 py-4 sm:flex-row sm:justify-end">
+          <footer className="mt-auto flex shrink-0 flex-col-reverse gap-3 border-t border-border px-8 py-6 sm:flex-row sm:justify-end">
             <Button
               type="button"
               variant="outline"
