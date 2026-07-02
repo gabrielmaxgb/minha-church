@@ -29,6 +29,7 @@ import { MEMBER_STATUS_LABELS } from "@/types/members";
 interface MemberExpandedPanelProps {
   member: Member;
   canManage: boolean;
+  onDeleted?: () => void;
 }
 
 function ReadOnlyDetails({
@@ -101,6 +102,7 @@ function ReadOnlyDetails({
 export function MemberExpandedPanel({
   member,
   canManage,
+  onDeleted,
 }: MemberExpandedPanelProps) {
   const [confirmName, setConfirmName] = useState("");
   const [isEditing, setIsEditing] = useState(false);
@@ -149,6 +151,7 @@ export function MemberExpandedPanel({
 
     try {
       await deleteMember.mutateAsync();
+      onDeleted?.();
     } catch (submitError) {
       setDeleteError(
         submitError instanceof Error

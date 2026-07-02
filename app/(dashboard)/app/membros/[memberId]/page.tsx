@@ -1,0 +1,26 @@
+"use client";
+
+import { useParams } from "next/navigation";
+
+import { MemberDetailContent } from "@/components/dashboard/members/member-detail-content";
+import { DashboardPage } from "@/components/dashboard/dashboard-shell";
+import { useMember } from "@/lib/api/queries";
+import { MEMBER_STATUS_LABELS } from "@/types/members";
+
+export default function MemberDetailPage() {
+  const params = useParams();
+  const memberId = params.memberId as string;
+  const { data: member } = useMember(memberId);
+
+  return (
+    <DashboardPage
+      title={member?.name ?? "Membro"}
+      subtitle={
+        member ? MEMBER_STATUS_LABELS[member.status] : "Cadastro e histórico pastoral"
+      }
+      className="max-w-4xl"
+    >
+      <MemberDetailContent memberId={memberId} />
+    </DashboardPage>
+  );
+}

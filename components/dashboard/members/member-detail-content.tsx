@@ -1,0 +1,114 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
+
+import { MemberExpandedPanel } from "@/components/dashboard/members/member-expanded-panel";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { AUTH_ROUTES } from "@/constants/routes";
+import { useMember } from "@/lib/api/queries";
+import { canManageMembers } from "@/lib/permissions";
+import { cn } from "@/lib/utils";
+import { useAuth } from "@/providers/auth-provider";
+import { MEMBER_STATUS_LABELS } from "@/types/members";
+
+interface MemberDetailContentProps {
+  memberId: string;
+}
+
+function statusBadgeClass(status: keyof typeof MEMBER_STATUS_LABELS) {
+  switch (status) {
+    case "active":
+      return "border-emerald-200 bg-emerald-50 text-emerald-800";
+    case "visitor":
+      return "border-amber-200 bg-amber-50 text-amber-800";
+    case "inactive":
+      return "border-border bg-muted text-muted-foreground";
+  }
+}
+
+export function MemberDetailContent({ memberId }: MemberDetailContentProps) {
+  const router = useRouter();
+  const { permissions } = useAuth();
+  const canManage = permissions ? canManageMembers(permissions) : false;
+  const { data: member, isLoading, isError, error } = useMember(memberId);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-5 w-40" />
+        <Skeleton className="h-48 w-full rounded-xl" />
+      </div>
+    );
+  }
+
+  if (isError || !member) {
+    return (
+      <div className="space-y-4">
+        <Link
+          href={AUTH_ROUTES.members}
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ArrowLeft className="size-4" />
+          Voltar para membros
+        </Link>
+
+        <div className="rounded-xl border border-border bg-muted/20 p-6 text-sm text-muted-foreground">
+          {error instanceof Error
+            ? error.message
+            : "Não foi possível carregar o cadastro."}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <Link
+        href={AUTH_ROUTES.members}
+        className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ArrowLeft className="size-4" />
+        Voltar para membros
+      </Link>
+
+      <Card>
+        <CardHeader className="pb-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <CardTitle className="font-display text-xl">{member.name}</CardTitle>
+              <CardDescription className="mt-1">
+                Ficha pastoral e vínculos na igreja
+              </CardDescription>
+            </div>
+
+            <span
+              className={cn(
+                "inline-flex shrink-0 rounded-md border px-2.5 py-1 text-xs font-medium",
+                statusBadgeClass(member.status),
+              )}
+            >
+              {MEMBER_STATUS_LABELS[member.status]}
+            </span>
+          </div>
+        </CardHeader>
+
+        <CardContent>
+          <MemberExpandedPanel
+            member={member}
+            canManage={canManage}
+            onDeleted={() => router.push(AUTH_ROUTES.members)}
+          />
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

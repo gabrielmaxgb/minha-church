@@ -25,6 +25,10 @@ export function ministryDetailPath(ministryId: string): string {
   return `${AUTH_ROUTES.ministries}/${ministryId}`;
 }
 
+export function memberDetailPath(memberId: string): string {
+  return `${AUTH_ROUTES.members}/${memberId}`;
+}
+
 export const MEMBER_CREATE_ROUTE = `${AUTH_ROUTES.members}/novo` as const;
 
 export type PublicRoute = (typeof PUBLIC_ROUTES)[keyof typeof PUBLIC_ROUTES];
