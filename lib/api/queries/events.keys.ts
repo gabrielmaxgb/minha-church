@@ -82,11 +82,17 @@ async function updateChurchEvent(
 async function deleteChurchEvent(
   churchId: string,
   eventId: string,
+  scope?: UpdateChurchEventPayload["scope"],
 ): Promise<void> {
-  await apiClient<void>(buildTenantPath(churchId, `/events/${eventId}`), {
-    churchId,
-    method: "DELETE",
-  });
+  const query = scope && scope !== "this" ? `?scope=${scope}` : "";
+
+  await apiClient<void>(
+    buildTenantPath(churchId, `/events/${eventId}${query}`),
+    {
+      churchId,
+      method: "DELETE",
+    },
+  );
 }
 
 export const eventsKeys = createQueryKeys("events", {

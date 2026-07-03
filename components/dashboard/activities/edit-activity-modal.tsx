@@ -11,6 +11,7 @@ import {
   X,
 } from "lucide-react";
 
+import { EventMutationScopeFields } from "@/components/dashboard/activities/event-mutation-scope-fields";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,7 +23,7 @@ import {
 } from "@/lib/api/queries";
 import { toDatetimeLocalValue } from "@/lib/activities/datetime";
 import { cn, formatDateTime } from "@/lib/utils";
-import type { ChurchEvent } from "@/types/events";
+import type { ChurchEvent, EventMutationScope } from "@/types/events";
 
 interface EditActivityModalProps {
   event: ChurchEvent | null;
@@ -91,10 +92,13 @@ export function EditActivityModal({
   const [endsAt, setEndsAt] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [editScope, setEditScope] = useState<EventMutationScope>("this");
+  const [deleteScope, setDeleteScope] = useState<EventMutationScope>("this");
 
   const updateEvent = useUpdateChurchEvent(event?.id ?? "");
   const deleteEvent = useDeleteChurchEvent(event?.id ?? "");
   const isPending = updateEvent.isPending || deleteEvent.isPending;
+  const isRecurring = Boolean(event?.recurrenceSeriesId && event?.recurrence);
 
   const hasChanges = useMemo(() => {
     if (!event) {
@@ -120,6 +124,8 @@ export function EditActivityModal({
       setEndsAt("");
       setError(null);
       setConfirmDelete(false);
+      setEditScope("this");
+      setDeleteScope("this");
       return;
     }
 
@@ -130,6 +136,8 @@ export function EditActivityModal({
     setEndsAt(event.endsAt ? toDatetimeLocalValue(event.endsAt) : "");
     setError(null);
     setConfirmDelete(false);
+    setEditScope("this");
+    setDeleteScope("this");
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -175,6 +183,7 @@ export function EditActivityModal({
         location: location.trim() || null,
         startsAt: new Date(startsAt).toISOString(),
         endsAt: endsAt ? new Date(endsAt).toISOString() : null,
+        ...(isRecurring ? { scope: editScope } : {}),
       });
       onClose();
     } catch (submitError) {
@@ -190,7 +199,7 @@ export function EditActivityModal({
     setError(null);
 
     try {
-      await deleteEvent.mutateAsync();
+      await deleteEvent.mutateAsync(isRecurring ? deleteScope : "this");
       onClose();
       onDeleted?.();
     } catch (deleteError) {
@@ -249,6 +258,9 @@ export function EditActivityModal({
                   <Badge variant="secondary" className="px-2.5 py-1">
                     {event.ministryName ?? "Ministério"}
                   </Badge>
+                )}
+                {event.recurrence && (
+                  <Badge variant="secondary">Recorrente</Badge>
                 )}
                 {hasChanges && (
                   <Badge variant="outline" className="border-amber-500/40 text-amber-700 dark:text-amber-300">
@@ -382,6 +394,23 @@ export function EditActivityModal({
               </div>
             </FormSection>
 
+            {isRecurring && (
+              <FormSection
+                title="Alcance das alterações"
+                description="Defina se a edição vale só para esta data ou para a série inteira."
+              >
+                <div className="rounded-2xl border border-border/80 bg-muted/10 p-5 sm:p-6">
+                  <EventMutationScopeFields
+                    name="edit-event-scope"
+                    value={editScope}
+                    onChange={setEditScope}
+                    disabled={isPending}
+                    actionLabel="edit"
+                  />
+                </div>
+              </FormSection>
+            )}
+
             <FormSection
               title="Zona de perigo"
               description="A exclusão remove a atividade da agenda. Essa ação não pode ser desfeita."
@@ -395,9 +424,22 @@ export function EditActivityModal({
                         Excluir &quot;{event.name}&quot;?
                       </p>
                       <p className="text-sm leading-relaxed text-muted-foreground">
-                        A atividade deixará de aparecer em Atividades e no painel do ministério.
+                        {isRecurring
+                          ? "Escolha se a exclusão vale só para esta ocorrência ou para mais eventos da série."
+                          : "A atividade deixará de aparecer em Atividades e no painel do ministério."}
                       </p>
                     </div>
+
+                    {isRecurring && (
+                      <EventMutationScopeFields
+                        name="delete-event-scope"
+                        value={deleteScope}
+                        onChange={setDeleteScope}
+                        disabled={isPending}
+                        actionLabel="delete"
+                      />
+                    )}
+
                     <div className="flex flex-col gap-2 sm:flex-row">
                       <Button
                         type="button"

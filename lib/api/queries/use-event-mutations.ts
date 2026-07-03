@@ -60,12 +60,12 @@ export function useDeleteChurchEvent(eventId: string) {
   const invalidate = useInvalidateEvents();
 
   return useMutation({
-    mutationFn: () => {
+    mutationFn: (scope?: UpdateChurchEventPayload["scope"]) => {
       if (!churchId) {
         throw new Error("Igreja não selecionada.");
       }
 
-      return deleteChurchEvent(churchId, eventId);
+      return deleteChurchEvent(churchId, eventId, scope);
     },
     onSuccess: invalidate,
   });

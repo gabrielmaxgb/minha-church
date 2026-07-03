@@ -39,10 +39,13 @@ export interface CreateChurchEventResponse extends ChurchEvent {
   occurrencesCreated: number;
 }
 
+export type EventMutationScope = "this" | "this_and_following" | "all";
+
 export interface UpdateChurchEventPayload {
   name?: string;
   description?: string | null;
   location?: string | null;
   startsAt?: string;
   endsAt?: string | null;
+  scope?: EventMutationScope;
 }
