@@ -34,15 +34,14 @@ export function DashboardShell({
   } = useRequireAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const mustChangePassword =
+    Boolean(user?.mustChangePassword) && pathname !== AUTH_ROUTES.changePassword;
+
   useEffect(() => {
-    if (
-      !isLoading &&
-      user?.mustChangePassword &&
-      pathname !== AUTH_ROUTES.changePassword
-    ) {
+    if (!isLoading && mustChangePassword) {
       router.replace(AUTH_ROUTES.changePassword);
     }
-  }, [isLoading, pathname, router, user?.mustChangePassword]);
+  }, [isLoading, mustChangePassword, router]);
 
   if (isLoading) {
     return (
@@ -52,7 +51,7 @@ export function DashboardShell({
     );
   }
 
-  if (!isAuthenticated || !church) {
+  if (!isAuthenticated || !church || mustChangePassword) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <p className="text-sm text-muted-foreground">Redirecionando...</p>

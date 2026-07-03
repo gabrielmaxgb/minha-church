@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff } from "lucide-react";
 import { Suspense, useState } from "react";
@@ -30,9 +30,8 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 
 function LoginFormContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const { login, isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const { login, isAuthenticated, isLoading: isAuthLoading, user } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingIdentifier, setLoadingIdentifier] = useState<string | null>(null);
@@ -54,10 +53,16 @@ function LoginFormContent() {
   } = form;
 
   useEffect(() => {
-    if (!isAuthLoading && isAuthenticated) {
-      window.location.replace(resolvePostLoginRedirect(searchParams.get("redirect")));
+    if (isAuthLoading || !isAuthenticated || !user) {
+      return;
     }
-  }, [isAuthenticated, isAuthLoading, searchParams]);
+
+    const destination = user.mustChangePassword
+      ? AUTH_ROUTES.changePassword
+      : resolvePostLoginRedirect(searchParams.get("redirect"));
+
+    window.location.replace(destination);
+  }, [isAuthenticated, isAuthLoading, user, searchParams]);
 
   async function performLogin(loginIdentifierValue: string, loginPassword: string) {
     clearErrors("root");
@@ -70,12 +75,11 @@ function LoginFormContent() {
         password: loginPassword,
       });
 
-      if (session.user.mustChangePassword) {
-        router.push(AUTH_ROUTES.changePassword);
-        return;
-      }
+      const destination = session.user.mustChangePassword
+        ? AUTH_ROUTES.changePassword
+        : resolvePostLoginRedirect(searchParams.get("redirect"));
 
-      router.push(resolvePostLoginRedirect(searchParams.get("redirect")));
+      window.location.replace(destination);
     } catch (loginError) {
       setError("root", {
         message:
@@ -83,7 +87,6 @@ function LoginFormContent() {
             ? loginError.message
             : "Não foi possível entrar. Tente novamente.",
       });
-    } finally {
       setIsLoading(false);
       setLoadingIdentifier(null);
     }
