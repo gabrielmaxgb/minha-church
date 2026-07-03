@@ -1,13 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Calendar, MapPin, Pencil, Plus, Trash2, UserPlus } from "lucide-react";
+import { Calendar, MapPin, Pencil, Plus, UserPlus } from "lucide-react";
 
 import { AddMinistryMemberModal } from "@/components/dashboard/ministries/add-ministry-member-modal";
-import { MinistryRoleToggles } from "@/components/dashboard/ministries/ministry-role-toggles";
+import { MinistryMembersList } from "@/components/dashboard/ministries/ministry-members-list";
 import { CreateMinistryEventModal } from "@/components/dashboard/ministries/create-ministry-event-modal";
 import { EditActivityModal } from "@/components/dashboard/activities/edit-activity-modal";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -283,61 +282,19 @@ export function MinistryMembersSection({
             </div>
           )}
 
-          {!isLoading &&
-            !isError &&
-            members?.map((member) => (
-              <div
-                key={member.id}
-                className="space-y-3 rounded-lg border border-border px-4 py-3"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="font-medium">{member.memberName}</p>
-                    <p className="mt-0.5 truncate text-sm text-muted-foreground">
-                      {member.memberEmail || member.memberPhone || "Sem contato"}
-                    </p>
-                  </div>
-
-                  {canManage && (
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      className="shrink-0 text-muted-foreground hover:text-destructive"
-                      disabled={removeMember.isPending}
-                      onClick={() => removeMember.mutate(member.memberId)}
-                    >
-                      <Trash2 className="size-4" />
-                    </Button>
-                  )}
-                </div>
-
-                {canManage ? (
-                  <MinistryRoleToggles
-                    roles={roles}
-                    selectedRoleIds={member.roles.map((role) => role.id)}
-                    isUpdating={updateRole.isPending}
-                    onToggle={(roleId, checked) => {
-                      const currentIds = member.roles.map((role) => role.id);
-                      const next = checked
-                        ? [...currentIds, roleId]
-                        : currentIds.filter((id) => id !== roleId);
-
-                      updateRole.mutate({
-                        memberId: member.memberId,
-                        ministryRoleIds: next,
-                      });
-                    }}
-                  />
-                ) : (
-                  <Badge variant="outline">
-                    {member.roles.length > 0
-                      ? member.roles.map((role) => role.name).join(", ")
-                      : "Sem cargo"}
-                  </Badge>
-                )}
-              </div>
-            ))}
+          {!isLoading && !isError && (members?.length ?? 0) > 0 && (
+            <MinistryMembersList
+              members={members ?? []}
+              roles={roles}
+              canManage={canManage}
+              isRemoving={removeMember.isPending}
+              isUpdatingRoles={updateRole.isPending}
+              onRemove={(memberId) => removeMember.mutate(memberId)}
+              onToggleRoles={(memberId, ministryRoleIds) =>
+                updateRole.mutate({ memberId, ministryRoleIds })
+              }
+            />
+          )}
         </CardContent>
       </Card>
 
