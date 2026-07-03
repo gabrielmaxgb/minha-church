@@ -1,11 +1,12 @@
 "use client";
 
-import { Calendar, MapPin, Pencil, Sparkles } from "lucide-react";
+import { Calendar, MapPin, Pencil, Repeat, Sparkles } from "lucide-react";
 
 import { HoverLift } from "@/components/motion/dashboard-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn, formatDateTime } from "@/lib/utils";
+import { formatRecurrenceSummary } from "@/lib/events/recurrence";
 import type { ChurchEvent } from "@/types/events";
 
 interface ActivityEventCardProps {
@@ -43,10 +44,21 @@ export function ActivityEventCard({
                   Igreja
                 </Badge>
               )}
+              {event.recurrence && (
+                <Badge variant="secondary" className="gap-1.5">
+                  <Repeat className="size-3" />
+                  Recorrente
+                </Badge>
+              )}
             </div>
             {event.description && (
               <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
                 {event.description}
+              </p>
+            )}
+            {event.recurrence && (
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                {formatRecurrenceSummary(event.recurrence, event.startsAt)}
               </p>
             )}
           </div>

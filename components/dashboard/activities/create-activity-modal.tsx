@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { Calendar, Loader2, X } from "lucide-react";
 
+import { EventRecurrenceFields } from "@/components/dashboard/activities/event-recurrence-fields";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +16,12 @@ import {
   canCreateMinistryActivity,
 } from "@/lib/permissions";
 import { useAuth } from "@/providers/auth-provider";
+import {
+  buildRecurrencePayload,
+  defaultRecurrenceFormState,
+  syncRecurrenceDaysWithStart,
+  type EventRecurrenceFormState,
+} from "@/lib/events/recurrence";
 import type { CreateChurchEventPayload } from "@/types/events";
 
 interface CreateActivityModalProps {
@@ -53,31 +60,45 @@ export function CreateActivityModal({
   const [location, setLocation] = useState("");
   const [startsAt, setStartsAt] = useState(defaultStartsAt);
   const [endsAt, setEndsAt] = useState("");
+  const [recurrence, setRecurrence] = useState<EventRecurrenceFormState>(
+    defaultRecurrenceFormState(defaultStartsAt()),
+  );
   const [error, setError] = useState<string | null>(null);
 
-  const creatableMinistries =
-    ministries?.filter(
-      (ministry) =>
-        ministry.isActive &&
-        permissions &&
-        canCreateMinistryActivity(permissions, ministry.id),
-    ) ?? [];
+  const creatableMinistries = useMemo(
+    () =>
+      ministries?.filter(
+        (ministry) =>
+          ministry.isActive &&
+          permissions &&
+          canCreateMinistryActivity(permissions, ministry.id),
+      ) ?? [],
+    [ministries, permissions],
+  );
 
   const canSelectChurchWide =
     permissions !== null && canCreateChurchWideActivity(permissions);
 
+  const wasOpenRef = useRef(false);
+
   useEffect(() => {
     if (!open) {
-      setName("");
-      setMinistryId(defaultMinistryId);
-      setDescription("");
-      setLocation("");
-      setStartsAt(defaultStartsAt());
-      setEndsAt("");
-      setError(null);
+      if (wasOpenRef.current) {
+        setName("");
+        setMinistryId(defaultMinistryId);
+        setDescription("");
+        setLocation("");
+        setStartsAt(defaultStartsAt());
+        setEndsAt("");
+        setRecurrence(defaultRecurrenceFormState(defaultStartsAt()));
+        setError(null);
+      }
+
+      wasOpenRef.current = false;
       return;
     }
 
+    wasOpenRef.current = true;
     setMinistryId(defaultMinistryId);
 
     if (!defaultMinistryId && creatableMinistries.length === 1) {
@@ -91,6 +112,10 @@ export function CreateActivityModal({
       document.body.style.overflow = previousOverflow;
     };
   }, [open, defaultMinistryId, creatableMinistries]);
+
+  useEffect(() => {
+    setRecurrence((current) => syncRecurrenceDaysWithStart(current, startsAt));
+  }, [startsAt]);
 
   useEffect(() => {
     if (!open) {
@@ -121,6 +146,13 @@ export function CreateActivityModal({
       return;
     }
 
+    const recurrencePayload = buildRecurrencePayload(recurrence);
+
+    if (recurrence.endType === "on_date" && recurrence.repeatMode !== "none" && !recurrence.endDate) {
+      setError("Informe a data final da repetição.");
+      return;
+    }
+
     const payload: CreateChurchEventPayload = {
       name: name.trim(),
       description: description.trim() || undefined,
@@ -128,6 +160,7 @@ export function CreateActivityModal({
       startsAt: new Date(startsAt).toISOString(),
       endsAt: endsAt ? new Date(endsAt).toISOString() : undefined,
       ministryId: ministryId || undefined,
+      recurrence: recurrencePayload,
     };
 
     try {
@@ -278,6 +311,13 @@ export function CreateActivityModal({
                 />
               </div>
             </div>
+
+            <EventRecurrenceFields
+              value={recurrence}
+              onChange={setRecurrence}
+              startsAt={startsAt}
+              disabled={createEvent.isPending}
+            />
           </div>
 
           <Separator />

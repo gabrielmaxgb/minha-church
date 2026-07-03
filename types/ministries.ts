@@ -1,3 +1,5 @@
+import type { EventRecurrence, EventRecurrenceInput } from "@/lib/events/recurrence";
+
 export interface MinistryRole {
   id: string;
   ministryId: string;
@@ -31,6 +33,8 @@ export interface MinistryEvent {
   startsAt: string;
   endsAt: string | null;
   createdByUserId: string | null;
+  recurrenceSeriesId: string | null;
+  recurrence: EventRecurrence | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -58,4 +62,5 @@ export interface CreateMinistryEventPayload {
   location?: string;
   startsAt: string;
   endsAt?: string;
+  recurrence?: EventRecurrenceInput;
 }

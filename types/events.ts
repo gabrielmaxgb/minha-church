@@ -1,3 +1,8 @@
+import type {
+  EventRecurrence,
+  EventRecurrenceInput,
+} from "@/lib/events/recurrence";
+
 export interface ChurchEvent {
   id: string;
   churchId: string;
@@ -10,6 +15,8 @@ export interface ChurchEvent {
   startsAt: string;
   endsAt: string | null;
   createdByUserId: string | null;
+  recurrenceSeriesId: string | null;
+  recurrence: EventRecurrence | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -21,6 +28,11 @@ export interface CreateChurchEventPayload {
   location?: string;
   startsAt: string;
   endsAt?: string;
+  recurrence?: EventRecurrenceInput;
+}
+
+export interface CreateChurchEventResponse extends ChurchEvent {
+  occurrencesCreated: number;
 }
 
 export interface UpdateChurchEventPayload {

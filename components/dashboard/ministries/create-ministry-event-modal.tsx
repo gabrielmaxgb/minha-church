@@ -3,12 +3,19 @@
 import { useEffect, useId, useState } from "react";
 import { Calendar, Loader2, X } from "lucide-react";
 
+import { EventRecurrenceFields } from "@/components/dashboard/activities/event-recurrence-fields";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateMinistryEvent } from "@/lib/api/queries";
+import {
+  buildRecurrencePayload,
+  defaultRecurrenceFormState,
+  syncRecurrenceDaysWithStart,
+  type EventRecurrenceFormState,
+} from "@/lib/events/recurrence";
 import type { CreateMinistryEventPayload } from "@/types/ministries";
 
 interface CreateMinistryEventModalProps {
@@ -44,6 +51,9 @@ export function CreateMinistryEventModal({
   const [location, setLocation] = useState("");
   const [startsAt, setStartsAt] = useState(defaultStartsAt);
   const [endsAt, setEndsAt] = useState("");
+  const [recurrence, setRecurrence] = useState<EventRecurrenceFormState>(
+    defaultRecurrenceFormState(defaultStartsAt()),
+  );
   const [error, setError] = useState<string | null>(null);
   const createEvent = useCreateMinistryEvent(ministryId);
 
@@ -54,6 +64,7 @@ export function CreateMinistryEventModal({
       setLocation("");
       setStartsAt(defaultStartsAt());
       setEndsAt("");
+      setRecurrence(defaultRecurrenceFormState(defaultStartsAt()));
       setError(null);
       return;
     }
@@ -65,6 +76,10 @@ export function CreateMinistryEventModal({
       document.body.style.overflow = previousOverflow;
     };
   }, [open]);
+
+  useEffect(() => {
+    setRecurrence((current) => syncRecurrenceDaysWithStart(current, startsAt));
+  }, [startsAt]);
 
   useEffect(() => {
     if (!open) {
@@ -95,12 +110,20 @@ export function CreateMinistryEventModal({
       return;
     }
 
+    const recurrencePayload = buildRecurrencePayload(recurrence);
+
+    if (recurrence.endType === "on_date" && recurrence.repeatMode !== "none" && !recurrence.endDate) {
+      setError("Informe a data final da repetição.");
+      return;
+    }
+
     const payload: CreateMinistryEventPayload = {
       name: name.trim(),
       description: description.trim() || undefined,
       location: location.trim() || undefined,
       startsAt: new Date(startsAt).toISOString(),
       endsAt: endsAt ? new Date(endsAt).toISOString() : undefined,
+      recurrence: recurrencePayload,
     };
 
     try {
@@ -133,7 +156,7 @@ export function CreateMinistryEventModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative z-10 flex max-h-[min(92dvh,680px)] w-full max-w-lg flex-col rounded-t-2xl border border-border bg-background shadow-2xl sm:rounded-2xl"
+        className="relative z-10 flex max-h-[min(92dvh,720px)] w-full max-w-lg flex-col rounded-t-2xl border border-border bg-background shadow-2xl sm:rounded-2xl"
       >
         <header className="flex items-start gap-4 px-6 pb-4 pt-6">
           <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
@@ -229,6 +252,13 @@ export function CreateMinistryEventModal({
                 />
               </div>
             </div>
+
+            <EventRecurrenceFields
+              value={recurrence}
+              onChange={setRecurrence}
+              startsAt={startsAt}
+              disabled={createEvent.isPending}
+            />
           </div>
 
           <Separator />

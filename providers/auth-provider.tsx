@@ -31,11 +31,11 @@ import {
   persistActiveChurch,
 } from "@/lib/auth/cookies";
 import { terminateSession } from "@/lib/auth/session";
-import { PUBLIC_ROUTES } from "@/constants/routes";
+import { isProtectedAreaPath, PUBLIC_ROUTES } from "@/constants/routes";
 import type { AuthResponse, ChangePasswordPayload, Church, LoginCredentials, UpdateProfilePayload, User, UserPermissions } from "@/types/auth";
 
 function redirectToLogin() {
-  window.location.replace(PUBLIC_ROUTES.login);
+  window.location.replace(`${PUBLIC_ROUTES.login}?force=1`);
 }
 
 async function handleInvalidSession(
@@ -45,12 +45,21 @@ async function handleInvalidSession(
     setChurches: (churches: Church[]) => void;
     setPermissions: (permissions: UserPermissions | null) => void;
   },
+  options?: { hardRedirect?: boolean },
 ) {
   await terminateSession();
   setters.setUser(null);
   setters.setChurch(null);
   setters.setChurches([]);
   setters.setPermissions(null);
+
+  if (
+    options?.hardRedirect &&
+    typeof window !== "undefined" &&
+    isProtectedAreaPath(window.location.pathname)
+  ) {
+    window.location.replace(`${PUBLIC_ROUTES.login}?force=1`);
+  }
 }
 
 interface AuthContextValue {
@@ -195,7 +204,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        await handleInvalidSession(sessionSetters);
+        await handleInvalidSession(sessionSetters, { hardRedirect: true });
       } finally {
         if (!cancelled) {
           setIsLoading(false);
@@ -370,13 +379,18 @@ export function useTenant() {
 
 export function useRequireAuth() {
   const auth = useAuth();
+  const redirectingRef = useRef(false);
 
   useEffect(() => {
-    if (!auth.isLoading && !auth.isAuthenticated) {
-      void terminateSession().finally(() => {
-        redirectToLogin();
-      });
+    if (auth.isLoading || auth.isAuthenticated || redirectingRef.current) {
+      return;
     }
+
+    redirectingRef.current = true;
+
+    void terminateSession().finally(() => {
+      window.location.replace(`${PUBLIC_ROUTES.login}?force=1`);
+    });
   }, [auth.isAuthenticated, auth.isLoading]);
 
   return auth;

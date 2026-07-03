@@ -55,9 +55,9 @@ function LoginFormContent() {
 
   useEffect(() => {
     if (!isAuthLoading && isAuthenticated) {
-      router.replace(resolvePostLoginRedirect(searchParams.get("redirect")));
+      window.location.replace(resolvePostLoginRedirect(searchParams.get("redirect")));
     }
-  }, [isAuthenticated, isAuthLoading, router, searchParams]);
+  }, [isAuthenticated, isAuthLoading, searchParams]);
 
   async function performLogin(loginIdentifierValue: string, loginPassword: string) {
     clearErrors("root");
