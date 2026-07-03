@@ -16,3 +16,12 @@ export function useChurchEvents(params: ListChurchEventsParams = {}) {
     enabled: Boolean(churchId),
   });
 }
+
+export function useChurchEvent(eventId: string) {
+  const { churchId } = useTenant();
+
+  return useQuery({
+    ...eventsKeys.detail(churchId ?? "unknown", eventId),
+    enabled: Boolean(churchId && eventId),
+  });
+}

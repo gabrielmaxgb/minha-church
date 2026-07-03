@@ -26,7 +26,7 @@ export { membersKeys } from "@/lib/api/queries/members.keys";
 export { membershipsKeys } from "@/lib/api/queries/memberships.keys";
 export { ministriesKeys } from "@/lib/api/queries/ministries.keys";
 export { pricingKeys } from "@/lib/api/queries/pricing.keys";
-export { useChurchEvents } from "@/lib/api/queries/use-church-events";
+export { useChurchEvent, useChurchEvents } from "@/lib/api/queries/use-church-events";
 export { useCreateChurchEvent, useDeleteChurchEvent, useUpdateChurchEvent } from "@/lib/api/queries/use-event-mutations";
 export { useDashboardSummary } from "@/lib/api/queries/use-dashboard-summary";
 export { useMember, useMembers, useMembersInfinite, useReceiveMember } from "@/lib/api/queries/use-members";

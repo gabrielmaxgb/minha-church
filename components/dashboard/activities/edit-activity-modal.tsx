@@ -28,6 +28,7 @@ interface EditActivityModalProps {
   event: ChurchEvent | null;
   open: boolean;
   onClose: () => void;
+  onDeleted?: () => void;
 }
 
 function FormSection({
@@ -80,6 +81,7 @@ export function EditActivityModal({
   event,
   open,
   onClose,
+  onDeleted,
 }: EditActivityModalProps) {
   const titleId = useId();
   const [name, setName] = useState("");
@@ -190,6 +192,7 @@ export function EditActivityModal({
     try {
       await deleteEvent.mutateAsync();
       onClose();
+      onDeleted?.();
     } catch (deleteError) {
       setError(
         deleteError instanceof Error

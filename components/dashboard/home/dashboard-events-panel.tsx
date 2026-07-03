@@ -1,16 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { Calendar, MapPin, Plus, Sparkles } from "lucide-react";
+import { Calendar, MapPin, Plus, Repeat, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AUTH_ROUTES } from "@/constants/routes";
+import { AUTH_ROUTES, activityDetailPath } from "@/constants/routes";
 import {
   formatEventDateChip,
   formatEventTime,
   formatRelativeEventDay,
 } from "@/lib/dashboard/date-utils";
+import { formatRecurrenceSummary } from "@/lib/events/recurrence";
 import { cn } from "@/lib/utils";
 import type { ChurchEvent } from "@/types/events";
 
@@ -76,7 +77,7 @@ export function DashboardEventsPanel({
         <ol className="space-y-2">
           {upcoming.map((event, index) => (
             <EventTimelineItem
-              key={event.id}
+              key={event.recurrenceSeriesId ?? event.id}
               event={event}
               isNext={index === 0}
             />
@@ -100,7 +101,7 @@ function EventTimelineItem({
   return (
     <li>
       <Link
-        href={AUTH_ROUTES.activities}
+        href={activityDetailPath(event.id)}
         className={cn(
           "group flex items-center gap-4 rounded-2xl border px-4 py-3 transition-all duration-200 hover:shadow-soft",
           isNext
@@ -147,8 +148,17 @@ function EventTimelineItem({
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1">
               <Calendar className="size-3 shrink-0" />
+              {event.recurrence && (
+                <span className="font-medium text-foreground">Próxima:</span>
+              )}
               {formatEventTime(event.startsAt)}
             </span>
+            {event.recurrence && (
+              <span className="inline-flex items-center gap-1">
+                <Repeat className="size-3 shrink-0" />
+                {formatRecurrenceSummary(event.recurrence, event.startsAt)}
+              </span>
+            )}
             {event.location && (
               <span className="inline-flex min-w-0 items-center gap-1">
                 <MapPin className="size-3 shrink-0" />

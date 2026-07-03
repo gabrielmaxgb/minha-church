@@ -21,6 +21,10 @@ export interface ChurchEvent {
   updatedAt: string;
 }
 
+export interface ChurchEventDetail extends ChurchEvent {
+  seriesOccurrences: ChurchEvent[];
+}
+
 export interface CreateChurchEventPayload {
   name: string;
   ministryId?: string;

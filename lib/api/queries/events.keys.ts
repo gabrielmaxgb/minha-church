@@ -3,6 +3,7 @@ import { createQueryKeys } from "@lukemorales/query-key-factory";
 import { apiClient, buildTenantPath } from "@/lib/api/client";
 import type {
   ChurchEvent,
+  ChurchEventDetail,
   CreateChurchEventPayload,
   UpdateChurchEventPayload,
 } from "@/types/events";
@@ -40,6 +41,16 @@ async function fetchChurchEvents(
   const path = buildTenantPath(churchId, `/events${query ? `?${query}` : ""}`);
 
   return apiClient<ChurchEvent[]>(path, { churchId });
+}
+
+async function fetchChurchEvent(
+  churchId: string,
+  eventId: string,
+): Promise<ChurchEventDetail> {
+  return apiClient<ChurchEventDetail>(
+    buildTenantPath(churchId, `/events/${eventId}`),
+    { churchId },
+  );
 }
 
 async function createChurchEvent(
@@ -83,8 +94,18 @@ export const eventsKeys = createQueryKeys("events", {
     queryKey: [churchId, params],
     queryFn: () => fetchChurchEvents(churchId, params),
   }),
+  detail: (churchId: string, eventId: string) => ({
+    queryKey: [churchId, eventId],
+    queryFn: () => fetchChurchEvent(churchId, eventId),
+  }),
 });
 
-export { createChurchEvent, deleteChurchEvent, fetchChurchEvents, updateChurchEvent };
+export {
+  createChurchEvent,
+  deleteChurchEvent,
+  fetchChurchEvent,
+  fetchChurchEvents,
+  updateChurchEvent,
+};
 
 export type { CreateChurchEventPayload, UpdateChurchEventPayload };

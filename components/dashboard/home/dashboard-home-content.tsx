@@ -24,20 +24,14 @@ import {
   usePendingAccessUsers,
 } from "@/lib/api/queries";
 import { canManageChurchMemberships } from "@/lib/church-memberships/constants";
+import { collapseRecurringEventsForList } from "@/lib/events/list";
 import { formatRelativeEventDay } from "@/lib/dashboard/date-utils";
 import { canCreateAnyActivity } from "@/lib/permissions";
 import { useAuth } from "@/providers/auth-provider";
 import type { ChurchEvent } from "@/types/events";
 
 function sortUpcomingEvents(events: ChurchEvent[]): ChurchEvent[] {
-  const now = Date.now();
-
-  return [...events]
-    .filter((event) => new Date(event.startsAt).getTime() >= now)
-    .sort(
-      (a, b) =>
-        new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
-    );
+  return collapseRecurringEventsForList(events);
 }
 
 export function DashboardHomeContent() {

@@ -31,6 +31,10 @@ export function memberDetailPath(memberId: string): string {
   return `${AUTH_ROUTES.members}/${memberId}`;
 }
 
+export function activityDetailPath(eventId: string): string {
+  return `${AUTH_ROUTES.activities}/${eventId}`;
+}
+
 export function settingsSectionPath(
   section: "password-reset-requests" | "pending-users",
 ): string {

@@ -1,10 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { Calendar, MapPin, Pencil, Repeat, Sparkles } from "lucide-react";
 
 import { HoverLift } from "@/components/motion/dashboard-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { activityDetailPath } from "@/constants/routes";
 import { cn, formatDateTime } from "@/lib/utils";
 import { formatRecurrenceSummary } from "@/lib/events/recurrence";
 import type { ChurchEvent } from "@/types/events";
@@ -24,14 +26,15 @@ export function ActivityEventCard({
 }: ActivityEventCardProps) {
   return (
     <HoverLift>
-      <article
-        className={cn(
-          "rounded-2xl border bg-card p-5 shadow-soft transition-shadow duration-300 hover:shadow-elevated",
-          highlighted
-            ? "border-primary/15 bg-gradient-to-br from-card to-muted/40"
-            : "border-border/70",
-        )}
-      >
+      <Link href={activityDetailPath(event.id)} className="block">
+        <article
+          className={cn(
+            "rounded-2xl border bg-card p-5 shadow-soft transition-shadow duration-300 hover:shadow-elevated",
+            highlighted
+              ? "border-primary/15 bg-gradient-to-br from-card to-muted/40"
+              : "border-border/70",
+          )}
+        >
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
@@ -73,7 +76,11 @@ export function ActivityEventCard({
                 size="sm"
                 variant="outline"
                 className="shrink-0"
-                onClick={() => onEdit(event)}
+                onClick={(clickEvent) => {
+                  clickEvent.preventDefault();
+                  clickEvent.stopPropagation();
+                  onEdit(event);
+                }}
               >
                 <Pencil className="size-4" />
                 Editar
@@ -87,8 +94,15 @@ export function ActivityEventCard({
             <span className="flex size-7 items-center justify-center rounded-lg bg-muted/80">
               <Calendar className="size-3.5 shrink-0 text-foreground/70" />
             </span>
-            {formatDateTime(event.startsAt)}
-            {event.endsAt && ` — ${formatDateTime(event.endsAt)}`}
+            <span>
+              {event.recurrence && (
+                <span className="mr-1.5 font-medium text-foreground">
+                  Próxima:
+                </span>
+              )}
+              {formatDateTime(event.startsAt)}
+              {event.endsAt && ` — ${formatDateTime(event.endsAt)}`}
+            </span>
           </span>
           {event.location && (
             <span className="inline-flex items-center gap-2">
@@ -100,6 +114,7 @@ export function ActivityEventCard({
           )}
         </div>
       </article>
+      </Link>
     </HoverLift>
   );
 }

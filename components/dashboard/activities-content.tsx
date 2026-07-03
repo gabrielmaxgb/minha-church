@@ -10,6 +10,7 @@ import { StaggerItem, StaggerList } from "@/components/motion/dashboard-motion";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useChurchEvents, useMinistries } from "@/lib/api/queries";
+import { collapseRecurringEventsForList } from "@/lib/events/list";
 import { canCreateAnyActivity, canManageActivity } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
@@ -44,16 +45,10 @@ export function ActivitiesContent() {
   const { data: events, isLoading, isError } = useChurchEvents(queryParams);
   const canCreate = permissions ? canCreateAnyActivity(permissions) : false;
 
-  const sortedEvents = useMemo(() => {
-    const now = Date.now();
-
-    return [...(events ?? [])]
-      .filter((event) => new Date(event.startsAt).getTime() >= now)
-      .sort(
-        (a, b) =>
-          new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
-      );
-  }, [events]);
+  const sortedEvents = useMemo(
+    () => collapseRecurringEventsForList(events ?? []),
+    [events],
+  );
 
   const churchWideEvents = sortedEvents.filter((event) => event.isChurchWide);
   const ministryEvents = sortedEvents.filter((event) => !event.isChurchWide);
@@ -147,7 +142,7 @@ export function ActivitiesContent() {
                 </h2>
                 <StaggerList className="space-y-3">
                   {churchWideEvents.map((event) => (
-                    <StaggerItem key={event.id}>
+                    <StaggerItem key={event.recurrenceSeriesId ?? event.id}>
                       <ActivityEventCard
                         event={event}
                         highlighted
@@ -169,7 +164,7 @@ export function ActivitiesContent() {
                 )}
                 <StaggerList className="space-y-3">
                   {(filter === "all" ? ministryEvents : sortedEvents).map((event) => (
-                    <StaggerItem key={event.id}>
+                    <StaggerItem key={event.recurrenceSeriesId ?? event.id}>
                       <ActivityEventCard
                         event={event}
                         canManage={canManageEvent(event)}

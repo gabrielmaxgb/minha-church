@@ -1,12 +1,14 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
-import { Calendar, MapPin, Pencil, Plus, UserPlus } from "lucide-react";
+import { Calendar, MapPin, Pencil, Plus, Repeat, UserPlus } from "lucide-react";
 
 import { AddMinistryMemberModal } from "@/components/dashboard/ministries/add-ministry-member-modal";
 import { MinistryMembersList } from "@/components/dashboard/ministries/ministry-members-list";
 import { CreateMinistryEventModal } from "@/components/dashboard/ministries/create-ministry-event-modal";
 import { EditActivityModal } from "@/components/dashboard/activities/edit-activity-modal";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -22,6 +24,9 @@ import {
   useRemoveMemberFromMinistry,
   useUpdateMemberMinistryRole,
 } from "@/lib/api/queries";
+import { activityDetailPath } from "@/constants/routes";
+import { collapseRecurringEventsForList } from "@/lib/events/list";
+import { formatRecurrenceSummary } from "@/lib/events/recurrence";
 import {
   canCreateMinistryActivity,
   canManageActivity,
@@ -72,17 +77,9 @@ export function MinistryDashboardSection({
   const canManageEvents =
     permissions !== null && canCreateMinistryActivity(permissions, ministry.id);
 
-  const now = Date.now();
   const upcomingEvents = useMemo(
-    () =>
-      [...(events ?? [])]
-        .filter((event) => new Date(event.startsAt).getTime() >= now)
-        .sort(
-          (a, b) =>
-            new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
-        )
-        .slice(0, 5),
-    [events, now],
+    () => collapseRecurringEventsForList(events ?? []).slice(0, 5),
+    [events],
   );
 
   const rolesWithEvents = ministry.roles.filter((role) => role.canManageEvents).length;
@@ -160,16 +157,37 @@ export function MinistryDashboardSection({
 
                 return (
                   <div
-                    key={event.id}
+                    key={event.recurrenceSeriesId ?? event.id}
                     className="flex flex-col gap-2 rounded-lg border border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
                   >
-                    <div className="min-w-0">
-                      <p className="font-medium">{event.name}</p>
+                    <Link
+                      href={activityDetailPath(event.id)}
+                      className="min-w-0 flex-1 transition-colors hover:text-foreground"
+                    >
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-medium">{event.name}</p>
+                        {event.recurrence && (
+                          <Badge variant="secondary" className="gap-1">
+                            <Repeat className="size-3" />
+                            Recorrente
+                          </Badge>
+                        )}
+                      </div>
+                      {event.recurrence && (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {formatRecurrenceSummary(event.recurrence, event.startsAt)}
+                        </p>
+                      )}
                       <p className="mt-0.5 flex items-center gap-1.5 text-sm text-muted-foreground">
                         <Calendar className="size-3.5" />
+                        {event.recurrence && (
+                          <span className="font-medium text-foreground">
+                            Próxima:
+                          </span>
+                        )}
                         {formatDateTime(event.startsAt)}
                       </p>
-                    </div>
+                    </Link>
 
                     <div className="flex flex-wrap items-center gap-2">
                       {event.location && (
