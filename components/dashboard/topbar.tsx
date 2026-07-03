@@ -70,19 +70,19 @@ export function DashboardTopbar({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex h-10 items-center gap-2 sm:gap-3">
           <NotificationsBell />
 
           {church && (
-            <div className="relative hidden sm:block">
+            <div className="relative hidden h-10 sm:block">
               <button
                 type="button"
                 onClick={() => setChurchMenuOpen((prev) => !prev)}
                 disabled={isSwitchingChurch}
-                className="inline-flex max-w-[220px] items-center gap-2 rounded-xl border border-border/80 bg-background/60 px-3 py-2 text-left text-sm shadow-soft transition-all duration-200 hover:bg-background hover:shadow-elevated disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex h-10 max-w-[220px] items-center gap-2 rounded-xl border border-border/80 bg-background/60 px-3 text-left text-sm shadow-soft transition-all duration-200 hover:bg-background hover:shadow-elevated disabled:cursor-not-allowed disabled:opacity-60"
                 aria-expanded={churchMenuOpen}
               >
-                <span className="truncate font-medium">{church.name}</span>
+                <span className="truncate font-medium leading-none">{church.name}</span>
                 {churches.length > 1 && (
                   <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
                 )}
@@ -124,20 +124,20 @@ export function DashboardTopbar({
           )}
 
           {user && (
-            <div className="relative">
+            <div className="relative h-10">
               <button
                 type="button"
                 onClick={() => setMenuOpen((prev) => !prev)}
-                className="inline-flex items-center gap-2 rounded-xl border border-border/80 bg-background/60 px-2 py-1.5 shadow-soft transition-all duration-200 hover:bg-background hover:shadow-elevated sm:px-3"
+                className="inline-flex h-10 items-center gap-2 rounded-xl border border-border/80 bg-background/60 px-2 shadow-soft transition-all duration-200 hover:bg-background hover:shadow-elevated sm:px-3"
                 aria-expanded={menuOpen}
               >
-                <span className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-foreground">
+                <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold leading-none text-foreground">
                   {getInitials(user.name)}
                 </span>
-                <span className="hidden text-sm font-medium sm:inline">
+                <span className="hidden text-sm font-medium leading-none sm:inline">
                   {user.name.split(" ")[0]}
                 </span>
-                <ChevronDown className="hidden size-4 text-muted-foreground sm:inline" />
+                <ChevronDown className="hidden size-4 shrink-0 text-muted-foreground sm:inline" />
               </button>
 
               {menuOpen && (

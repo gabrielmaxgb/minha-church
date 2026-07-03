@@ -18,6 +18,8 @@ import type { Member, MemberMinistryLink } from "@/types/members";
 interface MemberMinistriesSectionProps {
   member: Member;
   disabled?: boolean;
+  /** Oculta o título interno quando a seção já tem cabeçalho externo. */
+  hideTitle?: boolean;
 }
 
 function MinistryRoleRow({
@@ -88,6 +90,7 @@ function MinistryRoleRow({
 export function MemberMinistriesSection({
   member,
   disabled = false,
+  hideTitle = false,
 }: MemberMinistriesSectionProps) {
   const [newMinistryId, setNewMinistryId] = useState("");
   const [newRoleIds, setNewRoleIds] = useState<string[]>([]);
@@ -177,12 +180,14 @@ export function MemberMinistriesSection({
 
   return (
     <section className="space-y-4">
-      <div>
-        <h3 className="text-sm font-medium">Ministérios e cargos</h3>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          Uma pessoa pode ter mais de um cargo no mesmo ministério.
-        </p>
-      </div>
+      {!hideTitle && (
+        <div>
+          <h3 className="text-sm font-medium">Ministérios e cargos</h3>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Uma pessoa pode ter mais de um cargo no mesmo ministério.
+          </p>
+        </div>
+      )}
 
       {actionError && <FormAlert>{actionError}</FormAlert>}
 

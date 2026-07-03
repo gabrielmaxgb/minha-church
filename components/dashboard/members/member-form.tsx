@@ -1,8 +1,17 @@
 "use client";
 
 import { useEffect } from "react";
+import {
+  Church,
+  IdCard,
+  MapPin,
+  Phone,
+  UserRound,
+  type LucideIcon,
+} from "lucide-react";
 import { Controller, useFormContext } from "react-hook-form";
 
+import { DatePicker } from "@/components/ui/date-picker";
 import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { SelectField } from "@/components/ui/select-field";
@@ -12,6 +21,7 @@ import {
   MEMBER_STATUS_FORM_LABELS,
   type MemberFormValues,
 } from "@/lib/members/form";
+import { cn } from "@/lib/utils";
 import { formatCpfInput } from "@/lib/validation/shared";
 import type { Gender, MaritalStatus, MemberStatus } from "@/types/members";
 
@@ -21,24 +31,44 @@ interface MemberFormProps {
   requireLogin?: boolean;
 }
 
-function FieldGroup({
+function FormSection({
+  icon: Icon,
   title,
   description,
   children,
+  className,
 }: {
+  icon: LucideIcon;
   title: string;
   description?: string;
   children: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <section className="space-y-4">
-      <div>
-        <h3 className="text-sm font-medium">{title}</h3>
-        {description && (
-          <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
-        )}
+    <section
+      className={cn(
+        "overflow-hidden rounded-2xl border border-border/80 bg-card shadow-soft",
+        className,
+      )}
+    >
+      <header className="flex items-start gap-3 border-b border-border/60 bg-muted/25 px-5 py-4 sm:px-6">
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-foreground text-background">
+          <Icon className="size-4" aria-hidden />
+        </div>
+        <div className="min-w-0 pt-0.5">
+          <h3 className="font-display text-base font-semibold tracking-tight">
+            {title}
+          </h3>
+          {description && (
+            <p className="mt-0.5 text-sm leading-relaxed text-muted-foreground">
+              {description}
+            </p>
+          )}
+        </div>
+      </header>
+      <div className="grid gap-5 p-5 sm:grid-cols-2 sm:gap-x-5 sm:gap-y-5 sm:p-6">
+        {children}
       </div>
-      <div className="grid gap-4 sm:grid-cols-2">{children}</div>
     </section>
   );
 }
@@ -73,13 +103,14 @@ export function MemberForm({
   }, [maritalStatus, setValue]);
 
   return (
-    <div className="space-y-8">
-      <FieldGroup
+    <div className="space-y-5">
+      <FormSection
+        icon={UserRound}
         title="Identificação"
         description={
           requireLogin
-            ? "Informe e-mail ou CPF (obrigatório um dos dois) para criar o login de acesso."
-            : "Dados principais de contato."
+            ? "Nome e status no cadastro pastoral. E-mail ou CPF será usado no login."
+            : "Nome e situação da pessoa na igreja."
         }
       >
         <FormField
@@ -99,7 +130,11 @@ export function MemberForm({
         </FormField>
 
         {showStatus && (
-          <FormField label="Status" htmlFor="member-status">
+          <FormField
+            label="Status"
+            htmlFor="member-status"
+            hint="Define se a pessoa é visitante, membro ativo ou inativo."
+          >
             <SelectField
               id="member-status"
               disabled={disabled}
@@ -115,13 +150,23 @@ export function MemberForm({
             </SelectField>
           </FormField>
         )}
+      </FormSection>
 
+      <FormSection
+        icon={Phone}
+        title="Contato"
+        description={
+          requireLogin
+            ? "Informe e-mail ou CPF (pelo menos um) para criar o acesso ao painel."
+            : "Canais para comunicação e identificação."
+        }
+      >
         <FormField
           label="E-mail"
           htmlFor="member-email"
           error={errorMessage(errors, "email")}
           hint={
-            requireLogin ? "Obrigatório se CPF não for informado." : undefined
+            requireLogin ? "Obrigatório se o CPF não for informado." : undefined
           }
         >
           <Input
@@ -139,7 +184,7 @@ export function MemberForm({
           htmlFor="member-cpf"
           error={errorMessage(errors, "cpf")}
           hint={
-            requireLogin ? "Obrigatório se e-mail não for informado." : undefined
+            requireLogin ? "Obrigatório se o e-mail não for informado." : undefined
           }
         >
           <Controller
@@ -174,19 +219,30 @@ export function MemberForm({
         <FormField label="Telefone secundário" htmlFor="member-phone-secondary">
           <Input
             id="member-phone-secondary"
+            placeholder="Opcional"
             disabled={disabled}
             {...register("phoneSecondary")}
           />
         </FormField>
-      </FieldGroup>
+      </FormSection>
 
-      <FieldGroup title="Dados pessoais">
+      <FormSection
+        icon={IdCard}
+        title="Dados pessoais"
+        description="Informações usadas no acompanhamento pastoral e em aniversários."
+      >
         <FormField label="Data de nascimento" htmlFor="member-birth-date">
-          <Input
-            id="member-birth-date"
-            type="date"
-            disabled={disabled}
-            {...register("birthDate")}
+          <Controller
+            name="birthDate"
+            control={control}
+            render={({ field }) => (
+              <DatePicker
+                id="member-birth-date"
+                value={field.value}
+                onChange={field.onChange}
+                disabled={disabled}
+              />
+            )}
           />
         </FormField>
 
@@ -247,28 +303,49 @@ export function MemberForm({
             label="Aniversário de casamento"
             htmlFor="member-wedding-anniversary"
           >
-            <Input
-              id="member-wedding-anniversary"
-              type="date"
-              disabled={disabled}
-              {...register("weddingAnniversary")}
+            <Controller
+              name="weddingAnniversary"
+              control={control}
+              render={({ field }) => (
+                <DatePicker
+                  id="member-wedding-anniversary"
+                  value={field.value}
+                  onChange={field.onChange}
+                  disabled={disabled}
+                />
+              )}
             />
           </FormField>
         )}
-      </FieldGroup>
+      </FormSection>
 
-      <FieldGroup title="Endereço">
+      <FormSection
+        icon={MapPin}
+        title="Endereço"
+        description="Opcional. Ajuda em visitas e comunicação local."
+      >
         <FormField className="sm:col-span-2" label="Rua" htmlFor="member-street">
-          <Input id="member-street" disabled={disabled} {...register("street")} />
+          <Input
+            id="member-street"
+            placeholder="Rua, avenida..."
+            disabled={disabled}
+            {...register("street")}
+          />
         </FormField>
 
         <FormField label="Número" htmlFor="member-number">
-          <Input id="member-number" disabled={disabled} {...register("number")} />
+          <Input
+            id="member-number"
+            placeholder="Nº"
+            disabled={disabled}
+            {...register("number")}
+          />
         </FormField>
 
         <FormField label="Complemento" htmlFor="member-complement">
           <Input
             id="member-complement"
+            placeholder="Apto, bloco..."
             disabled={disabled}
             {...register("complement")}
           />
@@ -325,18 +402,33 @@ export function MemberForm({
             {...register("zipCode")}
           />
         </FormField>
-      </FieldGroup>
+      </FormSection>
 
-      <FieldGroup
+      <FormSection
+        icon={Church}
         title="Vida na igreja"
-        description="Datas importantes no histórico pastoral."
+        description="Datas do histórico pastoral. Alguns campos dependem do status atual."
       >
-        <FormField label="Visitante desde" htmlFor="member-visitor-since">
-          <Input
-            id="member-visitor-since"
-            type="date"
-            disabled={disabled || status !== "visitor"}
-            {...register("visitorSince")}
+        <FormField
+          label="Visitante desde"
+          htmlFor="member-visitor-since"
+          hint={
+            status !== "visitor"
+              ? "Disponível quando o status é visitante."
+              : undefined
+          }
+        >
+          <Controller
+            name="visitorSince"
+            control={control}
+            render={({ field }) => (
+              <DatePicker
+                id="member-visitor-since"
+                value={field.value}
+                onChange={field.onChange}
+                disabled={disabled || status !== "visitor"}
+              />
+            )}
           />
         </FormField>
 
@@ -344,25 +436,41 @@ export function MemberForm({
           label="Membro desde"
           htmlFor="member-membership-date"
           error={errorMessage(errors, "membershipDate")}
+          hint={
+            status !== "active"
+              ? "Disponível quando o status é membro ativo."
+              : undefined
+          }
         >
-          <Input
-            id="member-membership-date"
-            type="date"
-            disabled={disabled || status !== "active"}
-            aria-invalid={errors.membershipDate ? true : undefined}
-            {...register("membershipDate")}
+          <Controller
+            name="membershipDate"
+            control={control}
+            render={({ field }) => (
+              <DatePicker
+                id="member-membership-date"
+                value={field.value}
+                onChange={field.onChange}
+                disabled={disabled || status !== "active"}
+              />
+            )}
           />
         </FormField>
 
         <FormField label="Data de batismo" htmlFor="member-baptism-date">
-          <Input
-            id="member-baptism-date"
-            type="date"
-            disabled={disabled}
-            {...register("baptismDate")}
+          <Controller
+            name="baptismDate"
+            control={control}
+            render={({ field }) => (
+              <DatePicker
+                id="member-baptism-date"
+                value={field.value}
+                onChange={field.onChange}
+                disabled={disabled}
+              />
+            )}
           />
         </FormField>
-      </FieldGroup>
+      </FormSection>
     </div>
   );
 }

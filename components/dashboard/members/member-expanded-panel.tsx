@@ -2,15 +2,25 @@
 
 import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Trash2 } from "lucide-react";
+import {
+  Church,
+  IdCard,
+  Loader2,
+  MapPin,
+  Pencil,
+  Phone,
+  Trash2,
+  UserCheck,
+  UserRound,
+} from "lucide-react";
 import { FormProvider, useForm } from "react-hook-form";
 
 import { MemberForm } from "@/components/dashboard/members/member-form";
 import { MemberMinistriesSection } from "@/components/dashboard/members/member-ministries-section";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FormAlert } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 import {
   useDeleteMember,
   useReceiveMember,
@@ -18,11 +28,13 @@ import {
 } from "@/lib/api/queries";
 import {
   formValuesToUpdatePayload,
+  GENDER_LABELS,
+  MARITAL_STATUS_LABELS,
   memberToFormValues,
   type MemberFormValues,
 } from "@/lib/members/form";
 import { createMemberFormSchema } from "@/lib/validation/schemas";
-import { formatDate } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 import type { Member } from "@/types/members";
 import { MEMBER_STATUS_LABELS } from "@/types/members";
 
@@ -30,6 +42,47 @@ interface MemberExpandedPanelProps {
   member: Member;
   canManage: boolean;
   onDeleted?: () => void;
+}
+
+function DetailSection({
+  icon: Icon,
+  title,
+  children,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="overflow-hidden rounded-2xl border border-border/70 bg-card">
+      <header className="flex items-center gap-2.5 border-b border-border/50 bg-muted/20 px-4 py-3">
+        <div className="flex size-8 items-center justify-center rounded-lg bg-muted text-foreground">
+          <Icon className="size-3.5" aria-hidden />
+        </div>
+        <h3 className="text-sm font-semibold tracking-tight">{title}</h3>
+      </header>
+      <dl className="grid gap-4 p-4 sm:grid-cols-2">{children}</dl>
+    </section>
+  );
+}
+
+function DetailItem({
+  label,
+  value,
+  className,
+}: {
+  label: string;
+  value: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={className}>
+      <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        {label}
+      </dt>
+      <dd className="mt-1 text-sm text-foreground">{value || "—"}</dd>
+    </div>
+  );
 }
 
 function ReadOnlyDetails({
@@ -46,56 +99,88 @@ function ReadOnlyDetails({
     member.neighborhood,
     member.city,
     member.state,
+    member.zipCode,
   ]
     .filter(Boolean)
     .join(", ");
 
   return (
     <div className="space-y-4">
-      <dl className="grid gap-3 sm:grid-cols-2">
-        <div>
-          <dt className="text-xs text-muted-foreground">E-mail</dt>
-          <dd className="mt-0.5 text-sm">{member.email ?? "—"}</dd>
-        </div>
-        <div>
-          <dt className="text-xs text-muted-foreground">Telefone</dt>
-          <dd className="mt-0.5 text-sm">{member.phone ?? "—"}</dd>
-        </div>
-        <div>
-          <dt className="text-xs text-muted-foreground">Nascimento</dt>
-          <dd className="mt-0.5 text-sm">{formatDate(member.birthDate)}</dd>
-        </div>
-        <div>
-          <dt className="text-xs text-muted-foreground">Endereço</dt>
-          <dd className="mt-0.5 text-sm">{address || "—"}</dd>
-        </div>
-        <div>
-          <dt className="text-xs text-muted-foreground">Batismo</dt>
-          <dd className="mt-0.5 text-sm">{formatDate(member.baptismDate)}</dd>
-        </div>
-        <div>
-          <dt className="text-xs text-muted-foreground">Status</dt>
-          <dd className="mt-0.5 text-sm">{MEMBER_STATUS_LABELS[member.status]}</dd>
-        </div>
-      </dl>
+      <DetailSection icon={UserRound} title="Identificação">
+        <DetailItem label="Nome" value={member.name} className="sm:col-span-2" />
+        <DetailItem
+          label="Status"
+          value={
+            <Badge variant="secondary">
+              {MEMBER_STATUS_LABELS[member.status]}
+            </Badge>
+          }
+        />
+      </DetailSection>
+
+      <DetailSection icon={Phone} title="Contato">
+        <DetailItem label="E-mail" value={member.email} />
+        <DetailItem label="CPF" value={member.cpf} />
+        <DetailItem label="Telefone" value={member.phone} />
+        <DetailItem label="Telefone secundário" value={member.phoneSecondary} />
+      </DetailSection>
+
+      <DetailSection icon={IdCard} title="Dados pessoais">
+        <DetailItem label="Nascimento" value={formatDate(member.birthDate)} />
+        <DetailItem
+          label="Gênero"
+          value={member.gender ? GENDER_LABELS[member.gender] : null}
+        />
+        <DetailItem
+          label="Estado civil"
+          value={
+            member.maritalStatus
+              ? MARITAL_STATUS_LABELS[member.maritalStatus]
+              : null
+          }
+        />
+        {member.maritalStatus === "married" && (
+          <DetailItem
+            label="Aniversário de casamento"
+            value={formatDate(member.weddingAnniversary)}
+          />
+        )}
+      </DetailSection>
+
+      <DetailSection icon={MapPin} title="Endereço">
+        <DetailItem label="Endereço completo" value={address} className="sm:col-span-2" />
+      </DetailSection>
+
+      <DetailSection icon={Church} title="Vida na igreja">
+        <DetailItem
+          label="Visitante desde"
+          value={formatDate(member.visitorSince)}
+        />
+        <DetailItem
+          label="Membro desde"
+          value={formatDate(member.membershipDate)}
+        />
+        <DetailItem label="Batismo" value={formatDate(member.baptismDate)} />
+      </DetailSection>
 
       {showMinistries && member.ministries.length > 0 && (
-        <div>
-          <p className="text-xs text-muted-foreground">Ministérios</p>
-          <ul className="mt-2 flex flex-wrap gap-2">
-            {member.ministries.map((link) => (
-              <li
-                key={link.id}
-                className="rounded-md border border-border bg-background px-2.5 py-1 text-xs"
-              >
-                {link.ministryName}
-                {link.roles.length > 0
-                  ? ` · ${link.roles.map((role) => role.name).join(", ")}`
-                  : ""}
-              </li>
-            ))}
-          </ul>
-        </div>
+        <DetailSection icon={UserCheck} title="Ministérios">
+          <div className="sm:col-span-2">
+            <ul className="flex flex-wrap gap-2">
+              {member.ministries.map((link) => (
+                <li
+                  key={link.id}
+                  className="rounded-lg border border-border bg-muted/30 px-3 py-1.5 text-sm"
+                >
+                  <span className="font-medium">{link.ministryName}</span>
+                  {link.roles.length > 0
+                    ? ` · ${link.roles.map((role) => role.name).join(", ")}`
+                    : ""}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </DetailSection>
       )}
     </div>
   );
@@ -128,6 +213,7 @@ export function MemberExpandedPanel({
   }, [member, form]);
 
   const canDelete = confirmName.trim() === member.name;
+  const isPending = updateMember.isPending || deleteMember.isPending;
 
   const onSubmit = form.handleSubmit(async (values) => {
     try {
@@ -169,20 +255,16 @@ export function MemberExpandedPanel({
 
   if (!isEditing) {
     return (
-      <div className="space-y-4">
-        <ReadOnlyDetails member={member} showMinistries={!canManage} />
-
-        {canManage && <MemberMinistriesSection member={member} />}
-
+      <div className="space-y-5">
         <div className="flex flex-wrap gap-2">
-          <Button type="button" size="sm" onClick={() => setIsEditing(true)}>
+          <Button type="button" onClick={() => setIsEditing(true)}>
+            <Pencil className="size-4" />
             Editar cadastro
           </Button>
 
           {member.status === "visitor" && (
             <Button
               type="button"
-              size="sm"
               variant="outline"
               disabled={receiveMember.isPending}
               onClick={() => receiveMember.mutate(member.id)}
@@ -191,6 +273,10 @@ export function MemberExpandedPanel({
             </Button>
           )}
         </div>
+
+        <ReadOnlyDetails member={member} showMinistries={false} />
+
+        <MemberMinistriesSection member={member} />
       </div>
     );
   }
@@ -198,94 +284,137 @@ export function MemberExpandedPanel({
   return (
     <FormProvider {...form}>
       <form onSubmit={onSubmit} className="space-y-6" noValidate>
+        <div className="rounded-2xl border border-primary/15 bg-primary/5 px-4 py-3 sm:px-5">
+          <p className="text-sm font-medium text-foreground">
+            Editando cadastro
+          </p>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            Altere as seções abaixo e salve quando terminar. Campos opcionais
+            podem ficar em branco.
+          </p>
+        </div>
+
         {form.formState.errors.root?.message && (
           <FormAlert>{form.formState.errors.root.message}</FormAlert>
         )}
 
-        <MemberForm
-          disabled={updateMember.isPending || deleteMember.isPending}
-        />
+        <MemberForm disabled={isPending} />
 
-        <MemberMinistriesSection
-          member={member}
-          disabled={updateMember.isPending || deleteMember.isPending}
-        />
+        <section className="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-soft">
+          <header className="flex items-center gap-3 border-b border-border/60 bg-muted/25 px-5 py-4 sm:px-6">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-foreground text-background">
+              <UserCheck className="size-4" aria-hidden />
+            </div>
+            <div>
+              <h3 className="font-display text-base font-semibold tracking-tight">
+                Ministérios
+              </h3>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                Vínculos e cargos desta pessoa nos ministérios da igreja.
+              </p>
+            </div>
+          </header>
+          <div className="p-5 sm:p-6">
+            <MemberMinistriesSection
+              member={member}
+              disabled={isPending}
+              hideTitle
+            />
+          </div>
+        </section>
 
-      <div className="flex flex-wrap gap-2">
-        <Button
-          type="submit"
-          size="sm"
-          disabled={updateMember.isPending}
-        >
-          {updateMember.isPending ? (
-            <>
-              <Loader2 className="size-4 animate-spin" />
-              Salvando...
-            </>
-          ) : (
-            "Salvar alterações"
+        <div
+          className={cn(
+            "sticky bottom-0 z-10 -mx-1 flex flex-col-reverse gap-2 rounded-2xl border border-border/80 bg-background/95 p-4 shadow-elevated backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:flex-row sm:items-center sm:justify-between",
           )}
-        </Button>
-
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          disabled={updateMember.isPending}
-          onClick={() => {
-            form.reset(memberToFormValues(member));
-            setIsEditing(false);
-            form.clearErrors("root");
-          }}
         >
-          Cancelar
-        </Button>
+          <p className="text-center text-xs text-muted-foreground sm:text-left">
+            As alterações só são aplicadas ao salvar.
+          </p>
+          <div className="flex flex-col-reverse gap-2 sm:flex-row">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isPending}
+              onClick={() => {
+                form.reset(memberToFormValues(member));
+                setIsEditing(false);
+                form.clearErrors("root");
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={updateMember.isPending}>
+              {updateMember.isPending ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Salvando...
+                </>
+              ) : (
+                "Salvar alterações"
+              )}
+            </Button>
+          </div>
+        </div>
 
         {member.status === "visitor" && (
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            disabled={receiveMember.isPending || updateMember.isPending}
-            onClick={() => receiveMember.mutate(member.id)}
-          >
-            Receber como membro
-          </Button>
+          <div className="rounded-2xl border border-border/70 bg-muted/15 px-5 py-4">
+            <p className="text-sm font-medium">Receber como membro</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Atualiza o status para membro ativo sem precisar editar o formulário.
+            </p>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="mt-3"
+              disabled={receiveMember.isPending || isPending}
+              onClick={() => receiveMember.mutate(member.id)}
+            >
+              {receiveMember.isPending ? "Recebendo..." : "Receber como membro"}
+            </Button>
+          </div>
         )}
-      </div>
 
-      <Separator />
+        {deleteError && <FormAlert>{deleteError}</FormAlert>}
 
-      {deleteError && <FormAlert>{deleteError}</FormAlert>}
+        <section className="rounded-2xl border border-destructive/20 bg-destructive/5 p-5 sm:p-6">
+          <div className="flex items-start gap-3">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-destructive/10 text-destructive">
+              <Trash2 className="size-4" aria-hidden />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-foreground">
+                Zona de perigo
+              </p>
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                Excluir remove o cadastro pastoral de{" "}
+                <span className="font-medium text-foreground">{member.name}</span>.
+                Digite o nome completo para confirmar.
+              </p>
 
-      <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
-        <p className="text-sm font-medium text-destructive">Excluir cadastro</p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Remove o registro da pessoa. Digite{" "}
-          <span className="font-medium text-foreground">{member.name}</span> para
-          confirmar.
-        </p>
-
-        <div className="mt-4 space-y-3">
-          <Input
-            value={confirmName}
-            onChange={(event) => setConfirmName(event.target.value)}
-            placeholder={member.name}
-            disabled={deleteMember.isPending}
-          />
-          <Button
-            type="button"
-            size="sm"
-            variant="destructive"
-            disabled={!canDelete || deleteMember.isPending}
-            onClick={handleDelete}
-          >
-            <Trash2 className="size-4" />
-            {deleteMember.isPending ? "Excluindo..." : "Excluir cadastro"}
-          </Button>
-        </div>
-      </div>
-    </form>
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Input
+                  value={confirmName}
+                  onChange={(event) => setConfirmName(event.target.value)}
+                  placeholder={member.name}
+                  disabled={deleteMember.isPending}
+                  className="sm:max-w-xs"
+                />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  disabled={!canDelete || deleteMember.isPending}
+                  onClick={handleDelete}
+                >
+                  <Trash2 className="size-4" />
+                  {deleteMember.isPending ? "Excluindo..." : "Excluir cadastro"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </form>
     </FormProvider>
   );
 }

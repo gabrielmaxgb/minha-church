@@ -208,7 +208,7 @@ export function NotificationsBell() {
         type="button"
         onClick={handleToggle}
         className={cn(
-          "relative inline-flex size-10 items-center justify-center rounded-xl border border-border/80 bg-background/60 shadow-soft transition-all duration-200",
+          "relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border/80 bg-background/60 shadow-soft transition-all duration-200",
           open || hasNotifications
             ? "text-foreground hover:bg-background hover:shadow-elevated"
             : "cursor-default text-muted-foreground/50 hover:bg-background/60",
