@@ -2,6 +2,7 @@
 
 import { Repeat } from "lucide-react";
 
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SelectField } from "@/components/ui/select-field";
@@ -152,14 +153,13 @@ export function EventRecurrenceFields({
                 disabled={disabled}
                 label="Em"
               >
-                <Input
-                  type="date"
+                <DatePicker
                   value={value.endDate}
-                  onChange={(event) =>
-                    update({ endDate: event.target.value, endType: "on_date" })
+                  onChange={(endDate) =>
+                    update({ endDate, endType: "on_date" })
                   }
                   disabled={disabled || value.endType !== "on_date"}
-                  className="max-w-[11rem]"
+                  className="min-w-[12rem] max-w-[16rem]"
                 />
               </EndOption>
               <EndOption

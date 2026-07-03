@@ -8,12 +8,15 @@ import {
 } from "@/lib/api/queries/events.keys";
 import { useTenant } from "@/providers/auth-provider";
 
-export function useChurchEvents(params: ListChurchEventsParams = {}) {
+export function useChurchEvents(
+  params: ListChurchEventsParams = {},
+  options?: { enabled?: boolean },
+) {
   const { churchId } = useTenant();
 
   return useQuery({
     ...eventsKeys.list(churchId ?? "unknown", params),
-    enabled: Boolean(churchId),
+    enabled: Boolean(churchId) && (options?.enabled ?? true),
   });
 }
 

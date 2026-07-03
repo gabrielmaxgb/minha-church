@@ -3,7 +3,6 @@
 import { useEffect, useId, useMemo, useState } from "react";
 import {
   Calendar,
-  Clock,
   Loader2,
   MapPin,
   Sparkles,
@@ -11,6 +10,7 @@ import {
   X,
 } from "lucide-react";
 
+import { ActivityScheduleFields } from "@/components/dashboard/activities/activity-schedule-fields";
 import { EventMutationScopeFields } from "@/components/dashboard/activities/event-mutation-scope-fields";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -352,45 +352,18 @@ export function EditActivityModal({
 
             <FormSection
               title="Data e horário"
-              description="Defina quando a atividade começa e, se quiser, quando termina."
+              description="Defina o dia, o horário de início e a duração da atividade."
             >
-              <div className="grid gap-4 rounded-2xl border border-border/80 bg-muted/10 p-5 sm:grid-cols-2 sm:gap-5 sm:p-6">
-                <Field
-                  label="Início"
-                  htmlFor="edit-activity-starts-at"
-                  hint="Data e hora de começo."
-                >
-                  <div className="relative">
-                    <Clock className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="edit-activity-starts-at"
-                      type="datetime-local"
-                      value={startsAt}
-                      onChange={(inputEvent) => setStartsAt(inputEvent.target.value)}
-                      disabled={isPending}
-                      required
-                      className="h-12 rounded-xl border-border/80 bg-background pl-11 pr-4 text-base"
-                    />
-                  </div>
-                </Field>
-
-                <Field
-                  label="Término"
-                  htmlFor="edit-activity-ends-at"
-                  hint="Deixe em branco se não houver horário de fim."
-                >
-                  <div className="relative">
-                    <Clock className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="edit-activity-ends-at"
-                      type="datetime-local"
-                      value={endsAt}
-                      onChange={(inputEvent) => setEndsAt(inputEvent.target.value)}
-                      disabled={isPending}
-                      className="h-12 rounded-xl border-border/80 bg-background pl-11 pr-4 text-base"
-                    />
-                  </div>
-                </Field>
+              <div className="rounded-2xl border border-border/80 bg-muted/10 p-5 sm:p-6">
+                <ActivityScheduleFields
+                  idPrefix="edit-activity"
+                  startsAt={startsAt}
+                  endsAt={endsAt}
+                  onStartsAtChange={setStartsAt}
+                  onEndsAtChange={setEndsAt}
+                  disabled={isPending}
+                  elevated
+                />
               </div>
             </FormSection>
 

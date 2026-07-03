@@ -3,6 +3,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { Calendar, Loader2, X } from "lucide-react";
 
+import { ActivityScheduleFields } from "@/components/dashboard/activities/activity-schedule-fields";
 import { EventRecurrenceFields } from "@/components/dashboard/activities/event-recurrence-fields";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,9 +29,11 @@ interface CreateActivityModalProps {
   open: boolean;
   onClose: () => void;
   defaultMinistryId?: string;
+  /** Valor `datetime-local` inicial (ex.: dia clicado no calendário). */
+  defaultStartsAtValue?: string;
 }
 
-function defaultStartsAt(): string {
+function fallbackStartsAt(): string {
   const date = new Date();
   date.setDate(date.getDate() + 7);
   date.setHours(19, 0, 0, 0);
@@ -48,6 +51,7 @@ export function CreateActivityModal({
   open,
   onClose,
   defaultMinistryId = "",
+  defaultStartsAtValue,
 }: CreateActivityModalProps) {
   const titleId = useId();
   const { permissions } = useAuth();
@@ -58,10 +62,11 @@ export function CreateActivityModal({
   const [ministryId, setMinistryId] = useState(defaultMinistryId);
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
-  const [startsAt, setStartsAt] = useState(defaultStartsAt);
+  const initialStartsAt = defaultStartsAtValue ?? fallbackStartsAt();
+  const [startsAt, setStartsAt] = useState(initialStartsAt);
   const [endsAt, setEndsAt] = useState("");
   const [recurrence, setRecurrence] = useState<EventRecurrenceFormState>(
-    defaultRecurrenceFormState(defaultStartsAt()),
+    defaultRecurrenceFormState(initialStartsAt),
   );
   const [error, setError] = useState<string | null>(null);
 
@@ -88,9 +93,9 @@ export function CreateActivityModal({
         setMinistryId(defaultMinistryId);
         setDescription("");
         setLocation("");
-        setStartsAt(defaultStartsAt());
+        setStartsAt(fallbackStartsAt());
         setEndsAt("");
-        setRecurrence(defaultRecurrenceFormState(defaultStartsAt()));
+        setRecurrence(defaultRecurrenceFormState(fallbackStartsAt()));
         setError(null);
       }
 
@@ -98,8 +103,12 @@ export function CreateActivityModal({
       return;
     }
 
+    const nextStartsAt = defaultStartsAtValue ?? fallbackStartsAt();
+
     wasOpenRef.current = true;
     setMinistryId(defaultMinistryId);
+    setStartsAt(nextStartsAt);
+    setRecurrence(defaultRecurrenceFormState(nextStartsAt));
 
     if (!defaultMinistryId && creatableMinistries.length === 1) {
       setMinistryId(creatableMinistries[0].id);
@@ -111,7 +120,7 @@ export function CreateActivityModal({
     return () => {
       document.body.style.overflow = previousOverflow;
     };
-  }, [open, defaultMinistryId, creatableMinistries]);
+  }, [open, defaultMinistryId, defaultStartsAtValue, creatableMinistries]);
 
   useEffect(() => {
     setRecurrence((current) => syncRecurrenceDaysWithStart(current, startsAt));
@@ -288,29 +297,14 @@ export function CreateActivityModal({
               />
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="activity-starts-at">Início</Label>
-                <Input
-                  id="activity-starts-at"
-                  type="datetime-local"
-                  value={startsAt}
-                  onChange={(event) => setStartsAt(event.target.value)}
-                  disabled={createEvent.isPending}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="activity-ends-at">Término (opcional)</Label>
-                <Input
-                  id="activity-ends-at"
-                  type="datetime-local"
-                  value={endsAt}
-                  onChange={(event) => setEndsAt(event.target.value)}
-                  disabled={createEvent.isPending}
-                />
-              </div>
-            </div>
+            <ActivityScheduleFields
+              idPrefix="activity"
+              startsAt={startsAt}
+              endsAt={endsAt}
+              onStartsAtChange={setStartsAt}
+              onEndsAtChange={setEndsAt}
+              disabled={createEvent.isPending}
+            />
 
             <EventRecurrenceFields
               value={recurrence}

@@ -3,6 +3,7 @@
 import { useEffect, useId, useState } from "react";
 import { Calendar, Loader2, X } from "lucide-react";
 
+import { ActivityScheduleFields } from "@/components/dashboard/activities/activity-schedule-fields";
 import { EventRecurrenceFields } from "@/components/dashboard/activities/event-recurrence-fields";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -229,29 +230,14 @@ export function CreateMinistryEventModal({
               />
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="event-starts-at">Início</Label>
-                <Input
-                  id="event-starts-at"
-                  type="datetime-local"
-                  value={startsAt}
-                  onChange={(event) => setStartsAt(event.target.value)}
-                  disabled={createEvent.isPending}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="event-ends-at">Término (opcional)</Label>
-                <Input
-                  id="event-ends-at"
-                  type="datetime-local"
-                  value={endsAt}
-                  onChange={(event) => setEndsAt(event.target.value)}
-                  disabled={createEvent.isPending}
-                />
-              </div>
-            </div>
+            <ActivityScheduleFields
+              idPrefix="event"
+              startsAt={startsAt}
+              endsAt={endsAt}
+              onStartsAtChange={setStartsAt}
+              onEndsAtChange={setEndsAt}
+              disabled={createEvent.isPending}
+            />
 
             <EventRecurrenceFields
               value={recurrence}
