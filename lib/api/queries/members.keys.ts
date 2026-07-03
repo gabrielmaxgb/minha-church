@@ -94,7 +94,7 @@ async function receiveMember(
 
 export interface AssignMemberMinistryPayload {
   ministryId: string;
-  ministryRoleId?: string;
+  ministryRoleIds?: string[];
   startedAt?: string;
 }
 

@@ -35,14 +35,20 @@ export interface MinistryEvent {
   updatedAt: string;
 }
 
+export interface MinistryMemberRole {
+  id: string;
+  name: string;
+  canManageEvents: boolean;
+}
+
 export interface MinistryMember {
   id: string;
   memberId: string;
   memberName: string;
   memberEmail: string | null;
   memberPhone: string | null;
-  ministryRoleId: string | null;
-  ministryRoleName: string | null;
+  roles: MinistryMemberRole[];
+  canManageEvents: boolean;
   startedAt: string | null;
 }
 

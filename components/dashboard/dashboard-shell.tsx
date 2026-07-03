@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
+import { ChurchSwitchOverlay } from "@/components/dashboard/church-switch-overlay";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { DashboardContentMotion } from "@/components/motion/dashboard-motion";
@@ -23,7 +24,14 @@ export function DashboardShell({
 }: DashboardShellProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { isLoading, isAuthenticated, church, user } = useRequireAuth();
+  const {
+    isLoading,
+    isAuthenticated,
+    isSwitchingChurch,
+    switchingToChurchName,
+    church,
+    user,
+  } = useRequireAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
@@ -53,8 +61,17 @@ export function DashboardShell({
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-surface">
-      <div className="hidden h-screen shrink-0 lg:block">
+    <div className="relative flex h-screen overflow-hidden bg-surface">
+      {isSwitchingChurch && switchingToChurchName && (
+        <ChurchSwitchOverlay churchName={switchingToChurchName} />
+      )}
+
+      <div
+        className={cn(
+          "hidden h-screen shrink-0 lg:block",
+          isSwitchingChurch && "pointer-events-none select-none",
+        )}
+      >
         <DashboardSidebar className="h-full" />
       </div>
 
@@ -75,13 +92,24 @@ export function DashboardShell({
         </>
       )}
 
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+      <div
+        className={cn(
+          "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden",
+          isSwitchingChurch && "pointer-events-none select-none",
+        )}
+        aria-busy={isSwitchingChurch}
+      >
         <DashboardTopbar
           title={title}
           subtitle={subtitle ?? church?.name}
           onOpenSidebar={() => setSidebarOpen(true)}
         />
-        <main className="dashboard-canvas min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 sm:py-8">
+        <main
+          className={cn(
+            "dashboard-canvas min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 sm:py-8",
+            isSwitchingChurch && "opacity-60",
+          )}
+        >
           <DashboardContentMotion>{children}</DashboardContentMotion>
         </main>
       </div>

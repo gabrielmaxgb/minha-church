@@ -32,7 +32,14 @@ export function DashboardTopbar({
   subtitle,
   onOpenSidebar,
 }: DashboardTopbarProps) {
-  const { user, church, churches, logout, switchChurch } = useAuth();
+  const {
+    user,
+    church,
+    churches,
+    logout,
+    switchChurch,
+    isSwitchingChurch,
+  } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [churchMenuOpen, setChurchMenuOpen] = useState(false);
 
@@ -71,7 +78,8 @@ export function DashboardTopbar({
               <button
                 type="button"
                 onClick={() => setChurchMenuOpen((prev) => !prev)}
-                className="inline-flex max-w-[220px] items-center gap-2 rounded-xl border border-border/80 bg-background/60 px-3 py-2 text-left text-sm shadow-soft transition-all duration-200 hover:bg-background hover:shadow-elevated"
+                disabled={isSwitchingChurch}
+                className="inline-flex max-w-[220px] items-center gap-2 rounded-xl border border-border/80 bg-background/60 px-3 py-2 text-left text-sm shadow-soft transition-all duration-200 hover:bg-background hover:shadow-elevated disabled:cursor-not-allowed disabled:opacity-60"
                 aria-expanded={churchMenuOpen}
               >
                 <span className="truncate font-medium">{church.name}</span>
@@ -96,12 +104,13 @@ export function DashboardTopbar({
                       <button
                         key={item.id}
                         type="button"
+                        disabled={isSwitchingChurch || item.id === church.id}
                         onClick={() => {
-                          void switchChurch(item.id);
                           setChurchMenuOpen(false);
+                          void switchChurch(item.id);
                         }}
                         className={cn(
-                          "flex w-full rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-muted",
+                          "flex w-full rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60",
                           item.id === church.id && "bg-muted font-medium",
                         )}
                       >

@@ -89,7 +89,9 @@ function ReadOnlyDetails({
                 className="rounded-md border border-border bg-background px-2.5 py-1 text-xs"
               >
                 {link.ministryName}
-                {link.ministryRoleName ? ` · ${link.ministryRoleName}` : ""}
+                {link.roles.length > 0
+                  ? ` · ${link.roles.map((role) => role.name).join(", ")}`
+                  : ""}
               </li>
             ))}
           </ul>

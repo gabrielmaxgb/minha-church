@@ -4,12 +4,17 @@ export type Gender = "male" | "female" | "other" | "prefer_not_to_say";
 
 export type MaritalStatus = "single" | "married" | "divorced" | "widowed";
 
+export interface MemberMinistryRoleSummary {
+  id: string;
+  name: string;
+  canManageEvents: boolean;
+}
+
 export interface MemberMinistryLink {
   id: string;
   ministryId: string;
   ministryName: string;
-  ministryRoleId: string | null;
-  ministryRoleName: string | null;
+  roles: MemberMinistryRoleSummary[];
   canManageEvents: boolean;
   startedAt: string | null;
   endedAt: string | null;

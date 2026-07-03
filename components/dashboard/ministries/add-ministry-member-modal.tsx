@@ -3,9 +3,9 @@
 import { useEffect, useId, useMemo, useState } from "react";
 import { Loader2, UserPlus, X } from "lucide-react";
 
+import { MinistryRoleToggles } from "@/components/dashboard/ministries/ministry-role-toggles";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { SelectField } from "@/components/ui/select-field";
 import { Separator } from "@/components/ui/separator";
 import { TypeaheadSelect } from "@/components/ui/typeahead-select";
 import { useAssignMemberToMinistry, useMembers } from "@/lib/api/queries";
@@ -26,7 +26,7 @@ export function AddMinistryMemberModal({
 }: AddMinistryMemberModalProps) {
   const titleId = useId();
   const [memberId, setMemberId] = useState("");
-  const [roleId, setRoleId] = useState("");
+  const [roleIds, setRoleIds] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const { data: membersData, isLoading } = useMembers({ limit: 100 });
@@ -61,7 +61,7 @@ export function AddMinistryMemberModal({
   useEffect(() => {
     if (!open) {
       setMemberId("");
-      setRoleId("");
+      setRoleIds([]);
       setError(null);
       return;
     }
@@ -107,7 +107,7 @@ export function AddMinistryMemberModal({
       await assignMember.mutateAsync({
         memberId,
         payload: {
-          ministryRoleId: roleId || undefined,
+          ministryRoleIds: roleIds,
         },
       });
       onClose();
@@ -198,25 +198,19 @@ export function AddMinistryMemberModal({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="member-role">Cargo no ministério</Label>
-              <SelectField
-                id="member-role"
-                value={roleId}
-                onChange={(event) => setRoleId(event.target.value)}
-                disabled={assignMember.isPending || roles.length === 0}
-              >
-                <option value="">Sem cargo definido</option>
-                {roles.map((role) => (
-                  <option key={role.id} value={role.id}>
-                    {role.name}
-                  </option>
-                ))}
-              </SelectField>
-              {roles.length === 0 && (
-                <p className="text-xs text-muted-foreground">
-                  Crie cargos na aba &quot;Cargos&quot; antes de atribuir papéis.
-                </p>
-              )}
+              <Label>Cargos no ministério</Label>
+              <MinistryRoleToggles
+                roles={roles}
+                selectedRoleIds={roleIds}
+                disabled={assignMember.isPending}
+                onToggle={(roleId, checked) => {
+                  setRoleIds((current) =>
+                    checked
+                      ? [...current, roleId]
+                      : current.filter((id) => id !== roleId),
+                  );
+                }}
+              />
             </div>
           </div>
 

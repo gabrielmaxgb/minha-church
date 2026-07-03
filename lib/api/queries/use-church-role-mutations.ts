@@ -13,6 +13,7 @@ import type {
   CreateChurchRolePayload,
   UpdateChurchRolePayload,
 } from "@/types/church-roles";
+import { membershipsKeys } from "@/lib/api/queries/memberships.keys";
 import { useTenant } from "@/providers/auth-provider";
 
 export function useCreateChurchRole() {
@@ -54,6 +55,7 @@ export function useUpdateChurchRole() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: churchRolesKeys._def });
+      await queryClient.invalidateQueries({ queryKey: membershipsKeys._def });
       await queryClient.invalidateQueries({ queryKey: auditLogsKeys._def });
     },
   });

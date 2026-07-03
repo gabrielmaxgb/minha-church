@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Loader2, Trash2 } from "lucide-react";
 
+import { MinistryRoleToggles } from "@/components/dashboard/ministries/ministry-role-toggles";
 import { Button } from "@/components/ui/button";
 import { FormAlert } from "@/components/ui/form-field";
 import { Label } from "@/components/ui/label";
@@ -13,7 +14,6 @@ import {
   useMinistries,
 } from "@/lib/api/queries";
 import type { Member, MemberMinistryLink } from "@/types/members";
-import type { MinistryRole } from "@/types/ministries";
 
 interface MemberMinistriesSectionProps {
   member: Member;
@@ -25,52 +25,37 @@ function MinistryRoleRow({
   roles,
   disabled,
   isUpdating,
-  onRoleChange,
+  onRolesChange,
   onRemove,
   isRemoving,
 }: {
   link: MemberMinistryLink;
-  roles: MinistryRole[];
+  roles: import("@/types/ministries").MinistryRole[];
   disabled?: boolean;
   isUpdating: boolean;
-  onRoleChange: (ministryRoleId: string | null) => void;
+  onRolesChange: (roleIds: string[]) => void;
   onRemove: () => void;
   isRemoving: boolean;
 }) {
-  const sortedRoles = [...roles].sort((a, b) => a.sortOrder - b.sortOrder);
+  const selectedRoleIds = link.roles.map((role) => role.id);
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-      <div className="min-w-0">
-        <p className="text-sm font-medium">{link.ministryName}</p>
-        {roles.length === 0 && (
+    <div className="space-y-3 rounded-lg border border-border px-4 py-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-medium">{link.ministryName}</p>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Este ministério ainda não tem cargos cadastrados.
+            {selectedRoleIds.length === 0
+              ? "Nenhum cargo atribuído"
+              : `${selectedRoleIds.length} cargo${selectedRoleIds.length === 1 ? "" : "s"} atribuído${selectedRoleIds.length === 1 ? "" : "s"}`}
           </p>
-        )}
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <SelectField
-          value={link.ministryRoleId ?? ""}
-          onChange={(event) => onRoleChange(event.target.value || null)}
-          disabled={disabled || isUpdating || isRemoving || roles.length === 0}
-          className="w-full sm:w-52"
-          aria-label={`Cargo em ${link.ministryName}`}
-        >
-          <option value="">Sem cargo</option>
-          {sortedRoles.map((role) => (
-            <option key={role.id} value={role.id}>
-              {role.name}
-            </option>
-          ))}
-        </SelectField>
+        </div>
 
         <Button
           type="button"
           size="sm"
           variant="ghost"
-          className="text-muted-foreground hover:text-destructive"
+          className="shrink-0 text-muted-foreground hover:text-destructive"
           disabled={disabled || isUpdating || isRemoving}
           onClick={onRemove}
           aria-label={`Remover de ${link.ministryName}`}
@@ -82,6 +67,20 @@ function MinistryRoleRow({
           )}
         </Button>
       </div>
+
+      <MinistryRoleToggles
+        roles={roles}
+        selectedRoleIds={selectedRoleIds}
+        disabled={disabled}
+        isUpdating={isUpdating}
+        onToggle={(roleId, checked) => {
+          const next = checked
+            ? [...selectedRoleIds, roleId]
+            : selectedRoleIds.filter((id) => id !== roleId);
+
+          onRolesChange(next);
+        }}
+      />
     </div>
   );
 }
@@ -91,7 +90,7 @@ export function MemberMinistriesSection({
   disabled = false,
 }: MemberMinistriesSectionProps) {
   const [newMinistryId, setNewMinistryId] = useState("");
-  const [newRoleId, setNewRoleId] = useState("");
+  const [newRoleIds, setNewRoleIds] = useState<string[]>([]);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const { data: ministries, isLoading } = useMinistries();
@@ -118,22 +117,22 @@ export function MemberMinistriesSection({
 
   const isBusy = assignMinistry.isPending || removeMinistry.isPending;
 
-  async function handleRoleChange(
+  async function handleRolesChange(
     link: MemberMinistryLink,
-    ministryRoleId: string | null,
+    ministryRoleIds: string[],
   ) {
     setActionError(null);
 
     try {
       await assignMinistry.mutateAsync({
         ministryId: link.ministryId,
-        ministryRoleId: ministryRoleId ?? undefined,
+        ministryRoleIds,
       });
     } catch (error) {
       setActionError(
         error instanceof Error
           ? error.message
-          : "Não foi possível atualizar o cargo.",
+          : "Não foi possível atualizar os cargos.",
       );
     }
   }
@@ -163,10 +162,10 @@ export function MemberMinistriesSection({
     try {
       await assignMinistry.mutateAsync({
         ministryId: newMinistryId,
-        ministryRoleId: newRoleId || undefined,
+        ministryRoleIds: newRoleIds,
       });
       setNewMinistryId("");
-      setNewRoleId("");
+      setNewRoleIds([]);
     } catch (error) {
       setActionError(
         error instanceof Error
@@ -181,7 +180,7 @@ export function MemberMinistriesSection({
       <div>
         <h3 className="text-sm font-medium">Ministérios e cargos</h3>
         <p className="mt-0.5 text-xs text-muted-foreground">
-          Atribua cargos nos ministérios aos quais a pessoa pertence.
+          Uma pessoa pode ter mais de um cargo no mesmo ministério.
         </p>
       </div>
 
@@ -205,7 +204,7 @@ export function MemberMinistriesSection({
             roles={ministriesById.get(link.ministryId)?.roles ?? []}
             disabled={disabled}
             isUpdating={assignMinistry.isPending}
-            onRoleChange={(ministryRoleId) => handleRoleChange(link, ministryRoleId)}
+            onRolesChange={(roleIds) => handleRolesChange(link, roleIds)}
             onRemove={() => handleRemove(link.ministryId)}
             isRemoving={removeMinistry.isPending}
           />
@@ -215,7 +214,7 @@ export function MemberMinistriesSection({
         <div className="rounded-lg border border-border bg-muted/20 p-4">
           <p className="text-sm font-medium">Vincular a um ministério</p>
 
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div className="mt-4 space-y-4">
             <div className="space-y-2">
               <Label htmlFor={`add-ministry-${member.id}`}>Ministério</Label>
               <SelectField
@@ -223,7 +222,7 @@ export function MemberMinistriesSection({
                 value={newMinistryId}
                 onChange={(event) => {
                   setNewMinistryId(event.target.value);
-                  setNewRoleId("");
+                  setNewRoleIds([]);
                 }}
                 disabled={disabled || isBusy}
               >
@@ -236,31 +235,23 @@ export function MemberMinistriesSection({
               </SelectField>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor={`add-ministry-role-${member.id}`}>
-                Cargo no ministério
-              </Label>
-              <SelectField
-                id={`add-ministry-role-${member.id}`}
-                value={newRoleId}
-                onChange={(event) => setNewRoleId(event.target.value)}
-                disabled={
-                  disabled ||
-                  isBusy ||
-                  !newMinistryId ||
-                  newMinistryRoles.length === 0
-                }
-              >
-                <option value="">Sem cargo definido</option>
-                {[...newMinistryRoles]
-                  .sort((a, b) => a.sortOrder - b.sortOrder)
-                  .map((role) => (
-                    <option key={role.id} value={role.id}>
-                      {role.name}
-                    </option>
-                  ))}
-              </SelectField>
-            </div>
+            {newMinistryId && (
+              <div className="space-y-2">
+                <Label>Cargos no ministério</Label>
+                <MinistryRoleToggles
+                  roles={newMinistryRoles}
+                  selectedRoleIds={newRoleIds}
+                  disabled={disabled || isBusy}
+                  onToggle={(roleId, checked) => {
+                    setNewRoleIds((current) =>
+                      checked
+                        ? [...current, roleId]
+                        : current.filter((id) => id !== roleId),
+                    );
+                  }}
+                />
+              </div>
+            )}
           </div>
 
           <Button

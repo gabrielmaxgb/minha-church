@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Calendar, MapPin, Pencil, Plus, Trash2, UserPlus } from "lucide-react";
 
 import { AddMinistryMemberModal } from "@/components/dashboard/ministries/add-ministry-member-modal";
+import { MinistryRoleToggles } from "@/components/dashboard/ministries/ministry-role-toggles";
 import { CreateMinistryEventModal } from "@/components/dashboard/ministries/create-ministry-event-modal";
 import { EditActivityModal } from "@/components/dashboard/activities/edit-activity-modal";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +16,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { SelectField } from "@/components/ui/select-field";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   useMinistryEvents,
@@ -288,47 +288,22 @@ export function MinistryMembersSection({
             members?.map((member) => (
               <div
                 key={member.id}
-                className="flex flex-col gap-3 rounded-lg border border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+                className="space-y-3 rounded-lg border border-border px-4 py-3"
               >
-                <div className="min-w-0">
-                  <p className="font-medium">{member.memberName}</p>
-                  <p className="mt-0.5 truncate text-sm text-muted-foreground">
-                    {member.memberEmail || member.memberPhone || "Sem contato"}
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  {canManage ? (
-                    <SelectField
-                      value={member.ministryRoleId ?? ""}
-                      onChange={(event) =>
-                        updateRole.mutate({
-                          memberId: member.memberId,
-                          ministryRoleId: event.target.value || null,
-                        })
-                      }
-                      disabled={updateRole.isPending || roles.length === 0}
-                      className="w-full sm:w-44"
-                    >
-                      <option value="">Sem cargo</option>
-                      {roles.map((role) => (
-                        <option key={role.id} value={role.id}>
-                          {role.name}
-                        </option>
-                      ))}
-                    </SelectField>
-                  ) : (
-                    <Badge variant="outline">
-                      {member.ministryRoleName ?? "Sem cargo"}
-                    </Badge>
-                  )}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-medium">{member.memberName}</p>
+                    <p className="mt-0.5 truncate text-sm text-muted-foreground">
+                      {member.memberEmail || member.memberPhone || "Sem contato"}
+                    </p>
+                  </div>
 
                   {canManage && (
                     <Button
                       type="button"
                       size="sm"
                       variant="ghost"
-                      className="text-muted-foreground hover:text-destructive"
+                      className="shrink-0 text-muted-foreground hover:text-destructive"
                       disabled={removeMember.isPending}
                       onClick={() => removeMember.mutate(member.memberId)}
                     >
@@ -336,6 +311,31 @@ export function MinistryMembersSection({
                     </Button>
                   )}
                 </div>
+
+                {canManage ? (
+                  <MinistryRoleToggles
+                    roles={roles}
+                    selectedRoleIds={member.roles.map((role) => role.id)}
+                    isUpdating={updateRole.isPending}
+                    onToggle={(roleId, checked) => {
+                      const currentIds = member.roles.map((role) => role.id);
+                      const next = checked
+                        ? [...currentIds, roleId]
+                        : currentIds.filter((id) => id !== roleId);
+
+                      updateRole.mutate({
+                        memberId: member.memberId,
+                        ministryRoleIds: next,
+                      });
+                    }}
+                  />
+                ) : (
+                  <Badge variant="outline">
+                    {member.roles.length > 0
+                      ? member.roles.map((role) => role.name).join(", ")
+                      : "Sem cargo"}
+                  </Badge>
+                )}
               </div>
             ))}
         </CardContent>

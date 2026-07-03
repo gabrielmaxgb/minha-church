@@ -112,9 +112,6 @@ function NotificationsPanel({
             <div className="px-4 py-8 text-center">
               <Bell className="mx-auto size-7 text-muted-foreground/40" aria-hidden />
               <p className="mt-2 text-sm font-medium">Tudo em dia</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Quando alguém pedir recuperação de senha sem e-mail, aparece aqui.
-              </p>
             </div>
           )}
 

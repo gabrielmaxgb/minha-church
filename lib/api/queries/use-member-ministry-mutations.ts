@@ -69,10 +69,10 @@ export function useUpdateMemberMinistryRole(ministryId: string) {
   return useMutation({
     mutationFn: ({
       memberId,
-      ministryRoleId,
+      ministryRoleIds,
     }: {
       memberId: string;
-      ministryRoleId: string | null;
+      ministryRoleIds: string[];
     }) => {
       if (!churchId) {
         throw new Error("Igreja não selecionada.");
@@ -80,7 +80,7 @@ export function useUpdateMemberMinistryRole(ministryId: string) {
 
       return assignMemberMinistry(churchId, memberId, {
         ministryId,
-        ministryRoleId: ministryRoleId ?? undefined,
+        ministryRoleIds,
       });
     },
     onSuccess: invalidate,

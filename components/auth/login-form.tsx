@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff } from "lucide-react";
@@ -31,7 +32,7 @@ import { useAuth } from "@/providers/auth-provider";
 function LoginFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login } = useAuth();
+  const { login, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingIdentifier, setLoadingIdentifier] = useState<string | null>(null);
@@ -51,6 +52,12 @@ function LoginFormContent() {
     clearErrors,
     formState: { errors },
   } = form;
+
+  useEffect(() => {
+    if (!isAuthLoading && isAuthenticated) {
+      router.replace(resolvePostLoginRedirect(searchParams.get("redirect")));
+    }
+  }, [isAuthenticated, isAuthLoading, router, searchParams]);
 
   async function performLogin(loginIdentifierValue: string, loginPassword: string) {
     clearErrors("root");

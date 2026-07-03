@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,7 @@ import {
   type ChurchPermissionKey,
 } from "@/types/church-roles";
 import { useAuth } from "@/providers/auth-provider";
-import type { ChurchRole } from "@/types/church-roles";
+import type { ChurchRole, UpdateChurchRolePayload } from "@/types/church-roles";
 
 import {
   SettingsAlert,
@@ -33,6 +33,7 @@ import {
   SettingsSplitLayout,
   SettingsToggleRow,
 } from "./settings-shared";
+import { ChurchRoleNameHeader } from "./church-role-name-header";
 
 function permissionsEqual(
   a: readonly ChurchPermissionKey[],
@@ -56,6 +57,7 @@ export function ChurchRolesSettings() {
 
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<string, ChurchPermissionKey[]>>({});
+  const [nameDrafts, setNameDrafts] = useState<Record<string, string>>({});
   const [newRoleName, setNewRoleName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -69,6 +71,16 @@ export function ChurchRolesSettings() {
         (a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name, "pt-BR"),
       ),
     [roles],
+  );
+
+  const systemRoles = useMemo(
+    () => sortedRoles.filter((role) => role.isSystem),
+    [sortedRoles],
+  );
+
+  const customRoles = useMemo(
+    () => sortedRoles.filter((role) => !role.isSystem),
+    [sortedRoles],
   );
 
   const selectedRole = sortedRoles.find((role) => role.id === selectedRoleId) ?? null;
@@ -102,17 +114,35 @@ export function ChurchRolesSettings() {
 
       return next;
     });
+
+    setNameDrafts((current) => {
+      const next = { ...current };
+
+      for (const role of roles) {
+        const draft = current[role.id];
+
+        if (draft !== undefined && draft.trim() === role.name) {
+          delete next[role.id];
+        }
+      }
+
+      return next;
+    });
   }, [roles]);
 
   if (!canManage) {
     return null;
   }
 
+  function getDraftName(role: ChurchRole): string {
+    return nameDrafts[role.id] ?? role.name;
+  }
+
   function getDraftPermissions(role: ChurchRole): ChurchPermissionKey[] {
     return drafts[role.id] ?? role.permissions;
   }
 
-  function isRoleDirty(role: ChurchRole): boolean {
+  function isPermissionsDirty(role: ChurchRole): boolean {
     const draft = drafts[role.id];
 
     if (!draft) {
@@ -120,6 +150,38 @@ export function ChurchRolesSettings() {
     }
 
     return !permissionsEqual(draft, role.permissions);
+  }
+
+  function isNameDirty(role: ChurchRole): boolean {
+    const draft = nameDrafts[role.id];
+
+    if (draft === undefined) {
+      return false;
+    }
+
+    return draft.trim() !== role.name;
+  }
+
+  function isRoleDirty(role: ChurchRole): boolean {
+    return isPermissionsDirty(role) || isNameDirty(role);
+  }
+
+  function setDraftName(roleId: string, value: string) {
+    const role = sortedRoles.find((item) => item.id === roleId);
+
+    if (!role) {
+      return;
+    }
+
+    setNameDrafts((current) => {
+      if (value.trim() === role.name) {
+        const next = { ...current };
+        delete next[roleId];
+        return next;
+      }
+
+      return { ...current, [roleId]: value };
+    });
   }
 
   function setDraftPermissions(
@@ -158,14 +220,42 @@ export function ChurchRolesSettings() {
       delete next[role.id];
       return next;
     });
+    setNameDrafts((current) => {
+      const next = { ...current };
+      delete next[role.id];
+      return next;
+    });
     setErrorMessage(null);
   }
 
   async function saveChanges(role: ChurchRole) {
-    const draft = drafts[role.id];
+    const permissionDraft = drafts[role.id];
+    const nameDraft = nameDrafts[role.id];
+    const permissionsChanged =
+      permissionDraft !== undefined &&
+      !permissionsEqual(permissionDraft, role.permissions);
+    const nameChanged =
+      nameDraft !== undefined && nameDraft.trim() !== role.name;
 
-    if (!draft || permissionsEqual(draft, role.permissions)) {
+    if (!permissionsChanged && !nameChanged) {
       return;
+    }
+
+    const payload: UpdateChurchRolePayload = {};
+
+    if (permissionsChanged) {
+      payload.permissions = permissionDraft;
+    }
+
+    if (nameChanged) {
+      const trimmedName = nameDraft.trim();
+
+      if (!trimmedName) {
+        setErrorMessage("O nome do cargo não pode ficar vazio.");
+        return;
+      }
+
+      payload.name = trimmedName;
     }
 
     setErrorMessage(null);
@@ -174,8 +264,9 @@ export function ChurchRolesSettings() {
     try {
       await updateRole.mutateAsync({
         roleId: role.id,
-        payload: { permissions: draft },
+        payload,
       });
+      discardChanges(role);
     } catch (error) {
       setErrorMessage(
         error instanceof Error
@@ -309,10 +400,28 @@ export function ChurchRolesSettings() {
                   )
                 }
               >
-                {sortedRoles.map((role) => (
+                {systemRoles.map((role) => (
                   <SettingsSidebarItem
                     key={role.id}
-                    label={role.name}
+                    label={getDraftName(role)}
+                    selected={role.id === selectedRoleId}
+                    dirty={isRoleDirty(role)}
+                    onClick={() => setSelectedRoleId(role.id)}
+                  />
+                ))}
+
+                {customRoles.length > 0 && (
+                  <div
+                    className="my-2 border-t border-border/70"
+                    role="separator"
+                    aria-hidden
+                  />
+                )}
+
+                {customRoles.map((role) => (
+                  <SettingsSidebarItem
+                    key={role.id}
+                    label={getDraftName(role)}
                     selected={role.id === selectedRoleId}
                     dirty={isRoleDirty(role)}
                     onClick={() => setSelectedRoleId(role.id)}
@@ -323,25 +432,24 @@ export function ChurchRolesSettings() {
           >
             {selectedRole ? (
               <>
-                <SettingsDetailHeader
-                  title={selectedRole.name}
-                  description={`${getDraftPermissions(selectedRole).length} de ${ALL_CHURCH_PERMISSIONS.length} permissões${selectedRole.isSystem ? " · cargo padrão" : ""}`}
-                  action={
-                    !selectedRole.isSystem ? (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 text-muted-foreground hover:text-destructive"
-                        disabled={deleteRole.isPending}
-                        onClick={() => void handleDeleteRole(selectedRole)}
-                      >
-                        <Trash2 className="size-3.5" />
-                        Excluir
-                      </Button>
-                    ) : undefined
-                  }
-                />
+                {selectedRole.isSystem ? (
+                  <SettingsDetailHeader
+                    title={selectedRole.name}
+                    description={`${getDraftPermissions(selectedRole).length} de ${ALL_CHURCH_PERMISSIONS.length} permissões · cargo padrão`}
+                  />
+                ) : (
+                  <ChurchRoleNameHeader
+                    name={getDraftName(selectedRole)}
+                    permissionsLabel={`${getDraftPermissions(selectedRole).length} de ${ALL_CHURCH_PERMISSIONS.length} permissões`}
+                    isNameDirty={isNameDirty(selectedRole)}
+                    isSaving={isSaving}
+                    isDeleting={deleteRole.isPending}
+                    onNameChange={(value) =>
+                      setDraftName(selectedRole.id, value)
+                    }
+                    onDelete={() => void handleDeleteRole(selectedRole)}
+                  />
+                )}
 
                 <div className="flex-1 overflow-y-auto px-5 py-2">
                   <div className="divide-y divide-border/50">

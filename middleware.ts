@@ -33,6 +33,10 @@ function isAuthenticated(request: NextRequest): boolean {
   return isTokenValid(refreshToken);
 }
 
+function hasValidAccessToken(request: NextRequest): boolean {
+  return isTokenValid(request.cookies.get(AUTH_COOKIE)?.value);
+}
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isLoggedIn = isAuthenticated(request);
@@ -45,7 +49,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (isLoginRoute && isLoggedIn) {
+  if (isLoginRoute && hasValidAccessToken(request)) {
     return NextResponse.redirect(new URL(AUTH_ROUTES.dashboard, request.url));
   }
 
