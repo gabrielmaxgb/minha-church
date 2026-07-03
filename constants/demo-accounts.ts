@@ -15,6 +15,10 @@ export const DEMO_ACCOUNTS: DemoAccount[] = [
   { email: "member@igreja.com.br", label: "Membro" },
 ];
 
+const isVercelProduction =
+  process.env.NEXT_PUBLIC_VERCEL_ENV === "production";
+
 export const SHOW_DEMO_ACCOUNTS =
-  process.env.NODE_ENV === "development" ||
-  process.env.NEXT_PUBLIC_SHOW_DEMO_ACCOUNTS === "true";
+  !isVercelProduction &&
+  (process.env.NODE_ENV === "development" ||
+    process.env.NEXT_PUBLIC_SHOW_DEMO_ACCOUNTS === "true");
