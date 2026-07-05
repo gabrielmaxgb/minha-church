@@ -20,6 +20,12 @@
   --accent: #deded9;
   --accent-foreground: #1a1a18;
   --destructive: #8f4444;
+  --attention: #c4a574;
+  --attention-foreground: #6a5735;
+  --attention-subtle: color-mix(in srgb, var(--attention) 11%, var(--card));
+  --attention-border: color-mix(in srgb, var(--attention) 18%, var(--border));
+  --attention-emphasis: color-mix(in srgb, var(--attention) 34%, transparent);
+  --attention-mark: color-mix(in srgb, var(--attention) 22%, var(--card));
   --border: #d8d8d3;
   --input: #d0d0cb;
   --ring: #5c5c58;
@@ -46,6 +52,12 @@
   --accent: #32322f;
   --accent-foreground: #f0f0ec;
   --destructive: #d48484;
+  --attention: #b89968;
+  --attention-foreground: #dcc9a8;
+  --attention-subtle: color-mix(in srgb, var(--attention) 14%, var(--card));
+  --attention-border: color-mix(in srgb, var(--attention) 22%, var(--border));
+  --attention-emphasis: color-mix(in srgb, var(--attention) 40%, transparent);
+  --attention-mark: color-mix(in srgb, var(--attention) 28%, var(--card));
   --border: #2e2e2b;
   --input: #353532;
   --ring: #8a8a84;
@@ -69,6 +81,12 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-attention: var(--attention);
+  --color-attention-foreground: var(--attention-foreground);
+  --color-attention-subtle: var(--attention-subtle);
+  --color-attention-border: var(--attention-border);
+  --color-attention-emphasis: var(--attention-emphasis);
+  --color-attention-mark: var(--attention-mark);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);

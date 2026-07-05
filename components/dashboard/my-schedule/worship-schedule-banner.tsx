@@ -1,0 +1,128 @@
+"use client";
+
+import Link from "next/link";
+import { AlertCircle, CalendarDays, ChevronRight } from "lucide-react";
+
+import { RosterFunctionsReminder } from "@/components/dashboard/ministries/roster-functions-reminder";
+import { Button } from "@/components/ui/button";
+import { AUTH_ROUTES, activityDetailPath, myScheduleMinistryPath } from "@/constants/routes";
+import { pendingNotificationStyles } from "@/lib/ui/notification-styles";
+import { useMySchedules } from "@/lib/api/queries";
+import {
+  formatEventTime,
+  formatRelativeEventDay,
+} from "@/lib/dashboard/date-utils";
+
+export function ScheduleBanner() {
+  const { data, isLoading } = useMySchedules();
+
+  if (isLoading || !data?.hasRosterMinistries) {
+    return null;
+  }
+
+  const pending = data.summary.pendingAvailabilityCount;
+  const missingFunctions = data.summary.missingRosterFunctionsCount;
+  const next = data.summary.nextAssignment;
+
+  if (pending === 0 && !next && missingFunctions === 0) {
+    return null;
+  }
+
+  if (missingFunctions > 0) {
+    const firstMissing = data.ministries.find(
+      (ministry) => ministry.needsRosterFunctions,
+    );
+
+    if (firstMissing) {
+      return (
+        <RosterFunctionsReminder
+          ministryId={firstMissing.ministryId}
+          ministryName={firstMissing.ministryName}
+        />
+      );
+    }
+  }
+
+  if (pending > 0) {
+    const firstPendingMinistry = data.ministries.find(
+      (ministry) => ministry.pendingAvailability.length > 0,
+    );
+    const respondHref = firstPendingMinistry
+      ? myScheduleMinistryPath(firstPendingMinistry.ministryId)
+      : AUTH_ROUTES.mySchedules;
+
+    return (
+      <Link
+        href={respondHref}
+        className={pendingNotificationStyles.banner.interactive}
+      >
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-start gap-4">
+            <div className={pendingNotificationStyles.icon.md}>
+              <AlertCircle className="size-6" aria-hidden />
+            </div>
+            <div className="min-w-0">
+              <p className={pendingNotificationStyles.label}>
+                Escalas aguardando resposta
+              </p>
+              <p className="mt-1 font-display text-lg font-bold tracking-tight text-foreground sm:text-xl">
+                Precisamos da sua disponibilidade
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {pending} evento{pending === 1 ? "" : "s"} sem sua resposta. Sem
+                isso, o líder não consegue fechar a escala.
+              </p>
+            </div>
+          </div>
+          <Button size="lg" className="shrink-0" asChild>
+            <span className="inline-flex items-center gap-2">
+              Responder agora
+              <ChevronRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+            </span>
+          </Button>
+        </div>
+      </Link>
+    );
+  }
+
+  if (next) {
+    const relative = formatRelativeEventDay(next.startsAt);
+
+    return (
+      <Link
+        href={activityDetailPath(next.eventId)}
+        className="group block overflow-hidden rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 to-card p-5 shadow-soft transition-all hover:border-emerald-500/50 sm:p-6"
+      >
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-start gap-4">
+            <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-foreground text-background">
+              <CalendarDays className="size-5" aria-hidden />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+                Próxima escala · {next.ministryName}
+              </p>
+              <p className="mt-1 font-display text-lg font-bold tracking-tight text-foreground">
+                {next.roleLabel} · {next.name}
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {relative ? `${relative} · ` : ""}
+                {formatEventTime(next.startsAt)}
+                {next.location ? ` · ${next.location}` : ""}
+              </p>
+            </div>
+          </div>
+          <span className="inline-flex shrink-0 items-center gap-1 text-sm font-medium text-muted-foreground group-hover:text-foreground">
+            Ver detalhes
+            <ChevronRight className="size-4" />
+          </span>
+        </div>
+      </Link>
+    );
+  }
+
+  return null;
+}
+
+/** @deprecated Use ScheduleBanner */
+export const WorshipScheduleBanner = ScheduleBanner;

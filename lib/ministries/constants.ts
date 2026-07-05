@@ -1,5 +1,6 @@
 export type MinistrySettingsSection =
   | "dashboard"
+  | "availability"
   | "members"
   | "overview"
   | "roles"
@@ -10,11 +11,18 @@ export const MINISTRY_SETTINGS_SECTIONS: Array<{
   id: MinistrySettingsSection;
   label: string;
   description: string;
+    rosterOnly?: boolean;
 }> = [
   {
     id: "dashboard",
     label: "Painel",
     description: "Resumo e atalhos",
+  },
+  {
+    id: "availability",
+    label: "Escalas",
+    description: "Disponibilidade e funções na equipe",
+    rosterOnly: true,
   },
   {
     id: "members",

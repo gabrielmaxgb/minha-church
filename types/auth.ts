@@ -5,12 +5,15 @@ export interface UserRoleSummary {
 }
 
 export interface UserPermissions {
-  members: { manage: boolean };
-  ministries: { manage: boolean };
+  dashboard: { access: boolean };
+  members: { access: boolean; manage: boolean };
+  ministries: { access: boolean; manage: boolean; rosterMinistryIds: string[] };
   activities: {
+    access: boolean;
     createChurchWide: boolean;
     ministryIds: string[];
   };
+  schedules: { access: boolean };
   finances: { access: boolean };
   communication: { access: boolean };
   reports: { access: boolean };
@@ -86,6 +89,11 @@ export interface AuthResponse {
 }
 
 export type ChurchPermissionKey =
+  | "dashboard_access"
+  | "members_access"
+  | "ministries_access"
+  | "activities_access"
+  | "schedules_access"
   | "members_manage"
   | "ministries_manage"
   | "events_create_church_wide"

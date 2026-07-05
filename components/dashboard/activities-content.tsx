@@ -13,7 +13,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useChurchEvents, useMinistries } from "@/lib/api/queries";
 import { getMonthQueryRange, startsAtForDateKey } from "@/lib/events/calendar";
 import { collapseRecurringEventsForList } from "@/lib/events/list";
-import { canCreateAnyActivity, canManageActivity } from "@/lib/permissions";
+import {
+  canCreateAnyActivity,
+  canListMinistries,
+  canManageActivity,
+} from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 import type { ChurchEvent } from "@/types/events";
@@ -32,7 +36,8 @@ export function ActivitiesContent() {
   const [createStartsAt, setCreateStartsAt] = useState<string | undefined>();
   const [editingEvent, setEditingEvent] = useState<ChurchEvent | null>(null);
 
-  const { data: ministries } = useMinistries();
+  const canList = canListMinistries(permissions);
+  const { data: ministries } = useMinistries({ enabled: canList });
   const activeMinistries = useMemo(
     () => ministries?.filter((ministry) => ministry.isActive) ?? [],
     [ministries],
@@ -71,6 +76,18 @@ export function ActivitiesContent() {
   const calendarEvents = calendarQuery.data;
   const isLoading = view === "list" ? listQuery.isLoading : calendarQuery.isLoading;
   const isError = view === "list" ? listQuery.isError : calendarQuery.isError;
+
+  const knownMinistryNames = useMemo(() => {
+    const names: Record<string, string> = {};
+
+    for (const event of [...(calendarEvents ?? []), ...(listEvents ?? [])]) {
+      if (event.ministryId && event.ministryName) {
+        names[event.ministryId] = event.ministryName;
+      }
+    }
+
+    return names;
+  }, [calendarEvents, listEvents]);
 
   const canCreate = permissions ? canCreateAnyActivity(permissions) : false;
 
@@ -153,15 +170,16 @@ export function ActivitiesContent() {
             >
               Igreja
             </FilterPill>
-            {activeMinistries.map((ministry) => (
-              <FilterPill
-                key={ministry.id}
-                active={filter === ministry.id}
-                onClick={() => setFilter(ministry.id)}
-              >
-                {ministry.name}
-              </FilterPill>
-            ))}
+            {canList &&
+              activeMinistries.map((ministry) => (
+                <FilterPill
+                  key={ministry.id}
+                  active={filter === ministry.id}
+                  onClick={() => setFilter(ministry.id)}
+                >
+                  {ministry.name}
+                </FilterPill>
+              ))}
           </div>
         </div>
 
@@ -274,6 +292,7 @@ export function ActivitiesContent() {
         onClose={closeCreateModal}
         defaultMinistryId={defaultMinistryId}
         defaultStartsAtValue={createStartsAt}
+        knownMinistryNames={knownMinistryNames}
       />
 
       <EditActivityModal

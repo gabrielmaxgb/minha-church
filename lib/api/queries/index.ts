@@ -8,6 +8,7 @@ import { membersKeys } from "@/lib/api/queries/members.keys";
 import { membershipsKeys } from "@/lib/api/queries/memberships.keys";
 import { ministriesKeys } from "@/lib/api/queries/ministries.keys";
 import { pricingKeys } from "@/lib/api/queries/pricing.keys";
+import { rosterKeys } from "@/lib/api/queries/roster.keys";
 
 export const queries = mergeQueryKeys(
   pricingKeys,
@@ -16,6 +17,7 @@ export const queries = mergeQueryKeys(
   membersKeys,
   membershipsKeys,
   ministriesKeys,
+  rosterKeys,
   churchRolesKeys,
   auditLogsKeys,
 );
@@ -27,7 +29,13 @@ export { membershipsKeys } from "@/lib/api/queries/memberships.keys";
 export { ministriesKeys } from "@/lib/api/queries/ministries.keys";
 export { pricingKeys } from "@/lib/api/queries/pricing.keys";
 export { useChurchEvent, useChurchEvents } from "@/lib/api/queries/use-church-events";
-export { useCreateChurchEvent, useDeleteChurchEvent, useUpdateChurchEvent } from "@/lib/api/queries/use-event-mutations";
+export {
+	useCreateChurchEvent,
+	useDeleteChurchEvent,
+	useRemoveEventRoster,
+	useUpdateChurchEvent,
+	useUpsertEventRoster,
+} from "@/lib/api/queries/use-event-mutations";
 export { useDashboardSummary } from "@/lib/api/queries/use-dashboard-summary";
 export { useMember, useMembers, useMembersInfinite, useReceiveMember } from "@/lib/api/queries/use-members";
 export {
@@ -47,9 +55,17 @@ export {
 export { useChurchMemberships, useAssignableRoles, usePasswordResetRequests, usePendingAccessUsers } from "@/lib/api/queries/use-church-memberships";
 export { useResetMemberPassword } from "@/lib/api/queries/use-reset-member-password";
 export { useUpdateChurchMembership } from "@/lib/api/queries/use-membership-mutations";
-export { useMinistries, useMinistry, useMinistryEvents, useMinistryMembers } from "@/lib/api/queries/use-ministries";
+export {
+  useMinistries,
+  useMinistry,
+  useMinistryEvents,
+  useMinistryMembers,
+  useRosterProfile,
+  useWorshipProfile,
+} from "@/lib/api/queries/use-ministries";
 export {
   useAssignMemberToMinistry,
+  useAssignMembersToMinistry,
   useMemberMinistryAssignment,
   useMemberMinistryRemoval,
   useRemoveMemberFromMinistry,
@@ -59,9 +75,20 @@ export {
   useCreateMinistry,
   useCreateMinistryEvent,
   useCreateMinistryRole,
+  useCloseAvailabilityWindow,
   useDeleteMinistry,
   useDeleteMinistryRole,
+  useOpenAvailabilityWindow,
+  useUpdateEventAvailability,
   useUpdateMinistry,
   useUpdateMinistryRole,
+  useUpdateRosterProfile,
+  useUpdateWorshipProfile,
 } from "@/lib/api/queries/use-ministry-mutations";
 export { usePricing } from "@/lib/api/queries/use-pricing";
+export { rosterKeys, worshipKeys } from "@/lib/api/queries/roster.keys";
+export { useMySchedules, useMyWorshipSchedule } from "@/lib/api/queries/use-my-schedules";
+export {
+  useRespondToRosterAvailability,
+  useRespondToWorshipAvailability,
+} from "@/lib/api/queries/use-respond-worship-availability";

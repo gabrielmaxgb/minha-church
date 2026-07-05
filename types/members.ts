@@ -72,7 +72,15 @@ export interface MemberAccountCredentials {
 }
 
 export interface CreateMemberResponse extends Member {
-  account: MemberAccountCredentials;
+  account?: MemberAccountCredentials;
+}
+
+export interface ReceiveMemberResponse extends Member {
+  account?: MemberAccountCredentials;
+}
+
+export interface UpdateMemberResponse extends Member {
+  account?: MemberAccountCredentials;
 }
 
 export const MEMBER_STATUS_LABELS: Record<MemberStatus, string> = {

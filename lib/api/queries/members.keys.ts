@@ -10,6 +10,8 @@ import type {
   ListMembersParams,
   Member,
   MembersListResponse,
+  ReceiveMemberResponse,
+  UpdateMemberResponse,
 } from "@/types/members";
 
 async function fetchMembers(
@@ -64,8 +66,8 @@ async function updateMember(
   churchId: string,
   memberId: string,
   payload: UpdateMemberPayload,
-): Promise<Member> {
-  return apiClient<Member>(buildTenantPath(churchId, `/members/${memberId}`), {
+): Promise<UpdateMemberResponse> {
+  return apiClient<UpdateMemberResponse>(buildTenantPath(churchId, `/members/${memberId}`), {
     churchId,
     method: "PATCH",
     body: JSON.stringify(payload),
@@ -85,8 +87,8 @@ async function deleteMember(
 async function receiveMember(
   churchId: string,
   memberId: string,
-): Promise<Member> {
-  return apiClient<Member>(
+): Promise<ReceiveMemberResponse> {
+  return apiClient<ReceiveMemberResponse>(
     buildTenantPath(churchId, `/members/${memberId}/receive`),
     { churchId, method: "POST" },
   );

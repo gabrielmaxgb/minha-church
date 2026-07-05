@@ -11,7 +11,9 @@ import {
   dashboardSecondaryNavItems,
 } from "@/constants/dashboard-nav";
 import { AUTH_ROUTES } from "@/constants/routes";
-import { canAccessNav } from "@/lib/permissions";
+import { useMySchedules } from "@/lib/api/queries";
+import { pendingNotificationStyles } from "@/lib/ui/notification-styles";
+import { canAccessNavItem } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 
@@ -25,12 +27,14 @@ function NavLink({
   label,
   icon: Icon,
   isActive,
+  badge,
   onNavigate,
 }: {
   href: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   isActive: boolean;
+  badge?: number;
   onNavigate?: () => void;
 }) {
   const shouldReduceMotion = useReducedMotion();
@@ -54,7 +58,19 @@ function NavLink({
         />
       )}
       <Icon className="relative z-10 size-4 shrink-0" aria-hidden />
-      <span className="relative z-10">{label}</span>
+      <span className="relative z-10 flex-1">{label}</span>
+      {badge !== undefined && badge > 0 && (
+        <span
+          className={cn(
+            "relative z-10 flex size-5 min-w-5 items-center justify-center rounded-full text-[10px] font-bold tabular-nums",
+            isActive
+              ? "bg-primary-foreground text-primary"
+              : pendingNotificationStyles.countBadge,
+          )}
+        >
+          {badge > 9 ? "9+" : badge}
+        </span>
+      )}
     </Link>
   );
 }
@@ -65,24 +81,31 @@ export function DashboardSidebar({
 }: DashboardSidebarProps) {
   const pathname = usePathname();
   const { permissions } = useAuth();
+  const { data: schedule } = useMySchedules();
 
   const visibleNavItems = useMemo(() => {
     if (!permissions) {
       return dashboardNavItems;
     }
 
-    return dashboardNavItems.filter(
-      (item) => !item.permission || canAccessNav(permissions, item.permission),
+    return dashboardNavItems.filter((item) =>
+      canAccessNavItem(permissions, item),
     );
   }, [permissions]);
+
+  const pendingCount =
+    permissions?.schedules.access && schedule
+      ? schedule.summary.pendingAvailabilityCount +
+        schedule.summary.missingRosterFunctionsCount
+      : 0;
 
   const visibleSecondaryNavItems = useMemo(() => {
     if (!permissions) {
       return dashboardSecondaryNavItems;
     }
 
-    return dashboardSecondaryNavItems.filter(
-      (item) => !item.permission || canAccessNav(permissions, item.permission),
+    return dashboardSecondaryNavItems.filter((item) =>
+      canAccessNavItem(permissions, item),
     );
   }, [permissions]);
 
@@ -112,6 +135,9 @@ export function DashboardSidebar({
               label={item.label}
               icon={item.icon}
               isActive={isActive}
+              badge={
+                item.href === AUTH_ROUTES.mySchedules ? pendingCount : undefined
+              }
               onNavigate={onNavigate}
             />
           );

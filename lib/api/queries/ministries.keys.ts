@@ -7,29 +7,35 @@ import type {
   MinistryEvent,
   MinistryMember,
   MinistryRole,
+  RosterAvailabilityWindow,
+  RosterProfile,
 } from "@/types/ministries";
 
 export interface CreateMinistryPayload {
   name: string;
   description?: string;
+  hasRoster?: boolean;
 }
 
 export interface UpdateMinistryPayload {
   name?: string;
   description?: string | null;
   isActive?: boolean;
+  hasRoster?: boolean;
 }
 
 export interface CreateMinistryRolePayload {
   name: string;
   sortOrder?: number;
   canManageEvents?: boolean;
+  canManageRoster?: boolean;
 }
 
 export interface UpdateMinistryRolePayload {
   name?: string;
   sortOrder?: number;
   canManageEvents?: boolean;
+  canManageRoster?: boolean;
 }
 
 async function fetchMinistries(churchId: string): Promise<Ministry[]> {
@@ -161,6 +167,84 @@ async function deleteMinistryRole(
   );
 }
 
+async function fetchRosterProfile(
+  churchId: string,
+  ministryId: string,
+): Promise<RosterProfile> {
+  return apiClient<RosterProfile>(
+    buildTenantPath(churchId, `/ministries/${ministryId}/roster/me`),
+    { churchId },
+  );
+}
+
+async function updateRosterProfile(
+  churchId: string,
+  ministryId: string,
+  instruments: string[],
+): Promise<RosterProfile> {
+  return apiClient<RosterProfile>(
+    buildTenantPath(churchId, `/ministries/${ministryId}/roster/me`),
+    {
+      churchId,
+      method: "PATCH",
+      body: JSON.stringify({ instruments }),
+    },
+  );
+}
+
+async function updateEventAvailability(
+  churchId: string,
+  ministryId: string,
+  eventId: string,
+  status: "available" | "unavailable" | "clear",
+): Promise<RosterProfile> {
+  return apiClient<RosterProfile>(
+    buildTenantPath(
+      churchId,
+      `/ministries/${ministryId}/roster/events/${eventId}/availability`,
+    ),
+    {
+      churchId,
+      method: "PUT",
+      body: JSON.stringify({ status }),
+    },
+  );
+}
+
+async function openAvailabilityWindow(
+  churchId: string,
+  ministryId: string,
+  payload: { periodType: string; startDate?: string },
+): Promise<RosterAvailabilityWindow> {
+  return apiClient<RosterAvailabilityWindow>(
+    buildTenantPath(
+      churchId,
+      `/ministries/${ministryId}/roster/availability-window`,
+    ),
+    {
+      churchId,
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
+}
+
+async function closeAvailabilityWindow(
+  churchId: string,
+  ministryId: string,
+): Promise<RosterAvailabilityWindow> {
+  return apiClient<RosterAvailabilityWindow>(
+    buildTenantPath(
+      churchId,
+      `/ministries/${ministryId}/roster/availability-window`,
+    ),
+    {
+      churchId,
+      method: "DELETE",
+    },
+  );
+}
+
 export const ministriesKeys = createQueryKeys("ministries", {
   list: (churchId: string) => ({
     queryKey: [churchId],
@@ -178,6 +262,10 @@ export const ministriesKeys = createQueryKeys("ministries", {
     queryKey: [churchId, ministryId, "members"],
     queryFn: () => fetchMinistryMembers(churchId, ministryId),
   }),
+  rosterProfile: (churchId: string, ministryId: string) => ({
+    queryKey: [churchId, ministryId, "roster-profile"],
+    queryFn: () => fetchRosterProfile(churchId, ministryId),
+  }),
 });
 
 export {
@@ -190,8 +278,13 @@ export {
   fetchMinistry,
   fetchMinistryEvents,
   fetchMinistryMembers,
+  fetchRosterProfile,
+  closeAvailabilityWindow,
+  openAvailabilityWindow,
+  updateEventAvailability,
   updateMinistry,
   updateMinistryRole,
+  updateRosterProfile,
 };
 
 export type { CreateMinistryEventPayload };

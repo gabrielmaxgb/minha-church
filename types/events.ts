@@ -2,6 +2,10 @@ import type {
   EventRecurrence,
   EventRecurrenceInput,
 } from "@/lib/events/recurrence";
+import type {
+  EventRosterAssignment,
+  EventRosterCandidate,
+} from "@/types/ministries";
 
 export interface ChurchEvent {
   id: string;
@@ -17,12 +21,16 @@ export interface ChurchEvent {
   createdByUserId: string | null;
   recurrenceSeriesId: string | null;
   recurrence: EventRecurrence | null;
+  rosterOpen: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface ChurchEventDetail extends ChurchEvent {
   seriesOccurrences: ChurchEvent[];
+  roster: EventRosterAssignment[];
+  rosterCandidates: EventRosterCandidate[];
+  isRosterMinistry: boolean;
 }
 
 export interface CreateChurchEventPayload {

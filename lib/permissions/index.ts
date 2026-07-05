@@ -1,6 +1,17 @@
 import type { UserPermissions } from "@/types/auth";
+import {
+  dashboardNavItems,
+  dashboardSecondaryNavItems,
+  type DashboardNavItem,
+} from "@/constants/dashboard-nav";
+import { AUTH_ROUTES } from "@/constants/routes";
 
 export type NavPermissionKey =
+  | "dashboard"
+  | "members"
+  | "ministries"
+  | "activities"
+  | "schedules"
   | "finances"
   | "communication"
   | "reports"
@@ -12,6 +23,27 @@ export function canManageMembers(permissions: UserPermissions) {
 
 export function canManageMinistries(permissions: UserPermissions) {
   return permissions.ministries.manage;
+}
+
+export function canManageMinistryRoster(
+  permissions: UserPermissions,
+  ministryId: string,
+) {
+  return (
+    permissions.ministries.manage ||
+    permissions.ministries.rosterMinistryIds.includes(ministryId)
+  );
+}
+
+export function canListMinistries(permissions: UserPermissions | null) {
+  if (!permissions) {
+    return false;
+  }
+
+  return (
+    canAccessSection(permissions, "ministries") ||
+    canManageMinistries(permissions)
+  );
 }
 
 export function canManageChurchRoles(permissions: UserPermissions) {
@@ -55,17 +87,74 @@ export function canManageActivity(
   return false;
 }
 
+export function canAccessSection(
+  permissions: UserPermissions,
+  key: NavPermissionKey,
+): boolean {
+  switch (key) {
+    case "dashboard":
+      return permissions.dashboard.access;
+    case "members":
+      return permissions.members.access;
+    case "ministries":
+      return permissions.ministries.access;
+    case "activities":
+      return permissions.activities.access;
+    case "schedules":
+      return permissions.schedules.access;
+    case "finances":
+      return permissions.finances.access;
+    case "communication":
+      return permissions.communication.access;
+    case "reports":
+      return permissions.reports.access;
+    case "settings":
+      return permissions.settings.access;
+    default:
+      return false;
+  }
+}
+
+/** @deprecated Use canAccessSection */
 export function canAccessNav(
   permissions: UserPermissions,
   key: NavPermissionKey,
 ) {
-  return permissions[key].access;
+  return canAccessSection(permissions, key);
+}
+
+export function canAccessNavItem(
+  permissions: UserPermissions,
+  item: DashboardNavItem,
+): boolean {
+  if (!item.permission) {
+    return true;
+  }
+
+  return canAccessSection(permissions, item.permission);
+}
+
+export function getFirstAccessibleRoute(
+  permissions: UserPermissions,
+): string {
+  const items = [...dashboardNavItems, ...dashboardSecondaryNavItems];
+
+  for (const item of items) {
+    if (canAccessNavItem(permissions, item)) {
+      return item.href;
+    }
+  }
+
+  return AUTH_ROUTES.settings;
 }
 
 export type RoutePermission =
+  | "dashboard"
+  | "members"
+  | "ministries"
+  | "activities"
+  | "schedules"
   | "members.manage"
-  | "ministries.manage"
-  | "activities.create"
   | "finances"
   | "communication"
   | "reports"
@@ -76,12 +165,18 @@ export function hasRoutePermission(
   permission: RoutePermission,
 ) {
   switch (permission) {
+    case "dashboard":
+      return permissions.dashboard.access;
+    case "members":
+      return permissions.members.access;
+    case "ministries":
+      return permissions.ministries.access;
+    case "activities":
+      return permissions.activities.access;
+    case "schedules":
+      return permissions.schedules.access;
     case "members.manage":
-      return canManageMembers(permissions);
-    case "ministries.manage":
-      return canManageMinistries(permissions);
-    case "activities.create":
-      return canCreateAnyActivity(permissions);
+      return permissions.members.manage;
     case "finances":
       return permissions.finances.access;
     case "communication":

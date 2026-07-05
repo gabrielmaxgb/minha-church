@@ -85,9 +85,11 @@ export function useSettingsNav(permissions: UserPermissions | null) {
 }
 
 const emptyPermissions: UserPermissions = {
-  members: { manage: false },
-  ministries: { manage: false },
-  activities: { createChurchWide: false, ministryIds: [] },
+  dashboard: { access: false },
+  members: { access: false, manage: false },
+  ministries: { access: false, manage: false, rosterMinistryIds: [] },
+  activities: { access: false, createChurchWide: false, ministryIds: [] },
+  schedules: { access: false },
   finances: { access: false },
   communication: { access: false },
   reports: { access: false },

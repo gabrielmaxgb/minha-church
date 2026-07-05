@@ -13,8 +13,9 @@ import {
   UserCheck,
   UserRound,
 } from "lucide-react";
-import { FormProvider, useForm } from "react-hook-form";
+import { FormProvider, useForm, useWatch } from "react-hook-form";
 
+import { MemberAccountCreatedModal } from "@/components/dashboard/members/member-account-created-modal";
 import { MemberForm } from "@/components/dashboard/members/member-form";
 import { MemberMinistriesSection } from "@/components/dashboard/members/member-ministries-section";
 import { Badge } from "@/components/ui/badge";
@@ -35,7 +36,7 @@ import {
 } from "@/lib/members/form";
 import { createMemberFormSchema } from "@/lib/validation/schemas";
 import { cn, formatDate } from "@/lib/utils";
-import type { Member } from "@/types/members";
+import type { Member, MemberAccountCredentials } from "@/types/members";
 import { MEMBER_STATUS_LABELS } from "@/types/members";
 
 interface MemberExpandedPanelProps {
@@ -194,12 +195,20 @@ export function MemberExpandedPanel({
   const [confirmName, setConfirmName] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [createdAccount, setCreatedAccount] = useState<{
+    memberName: string;
+    account: MemberAccountCredentials;
+  } | null>(null);
 
   const form = useForm<MemberFormValues>({
-    resolver: zodResolver(createMemberFormSchema({ requireLogin: false })),
+    resolver: zodResolver(createMemberFormSchema()),
     defaultValues: memberToFormValues(member),
     mode: "onBlur",
   });
+
+  const editStatus = useWatch({ control: form.control, name: "status" }) ?? member.status;
+  const canReceiveAsMember =
+    member.status === "visitor" && Boolean(member.email || member.cpf);
 
   const updateMember = useUpdateMember(member.id);
   const deleteMember = useDeleteMember(member.id);
@@ -217,9 +226,16 @@ export function MemberExpandedPanel({
 
   const onSubmit = form.handleSubmit(async (values) => {
     try {
-      await updateMember.mutateAsync(formValuesToUpdatePayload(values));
+      const result = await updateMember.mutateAsync(formValuesToUpdatePayload(values));
       setIsEditing(false);
       form.clearErrors("root");
+
+      if (result.account) {
+        setCreatedAccount({
+          memberName: result.name,
+          account: result.account,
+        });
+      }
     } catch (submitError) {
       form.setError("root", {
         message:
@@ -229,6 +245,21 @@ export function MemberExpandedPanel({
       });
     }
   });
+
+  async function handleReceiveMember() {
+    try {
+      const result = await receiveMember.mutateAsync(member.id);
+
+      if (result.account) {
+        setCreatedAccount({
+          memberName: result.name,
+          account: result.account,
+        });
+      }
+    } catch {
+      // mutation error surfaces via react-query if needed
+    }
+  }
 
   async function handleDelete() {
     if (!canDelete) {
@@ -255,33 +286,52 @@ export function MemberExpandedPanel({
 
   if (!isEditing) {
     return (
-      <div className="space-y-5">
-        <div className="flex flex-wrap gap-2">
-          <Button type="button" onClick={() => setIsEditing(true)}>
-            <Pencil className="size-4" />
-            Editar cadastro
-          </Button>
-
-          {member.status === "visitor" && (
-            <Button
-              type="button"
-              variant="outline"
-              disabled={receiveMember.isPending}
-              onClick={() => receiveMember.mutate(member.id)}
-            >
-              {receiveMember.isPending ? "Recebendo..." : "Receber como membro"}
+      <>
+        <div className="space-y-5">
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" onClick={() => setIsEditing(true)}>
+              <Pencil className="size-4" />
+              Editar cadastro
             </Button>
+
+            {member.status === "visitor" && (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={receiveMember.isPending || !canReceiveAsMember}
+                onClick={() => void handleReceiveMember()}
+              >
+                {receiveMember.isPending ? "Recebendo..." : "Receber como membro"}
+              </Button>
+            )}
+          </div>
+
+          {member.status === "visitor" && !canReceiveAsMember && (
+            <p className="text-sm text-muted-foreground">
+              Cadastre e-mail ou CPF antes de receber como membro e liberar o
+              acesso ao painel.
+            </p>
           )}
+
+          <ReadOnlyDetails member={member} showMinistries={false} />
+
+          <MemberMinistriesSection member={member} />
         </div>
 
-        <ReadOnlyDetails member={member} showMinistries={false} />
-
-        <MemberMinistriesSection member={member} />
-      </div>
+        {createdAccount && (
+          <MemberAccountCreatedModal
+            open
+            memberName={createdAccount.memberName}
+            account={createdAccount.account}
+            onClose={() => setCreatedAccount(null)}
+          />
+        )}
+      </>
     );
   }
 
   return (
+    <>
     <FormProvider {...form}>
       <form onSubmit={onSubmit} className="space-y-6" noValidate>
         <div className="rounded-2xl border border-primary/15 bg-primary/5 px-4 py-3 sm:px-5">
@@ -298,7 +348,10 @@ export function MemberExpandedPanel({
           <FormAlert>{form.formState.errors.root.message}</FormAlert>
         )}
 
-        <MemberForm disabled={isPending} />
+        <MemberForm
+          disabled={isPending}
+          requireLogin={editStatus === "active" && !member.userId}
+        />
 
         <section className="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-soft">
           <header className="flex items-center gap-3 border-b border-border/60 bg-muted/25 px-5 py-4 sm:px-6">
@@ -361,15 +414,18 @@ export function MemberExpandedPanel({
           <div className="rounded-2xl border border-border/70 bg-muted/15 px-5 py-4">
             <p className="text-sm font-medium">Receber como membro</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Atualiza o status para membro ativo sem precisar editar o formulário.
+              Promove para membro ativo e cria o acesso ao painel com senha
+              temporária.
             </p>
             <Button
               type="button"
               size="sm"
               variant="outline"
               className="mt-3"
-              disabled={receiveMember.isPending || isPending}
-              onClick={() => receiveMember.mutate(member.id)}
+              disabled={
+                receiveMember.isPending || isPending || !canReceiveAsMember
+              }
+              onClick={() => void handleReceiveMember()}
             >
               {receiveMember.isPending ? "Recebendo..." : "Receber como membro"}
             </Button>
@@ -416,5 +472,15 @@ export function MemberExpandedPanel({
         </section>
       </form>
     </FormProvider>
+
+      {createdAccount && (
+        <MemberAccountCreatedModal
+          open
+          memberName={createdAccount.memberName}
+          account={createdAccount.account}
+          onClose={() => setCreatedAccount(null)}
+        />
+      )}
+    </>
   );
 }

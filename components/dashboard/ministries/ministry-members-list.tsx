@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { cn } from "@/lib/utils";
+import { formatRosterRole } from "@/lib/ministries/roster";
 import type { MinistryMember, MinistryRole } from "@/types/ministries";
 
 type RoleFilter = "all" | "none" | string;
@@ -204,6 +205,15 @@ export function MinistryMembersList({
                               Sem cargo
                             </Badge>
                           )}
+                          {(member.instruments ?? []).map((rosterFunction) => (
+                            <Badge
+                              key={rosterFunction}
+                              variant="outline"
+                              className="text-[11px] font-normal"
+                            >
+                              {formatRosterRole(rosterFunction)}
+                            </Badge>
+                          ))}
                         </span>
                       )}
                     </span>

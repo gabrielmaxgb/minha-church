@@ -10,7 +10,6 @@ import { Container } from "@/components/layout/container";
 import { CtaBanner } from "@/components/marketing/cta-banner";
 import { FaqList } from "@/components/marketing/faq-list";
 import { MotionSection } from "@/components/motion/motion-section";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,

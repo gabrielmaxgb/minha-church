@@ -164,7 +164,7 @@ export function DashboardTopbar({
                       onClick={() => setMenuOpen(false)}
                     >
                       <User className="size-4" />
-                      Configurações
+                      Configurações de perfil
                     </Link>
                     <button
                       type="button"

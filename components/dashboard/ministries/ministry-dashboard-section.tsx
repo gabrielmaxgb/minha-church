@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { Calendar, MapPin, Pencil, Plus, Repeat, UserPlus } from "lucide-react";
+import { Calendar, MapPin, Music2, Pencil, Plus, Repeat, UserPlus } from "lucide-react";
 
 import { AddMinistryMemberModal } from "@/components/dashboard/ministries/add-ministry-member-modal";
+import { RosterFunctionsReminder } from "@/components/dashboard/ministries/roster-functions-reminder";
 import { MinistryMembersList } from "@/components/dashboard/ministries/ministry-members-list";
 import { CreateMinistryEventModal } from "@/components/dashboard/ministries/create-ministry-event-modal";
 import { EditActivityModal } from "@/components/dashboard/activities/edit-activity-modal";
@@ -18,10 +19,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { myScheduleMinistryPath } from "@/constants/routes";
 import {
   useMinistryEvents,
   useMinistryMembers,
   useRemoveMemberFromMinistry,
+  useRosterProfile,
   useUpdateMemberMinistryRole,
 } from "@/lib/api/queries";
 import { activityDetailPath } from "@/constants/routes";
@@ -39,6 +42,7 @@ import type { Ministry, MinistryEvent } from "@/types/ministries";
 interface MinistryDashboardSectionProps {
   ministry: Ministry;
   onGoToMembers: () => void;
+  onGoToAvailability?: () => void;
 }
 
 function StatCard({
@@ -64,10 +68,13 @@ function StatCard({
 export function MinistryDashboardSection({
   ministry,
   onGoToMembers,
+  onGoToAvailability,
 }: MinistryDashboardSectionProps) {
   const { permissions } = useAuth();
+  const hasRoster = ministry.hasRoster;
   const { data: members, isLoading: membersLoading } = useMinistryMembers(ministry.id);
   const { data: events, isLoading: eventsLoading } = useMinistryEvents(ministry.id);
+  const { data: rosterProfile } = useRosterProfile(ministry.id, hasRoster);
 
   const [eventModalOpen, setEventModalOpen] = useState(false);
   const [memberModalOpen, setMemberModalOpen] = useState(false);
@@ -87,6 +94,13 @@ export function MinistryDashboardSection({
   return (
     <>
       <div className="space-y-6">
+        {hasRoster && rosterProfile?.needsRosterFunctions && (
+          <RosterFunctionsReminder
+            ministryId={ministry.id}
+            ministryName={ministry.name}
+          />
+        )}
+
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
             label="Membros"
@@ -110,17 +124,43 @@ export function MinistryDashboardSection({
           />
         </div>
 
+        {hasRoster && (
+          <Link
+            href={myScheduleMinistryPath(ministry.id)}
+            className="flex w-full items-start gap-4 rounded-2xl border border-foreground/10 bg-gradient-to-br from-muted/50 to-card px-5 py-4 text-left shadow-soft transition-all hover:shadow-elevated"
+          >
+            <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-foreground text-background">
+              <Music2 className="size-5" aria-hidden />
+            </span>
+            <span className="min-w-0">
+              <span className="block font-display text-base font-semibold tracking-tight">
+                Minhas escalas
+              </span>
+              <span className="mt-1 block text-sm leading-relaxed text-muted-foreground">
+                Veja suas escalas, responda se pode ir e ajude o líder a montar
+                a equipe.
+              </span>
+            </span>
+          </Link>
+        )}
+
         <div className="flex flex-wrap gap-2">
           {canAddMembers && (
             <Button size="sm" onClick={() => setMemberModalOpen(true)}>
               <UserPlus className="size-4" />
-              Adicionar membro
+              Adicionar membros
             </Button>
           )}
           {canManageEvents && (
             <Button size="sm" variant="outline" onClick={() => setEventModalOpen(true)}>
               <Calendar className="size-4" />
               Novo evento
+            </Button>
+          )}
+          {hasRoster && onGoToAvailability && (
+            <Button size="sm" variant="outline" onClick={onGoToAvailability}>
+              <Calendar className="size-4" />
+              Escalas
             </Button>
           )}
           <Button size="sm" variant="ghost" onClick={onGoToMembers}>
@@ -225,6 +265,7 @@ export function MinistryDashboardSection({
       <CreateMinistryEventModal
         ministryId={ministry.id}
         ministryName={ministry.name}
+        isRoster={hasRoster}
         open={eventModalOpen}
         onClose={() => setEventModalOpen(false)}
       />
@@ -267,7 +308,7 @@ export function MinistryMembersSection({
           {canManage && (
             <Button size="sm" onClick={() => setModalOpen(true)}>
               <Plus className="size-4" />
-              Adicionar membro
+              Adicionar membros
             </Button>
           )}
         </CardHeader>

@@ -22,6 +22,7 @@ import type { CreateMinistryEventPayload } from "@/types/ministries";
 interface CreateMinistryEventModalProps {
   ministryId: string;
   ministryName: string;
+  isRoster?: boolean;
   open: boolean;
   onClose: () => void;
 }
@@ -43,6 +44,7 @@ function defaultStartsAt(): string {
 export function CreateMinistryEventModal({
   ministryId,
   ministryName,
+  isRoster = false,
   open,
   onClose,
 }: CreateMinistryEventModalProps) {
@@ -52,6 +54,7 @@ export function CreateMinistryEventModal({
   const [location, setLocation] = useState("");
   const [startsAt, setStartsAt] = useState(defaultStartsAt);
   const [endsAt, setEndsAt] = useState("");
+  const [rosterOpen, setRosterOpen] = useState(true);
   const [recurrence, setRecurrence] = useState<EventRecurrenceFormState>(
     defaultRecurrenceFormState(defaultStartsAt()),
   );
@@ -65,6 +68,7 @@ export function CreateMinistryEventModal({
       setLocation("");
       setStartsAt(defaultStartsAt());
       setEndsAt("");
+      setRosterOpen(true);
       setRecurrence(defaultRecurrenceFormState(defaultStartsAt()));
       setError(null);
       return;
@@ -125,6 +129,7 @@ export function CreateMinistryEventModal({
       startsAt: new Date(startsAt).toISOString(),
       endsAt: endsAt ? new Date(endsAt).toISOString() : undefined,
       recurrence: recurrencePayload,
+      ...(isRoster ? { rosterOpen } : {}),
     };
 
     try {
@@ -238,6 +243,27 @@ export function CreateMinistryEventModal({
               onEndsAtChange={setEndsAt}
               disabled={createEvent.isPending}
             />
+
+            {isRoster && (
+              <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-border/80 bg-muted/15 px-4 py-3.5">
+                <input
+                  type="checkbox"
+                  className="mt-1 size-4 rounded border-border"
+                  checked={rosterOpen}
+                  disabled={createEvent.isPending}
+                  onChange={(event) => setRosterOpen(event.target.checked)}
+                />
+                <span className="min-w-0">
+                  <span className="block text-sm font-semibold text-foreground">
+                    Liberar para a equipe marcar disponibilidade
+                  </span>
+                  <span className="mt-1 block text-sm leading-relaxed text-muted-foreground">
+                    A equipe poderá informar se pode ou não servir
+                    nesta data (e nas ocorrências da série, se for recorrente).
+                  </span>
+                </span>
+              </label>
+            )}
 
             <EventRecurrenceFields
               value={recurrence}

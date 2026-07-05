@@ -21,6 +21,7 @@ import { FormAlert, FormField, FormMessage } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import {
   DEMO_ACCOUNTS,
+  DEMO_MOCK_MEMBERS,
   DEMO_PASSWORD,
   SHOW_DEMO_ACCOUNTS,
 } from "@/constants/demo-accounts";
@@ -199,24 +200,51 @@ function LoginFormContent() {
                 Senha de todas: <code className="text-foreground">{DEMO_PASSWORD}</code>
               </p>
 
-              <div className="mt-3 grid gap-2">
-                {DEMO_ACCOUNTS.map((account) => (
-                  <button
-                    key={account.email}
-                    type="button"
-                    disabled={isLoading}
-                    onClick={() => handleQuickLogin(account.email)}
-                    className={cn(
-                      "flex w-full items-center justify-between gap-3 rounded-md border border-border bg-background px-3 py-2 text-left text-sm transition-colors hover:bg-muted/60",
-                      loadingIdentifier === account.email && "opacity-70",
-                    )}
-                  >
-                    <span className="font-medium">{account.label}</span>
-                    <span className="truncate text-xs text-muted-foreground">
-                      {account.email}
-                    </span>
-                  </button>
-                ))}
+              <div className="mt-3 space-y-3">
+                <div className="grid gap-2">
+                  {DEMO_ACCOUNTS.map((account) => (
+                    <button
+                      key={account.email}
+                      type="button"
+                      disabled={isLoading}
+                      onClick={() => handleQuickLogin(account.email)}
+                      className={cn(
+                        "flex w-full items-center justify-between gap-3 rounded-md border border-border bg-background px-3 py-2 text-left text-sm transition-colors hover:bg-muted/60",
+                        loadingIdentifier === account.email && "opacity-70",
+                      )}
+                    >
+                      <span className="font-medium">{account.label}</span>
+                      <span className="truncate text-xs text-muted-foreground">
+                        {account.email}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground">
+                    Membros mock — Batista Central
+                  </p>
+                  <div className="mt-2 grid max-h-44 gap-2 overflow-y-auto pr-1">
+                    {DEMO_MOCK_MEMBERS.map((account) => (
+                      <button
+                        key={account.email}
+                        type="button"
+                        disabled={isLoading}
+                        onClick={() => handleQuickLogin(account.email)}
+                        className={cn(
+                          "flex w-full items-center justify-between gap-3 rounded-md border border-border bg-background px-3 py-2 text-left text-sm transition-colors hover:bg-muted/60",
+                          loadingIdentifier === account.email && "opacity-70",
+                        )}
+                      >
+                        <span className="font-medium">{account.label}</span>
+                        <span className="truncate text-xs text-muted-foreground">
+                          {account.email}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           )}

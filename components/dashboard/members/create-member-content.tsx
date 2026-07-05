@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Loader2, UserPlus } from "lucide-react";
-import { FormProvider, useForm } from "react-hook-form";
+import { FormProvider, useForm, useWatch } from "react-hook-form";
 
 import { MemberAccountCreatedModal } from "@/components/dashboard/members/member-account-created-modal";
 import { MemberForm } from "@/components/dashboard/members/member-form";
@@ -37,18 +37,27 @@ export function CreateMemberContent() {
   const createMember = useCreateMember();
 
   const form = useForm<MemberFormValues>({
-    resolver: zodResolver(createMemberFormSchema({ requireLogin: true })),
+    resolver: zodResolver(createMemberFormSchema()),
     defaultValues: emptyMemberFormValues("visitor"),
     mode: "onBlur",
   });
 
+  const status =
+    useWatch({ control: form.control, name: "status" }) ?? "visitor";
+
   const onSubmit = form.handleSubmit(async (values) => {
     try {
       const result = await createMember.mutateAsync(formValuesToCreatePayload(values));
-      setCreatedAccount({
-        memberName: result.name,
-        account: result.account,
-      });
+
+      if (result.account) {
+        setCreatedAccount({
+          memberName: result.name,
+          account: result.account,
+        });
+        return;
+      }
+
+      router.push(AUTH_ROUTES.members);
     } catch (submitError) {
       form.setError("root", {
         message:
@@ -86,8 +95,8 @@ export function CreateMemberContent() {
                   Novo cadastro
                 </CardTitle>
                 <CardDescription className="mt-1">
-                  Preencha os dados da pessoa. Um login com senha temporária será
-                  criado automaticamente (e-mail ou CPF obrigatório).
+                  Cadastro pastoral para todos. O login no painel só é criado
+                  quando o status for membro ativo (ou ao receber um visitante).
                 </CardDescription>
               </div>
             </div>
@@ -101,7 +110,7 @@ export function CreateMemberContent() {
                 )}
 
                 <MemberForm
-                  requireLogin
+                  requireLogin={status === "active"}
                   disabled={createMember.isPending}
                 />
 

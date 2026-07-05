@@ -3,14 +3,19 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { ministriesKeys } from "@/lib/api/queries/ministries.keys";
-import { useTenant } from "@/providers/auth-provider";
+import { canListMinistries } from "@/lib/permissions";
+import { useAuth, useTenant } from "@/providers/auth-provider";
 
-export function useMinistries() {
+export function useMinistries(options?: { enabled?: boolean }) {
   const { churchId } = useTenant();
+  const { permissions } = useAuth();
+  const canList = canListMinistries(permissions);
+  const extraEnabled = options?.enabled ?? true;
 
   return useQuery({
     ...ministriesKeys.list(churchId ?? "unknown"),
-    enabled: Boolean(churchId),
+    enabled: Boolean(churchId) && canList && extraEnabled,
+    retry: false,
   });
 }
 
@@ -40,3 +45,22 @@ export function useMinistryMembers(ministryId: string | null) {
     enabled: Boolean(churchId && ministryId),
   });
 }
+
+export function useRosterProfile(
+  ministryId: string | null,
+  enabled = true,
+) {
+  const { churchId } = useTenant();
+
+  return useQuery({
+    ...ministriesKeys.rosterProfile(
+      churchId ?? "unknown",
+      ministryId ?? "unknown",
+    ),
+    enabled: Boolean(churchId && ministryId && enabled),
+    retry: false,
+  });
+}
+
+/** @deprecated Use useRosterProfile */
+export const useWorshipProfile = useRosterProfile;

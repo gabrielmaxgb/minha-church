@@ -21,6 +21,51 @@ function useInvalidateMemberMinistries() {
   };
 }
 
+export function useAssignMembersToMinistry(ministryId: string) {
+  const { churchId } = useTenant();
+  const invalidate = useInvalidateMemberMinistries();
+
+  return useMutation({
+    mutationFn: async ({
+      memberIds,
+      payload,
+    }: {
+      memberIds: string[];
+      payload: Omit<AssignMemberMinistryPayload, "ministryId">;
+    }) => {
+      if (!churchId) {
+        throw new Error("Igreja não selecionada.");
+      }
+
+      const results = await Promise.allSettled(
+        memberIds.map((memberId) =>
+          assignMemberMinistry(churchId, memberId, {
+            ministryId,
+            ...payload,
+          }),
+        ),
+      );
+
+      const succeeded: string[] = [];
+      const failed: string[] = [];
+
+      results.forEach((result, index) => {
+        if (result.status === "fulfilled") {
+          succeeded.push(memberIds[index]);
+        } else {
+          failed.push(memberIds[index]);
+        }
+      });
+
+      if (succeeded.length > 0) {
+        await invalidate();
+      }
+
+      return { succeeded, failed };
+    },
+  });
+}
+
 export function useAssignMemberToMinistry(ministryId: string) {
   const { churchId } = useTenant();
   const invalidate = useInvalidateMemberMinistries();

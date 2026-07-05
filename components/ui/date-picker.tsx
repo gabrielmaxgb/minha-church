@@ -266,7 +266,6 @@ export function DatePicker({
         id={triggerId}
         type="button"
         disabled={disabled}
-        aria-required={required}
         aria-expanded={open}
         aria-haspopup="dialog"
         aria-controls={panelId}

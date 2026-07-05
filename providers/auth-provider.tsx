@@ -151,6 +151,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
   const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isSwitchingChurchRef = useRef(false);
+  const scheduleTokenRefreshRef = useRef<(expiresIn: number) => void>(() => undefined);
 
   const sessionSetters = useMemo(
     () => ({
@@ -175,7 +176,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           try {
             const session = await refreshSessionDeduped();
             commitSession(session, undefined, sessionSetters);
-            scheduleTokenRefresh(session.tokens.expiresIn);
+            scheduleTokenRefreshRef.current(session.tokens.expiresIn);
           } catch {
             await handleInvalidSession(sessionSetters);
             redirectToLogin();
@@ -185,6 +186,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     },
     [sessionSetters],
   );
+
+  useEffect(() => {
+    scheduleTokenRefreshRef.current = scheduleTokenRefresh;
+  }, [scheduleTokenRefresh]);
 
   useEffect(() => {
     let cancelled = false;

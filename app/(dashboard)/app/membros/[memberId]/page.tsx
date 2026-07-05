@@ -2,6 +2,7 @@
 
 import { useParams } from "next/navigation";
 
+import { RequirePermission } from "@/components/auth/require-permission";
 import { MemberDetailContent } from "@/components/dashboard/members/member-detail-content";
 import { DashboardPage } from "@/components/dashboard/dashboard-shell";
 import { useMember } from "@/lib/api/queries";
@@ -13,14 +14,16 @@ export default function MemberDetailPage() {
   const { data: member } = useMember(memberId);
 
   return (
-    <DashboardPage
-      title={member?.name ?? "Membro"}
-      subtitle={
-        member ? MEMBER_STATUS_LABELS[member.status] : "Cadastro e histórico pastoral"
-      }
-      className="max-w-4xl"
-    >
-      <MemberDetailContent memberId={memberId} />
-    </DashboardPage>
+    <RequirePermission permission="members">
+      <DashboardPage
+        title={member?.name ?? "Membro"}
+        subtitle={
+          member ? MEMBER_STATUS_LABELS[member.status] : "Cadastro e histórico pastoral"
+        }
+        className="max-w-4xl"
+      >
+        <MemberDetailContent memberId={memberId} />
+      </DashboardPage>
+    </RequirePermission>
   );
 }

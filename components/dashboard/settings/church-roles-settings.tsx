@@ -6,6 +6,7 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 import {
   useChurchRoles,
   useCreateChurchRole,
@@ -15,7 +16,7 @@ import {
 import { canManageChurchRoles } from "@/lib/permissions";
 import {
   ALL_CHURCH_PERMISSIONS,
-  CHURCH_PERMISSION_LABELS,
+  CHURCH_PERMISSION_GROUPS,
   type ChurchPermissionKey,
 } from "@/types/church-roles";
 import { useAuth } from "@/providers/auth-provider";
@@ -23,17 +24,17 @@ import type { ChurchRole, UpdateChurchRolePayload } from "@/types/church-roles";
 
 import {
   SettingsAlert,
-  SettingsDetailHeader,
   SettingsEmptyState,
+  SettingsExpandableRow,
   SettingsPanel,
   SettingsSaveBar,
   SettingsSectionHeader,
-  SettingsSidebar,
-  SettingsSidebarItem,
-  SettingsSplitLayout,
-  SettingsToggleRow,
 } from "./settings-shared";
 import { ChurchRoleNameHeader } from "./church-role-name-header";
+import {
+  ChurchRolePermissionsEditor,
+  ChurchRolePermissionsSummary,
+} from "./church-role-permissions-editor";
 
 function permissionsEqual(
   a: readonly ChurchPermissionKey[],
@@ -46,6 +47,68 @@ function permissionsEqual(
   const set = new Set(a);
 
   return b.every((item) => set.has(item));
+}
+
+function ChurchRoleOption({
+  label,
+  hint,
+  selected,
+  dirty,
+  onClick,
+}: {
+  label: string;
+  hint: string;
+  selected: boolean;
+  dirty?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left transition-colors",
+        selected
+          ? "bg-background shadow-sm ring-1 ring-border"
+          : "hover:bg-muted/50",
+      )}
+    >
+      <span className="min-w-0">
+        <span className="flex items-center gap-2">
+          <span className="truncate text-sm font-medium">{label}</span>
+          {dirty && (
+            <span
+              className="size-1.5 shrink-0 rounded-full bg-amber-500"
+              aria-label="Alterações não salvas"
+            />
+          )}
+        </span>
+        <span className="mt-0.5 block text-xs text-muted-foreground">{hint}</span>
+      </span>
+      {selected && (
+        <span className="shrink-0 text-[11px] font-medium text-primary">
+          Ativo
+        </span>
+      )}
+    </button>
+  );
+}
+
+function ChurchRoleGroup({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <p className="px-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        {title}
+      </p>
+      <div className="space-y-1">{children}</div>
+    </div>
+  );
 }
 
 export function ChurchRolesSettings() {
@@ -62,6 +125,7 @@ export function ChurchRolesSettings() {
   const [isCreating, setIsCreating] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [rolesPickerOpen, setRolesPickerOpen] = useState(false);
 
   const canManage = permissions ? canManageChurchRoles(permissions) : false;
 
@@ -214,6 +278,25 @@ export function ChurchRolesSettings() {
     setDraftPermissions(role.id, next);
   }
 
+  function setGroupPermissions(
+    role: ChurchRole,
+    groupId: "sections" | "actions",
+    enabled: boolean,
+  ) {
+    const group = CHURCH_PERMISSION_GROUPS.find((item) => item.id === groupId);
+
+    if (!group) {
+      return;
+    }
+
+    const current = getDraftPermissions(role);
+    const next = enabled
+      ? [...new Set([...current, ...group.permissions])]
+      : current.filter((item) => !group.permissions.includes(item));
+
+    setDraftPermissions(role.id, next);
+  }
+
   function discardChanges(role: ChurchRole) {
     setDrafts((current) => {
       const next = { ...current };
@@ -297,6 +380,7 @@ export function ChurchRolesSettings() {
       setNewRoleName("");
       setIsCreating(false);
       setSelectedRoleId(created.id);
+      setRolesPickerOpen(false);
     } catch (error) {
       setErrorMessage(
         error instanceof Error
@@ -331,11 +415,16 @@ export function ChurchRolesSettings() {
 
   const selectedDirty = selectedRole ? isRoleDirty(selectedRole) : false;
 
+  function selectRole(roleId: string) {
+    setSelectedRoleId(roleId);
+    setRolesPickerOpen(false);
+  }
+
   return (
     <div>
       <SettingsSectionHeader
         title="Cargos"
-        description="Defina o que cada cargo pode fazer na igreja."
+        description="Configure o que cada cargo vê no menu e o que pode fazer na igreja."
       />
 
       {errorMessage && <SettingsAlert message={errorMessage} />}
@@ -348,11 +437,58 @@ export function ChurchRolesSettings() {
         </p>
       ) : (
         <SettingsPanel>
-          <SettingsSplitLayout
-            sidebar={
-              <SettingsSidebar
-                footer={
-                  isCreating ? (
+          <div className="border-b border-border/70 p-4 sm:p-5">
+            <SettingsExpandableRow
+              title={
+                selectedRole
+                  ? getDraftName(selectedRole)
+                  : "Selecione um cargo"
+              }
+              subtitle={
+                rolesPickerOpen
+                  ? "Escolha o cargo que deseja configurar"
+                  : "Clique para ver todos os cargos"
+              }
+              badge={
+                selectedRole
+                  ? `${getDraftPermissions(selectedRole).length}/${ALL_CHURCH_PERMISSIONS.length} permissões`
+                  : undefined
+              }
+              expanded={rolesPickerOpen}
+              dirty={selectedDirty}
+              onToggle={() => setRolesPickerOpen((open) => !open)}
+            >
+              <div className="space-y-4">
+                <ChurchRoleGroup title="Cargos padrão">
+                  {systemRoles.map((role) => (
+                    <ChurchRoleOption
+                      key={role.id}
+                      label={getDraftName(role)}
+                      hint={`${getDraftPermissions(role).length} permissões ativas`}
+                      selected={role.id === selectedRoleId}
+                      dirty={isRoleDirty(role)}
+                      onClick={() => selectRole(role.id)}
+                    />
+                  ))}
+                </ChurchRoleGroup>
+
+                {customRoles.length > 0 && (
+                  <ChurchRoleGroup title="Cargos personalizados">
+                    {customRoles.map((role) => (
+                      <ChurchRoleOption
+                        key={role.id}
+                        label={getDraftName(role)}
+                        hint={`${getDraftPermissions(role).length} permissões ativas`}
+                        selected={role.id === selectedRoleId}
+                        dirty={isRoleDirty(role)}
+                        onClick={() => selectRole(role.id)}
+                      />
+                    ))}
+                  </ChurchRoleGroup>
+                )}
+
+                <div className="border-t border-border/60 pt-4">
+                  {isCreating ? (
                     <form
                       onSubmit={(event) => void handleCreateRole(event)}
                       className="space-y-2"
@@ -363,22 +499,21 @@ export function ChurchRolesSettings() {
                         placeholder="Nome do cargo"
                         autoFocus
                         disabled={createRole.isPending}
-                        className="h-8 border-0 bg-background text-sm shadow-none"
+                        className="h-9 text-sm"
                       />
-                      <div className="flex gap-1">
+                      <div className="flex gap-2">
                         <Button
                           type="submit"
                           size="sm"
-                          className="h-7 flex-1 text-xs"
+                          className="flex-1"
                           disabled={createRole.isPending || !newRoleName.trim()}
                         >
-                          Criar
+                          Criar cargo
                         </Button>
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="h-7 text-xs"
                           onClick={() => {
                             setIsCreating(false);
                             setNewRoleName("");
@@ -389,58 +524,45 @@ export function ChurchRolesSettings() {
                       </div>
                     </form>
                   ) : (
-                    <button
+                    <Button
                       type="button"
+                      variant="outline"
+                      size="sm"
+                      className="w-full gap-2"
                       onClick={() => setIsCreating(true)}
-                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-background/60 hover:text-foreground"
                     >
                       <Plus className="size-3.5" />
-                      Novo cargo
-                    </button>
-                  )
-                }
-              >
-                {systemRoles.map((role) => (
-                  <SettingsSidebarItem
-                    key={role.id}
-                    label={getDraftName(role)}
-                    selected={role.id === selectedRoleId}
-                    dirty={isRoleDirty(role)}
-                    onClick={() => setSelectedRoleId(role.id)}
-                  />
-                ))}
+                      Novo cargo personalizado
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </SettingsExpandableRow>
+          </div>
 
-                {customRoles.length > 0 && (
-                  <div
-                    className="my-2 border-t border-border/70"
-                    role="separator"
-                    aria-hidden
-                  />
-                )}
-
-                {customRoles.map((role) => (
-                  <SettingsSidebarItem
-                    key={role.id}
-                    label={getDraftName(role)}
-                    selected={role.id === selectedRoleId}
-                    dirty={isRoleDirty(role)}
-                    onClick={() => setSelectedRoleId(role.id)}
-                  />
-                ))}
-              </SettingsSidebar>
-            }
-          >
+          <div className="flex flex-col">
             {selectedRole ? (
               <>
                 {selectedRole.isSystem ? (
-                  <SettingsDetailHeader
-                    title={selectedRole.name}
-                    description={`${getDraftPermissions(selectedRole).length} de ${ALL_CHURCH_PERMISSIONS.length} permissões · cargo padrão`}
-                  />
+                  <div className="border-b border-border/70 px-4 py-4 sm:px-5">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <h3 className="font-medium">{selectedRole.name}</h3>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          Cargo padrão do sistema — personalize o acesso abaixo.
+                        </p>
+                      </div>
+                      <ChurchRolePermissionsSummary
+                        enabledCount={getDraftPermissions(selectedRole).length}
+                        total={ALL_CHURCH_PERMISSIONS.length}
+                      />
+                    </div>
+                  </div>
                 ) : (
                   <ChurchRoleNameHeader
                     name={getDraftName(selectedRole)}
-                    permissionsLabel={`${getDraftPermissions(selectedRole).length} de ${ALL_CHURCH_PERMISSIONS.length} permissões`}
+                    enabledCount={getDraftPermissions(selectedRole).length}
+                    totalCount={ALL_CHURCH_PERMISSIONS.length}
                     isNameDirty={isNameDirty(selectedRole)}
                     isSaving={isSaving}
                     isDeleting={deleteRole.isPending}
@@ -451,21 +573,16 @@ export function ChurchRolesSettings() {
                   />
                 )}
 
-                <div className="flex-1 overflow-y-auto px-5 py-2">
-                  <div className="divide-y divide-border/50">
-                    {ALL_CHURCH_PERMISSIONS.map((permission) => (
-                      <SettingsToggleRow
-                        key={permission}
-                        label={CHURCH_PERMISSION_LABELS[permission]}
-                        checked={getDraftPermissions(selectedRole).includes(
-                          permission,
-                        )}
-                        onChange={() =>
-                          togglePermission(selectedRole, permission)
-                        }
-                      />
-                    ))}
-                  </div>
+                <div className="flex-1 px-4 py-4 sm:px-5">
+                  <ChurchRolePermissionsEditor
+                    permissions={getDraftPermissions(selectedRole)}
+                    onToggle={(permission) =>
+                      togglePermission(selectedRole, permission)
+                    }
+                    onSetGroup={(groupId, enabled) =>
+                      setGroupPermissions(selectedRole, groupId, enabled)
+                    }
+                  />
                 </div>
 
                 <SettingsSaveBar
@@ -478,7 +595,7 @@ export function ChurchRolesSettings() {
             ) : (
               <SettingsEmptyState message="Selecione um cargo ou crie um novo." />
             )}
-          </SettingsSplitLayout>
+          </div>
         </SettingsPanel>
       )}
     </div>

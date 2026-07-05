@@ -8,7 +8,6 @@ import {
 } from "@tanstack/react-query";
 
 import {
-  fetchMember,
   fetchMembers,
   membersKeys,
   receiveMember,

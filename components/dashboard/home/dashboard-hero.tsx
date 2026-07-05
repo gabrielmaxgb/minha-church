@@ -54,9 +54,9 @@ export function DashboardHero({
             {getTimeGreeting()}, {getFirstName(userName)}
           </h1>
           <p className="text-sm text-muted-foreground sm:text-base">
-            Aqui está o pulso de{" "}
-            <span className="font-medium text-foreground">{churchName}</span>{" "}
-            hoje.
+            Panorama de hoje na{" "}
+            <span className="font-medium text-foreground">{churchName}</span>
+            {" "}— membros, atividades e o que vem a seguir.
           </p>
         </div>
 

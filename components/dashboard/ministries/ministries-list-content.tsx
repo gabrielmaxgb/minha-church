@@ -28,8 +28,9 @@ export function MinistriesListContent() {
       <div className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-muted-foreground">
-            Cada ministério tem sua própria página de configuração — cargos,
-            permissões e eventos.
+            {canManage
+              ? "Gerencie todas as áreas de serviço — cargos, permissões e eventos."
+              : "Ministérios em que você serve na igreja."}
           </p>
 
           {canManage && (
@@ -57,7 +58,9 @@ export function MinistriesListContent() {
         {!isLoading && !isError && sortedMinistries.length === 0 && (
           <div className="rounded-xl border border-dashed border-border bg-muted/20 p-8 text-center">
             <p className="text-sm text-muted-foreground">
-              Nenhum ministério cadastrado ainda.
+              {canManage
+                ? "Nenhum ministério cadastrado ainda."
+                : "Você ainda não faz parte de nenhum ministério."}
             </p>
             {canManage && (
               <Button className="mt-4" size="sm" onClick={() => setModalOpen(true)}>
@@ -79,6 +82,11 @@ export function MinistriesListContent() {
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="truncate font-medium">{ministry.name}</span>
+                    {ministry.hasRoster && (
+                      <Badge variant="secondary" className="text-[11px]">
+                        Escalas
+                      </Badge>
+                    )}
                     {!ministry.isActive && (
                       <Badge variant="outline" className="text-[11px]">
                         Inativo

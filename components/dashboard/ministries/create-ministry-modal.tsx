@@ -2,8 +2,8 @@
 
 import { useEffect, useId, useRef } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Layers, Loader2, X } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { CalendarDays, Layers, Loader2, X } from "lucide-react";
+import { useForm, useWatch } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import { FormAlert, FormField } from "@/components/ui/form-field";
@@ -32,7 +32,7 @@ export function CreateMinistryModal({ open, onClose }: CreateMinistryModalProps)
 
   const form = useForm<CreateMinistryFormValues>({
     resolver: zodResolver(createMinistrySchema),
-    defaultValues: { name: "", description: "" },
+    defaultValues: { name: "", description: "", hasRoster: false },
     mode: "onBlur",
   });
 
@@ -42,15 +42,16 @@ export function CreateMinistryModal({ open, onClose }: CreateMinistryModalProps)
     reset,
     setError,
     clearErrors,
-    watch,
+    setValue,
     formState: { errors },
   } = form;
 
-  const description = watch("description");
+  const description = useWatch({ control: form.control, name: "description" }) ?? "";
+  const hasRoster = useWatch({ control: form.control, name: "hasRoster" }) ?? false;
 
   useEffect(() => {
     if (!open) {
-      reset({ name: "", description: "" });
+      reset({ name: "", description: "", hasRoster: false });
       clearErrors();
       return;
     }
@@ -90,6 +91,7 @@ export function CreateMinistryModal({ open, onClose }: CreateMinistryModalProps)
       await createMinistry.mutateAsync({
         name: values.name.trim(),
         description: values.description.trim() || undefined,
+        hasRoster: values.hasRoster,
       });
 
       onClose();
@@ -168,6 +170,62 @@ export function CreateMinistryModal({ open, onClose }: CreateMinistryModalProps)
         <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col" noValidate>
           <div className="space-y-5 overflow-y-auto px-6 py-5">
             {errors.root?.message && <FormAlert>{errors.root.message}</FormAlert>}
+
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-foreground">Escalas</p>
+              <button
+                type="button"
+                onClick={() =>
+                  setValue("hasRoster", !hasRoster, { shouldDirty: true })
+                }
+                disabled={createMinistry.isPending}
+                className={cn(
+                  "flex w-full items-start gap-3 rounded-2xl border px-4 py-3.5 text-left transition-colors",
+                  hasRoster
+                    ? "border-foreground/20 bg-foreground text-background"
+                    : "border-border bg-muted/20 hover:bg-muted/40",
+                )}
+              >
+                <span
+                  className={cn(
+                    "mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-xl",
+                    hasRoster
+                      ? "bg-background/15 text-background"
+                      : "bg-background text-foreground",
+                  )}
+                >
+                  <CalendarDays className="size-5" aria-hidden />
+                </span>
+                <span className="min-w-0">
+                  <span className="flex items-center gap-2">
+                    <span className="font-semibold tracking-tight">
+                      Este ministério usa escalas
+                    </span>
+                    <span
+                      className={cn(
+                        "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                        hasRoster
+                          ? "bg-background/20 text-background"
+                          : "bg-muted text-muted-foreground",
+                      )}
+                    >
+                      {hasRoster ? "Ativo" : "Opcional"}
+                    </span>
+                  </span>
+                  <span
+                    className={cn(
+                      "mt-1 block text-sm leading-relaxed",
+                      hasRoster
+                        ? "text-background/80"
+                        : "text-muted-foreground",
+                    )}
+                  >
+                    Ativa coleta de disponibilidade, funções na equipe e montagem
+                    de escala nos eventos — para Louvor, mídia, recepção e outros.
+                  </span>
+                </span>
+              </button>
+            </div>
 
             <FormField
               label="Nome do ministério"

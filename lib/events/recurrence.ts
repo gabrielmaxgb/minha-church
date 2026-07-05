@@ -121,7 +121,6 @@ export function formatRecurrenceSummary(
   startsAt: string,
 ): string {
   const interval = recurrence.interval;
-  const intervalLabel = interval === 1 ? "" : ` a cada ${interval} `;
 
   let base = "";
 

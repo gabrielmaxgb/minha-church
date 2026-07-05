@@ -1,5 +1,4 @@
 import type { BillingPeriod, PricingTier } from "@/types";
-import { formatCurrency } from "@/lib/utils";
 
 export function getTierBillingComparison(tier: PricingTier) {
   const monthlyTotalYear = tier.monthlyPrice * 12;

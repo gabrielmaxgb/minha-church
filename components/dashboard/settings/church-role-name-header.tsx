@@ -8,9 +8,12 @@ import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
+import { ChurchRolePermissionsSummary } from "./church-role-permissions-editor";
+
 interface ChurchRoleNameHeaderProps {
   name: string;
-  permissionsLabel: string;
+  enabledCount: number;
+  totalCount: number;
   isNameDirty: boolean;
   isSaving: boolean;
   isDeleting: boolean;
@@ -20,7 +23,8 @@ interface ChurchRoleNameHeaderProps {
 
 export function ChurchRoleNameHeader({
   name,
-  permissionsLabel,
+  enabledCount,
+  totalCount,
   isNameDirty,
   isSaving,
   isDeleting,
@@ -52,11 +56,12 @@ export function ChurchRoleNameHeader({
           onClick={onDelete}
         >
           <Trash2 className="size-3.5" />
-          Excluir
+          Excluir cargo
         </Button>
       </div>
 
-      <div className="mt-4 max-w-lg">
+      <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className="max-w-lg flex-1">
         <FormField
           label="Nome do cargo"
           htmlFor={inputId}
@@ -96,9 +101,13 @@ export function ChurchRoleNameHeader({
             Nome alterado — salve para aplicar.
           </p>
         )}
-      </div>
+        </div>
 
-      <p className="mt-3 text-xs text-muted-foreground">{permissionsLabel}</p>
+        <ChurchRolePermissionsSummary
+          enabledCount={enabledCount}
+          total={totalCount}
+        />
+      </div>
     </div>
   );
 }

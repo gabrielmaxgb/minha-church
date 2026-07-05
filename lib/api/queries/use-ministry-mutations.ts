@@ -7,16 +7,21 @@ import {
   createMinistry,
   createMinistryEvent,
   createMinistryRole,
+  closeAvailabilityWindow,
   deleteMinistry,
   deleteMinistryRole,
   ministriesKeys,
+  openAvailabilityWindow,
   type CreateMinistryPayload,
   type CreateMinistryRolePayload,
   type UpdateMinistryPayload,
   type UpdateMinistryRolePayload,
+  updateEventAvailability,
   updateMinistry,
   updateMinistryRole,
+  updateRosterProfile,
 } from "@/lib/api/queries/ministries.keys";
+import { rosterKeys } from "@/lib/api/queries/roster.keys";
 import { queries } from "@/lib/api/queries";
 import { ministryDetailPath } from "@/constants/routes";
 import type { CreateMinistryEventPayload } from "@/types/ministries";
@@ -156,5 +161,98 @@ export function useCreateMinistryEvent(ministryId: string) {
       return createMinistryEvent(churchId, ministryId, payload);
     },
     onSuccess: invalidate,
+  });
+}
+
+export function useUpdateRosterProfile(ministryId: string) {
+  const { churchId } = useTenant();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (instruments: string[]) => {
+      if (!churchId) {
+        throw new Error("Igreja não selecionada.");
+      }
+
+      return updateRosterProfile(churchId, ministryId, instruments);
+    },
+    onSuccess: async (profile) => {
+      queryClient.setQueryData(
+        ministriesKeys.rosterProfile(churchId ?? "unknown", ministryId).queryKey,
+        profile,
+      );
+      await queryClient.invalidateQueries({
+        queryKey: ministriesKeys.members(churchId ?? "unknown", ministryId).queryKey,
+      });
+    },
+  });
+}
+
+/** @deprecated Use useUpdateRosterProfile */
+export const useUpdateWorshipProfile = useUpdateRosterProfile;
+
+export function useUpdateEventAvailability(ministryId: string) {
+  const { churchId } = useTenant();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      eventId,
+      status,
+    }: {
+      eventId: string;
+      status: "available" | "unavailable" | "clear";
+    }) => {
+      if (!churchId) {
+        throw new Error("Igreja não selecionada.");
+      }
+
+      return updateEventAvailability(churchId, ministryId, eventId, status);
+    },
+    onSuccess: (profile) => {
+      queryClient.setQueryData(
+        ministriesKeys.rosterProfile(churchId ?? "unknown", ministryId).queryKey,
+        profile,
+      );
+      void queryClient.invalidateQueries({ queryKey: rosterKeys._def });
+    },
+  });
+}
+
+export function useOpenAvailabilityWindow(ministryId: string) {
+  const { churchId } = useTenant();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: { periodType: string; startDate?: string }) => {
+      if (!churchId) {
+        throw new Error("Igreja não selecionada.");
+      }
+
+      return openAvailabilityWindow(churchId, ministryId, payload);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ministriesKeys._def });
+      await queryClient.invalidateQueries({ queryKey: rosterKeys._def });
+    },
+  });
+}
+
+export function useCloseAvailabilityWindow(ministryId: string) {
+  const { churchId } = useTenant();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => {
+      if (!churchId) {
+        throw new Error("Igreja não selecionada.");
+      }
+
+      return closeAvailabilityWindow(churchId, ministryId);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ministriesKeys._def });
+      await queryClient.invalidateQueries({ queryKey: rosterKeys._def });
+    },
   });
 }

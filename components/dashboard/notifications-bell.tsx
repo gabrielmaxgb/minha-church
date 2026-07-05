@@ -3,26 +3,36 @@
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Bell, KeyRound } from "lucide-react";
+import { Bell, ClipboardList, KeyRound } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { settingsSectionPath } from "@/constants/routes";
-import { usePasswordResetRequests } from "@/lib/api/queries";
+import {
+  ministryAvailabilityPath,
+  settingsSectionPath,
+} from "@/constants/routes";
+import { useMySchedules, usePasswordResetRequests } from "@/lib/api/queries";
 import { canManageChurchMemberships } from "@/lib/church-memberships/constants";
-import { formatDateTime } from "@/lib/utils";
+import { pendingNotificationStyles } from "@/lib/ui/notification-styles";
+import { cn, formatDateTime } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
-import { cn } from "@/lib/utils";
 
-function usePasswordResetRequestCount(): number {
+function useNotificationCount(): number {
   const { permissions } = useAuth();
   const canManage = canManageChurchMemberships(permissions);
-  const { data } = usePasswordResetRequests({ poll: canManage });
+  const hasSchedulesAccess = Boolean(permissions?.schedules.access);
 
-  if (!canManage) {
-    return 0;
-  }
+  const { data: passwordResetRequests } = usePasswordResetRequests({
+    poll: canManage,
+  });
+  const { data: schedules } = useMySchedules();
 
-  return data?.length ?? 0;
+  const passwordResetCount = canManage ? (passwordResetRequests?.length ?? 0) : 0;
+  const missingFunctionsCount =
+    hasSchedulesAccess && schedules
+      ? schedules.summary.missingRosterFunctionsCount
+      : 0;
+
+  return passwordResetCount + missingFunctionsCount;
 }
 
 function NotificationsPanel({
@@ -36,8 +46,35 @@ function NotificationsPanel({
   titleId: string;
   anchorRect: DOMRect | null;
 }) {
-  const { data, isLoading, isError } = usePasswordResetRequests({ poll: open });
-  const count = data?.length ?? 0;
+  const { permissions } = useAuth();
+  const canManage = canManageChurchMemberships(permissions);
+  const hasSchedulesAccess = Boolean(permissions?.schedules.access);
+
+  const {
+    data: passwordResetRequests,
+    isLoading: passwordResetLoading,
+    isError: passwordResetError,
+  } = usePasswordResetRequests({ poll: open && canManage });
+  const {
+    data: schedules,
+    isLoading: schedulesLoading,
+    isError: schedulesError,
+  } = useMySchedules();
+
+  const passwordResetCount = canManage ? (passwordResetRequests?.length ?? 0) : 0;
+  const missingFunctionsMinistries =
+    hasSchedulesAccess && schedules
+      ? schedules.ministries.filter((ministry) => ministry.needsRosterFunctions)
+      : [];
+  const missingFunctionsCount = missingFunctionsMinistries.length;
+  const count = passwordResetCount + missingFunctionsCount;
+
+  const isLoading =
+    (canManage && passwordResetLoading) ||
+    (hasSchedulesAccess && schedulesLoading);
+  const isError =
+    (canManage && passwordResetError) ||
+    (hasSchedulesAccess && schedulesError);
 
   useEffect(() => {
     if (!open) {
@@ -117,14 +154,59 @@ function NotificationsPanel({
 
           {!isLoading &&
             !isError &&
-            data?.map((request) => (
+            missingFunctionsMinistries.map((ministry) => (
+              <div
+                key={ministry.ministryId}
+                className="border-b border-border/70 px-4 py-3 last:border-b-0"
+              >
+                <div className="flex items-start gap-3">
+                  <div className={pendingNotificationStyles.icon.sm}>
+                    <ClipboardList
+                      className={cn("size-3.5", pendingNotificationStyles.iconText)}
+                      aria-hidden
+                    />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium leading-snug">
+                      Cadastre suas funções na escala
+                    </p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      Em{" "}
+                      <span className="font-medium text-foreground">
+                        {ministry.ministryName}
+                      </span>
+                      , informe pelo menos uma função para o líder poder
+                      escalá-lo.
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-2 h-8 text-xs"
+                      asChild
+                      onClick={onClose}
+                    >
+                      <Link href={ministryAvailabilityPath(ministry.ministryId)}>
+                        Adicionar funções
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+          {!isLoading &&
+            !isError &&
+            passwordResetRequests?.map((request) => (
               <div
                 key={request.id}
                 className="border-b border-border/70 px-4 py-3 last:border-b-0"
               >
                 <div className="flex items-start gap-3">
-                  <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-amber-500/10">
-                    <KeyRound className="size-3.5 text-amber-700" aria-hidden />
+                  <div className={pendingNotificationStyles.icon.sm}>
+                    <KeyRound
+                      className={cn("size-3.5", pendingNotificationStyles.iconText)}
+                      aria-hidden
+                    />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium leading-snug">
@@ -163,9 +245,10 @@ export function NotificationsBell() {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const { permissions } = useAuth();
   const canManage = canManageChurchMemberships(permissions);
+  const hasSchedulesAccess = Boolean(permissions?.schedules.access);
   const [open, setOpen] = useState(false);
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
-  const count = usePasswordResetRequestCount();
+  const count = useNotificationCount();
   const hasNotifications = count > 0;
 
   useEffect(() => {
@@ -189,7 +272,7 @@ export function NotificationsBell() {
     };
   }, [open]);
 
-  if (!canManage) {
+  if (!canManage && !hasSchedulesAccess) {
     return null;
   }
 
@@ -224,7 +307,7 @@ export function NotificationsBell() {
       >
         <Bell className="size-4" aria-hidden />
         {hasNotifications && (
-          <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-destructive text-[10px] font-semibold text-destructive-foreground">
+          <span className={pendingNotificationStyles.bellBadge}>
             {count > 9 ? "9+" : count}
           </span>
         )}

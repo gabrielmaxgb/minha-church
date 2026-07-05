@@ -4,11 +4,15 @@ import { useEffect, useId, useMemo, useState } from "react";
 import { Loader2, UserPlus, X } from "lucide-react";
 
 import { MinistryRoleToggles } from "@/components/dashboard/ministries/ministry-role-toggles";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { TypeaheadSelect } from "@/components/ui/typeahead-select";
-import { useAssignMemberToMinistry, useMembers } from "@/lib/api/queries";
+import { TypeaheadMultiSelect } from "@/components/ui/typeahead-multi-select";
+import {
+  useAssignMembersToMinistry,
+  useMembers,
+} from "@/lib/api/queries";
 import type { Ministry, MinistryMember } from "@/types/ministries";
 
 interface AddMinistryMemberModalProps {
@@ -25,12 +29,12 @@ export function AddMinistryMemberModal({
   onClose,
 }: AddMinistryMemberModalProps) {
   const titleId = useId();
-  const [memberId, setMemberId] = useState("");
+  const [memberIds, setMemberIds] = useState<string[]>([]);
   const [roleIds, setRoleIds] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  const { data: membersData, isLoading } = useMembers({ limit: 100 });
-  const assignMember = useAssignMemberToMinistry(ministry.id);
+  const { data: membersData, isLoading } = useMembers({ limit: 200 });
+  const assignMembers = useAssignMembersToMinistry(ministry.id);
 
   const assignedIds = useMemo(
     () => new Set(currentMembers.map((member) => member.memberId)),
@@ -57,10 +61,27 @@ export function AddMinistryMemberModal({
   );
 
   const roles = [...ministry.roles].sort((a, b) => a.sortOrder - b.sortOrder);
+  const memberCount = memberIds.length;
+  const hasRemainingMembers = memberOptions.some(
+    (option) => !memberIds.includes(option.value),
+  );
+  const membersEmptyMessage = isLoading
+    ? "Carregando membros..."
+    : memberOptions.length === 0
+      ? "Nenhum membro disponível para adicionar."
+      : !hasRemainingMembers
+        ? "Todos os membros disponíveis já foram selecionados."
+        : "Nenhum membro encontrado.";
+  const submitLabel =
+    memberCount === 0
+      ? "Adicionar ao ministério"
+      : memberCount === 1
+        ? "Adicionar 1 membro"
+        : `Adicionar ${memberCount} membros`;
 
   useEffect(() => {
     if (!open) {
-      setMemberId("");
+      setMemberIds([]);
       setRoleIds([]);
       setError(null);
       return;
@@ -80,7 +101,7 @@ export function AddMinistryMemberModal({
     }
 
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape" && !assignMember.isPending) {
+      if (event.key === "Escape" && !assignMembers.isPending) {
         onClose();
       }
     }
@@ -88,7 +109,7 @@ export function AddMinistryMemberModal({
     window.addEventListener("keydown", handleKeyDown);
 
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [open, onClose, assignMember.isPending]);
+  }, [open, onClose, assignMembers.isPending]);
 
   if (!open) {
     return null;
@@ -98,24 +119,39 @@ export function AddMinistryMemberModal({
     event.preventDefault();
     setError(null);
 
-    if (!memberId) {
-      setError("Selecione um membro.");
+    if (memberIds.length === 0) {
+      setError("Selecione ao menos um membro.");
       return;
     }
 
     try {
-      await assignMember.mutateAsync({
-        memberId,
+      const { succeeded, failed } = await assignMembers.mutateAsync({
+        memberIds,
         payload: {
           ministryRoleIds: roleIds,
         },
       });
-      onClose();
+
+      if (failed.length === 0) {
+        onClose();
+        return;
+      }
+
+      setMemberIds(failed);
+
+      if (succeeded.length > 0) {
+        setError(
+          `${succeeded.length} membro${succeeded.length === 1 ? "" : "s"} adicionado${succeeded.length === 1 ? "" : "s"}. ${failed.length} não pôde${failed.length === 1 ? "" : "ram"} ser vinculado${failed.length === 1 ? "" : "s"}.`,
+        );
+        return;
+      }
+
+      setError("Não foi possível adicionar os membros selecionados.");
     } catch (submitError) {
       setError(
         submitError instanceof Error
           ? submitError.message
-          : "Não foi possível adicionar o membro.",
+          : "Não foi possível adicionar os membros.",
       );
     }
   }
@@ -126,9 +162,9 @@ export function AddMinistryMemberModal({
         type="button"
         className="absolute inset-0 bg-black/45 backdrop-blur-[2px]"
         aria-label="Fechar modal"
-        disabled={assignMember.isPending}
+        disabled={assignMembers.isPending}
         onClick={() => {
-          if (!assignMember.isPending) {
+          if (!assignMembers.isPending) {
             onClose();
           }
         }}
@@ -146,16 +182,17 @@ export function AddMinistryMemberModal({
           </div>
           <div className="min-w-0 flex-1 pt-0.5">
             <h2 id={titleId} className="font-display text-2xl font-semibold tracking-tight">
-              Adicionar membro
+              Adicionar membros
             </h2>
             <p className="mt-1.5 text-sm text-muted-foreground">
-              Vincule alguém ao ministério <span className="font-medium text-foreground">{ministry.name}</span>
+              Vincule uma ou mais pessoas ao ministério{" "}
+              <span className="font-medium text-foreground">{ministry.name}</span>
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            disabled={assignMember.isPending}
+            disabled={assignMembers.isPending}
             className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
             aria-label="Fechar"
           >
@@ -177,24 +214,30 @@ export function AddMinistryMemberModal({
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="member-typeahead">Membro</Label>
-              <TypeaheadSelect
+              <div className="flex flex-wrap items-center gap-2">
+                <Label htmlFor="member-typeahead">Membros</Label>
+                {memberCount > 0 && (
+                  <Badge variant="secondary" className="font-normal tabular-nums">
+                    {memberCount} selecionado{memberCount === 1 ? "" : "s"}
+                  </Badge>
+                )}
+              </div>
+              <TypeaheadMultiSelect
                 id="member-typeahead"
-                value={memberId}
-                onChange={setMemberId}
+                value={memberIds}
+                onChange={setMemberIds}
                 options={memberOptions}
                 placeholder="Nome, e-mail ou telefone"
                 listClassName="max-h-80"
-                emptyMessage={
-                  isLoading
-                    ? "Carregando membros..."
-                    : "Nenhum membro disponível para adicionar."
-                }
+                emptyMessage={membersEmptyMessage}
                 loading={isLoading}
-                disabled={assignMember.isPending}
-                required
-                aria-invalid={error === "Selecione um membro." ? true : undefined}
+                disabled={assignMembers.isPending}
+                aria-invalid={error === "Selecione ao menos um membro." ? true : undefined}
               />
+              <p className="text-xs text-muted-foreground">
+                Busque e selecione várias pessoas. Os cargos abaixo serão aplicados a
+                todos.
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -202,7 +245,7 @@ export function AddMinistryMemberModal({
               <MinistryRoleToggles
                 roles={roles}
                 selectedRoleIds={roleIds}
-                disabled={assignMember.isPending}
+                disabled={assignMembers.isPending}
                 onToggle={(roleId, checked) => {
                   setRoleIds((current) =>
                     checked
@@ -219,23 +262,23 @@ export function AddMinistryMemberModal({
               type="button"
               variant="outline"
               onClick={onClose}
-              disabled={assignMember.isPending}
+              disabled={assignMembers.isPending}
               className="w-full sm:w-auto"
             >
               Cancelar
             </Button>
             <Button
               type="submit"
-              disabled={assignMember.isPending || !memberId}
+              disabled={assignMembers.isPending || memberIds.length === 0}
               className="w-full sm:w-auto"
             >
-              {assignMember.isPending ? (
+              {assignMembers.isPending ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
                   Adicionando...
                 </>
               ) : (
-                "Adicionar ao ministério"
+                submitLabel
               )}
             </Button>
           </footer>

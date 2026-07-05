@@ -12,6 +12,7 @@ import { CreateActivityModal } from "@/components/dashboard/activities/create-ac
 import { DashboardActionsPanel } from "@/components/dashboard/home/dashboard-actions-panel";
 import { DashboardEventsPanel } from "@/components/dashboard/home/dashboard-events-panel";
 import { DashboardHero } from "@/components/dashboard/home/dashboard-hero";
+import { WorshipScheduleBanner } from "@/components/dashboard/my-schedule/worship-schedule-banner";
 import { DashboardMetricCard } from "@/components/dashboard/home/dashboard-metric-card";
 import { StaggerItem, StaggerList } from "@/components/motion/dashboard-motion";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -26,7 +27,7 @@ import {
 import { canManageChurchMemberships } from "@/lib/church-memberships/constants";
 import { collapseRecurringEventsForList } from "@/lib/events/list";
 import { formatRelativeEventDay } from "@/lib/dashboard/date-utils";
-import { canCreateAnyActivity } from "@/lib/permissions";
+import { canCreateAnyActivity, canListMinistries } from "@/lib/permissions";
 import { useAuth } from "@/providers/auth-provider";
 import type { ChurchEvent } from "@/types/events";
 
@@ -41,7 +42,10 @@ export function DashboardHomeContent() {
   const { data: summary, isLoading: summaryLoading, isError } =
     useDashboardSummary();
   const { data: events, isLoading: eventsLoading } = useChurchEvents();
-  const { data: ministries } = useMinistries();
+  const canListMinistriesData = canListMinistries(permissions);
+  const { data: ministries } = useMinistries({
+    enabled: canListMinistriesData,
+  });
 
   const canManageMemberships = canManageChurchMemberships(permissions);
   const { data: pendingAccess } = usePendingAccessUsers();
@@ -75,6 +79,18 @@ export function DashboardHomeContent() {
     ? canCreateAnyActivity(permissions)
     : false;
 
+  const knownMinistryNames = useMemo(() => {
+    const names: Record<string, string> = {};
+
+    for (const event of events ?? []) {
+      if (event.ministryId && event.ministryName) {
+        names[event.ministryId] = event.ministryName;
+      }
+    }
+
+    return names;
+  }, [events]);
+
   if (!user || !church) {
     return null;
   }
@@ -90,9 +106,13 @@ export function DashboardHomeContent() {
           onCreateActivity={() => setCreateActivityOpen(true)}
         />
 
+        <WorshipScheduleBanner />
+
         <StaggerList className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {summaryLoading ? (
-            Array.from({ length: 4 }).map((_, index) => (
+            Array.from({
+              length: canListMinistriesData ? 4 : 3,
+            }).map((_, index) => (
               <Skeleton key={index} className="h-[8.5rem] rounded-2xl" />
             ))
           ) : (
@@ -133,20 +153,22 @@ export function DashboardHomeContent() {
                   accent="amber"
                 />
               </StaggerItem>
-              <StaggerItem>
-                <DashboardMetricCard
-                  label="Ministérios ativos"
-                  value={String(activeMinistries)}
-                  hint={
-                    activeMinistries > 0
-                      ? "Áreas de serviço em operação"
-                      : "Configure equipes e cargos"
-                  }
-                  href={AUTH_ROUTES.ministries}
-                  icon={Layers}
-                  accent="violet"
-                />
-              </StaggerItem>
+              {canListMinistriesData && (
+                <StaggerItem>
+                  <DashboardMetricCard
+                    label="Ministérios ativos"
+                    value={String(activeMinistries)}
+                    hint={
+                      activeMinistries > 0
+                        ? "Áreas de serviço em operação"
+                        : "Configure equipes e cargos"
+                    }
+                    href={AUTH_ROUTES.ministries}
+                    icon={Layers}
+                    accent="violet"
+                  />
+                </StaggerItem>
+              )}
             </>
           )}
         </StaggerList>
@@ -178,6 +200,7 @@ export function DashboardHomeContent() {
         <CreateActivityModal
           open={createActivityOpen}
           onClose={() => setCreateActivityOpen(false)}
+          knownMinistryNames={knownMinistryNames}
         />
       )}
     </>

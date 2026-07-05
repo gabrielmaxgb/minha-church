@@ -23,6 +23,7 @@ import {
   canManageMembers,
   canManageMinistries,
 } from "@/lib/permissions";
+import { pendingNotificationStyles } from "@/lib/ui/notification-styles";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 
@@ -106,9 +107,12 @@ export function DashboardActionsPanel({
   return (
     <div className="space-y-4">
       {attentionItems.length > 0 && (
-        <section className="rounded-3xl border border-amber-500/25 bg-gradient-to-br from-amber-500/[0.07] to-card p-5 shadow-soft">
+        <section className={pendingNotificationStyles.banner.section}>
           <div className="mb-3 flex items-center gap-2">
-            <AlertCircle className="size-4 text-amber-700 dark:text-amber-400" />
+            <AlertCircle
+              className={cn("size-4", pendingNotificationStyles.icon.section)}
+              aria-hidden
+            />
             <h2 className="font-display text-sm font-semibold tracking-tight">
               Requer atenção
             </h2>
@@ -118,9 +122,14 @@ export function DashboardActionsPanel({
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className="flex items-start gap-3 rounded-xl border border-amber-500/15 bg-card/80 px-3 py-2.5 transition-colors hover:bg-card"
+                  className={pendingNotificationStyles.banner.item}
                 >
-                  <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-800 dark:text-amber-300">
+                  <span
+                    className={cn(
+                      "flex size-8 shrink-0 items-center justify-center rounded-lg",
+                      pendingNotificationStyles.icon.sm,
+                    )}
+                  >
                     <item.icon className="size-4" />
                   </span>
                   <span className="min-w-0">

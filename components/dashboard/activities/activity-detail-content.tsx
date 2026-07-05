@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { EditActivityModal } from "@/components/dashboard/activities/edit-activity-modal";
+import { EventRosterSection } from "@/components/dashboard/activities/event-roster-section";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,7 +32,7 @@ import {
 } from "@/constants/routes";
 import { useChurchEvent } from "@/lib/api/queries";
 import { formatRecurrenceSummary } from "@/lib/events/recurrence";
-import { canManageActivity } from "@/lib/permissions";
+import { canManageActivity, canManageMinistryRoster } from "@/lib/permissions";
 import { cn, formatDateTime } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 import type { ChurchEvent } from "@/types/events";
@@ -83,6 +84,10 @@ export function ActivityDetailContent({ eventId }: ActivityDetailContentProps) {
   const [editOpen, setEditOpen] = useState(false);
 
   const canManage = event && permissions ? canManageActivity(permissions, event) : false;
+  const canManageRoster =
+    event && permissions && event.ministryId
+      ? canManageMinistryRoster(permissions, event.ministryId)
+      : false;
 
   const upcomingOccurrences =
     event?.seriesOccurrences.filter(
@@ -233,6 +238,10 @@ export function ActivityDetailContent({ eventId }: ActivityDetailContentProps) {
             )}
           </CardContent>
         </Card>
+
+        {event.isRosterMinistry && (
+          <EventRosterSection event={event} canManage={canManageRoster} />
+        )}
 
         {event.recurrence && event.seriesOccurrences.length > 1 && (
           <section className="space-y-3">

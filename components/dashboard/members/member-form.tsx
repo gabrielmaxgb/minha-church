@@ -133,7 +133,11 @@ export function MemberForm({
           <FormField
             label="Status"
             htmlFor="member-status"
-            hint="Define se a pessoa é visitante, membro ativo ou inativo."
+            hint={
+              status === "active"
+                ? "Membros ativos recebem acesso ao painel (e-mail ou CPF obrigatório)."
+                : "Visitantes e inativos ficam só no cadastro pastoral, sem login."
+            }
           >
             <SelectField
               id="member-status"
@@ -157,8 +161,8 @@ export function MemberForm({
         title="Contato"
         description={
           requireLogin
-            ? "Informe e-mail ou CPF (pelo menos um) para criar o acesso ao painel."
-            : "Canais para comunicação e identificação."
+            ? "E-mail ou CPF obrigatório para criar o acesso ao painel."
+            : "Opcional para visitantes. Será necessário ao receber como membro."
         }
       >
         <FormField

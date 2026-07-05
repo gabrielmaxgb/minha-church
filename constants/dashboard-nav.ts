@@ -5,6 +5,7 @@ import {
   Layers,
   LayoutDashboard,
   Mail,
+  CalendarDays,
   Settings,
   Users,
   Wallet,
@@ -18,8 +19,8 @@ export interface DashboardNavItem {
   href: string;
   icon: LucideIcon;
   description?: string;
-  /** Omitido = visível para todos os membros da igreja */
-  permission?: NavPermissionKey;
+  /** Seção exige permissão de acesso configurada no cargo */
+  permission: NavPermissionKey;
 }
 
 export const dashboardNavItems: DashboardNavItem[] = [
@@ -28,24 +29,35 @@ export const dashboardNavItems: DashboardNavItem[] = [
     href: AUTH_ROUTES.dashboard,
     icon: LayoutDashboard,
     description: "Visão geral da igreja",
+    permission: "dashboard",
   },
   {
     label: "Membros",
     href: AUTH_ROUTES.members,
     icon: Users,
     description: "Cadastro e histórico pastoral",
+    permission: "members",
   },
   {
     label: "Ministérios",
     href: AUTH_ROUTES.ministries,
     icon: Layers,
     description: "Áreas de serviço, cargos e equipes",
+    permission: "ministries",
   },
   {
     label: "Atividades",
     href: AUTH_ROUTES.activities,
     icon: Calendar,
     description: "Eventos e encontros por ministério",
+    permission: "activities",
+  },
+  {
+    label: "Minhas escalas",
+    href: AUTH_ROUTES.mySchedules,
+    icon: CalendarDays,
+    description: "Escalas e disponibilidade por ministério",
+    permission: "schedules",
   },
   {
     label: "Finanças",
@@ -76,5 +88,6 @@ export const dashboardSecondaryNavItems: DashboardNavItem[] = [
     href: AUTH_ROUTES.settings,
     icon: Settings,
     description: "Perfil e preferências da igreja",
+    permission: "settings",
   },
 ];

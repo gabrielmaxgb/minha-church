@@ -16,6 +16,9 @@ export const AUTH_ROUTES = {
   members: "/app/membros",
   ministries: "/app/ministerios",
   activities: "/app/atividades",
+  mySchedules: "/app/minhas-escalas",
+  /** @deprecated Use mySchedules */
+  mySchedule: "/app/minhas-escalas",
   finances: "/app/financas",
   communication: "/app/comunicacao",
   reports: "/app/relatorios",
@@ -23,8 +26,18 @@ export const AUTH_ROUTES = {
   changePassword: "/app/alterar-senha",
 } as const;
 
+export function myScheduleMinistryPath(ministryId: string): string {
+  return `${AUTH_ROUTES.mySchedules}/${ministryId}`;
+}
+
 export function ministryDetailPath(ministryId: string): string {
   return `${AUTH_ROUTES.ministries}/${ministryId}`;
+}
+
+export const ROSTER_PROFILE_SECTION_ID = "roster-profile";
+
+export function ministryAvailabilityPath(ministryId: string): string {
+  return `${ministryDetailPath(ministryId)}?section=availability#${ROSTER_PROFILE_SECTION_ID}`;
 }
 
 export function memberDetailPath(memberId: string): string {

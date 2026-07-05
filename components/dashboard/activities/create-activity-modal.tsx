@@ -15,6 +15,7 @@ import { useCreateChurchEvent, useMinistries } from "@/lib/api/queries";
 import {
   canCreateChurchWideActivity,
   canCreateMinistryActivity,
+  canListMinistries,
 } from "@/lib/permissions";
 import { useAuth } from "@/providers/auth-provider";
 import {
@@ -31,6 +32,8 @@ interface CreateActivityModalProps {
   defaultMinistryId?: string;
   /** Valor `datetime-local` inicial (ex.: dia clicado no calendário). */
   defaultStartsAtValue?: string;
+  /** Nomes conhecidos sem listar ministérios (ex.: vindos dos eventos). */
+  knownMinistryNames?: Record<string, string>;
 }
 
 function fallbackStartsAt(): string {
@@ -52,10 +55,12 @@ export function CreateActivityModal({
   onClose,
   defaultMinistryId = "",
   defaultStartsAtValue,
+  knownMinistryNames = {},
 }: CreateActivityModalProps) {
   const titleId = useId();
   const { permissions } = useAuth();
-  const { data: ministries } = useMinistries();
+  const canList = canListMinistries(permissions);
+  const { data: ministries } = useMinistries({ enabled: open && canList });
   const createEvent = useCreateChurchEvent();
 
   const [name, setName] = useState("");
@@ -70,16 +75,30 @@ export function CreateActivityModal({
   );
   const [error, setError] = useState<string | null>(null);
 
-  const creatableMinistries = useMemo(
-    () =>
+  const creatableMinistries = useMemo(() => {
+    if (!permissions) {
+      return [];
+    }
+
+    const fromList =
       ministries?.filter(
         (ministry) =>
           ministry.isActive &&
-          permissions &&
           canCreateMinistryActivity(permissions, ministry.id),
-      ) ?? [],
-    [ministries, permissions],
-  );
+      ) ?? [];
+
+    if (fromList.length > 0) {
+      return fromList;
+    }
+
+    return permissions.activities.ministryIds
+      .filter((ministryId) => canCreateMinistryActivity(permissions, ministryId))
+      .map((ministryId) => ({
+        id: ministryId,
+        name: knownMinistryNames[ministryId] ?? "Ministério",
+        isActive: true,
+      }));
+  }, [ministries, permissions, knownMinistryNames]);
 
   const canSelectChurchWide =
     permissions !== null && canCreateChurchWideActivity(permissions);
