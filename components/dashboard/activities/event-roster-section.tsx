@@ -12,7 +12,7 @@ import {
   useUpdateChurchEvent,
   useUpsertEventRoster,
 } from "@/lib/api/queries";
-import { formatRosterRole, normalizeRosterRoleList } from "@/lib/ministries/roster";
+import { formatRosterRole, memberCanFillEventRole, normalizeRosterRoleList } from "@/lib/ministries/roster";
 import { cn } from "@/lib/utils";
 import type { ChurchEventDetail } from "@/types/events";
 
@@ -70,9 +70,24 @@ export function EventRosterSection({
     [event.roster],
   );
 
-  const selectableCandidates = availableCandidates.filter(
-    (candidate) => !assignedMemberIds.has(candidate.memberId),
-  );
+  const selectableCandidates = useMemo(() => {
+    const selectedSlot = slots.find((slot) => slot.id === rosterSlotId);
+
+    return availableCandidates.filter((candidate) => {
+      if (assignedMemberIds.has(candidate.memberId)) {
+        return false;
+      }
+
+      if (!selectedSlot) {
+        return true;
+      }
+
+      return memberCanFillEventRole(
+        candidate.roleLabels ?? [],
+        selectedSlot.label,
+      );
+    });
+  }, [availableCandidates, assignedMemberIds, rosterSlotId, slots]);
 
   async function handleAdd() {
     if (!memberId || !rosterSlotId) {

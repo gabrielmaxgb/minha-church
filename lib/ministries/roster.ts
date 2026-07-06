@@ -118,6 +118,17 @@ export function addRosterRole(values: string[], value: string): string[] {
   return [...values, normalized];
 }
 
+export function memberCanFillEventRole(
+  memberRoleLabels: string[],
+  slotLabel: string,
+): boolean {
+  const target = normalizeRosterRoleValue(slotLabel);
+
+  return normalizeRosterRoleList(memberRoleLabels).some(
+    (role) => normalizeRosterRoleValue(role) === target,
+  );
+}
+
 export function needsRosterFunctions(values: string[]): boolean {
   return normalizeRosterRoleList(values).length === 0;
 }

@@ -111,7 +111,9 @@ export interface RosterAvailabilityEvent {
   recurrenceSeriesId: string | null;
   isRecurring: boolean;
   rosterOpen: boolean;
+  rosterRoles: string[];
   myStatus: EventAvailabilityStatus | null;
+  myRoleLabels: string[];
   availableCount: number;
   unavailableCount: number;
   pendingCount: number;
@@ -121,6 +123,8 @@ export interface RosterSeriesGroup {
   key: string;
   name: string;
   isRecurring: boolean;
+  rosterRoles: string[];
+  myProfileRoleLabels: string[];
   openCount: number;
   myAvailableCount: number;
   myUnavailableCount: number;
@@ -133,6 +137,9 @@ export interface RosterProfile {
   ministryName: string;
   hasRoster: true;
   memberId: string;
+  /** Funções cadastradas pelo membro neste ministério. */
+  instruments: string[];
+  needsRosterFunctions: boolean;
   availabilityWindow: RosterAvailabilityWindow;
   series: RosterSeriesGroup[];
   summary: {
@@ -157,6 +164,7 @@ export interface EventRosterCandidate {
   memberId: string;
   memberName: string;
   availabilityStatus: EventAvailabilityStatus | null;
+  roleLabels: string[];
 }
 
 export interface MyScheduleAssignment {
@@ -185,7 +193,11 @@ export interface MyScheduleEvent {
   endsAt: string | null;
   location: string | null;
   rosterOpen: boolean;
+  rosterRoles: string[];
+  profileKey: string;
+  myProfileRoleLabels: string[];
   myAvailabilityStatus: EventAvailabilityStatus | null;
+  myRoleLabels: string[];
   myRoleLabel: string | null;
   roster: MyScheduleRosterEntry[];
 }
@@ -212,6 +224,8 @@ export interface MyMinistrySchedule {
   pendingAvailability: MySchedulePending[];
   upcomingAssignments: MyScheduleAssignment[];
   events: MyScheduleEvent[];
+  rosterFunctions: string[];
+  needsRosterFunctions: boolean;
 }
 
 export interface MySchedules {
@@ -219,6 +233,7 @@ export interface MySchedules {
   summary: {
     pendingAvailabilityCount: number;
     upcomingAssignmentsCount: number;
+    missingRosterFunctionsCount: number;
     nextAssignment: MyScheduleAssignment | null;
   };
   ministries: MyMinistrySchedule[];

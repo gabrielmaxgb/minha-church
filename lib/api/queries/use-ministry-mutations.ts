@@ -18,6 +18,7 @@ import {
   type UpdateMinistryPayload,
   type UpdateMinistryRolePayload,
   updateEventAvailability,
+  updateEventRoleProfile,
   updateMinistry,
   updateMinistryRole,
   updateRosterProfile,
@@ -33,7 +34,6 @@ function useInvalidateMinistries() {
 
   return async () => {
     await queryClient.invalidateQueries({ queryKey: ministriesKeys._def });
-    await queryClient.invalidateQueries({ queryKey: queries.members._def });
     await queryClient.invalidateQueries({ queryKey: queries.events._def });
     await queryClient.invalidateQueries({ queryKey: queries.dashboard._def });
   };
@@ -182,15 +182,53 @@ export function useUpdateRosterProfile(ministryId: string) {
         ministriesKeys.rosterProfile(churchId ?? "unknown", ministryId).queryKey,
         profile,
       );
-      await queryClient.invalidateQueries({
-        queryKey: ministriesKeys.members(churchId ?? "unknown", ministryId).queryKey,
-      });
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ministriesKeys.members(churchId ?? "unknown", ministryId).queryKey,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: rosterKeys.mySchedules(churchId ?? "unknown").queryKey,
+        }),
+      ]);
     },
   });
 }
 
 /** @deprecated Use useUpdateRosterProfile */
 export const useUpdateWorshipProfile = useUpdateRosterProfile;
+
+export function useUpdateEventRoleProfile(ministryId: string) {
+  const { churchId } = useTenant();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      profileKey,
+      roleLabels,
+    }: {
+      profileKey: string;
+      roleLabels: string[];
+    }) => {
+      if (!churchId) {
+        throw new Error("Igreja não selecionada.");
+      }
+
+      return updateEventRoleProfile(
+        churchId,
+        ministryId,
+        profileKey,
+        roleLabels,
+      );
+    },
+    onSuccess: (profile) => {
+      queryClient.setQueryData(
+        ministriesKeys.rosterProfile(churchId ?? "unknown", ministryId).queryKey,
+        profile,
+      );
+      void queryClient.invalidateQueries({ queryKey: rosterKeys._def });
+    },
+  });
+}
 
 export function useUpdateEventAvailability(ministryId: string) {
   const { churchId } = useTenant();
@@ -200,15 +238,20 @@ export function useUpdateEventAvailability(ministryId: string) {
     mutationFn: ({
       eventId,
       status,
+      roleLabels,
     }: {
       eventId: string;
       status: "available" | "unavailable" | "clear";
+      roleLabels?: string[];
     }) => {
       if (!churchId) {
         throw new Error("Igreja não selecionada.");
       }
 
-      return updateEventAvailability(churchId, ministryId, eventId, status);
+      return updateEventAvailability(churchId, ministryId, eventId, {
+        status,
+        roleLabels,
+      });
     },
     onSuccess: (profile) => {
       queryClient.setQueryData(

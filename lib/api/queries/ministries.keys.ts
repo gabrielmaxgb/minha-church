@@ -203,11 +203,33 @@ async function updateRosterProfile(
   );
 }
 
+async function updateEventRoleProfile(
+  churchId: string,
+  ministryId: string,
+  profileKey: string,
+  roleLabels: string[],
+): Promise<RosterProfile> {
+  return apiClient<RosterProfile>(
+    buildTenantPath(
+      churchId,
+      `/ministries/${ministryId}/roster/event-profiles/${encodeURIComponent(profileKey)}`,
+    ),
+    {
+      churchId,
+      method: "PUT",
+      body: JSON.stringify({ roleLabels }),
+    },
+  );
+}
+
 async function updateEventAvailability(
   churchId: string,
   ministryId: string,
   eventId: string,
-  status: "available" | "unavailable" | "clear",
+  payload: {
+    status: "available" | "unavailable" | "clear";
+    roleLabels?: string[];
+  },
 ): Promise<RosterProfile> {
   return apiClient<RosterProfile>(
     buildTenantPath(
@@ -217,7 +239,7 @@ async function updateEventAvailability(
     {
       churchId,
       method: "PUT",
-      body: JSON.stringify({ status }),
+      body: JSON.stringify(payload),
     },
   );
 }
@@ -317,6 +339,7 @@ export {
   openAvailabilityWindow,
   setRosterCollection,
   updateEventAvailability,
+  updateEventRoleProfile,
   updateMinistry,
   updateMinistryRole,
   updateRosterProfile,

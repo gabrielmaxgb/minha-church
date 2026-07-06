@@ -1,18 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   CalendarDays,
   ChevronDown,
-  CircleDashed,
   Repeat,
 } from "lucide-react";
 
 import { RosterCollectionPanel } from "@/components/dashboard/ministries/roster-collection-panel";
-import {
-  AvailabilityRespondActions,
-} from "@/components/dashboard/my-schedule/availability-respond-actions";
+import { EventRoleProfileSection } from "@/components/dashboard/my-schedule/event-role-profile-section";
+import { OccurrenceAvailabilityActions } from "@/components/dashboard/my-schedule/occurrence-availability-actions";
+import type { EventAvailabilityPayload } from "@/components/dashboard/my-schedule/event-availability-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -22,6 +21,7 @@ import {
   useUpdateEventAvailability,
   useWorshipProfile,
 } from "@/lib/api/queries";
+import { formatRosterRole } from "@/lib/ministries/roster";
 import { cn } from "@/lib/utils";
 import type {
   WorshipAvailabilityEvent,
@@ -43,23 +43,26 @@ function formatEventDay(iso: string): string {
 }
 
 function SeriesCard({
+  ministryId,
   group,
   busyEventId,
-  onSetStatus,
+  onRespond,
   canManageRosters = false,
 }: {
+  ministryId: string;
   group: WorshipSeriesGroup;
   busyEventId: string | null;
-  onSetStatus: (
-    eventId: string,
-    status: "available" | "unavailable" | "clear",
-  ) => void;
+  onRespond: (eventId: string, payload: EventAvailabilityPayload) => void;
   canManageRosters?: boolean;
 }) {
   const [open, setOpen] = useState(group.myPendingCount > 0);
-  const openOccurrences = group.occurrences.filter((item) => item.rosterOpen);
-  const firstOpen = openOccurrences[0] ?? group.occurrences[0];
+  const [profileRoles, setProfileRoles] = useState(group.myProfileRoleLabels);
+  const firstOpen = group.occurrences[0];
   const timeLabel = firstOpen ? formatEventTime(firstOpen.startsAt) : "";
+
+  useEffect(() => {
+    setProfileRoles(group.myProfileRoleLabels);
+  }, [group.key, group.myProfileRoleLabels.join("|")]);
 
   return (
     <article className="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-soft">
@@ -92,47 +95,53 @@ function SeriesCard({
 
           <span className="mt-1 block text-sm text-muted-foreground">
             {group.occurrences.length} data
-            {group.occurrences.length === 1 ? "" : "s"} futura
+            {group.occurrences.length === 1 ? "" : "s"} aberta
             {group.occurrences.length === 1 ? "" : "s"}
             {timeLabel ? ` · ${timeLabel}` : ""}
-            {group.openCount > 0
-              ? ` · ${group.openCount} aberta${group.openCount === 1 ? "" : "s"} para marcar`
-              : " · aguardando liberação"}
           </span>
 
-          {group.openCount > 0 && (
-            <span className="mt-2 flex flex-wrap gap-2 text-xs">
-              <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 font-medium text-emerald-800 dark:text-emerald-300">
-                {group.myAvailableCount} posso ir
-              </span>
-              <span className="rounded-full bg-destructive/10 px-2 py-0.5 font-medium text-destructive">
-                {group.myUnavailableCount} não posso
-              </span>
-              {group.myPendingCount > 0 && (
-                <span className="rounded-full bg-attention-subtle px-2 py-0.5 font-medium text-attention-foreground">
-                  {group.myPendingCount} sem resposta
-                </span>
-              )}
+          <span className="mt-2 flex flex-wrap gap-2 text-xs">
+            <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 font-medium text-emerald-800 dark:text-emerald-300">
+              {group.myAvailableCount} posso ir
             </span>
-          )}
+            <span className="rounded-full bg-destructive/10 px-2 py-0.5 font-medium text-destructive">
+              {group.myUnavailableCount} não posso
+            </span>
+            {group.myPendingCount > 0 && (
+              <span className="rounded-full bg-attention-subtle px-2 py-0.5 font-medium text-attention-foreground">
+                {group.myPendingCount} sem resposta
+              </span>
+            )}
+          </span>
         </span>
       </button>
 
       {open && (
-        <div className="space-y-2 border-t border-border/60 bg-muted/10 px-4 py-4 sm:px-5">
-          <p className="text-xs text-muted-foreground">
-            Marque cada data em que você pode servir nesta série.
-          </p>
+        <div className="space-y-4 border-t border-border/60 bg-muted/10 px-4 py-4 sm:px-5">
+          <EventRoleProfileSection
+            ministryId={ministryId}
+            profileKey={group.key}
+            rosterRoles={group.rosterRoles}
+            myProfileRoleLabels={group.myProfileRoleLabels}
+            onRolesChange={setProfileRoles}
+          />
 
-          {group.occurrences.map((event) => (
-            <OccurrenceRow
-              key={event.id}
-              event={event}
-              busy={busyEventId === event.id}
-              onSetStatus={onSetStatus}
-              canManageRosters={canManageRosters}
-            />
-          ))}
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground">
+              Marque sua disponibilidade em cada data.
+            </p>
+
+            {group.occurrences.map((event) => (
+              <OccurrenceRow
+                key={event.id}
+                event={event}
+                busy={busyEventId === event.id}
+                hasProfileRoles={profileRoles.length > 0}
+                onRespond={onRespond}
+                canManageRosters={canManageRosters}
+              />
+            ))}
+          </div>
         </div>
       )}
     </article>
@@ -142,59 +151,58 @@ function SeriesCard({
 function OccurrenceRow({
   event,
   busy,
-  onSetStatus,
+  hasProfileRoles,
+  onRespond,
   canManageRosters = false,
 }: {
   event: WorshipAvailabilityEvent;
   busy: boolean;
-  onSetStatus: (
-    eventId: string,
-    status: "available" | "unavailable" | "clear",
-  ) => void;
+  hasProfileRoles: boolean;
+  onRespond: (eventId: string, payload: EventAvailabilityPayload) => void;
   canManageRosters?: boolean;
 }) {
   return (
     <div
       className={cn(
-        "flex flex-col gap-3 rounded-xl border px-3 py-3 sm:flex-row sm:items-center sm:justify-between",
+        "flex flex-col gap-3 rounded-xl border px-3 py-3",
         event.myStatus === "available" &&
           "border-emerald-500/25 bg-emerald-500/5",
         event.myStatus === "unavailable" &&
           "border-destructive/20 bg-destructive/4",
         !event.myStatus && "border-border/70 bg-background",
-        !event.rosterOpen && "opacity-80",
       )}
     >
-      <div className="min-w-0">
-        <p className="text-sm font-medium capitalize text-foreground">
-          {formatEventDay(event.startsAt)}
-        </p>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          {formatEventTime(event.startsAt)}
-          {event.location ? ` · ${event.location}` : ""}
-        </p>
-      </div>
-
-      {event.rosterOpen ? (
-        <div className="flex flex-col items-stretch gap-2 sm:items-end">
-          <AvailabilityRespondActions
-            busy={busy}
-            layout="compact"
-            availabilityStatus={event.myStatus}
-            onRespond={(status) => onSetStatus(event.id, status)}
-          />
-          {canManageRosters && (
-            <Button size="sm" variant="outline" asChild>
-              <Link href={activityDetailPath(event.id)}>Montar escala</Link>
-            </Button>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-sm font-medium capitalize text-foreground">
+            {formatEventDay(event.startsAt)}
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {formatEventTime(event.startsAt)}
+            {event.location ? ` · ${event.location}` : ""}
+          </p>
+          {event.rosterRoles.length > 0 && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Funções:{" "}
+              {event.rosterRoles.map((role) => formatRosterRole(role)).join(", ")}
+            </p>
           )}
         </div>
-      ) : (
-        <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-          <CircleDashed className="size-3.5" />
-          Ainda não liberado
-        </span>
-      )}
+
+        {canManageRosters && (
+          <Button size="sm" variant="outline" asChild className="shrink-0">
+            <Link href={activityDetailPath(event.id)}>Montar escala</Link>
+          </Button>
+        )}
+      </div>
+
+      <OccurrenceAvailabilityActions
+        availabilityStatus={event.myStatus}
+        hasProfileRoles={hasProfileRoles}
+        busy={busy}
+        layout="compact"
+        onRespond={(status) => onRespond(event.id, { status, roleLabels: [] })}
+      />
     </div>
   );
 }
@@ -209,15 +217,18 @@ export function WorshipAvailabilitySection({
   const [busyEventId, setBusyEventId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  async function handleStatus(
+  async function handleRespond(
     eventId: string,
-    status: "available" | "unavailable" | "clear",
+    payload: EventAvailabilityPayload,
   ) {
     setActionError(null);
     setBusyEventId(eventId);
 
     try {
-      await updateAvailability.mutateAsync({ eventId, status });
+      await updateAvailability.mutateAsync({
+        eventId,
+        status: payload.status,
+      });
     } catch (statusError) {
       setActionError(
         statusError instanceof Error
@@ -250,11 +261,13 @@ export function WorshipAvailabilitySection({
 
   return (
     <div className="space-y-6">
-      <RosterCollectionPanel
-        ministryId={ministryId}
-        canManage={canManage}
-        openEventsCount={data.summary.totalOpen}
-      />
+      {(canManage || canManageRosters) && (
+        <RosterCollectionPanel
+          ministryId={ministryId}
+          canManage={canManage}
+          openEventsCount={data.summary.totalOpen}
+        />
+      )}
 
       {actionError && (
         <p className="rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive">
@@ -292,10 +305,10 @@ export function WorshipAvailabilitySection({
       <section className="space-y-3">
         <div>
           <h4 className="text-sm font-semibold text-foreground">
-            Séries e eventos
+            Coleta aberta
           </h4>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Toque em uma série para abrir as datas e marcar sua disponibilidade.
+            Defina suas funções uma vez por evento e marque cada data.
           </p>
         </div>
 
@@ -303,22 +316,21 @@ export function WorshipAvailabilitySection({
           <div className="rounded-2xl border border-dashed border-border bg-muted/15 px-5 py-10 text-center">
             <CalendarDays className="mx-auto size-8 text-muted-foreground" />
             <p className="mt-3 font-medium text-foreground">
-              Nenhum evento com escala cadastrado
+              Nenhum evento aberto no momento
             </p>
             <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
-              Crie atividades com &quot;Este evento usa escala&quot; para a equipe
-              poder marcar disponibilidade.
+              Quando o líder abrir a coleta de um evento, ele aparece aqui para
+              você responder.
             </p>
           </div>
         ) : (
           data.series.map((group) => (
             <SeriesCard
               key={group.key}
+              ministryId={ministryId}
               group={group}
               busyEventId={busyEventId}
-              onSetStatus={(eventId, status) =>
-                void handleStatus(eventId, status)
-              }
+              onRespond={(eventId, payload) => void handleRespond(eventId, payload)}
               canManageRosters={canManageRosters}
             />
           ))

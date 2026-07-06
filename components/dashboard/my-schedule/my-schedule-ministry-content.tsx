@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AUTH_ROUTES, ministryAvailabilityPath } from "@/constants/routes";
 import { useMySchedules } from "@/lib/api/queries";
 import { useRespondToRosterAvailability } from "@/lib/api/queries/use-respond-worship-availability";
-import type { ScheduleAvailabilityAction } from "@/lib/my-schedule/event-display";
+import type { EventAvailabilityPayload } from "@/components/dashboard/my-schedule/event-availability-panel";
 import { canListMinistries } from "@/lib/permissions";
 import { useAuth } from "@/providers/auth-provider";
 import type { MyMinistrySchedule } from "@/types/ministries";
@@ -32,7 +32,7 @@ function MinistryScheduleDetail({
   onRespond: (
     ministryId: string,
     eventId: string,
-    status: ScheduleAvailabilityAction,
+    payload: EventAvailabilityPayload,
   ) => void;
   showMinistryLink: boolean;
 }) {
@@ -99,7 +99,7 @@ export function MyScheduleMinistryContent({
   async function handleRespond(
     targetMinistryId: string,
     eventId: string,
-    status: ScheduleAvailabilityAction,
+    payload: EventAvailabilityPayload,
   ) {
     setActionError(null);
     setBusyEventId(eventId);
@@ -108,7 +108,7 @@ export function MyScheduleMinistryContent({
       await respond.mutateAsync({
         ministryId: targetMinistryId,
         eventId,
-        status,
+        status: payload.status,
       });
     } catch (error) {
       setActionError(

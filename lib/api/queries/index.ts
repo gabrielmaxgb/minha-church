@@ -81,6 +81,7 @@ export {
   useOpenAvailabilityWindow,
   useSetRosterCollection,
   useUpdateEventAvailability,
+  useUpdateEventRoleProfile,
   useUpdateMinistry,
   useUpdateMinistryRole,
   useUpdateRosterProfile,

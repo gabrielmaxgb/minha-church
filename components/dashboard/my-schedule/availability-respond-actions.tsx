@@ -1,12 +1,49 @@
 "use client";
 
-import { Check, RotateCcw, X } from "lucide-react";
+import { Check, ChevronRight, RotateCcw, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { scrollToRosterProfileSection } from "@/lib/ministries/roster-profile-scroll";
 import type { ScheduleAvailabilityAction } from "@/lib/my-schedule/event-display";
+import { pendingNotificationStyles } from "@/lib/ui/notification-styles";
 import { cn } from "@/lib/utils";
 
+interface AvailabilityFunctionsGateProps {
+  className?: string;
+}
+
+export function AvailabilityFunctionsGate({
+  className,
+}: AvailabilityFunctionsGateProps) {
+  function handleScroll() {
+    scrollToRosterProfileSection();
+  }
+
+  return (
+    <div className={cn(pendingNotificationStyles.banner.compact, className)}>
+      <p className="text-sm font-medium text-foreground">
+        Cadastre suas funções antes de responder
+      </p>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Informe pelo menos uma função em &quot;Seu perfil na escala&quot; para
+        o líder saber como você pode servir.
+      </p>
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        className="mt-3"
+        onClick={handleScroll}
+      >
+        Adicionar funções
+        <ChevronRight className="size-4" />
+      </Button>
+    </div>
+  );
+}
+
 interface AvailabilityRespondActionsProps {
+  needsRosterFunctions?: boolean;
   busy?: boolean;
   layout?: "compact" | "default" | "card";
   availabilityStatus?: "available" | "unavailable" | null;
@@ -16,6 +53,7 @@ interface AvailabilityRespondActionsProps {
 }
 
 export function AvailabilityRespondActions({
+  needsRosterFunctions = false,
   busy = false,
   layout = "default",
   availabilityStatus = null,
@@ -25,6 +63,10 @@ export function AvailabilityRespondActions({
 }: AvailabilityRespondActionsProps) {
   const isAvailable = availabilityStatus === "available";
   const isUnavailable = availabilityStatus === "unavailable";
+
+  if (needsRosterFunctions) {
+    return <AvailabilityFunctionsGate className={className} />;
+  }
 
   if (layout === "card") {
     return (

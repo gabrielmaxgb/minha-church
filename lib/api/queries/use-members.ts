@@ -18,12 +18,16 @@ import { useTenant } from "@/providers/auth-provider";
 
 export const MEMBERS_PAGE_SIZE = 50;
 
-export function useMembers(params: ListMembersParams = {}) {
+export function useMembers(
+  params: ListMembersParams = {},
+  options?: { enabled?: boolean },
+) {
   const { churchId } = useTenant();
 
   return useQuery({
     ...membersKeys.list(churchId ?? "unknown", params),
-    enabled: Boolean(churchId),
+    enabled: Boolean(churchId) && (options?.enabled ?? true),
+    retry: false,
   });
 }
 

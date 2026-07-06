@@ -18,16 +18,21 @@ export function useRespondToRosterAvailability() {
       ministryId,
       eventId,
       status,
+      roleLabels,
     }: {
       ministryId: string;
       eventId: string;
       status: "available" | "unavailable" | "clear";
+      roleLabels?: string[];
     }) => {
       if (!churchId) {
         throw new Error("Igreja não selecionada.");
       }
 
-      return updateEventAvailability(churchId, ministryId, eventId, status);
+      return updateEventAvailability(churchId, ministryId, eventId, {
+        status,
+        roleLabels,
+      });
     },
     onSuccess: async (profile, variables) => {
       if (churchId) {

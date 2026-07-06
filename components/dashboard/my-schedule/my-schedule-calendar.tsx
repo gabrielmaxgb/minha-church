@@ -5,7 +5,9 @@ import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { ScheduleEventRosterList } from "@/components/dashboard/my-schedule/schedule-event-roster-list";
-import { AvailabilityRespondActions } from "@/components/dashboard/my-schedule/availability-respond-actions";
+import { EventRoleProfileSection } from "@/components/dashboard/my-schedule/event-role-profile-section";
+import { OccurrenceAvailabilityActions } from "@/components/dashboard/my-schedule/occurrence-availability-actions";
+import type { EventAvailabilityPayload } from "@/components/dashboard/my-schedule/event-availability-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { activityDetailPath } from "@/constants/routes";
@@ -25,11 +27,13 @@ import {
   scheduleEventBorderStyle,
   scheduleEventCalendarLabel,
   scheduleEventStyle,
-  type ScheduleAvailabilityAction,
 } from "@/lib/my-schedule/event-display";
+import { formatRosterRole } from "@/lib/ministries/roster";
 import { pendingNotificationStyles } from "@/lib/ui/notification-styles";
 import { cn } from "@/lib/utils";
 import type { MyScheduleEvent } from "@/types/ministries";
+
+const EMPTY_SCHEDULE_EVENTS: MyScheduleEvent[] = [];
 
 function groupEventsByDateKey(
   events: MyScheduleEvent[],
@@ -53,7 +57,7 @@ interface MyScheduleCalendarProps {
   onRespond: (
     ministryId: string,
     eventId: string,
-    status: ScheduleAvailabilityAction,
+    payload: EventAvailabilityPayload,
   ) => void;
 }
 
@@ -87,8 +91,15 @@ export function MyScheduleCalendar({
     [year, monthIndex],
   );
 
-  const selectedEvents = eventsByDay.get(selectedDateKey) ?? [];
+  const selectedEvents = useMemo(
+    () => eventsByDay.get(selectedDateKey) ?? EMPTY_SCHEDULE_EVENTS,
+    [eventsByDay, selectedDateKey],
+  );
   const selectedInMonth = grid.some((day) => toDateKey(day) === selectedDateKey);
+
+  const [profileRolesByKey, setProfileRolesByKey] = useState<
+    Record<string, string[]>
+  >({});
 
   function goToPreviousMonth() {
     if (monthIndex === 0) {
@@ -300,18 +311,21 @@ export function MyScheduleCalendar({
               </p>
             </div>
           ) : (
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               {selectedEvents.map((event) => {
                 const busy = busyEventId === event.eventId || respondBusy;
                 const kind = getScheduleEventDisplayKind(event);
                 const canRespond =
                   event.rosterOpen && kind !== "assigned";
+                const groupKey = `${event.ministryId}:${event.profileKey}`;
+                const profileRoles =
+                  profileRolesByKey[groupKey] ?? event.myProfileRoleLabels;
 
                 return (
                   <li
                     key={event.eventId}
                     className={cn(
-                      "rounded-xl border px-3 py-2.5",
+                      "rounded-xl border px-3 py-3",
                       scheduleEventBorderStyle(kind),
                     )}
                   >
@@ -324,7 +338,7 @@ export function MyScheduleCalendar({
                           variant="secondary"
                           className="bg-emerald-500/15 text-emerald-800 dark:text-emerald-200"
                         >
-                          {event.myRoleLabel}
+                          {formatRosterRole(event.myRoleLabel)}
                         </Badge>
                       )}
                       {kind === "pending" && (
@@ -346,6 +360,22 @@ export function MyScheduleCalendar({
                       {event.location ? ` · ${event.location}` : ""}
                     </p>
 
+                    {canRespond && (
+                      <EventRoleProfileSection
+                        className="mt-3 border-t border-border/60 pt-3"
+                        ministryId={event.ministryId}
+                        profileKey={event.profileKey}
+                        rosterRoles={event.rosterRoles}
+                        myProfileRoleLabels={event.myProfileRoleLabels}
+                        onRolesChange={(roles) =>
+                          setProfileRolesByKey((current) => ({
+                            ...current,
+                            [groupKey]: roles,
+                          }))
+                        }
+                      />
+                    )}
+
                     <ScheduleEventRosterList
                       roster={event.roster}
                       className="mt-3"
@@ -361,13 +391,16 @@ export function MyScheduleCalendar({
                     )}
 
                     {canRespond && (
-                      <AvailabilityRespondActions
-                        className="mt-3"
-                        busy={busy}
+                      <OccurrenceAvailabilityActions
+                        className="mt-3 border-t border-border/60 pt-3"
                         availabilityStatus={event.myAvailabilityStatus}
-                        showClear={Boolean(event.myAvailabilityStatus)}
+                        hasProfileRoles={profileRoles.length > 0}
+                        busy={busy}
                         onRespond={(status) =>
-                          onRespond(event.ministryId, event.eventId, status)
+                          onRespond(event.ministryId, event.eventId, {
+                            status,
+                            roleLabels: [],
+                          })
                         }
                       />
                     )}

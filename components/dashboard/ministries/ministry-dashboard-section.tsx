@@ -241,12 +241,14 @@ export function MinistryDashboardSection({
         </Card>
       </div>
 
-      <AddMinistryMemberModal
-        ministry={ministry}
-        currentMembers={members ?? []}
-        open={memberModalOpen}
-        onClose={() => setMemberModalOpen(false)}
-      />
+      {canAddMembers && (
+        <AddMinistryMemberModal
+          ministry={ministry}
+          currentMembers={members ?? []}
+          open={memberModalOpen}
+          onClose={() => setMemberModalOpen(false)}
+        />
+      )}
 
       <CreateMinistryEventModal
         ministryId={ministry.id}
@@ -342,12 +344,14 @@ export function MinistryMembersSection({
         </CardContent>
       </Card>
 
-      <AddMinistryMemberModal
-        ministry={ministry}
-        currentMembers={members ?? []}
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-      />
+      {canManage && (
+        <AddMinistryMemberModal
+          ministry={ministry}
+          currentMembers={members ?? []}
+          open={modalOpen}
+          onClose={() => setModalOpen(false)}
+        />
+      )}
     </>
   );
 }
