@@ -26,5 +26,6 @@ export function useChurchEvent(eventId: string) {
   return useQuery({
     ...eventsKeys.detail(churchId ?? "unknown", eventId),
     enabled: Boolean(churchId && eventId),
+    staleTime: 30_000,
   });
 }

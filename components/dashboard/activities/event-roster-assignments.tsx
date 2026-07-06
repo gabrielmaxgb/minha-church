@@ -76,6 +76,67 @@ export function EventRosterAssignments({
     });
   }, [availableCandidates, assignedMemberIds, rosterSlotId, slots]);
 
+  const selectedCandidate = useMemo(
+    () => availableCandidates.find((candidate) => candidate.memberId === memberId),
+    [availableCandidates, memberId],
+  );
+
+  const selectableSlots = useMemo(() => {
+    if (!selectedCandidate) {
+      return vacantSlots;
+    }
+
+    return vacantSlots.filter((slot) =>
+      memberCanFillEventRole(selectedCandidate.roleLabels ?? [], slot.label),
+    );
+  }, [selectedCandidate, vacantSlots]);
+
+  function handleMemberChange(nextMemberId: string) {
+    setMemberId(nextMemberId);
+
+    if (!nextMemberId) {
+      return;
+    }
+
+    const candidate = availableCandidates.find(
+      (item) => item.memberId === nextMemberId,
+    );
+
+    if (!candidate || !rosterSlotId) {
+      return;
+    }
+
+    const slot = slots.find((item) => item.id === rosterSlotId);
+
+    if (
+      slot &&
+      !memberCanFillEventRole(candidate.roleLabels ?? [], slot.label)
+    ) {
+      setRosterSlotId("");
+    }
+  }
+
+  function handleSlotChange(nextSlotId: string) {
+    setRosterSlotId(nextSlotId);
+
+    if (!nextSlotId || !memberId) {
+      return;
+    }
+
+    const slot = slots.find((item) => item.id === nextSlotId);
+    const candidate = availableCandidates.find(
+      (item) => item.memberId === memberId,
+    );
+
+    if (
+      slot &&
+      candidate &&
+      !memberCanFillEventRole(candidate.roleLabels ?? [], slot.label)
+    ) {
+      setMemberId("");
+    }
+  }
+
   async function handleAdd() {
     if (!memberId || !rosterSlotId) {
       setError("Escolha a função e a pessoa disponível.");
@@ -204,34 +265,18 @@ export function EventRosterAssignments({
               Preencher vaga
             </p>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Escolha a função e alguém que marcou &ldquo;posso ir&rdquo;.
+              Escolha a pessoa e a função em que ela se disponibilizou.
             </p>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <p className="text-xs font-medium text-muted-foreground">Função</p>
-              <SelectField
-                value={rosterSlotId}
-                onChange={(changeEvent) => {
-                  setRosterSlotId(changeEvent.target.value);
-                }}
-                disabled={upsertRoster.isPending}
-              >
-                <option value="">Selecione</option>
-                {vacantSlots.map((slot) => (
-                  <option key={slot.id} value={slot.id}>
-                    {formatRosterRole(slot.label)}
-                  </option>
-                ))}
-              </SelectField>
-            </div>
-
-            <div className="space-y-1.5">
               <p className="text-xs font-medium text-muted-foreground">Pessoa</p>
               <SelectField
                 value={memberId}
-                onChange={(changeEvent) => setMemberId(changeEvent.target.value)}
+                onChange={(changeEvent) =>
+                  handleMemberChange(changeEvent.target.value)
+                }
                 disabled={upsertRoster.isPending}
               >
                 <option value="">Selecione</option>
@@ -242,7 +287,33 @@ export function EventRosterAssignments({
                 ))}
               </SelectField>
             </div>
+
+            <div className="space-y-1.5">
+              <p className="text-xs font-medium text-muted-foreground">Função</p>
+              <SelectField
+                value={rosterSlotId}
+                onChange={(changeEvent) =>
+                  handleSlotChange(changeEvent.target.value)
+                }
+                disabled={upsertRoster.isPending || !memberId}
+              >
+                <option value="">
+                  {memberId ? "Selecione" : "Escolha a pessoa primeiro"}
+                </option>
+                {selectableSlots.map((slot) => (
+                  <option key={slot.id} value={slot.id}>
+                    {formatRosterRole(slot.label)}
+                  </option>
+                ))}
+              </SelectField>
+            </div>
           </div>
+
+          {memberId && selectableSlots.length === 0 && (
+            <p className="text-xs text-amber-800 dark:text-amber-300">
+              Esta pessoa não marcou funções compatíveis com as vagas abertas.
+            </p>
+          )}
 
           {availableCandidates.length === 0 && (
             <p className="text-xs text-amber-800 dark:text-amber-300">
