@@ -68,7 +68,7 @@ export function MinistryDashboardSection({
   onGoToMembers,
   onGoToAvailability,
 }: MinistryDashboardSectionProps) {
-  const { permissions } = useAuth();
+  const { permissions, user } = useAuth();
   const { data: members, isLoading: membersLoading } = useMinistryMembers(ministry.id);
   const { data: events, isLoading: eventsLoading } = useMinistryEvents(ministry.id);
   const [eventModalOpen, setEventModalOpen] = useState(false);
@@ -179,7 +179,8 @@ export function MinistryDashboardSection({
             {!eventsLoading &&
               upcomingEvents.map((event) => {
                 const canEdit =
-                  permissions !== null && canManageActivity(permissions, event);
+                  permissions !== null &&
+                  canManageActivity(permissions, event, user?.id ?? null);
 
                 return (
                   <div

@@ -7,11 +7,9 @@ import {
   createMinistry,
   createMinistryEvent,
   createMinistryRole,
-  closeAvailabilityWindow,
   deleteMinistry,
   deleteMinistryRole,
   ministriesKeys,
-  openAvailabilityWindow,
   setRosterCollection,
   type CreateMinistryPayload,
   type CreateMinistryRolePayload,
@@ -259,44 +257,6 @@ export function useUpdateEventAvailability(ministryId: string) {
         profile,
       );
       void queryClient.invalidateQueries({ queryKey: rosterKeys._def });
-    },
-  });
-}
-
-export function useOpenAvailabilityWindow(ministryId: string) {
-  const { churchId } = useTenant();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (payload: { periodType: string; startDate?: string }) => {
-      if (!churchId) {
-        throw new Error("Igreja não selecionada.");
-      }
-
-      return openAvailabilityWindow(churchId, ministryId, payload);
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ministriesKeys._def });
-      await queryClient.invalidateQueries({ queryKey: rosterKeys._def });
-    },
-  });
-}
-
-export function useCloseAvailabilityWindow(ministryId: string) {
-  const { churchId } = useTenant();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: () => {
-      if (!churchId) {
-        throw new Error("Igreja não selecionada.");
-      }
-
-      return closeAvailabilityWindow(churchId, ministryId);
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ministriesKeys._def });
-      await queryClient.invalidateQueries({ queryKey: rosterKeys._def });
     },
   });
 }

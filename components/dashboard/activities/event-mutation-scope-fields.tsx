@@ -29,7 +29,7 @@ interface EventMutationScopeFieldsProps {
   value: EventMutationScope;
   onChange: (scope: EventMutationScope) => void;
   disabled?: boolean;
-  actionLabel?: "edit" | "delete";
+  actionLabel?: "edit" | "delete" | "collection";
   name?: string;
 }
 
@@ -43,7 +43,9 @@ export function EventMutationScopeFields({
   const title =
     actionLabel === "delete"
       ? "Excluir eventos recorrentes"
-      : "Editar eventos recorrentes";
+      : actionLabel === "collection"
+        ? "Alcance da coleta de disponibilidade"
+        : "Editar eventos recorrentes";
 
   return (
     <fieldset className="space-y-3" disabled={disabled}>
@@ -51,7 +53,9 @@ export function EventMutationScopeFields({
         {title}
       </legend>
       <p className="text-sm text-muted-foreground">
-        Escolha o alcance, como no Google Agenda.
+        {actionLabel === "collection"
+          ? "Escolha se abre ou fecha a coleta só nesta data, nesta e nas próximas, ou em toda a série."
+          : "Escolha o alcance, como no Google Agenda."}
       </p>
 
       <div className="space-y-2">

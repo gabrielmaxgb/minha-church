@@ -8,7 +8,6 @@ import {
   Repeat,
 } from "lucide-react";
 
-import { RosterCollectionPanel } from "@/components/dashboard/ministries/roster-collection-panel";
 import { EventRoleProfileSection } from "@/components/dashboard/my-schedule/event-role-profile-section";
 import { OccurrenceAvailabilityActions } from "@/components/dashboard/my-schedule/occurrence-availability-actions";
 import type { EventAvailabilityPayload } from "@/components/dashboard/my-schedule/event-availability-panel";
@@ -30,7 +29,6 @@ import type {
 
 interface WorshipAvailabilitySectionProps {
   ministryId: string;
-  canManage?: boolean;
   canManageRosters?: boolean;
 }
 
@@ -209,7 +207,6 @@ function OccurrenceRow({
 
 export function WorshipAvailabilitySection({
   ministryId,
-  canManage = false,
   canManageRosters = false,
 }: WorshipAvailabilitySectionProps) {
   const { data, isLoading, isError, error } = useWorshipProfile(ministryId);
@@ -261,14 +258,6 @@ export function WorshipAvailabilitySection({
 
   return (
     <div className="space-y-6">
-      {(canManage || canManageRosters) && (
-        <RosterCollectionPanel
-          ministryId={ministryId}
-          canManage={canManage}
-          openEventsCount={data.summary.totalOpen}
-        />
-      )}
-
       {actionError && (
         <p className="rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive">
           {actionError}

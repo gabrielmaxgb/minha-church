@@ -15,6 +15,8 @@ interface EventRosterOptionsFieldsProps {
   onRosterRolesChange: (value: string[]) => void;
   disabled?: boolean;
   className?: string;
+  /** Na página do evento a coleta é controlada no passo 2 do fluxo */
+  hideCollectionToggle?: boolean;
 }
 
 export function EventRosterOptionsFields({
@@ -26,6 +28,7 @@ export function EventRosterOptionsFields({
   onRosterRolesChange,
   disabled,
   className,
+  hideCollectionToggle = false,
 }: EventRosterOptionsFieldsProps) {
   return (
     <div className={cn("space-y-3", className)}>
@@ -40,7 +43,7 @@ export function EventRosterOptionsFields({
           }
         }}
         title="Este evento usa escala"
-        description="Ativa disponibilidade da equipe e montagem de escala nesta data (e nas ocorrências da série, se for recorrente)."
+        description="Ativa vagas por função e permite coletar disponibilidade da equipe."
         icon={ClipboardList}
         disabled={disabled}
       />
@@ -59,21 +62,23 @@ export function EventRosterOptionsFields({
             />
           </div>
 
-          <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Coleta de disponibilidade
-            </p>
-            <EventOptionCard
-              type="checkbox"
-              checked={rosterOpen}
-              onChange={onRosterOpenChange}
-              title="Liberar para a equipe marcar disponibilidade"
-              description="A equipe poderá informar se pode ou não servir. Você também pode abrir depois na aba Escalas."
-              icon={CalendarCheck}
-              disabled={disabled}
-              compact
-            />
-          </div>
+          {!hideCollectionToggle ? (
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Coleta de disponibilidade
+              </p>
+              <EventOptionCard
+                type="checkbox"
+                checked={rosterOpen}
+                onChange={onRosterOpenChange}
+                title="Liberar para a equipe marcar disponibilidade"
+                description="A equipe poderá informar se pode ou não servir."
+                icon={CalendarCheck}
+                disabled={disabled}
+                compact
+              />
+            </div>
+          ) : null}
         </div>
       ) : null}
     </div>

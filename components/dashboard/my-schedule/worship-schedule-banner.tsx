@@ -4,9 +4,10 @@ import Link from "next/link";
 import { AlertCircle, CalendarDays, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { AUTH_ROUTES, activityDetailPath, myScheduleMinistryPath } from "@/constants/routes";
+import { AUTH_ROUTES, activityDetailPath } from "@/constants/routes";
 import { pendingNotificationStyles } from "@/lib/ui/notification-styles";
 import { useMySchedules } from "@/lib/api/queries";
+import { firstPendingScheduleHref } from "@/lib/my-schedule/schedule-notifications";
 import {
   formatEventTime,
   formatRelativeEventDay,
@@ -16,7 +17,7 @@ import { formatRosterRole } from "@/lib/ministries/roster";
 export function ScheduleBanner() {
   const { data, isLoading } = useMySchedules();
 
-  if (isLoading || !data?.hasRosterMinistries) {
+  if (isLoading || !data?.hasSchedule) {
     return null;
   }
 
@@ -28,12 +29,7 @@ export function ScheduleBanner() {
   }
 
   if (pending > 0) {
-    const firstPendingMinistry = data.ministries.find(
-      (ministry) => ministry.pendingAvailability.length > 0,
-    );
-    const respondHref = firstPendingMinistry
-      ? myScheduleMinistryPath(firstPendingMinistry.ministryId)
-      : AUTH_ROUTES.mySchedules;
+    const respondHref = firstPendingScheduleHref(data);
 
     return (
       <Link

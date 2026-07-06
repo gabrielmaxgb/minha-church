@@ -98,9 +98,22 @@ export function canManageEventRoster(
 
 export function canManageActivity(
   permissions: UserPermissions,
-  event: { isChurchWide: boolean; ministryId: string | null },
+  event: {
+    isChurchWide: boolean;
+    ministryId: string | null;
+    createdByUserId?: string | null;
+  },
+  currentUserId?: string | null,
 ) {
   if (event.isChurchWide) {
+    if (
+      event.createdByUserId &&
+      currentUserId &&
+      event.createdByUserId === currentUserId
+    ) {
+      return true;
+    }
+
     return canCreateChurchWideActivity(permissions);
   }
 
@@ -109,6 +122,21 @@ export function canManageActivity(
   }
 
   return false;
+}
+
+export function canManageEventSettings(
+  permissions: UserPermissions,
+  event: {
+    isChurchWide: boolean;
+    ministryId: string | null;
+    createdByUserId: string | null;
+  },
+  currentUserId: string | null,
+) {
+  return (
+    canManageActivity(permissions, event, currentUserId) ||
+    canManageEventRoster(permissions, event, currentUserId)
+  );
 }
 
 export function canAccessSection(

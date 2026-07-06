@@ -7,7 +7,6 @@ import {
   ChevronRight,
   Plus,
   Repeat,
-  Sparkles,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -28,6 +27,93 @@ import { cn } from "@/lib/utils";
 import type { ChurchEvent } from "@/types/events";
 
 const MAX_CHIPS_DESKTOP = 3;
+
+interface DayAgendaGroup {
+  key: string;
+  label: string;
+  kind: "church" | "ministry";
+  events: ChurchEvent[];
+}
+
+function groupDayAgendaEvents(events: ChurchEvent[]): DayAgendaGroup[] {
+  const churchEvents = events.filter((event) => event.isChurchWide);
+  const ministryBuckets = new Map<
+    string,
+    { label: string; events: ChurchEvent[] }
+  >();
+
+  for (const event of events) {
+    if (event.isChurchWide) {
+      continue;
+    }
+
+    const key = event.ministryId ?? "ministry";
+    const current = ministryBuckets.get(key);
+
+    if (current) {
+      current.events.push(event);
+      continue;
+    }
+
+    ministryBuckets.set(key, {
+      label: event.ministryName ?? "Ministério",
+      events: [event],
+    });
+  }
+
+  const groups: DayAgendaGroup[] = [];
+
+  if (churchEvents.length > 0) {
+    groups.push({
+      key: "church",
+      label: "Igreja",
+      kind: "church",
+      events: churchEvents,
+    });
+  }
+
+  for (const [key, bucket] of [...ministryBuckets.entries()].sort((left, right) =>
+    left[1].label.localeCompare(right[1].label, "pt-BR"),
+  )) {
+    groups.push({
+      key,
+      label: bucket.label,
+      kind: "ministry",
+      events: bucket.events,
+    });
+  }
+
+  return groups;
+}
+
+function DayAgendaEventItem({ event }: { event: ChurchEvent }) {
+  return (
+    <Link
+      href={activityDetailPath(event.id)}
+      className={cn(
+        "block rounded-xl border px-3 py-2.5 transition-colors hover:bg-muted/40",
+        event.isChurchWide
+          ? "border-foreground/15 bg-muted/30"
+          : "border-border/70",
+      )}
+    >
+      <div className="flex flex-wrap items-center gap-1.5">
+        <p className="truncate text-sm font-medium text-foreground">
+          {event.name}
+        </p>
+        {event.recurrence && (
+          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-muted-foreground">
+            <Repeat className="size-3" />
+            Recorrente
+          </span>
+        )}
+      </div>
+      <p className="mt-1 text-xs text-muted-foreground">
+        {formatEventTime(event.startsAt)}
+      </p>
+    </Link>
+  );
+}
 
 interface ActivityCalendarProps {
   year: number;
@@ -61,6 +147,10 @@ export function ActivityCalendar({
   const eventsByDay = useMemo(() => groupEventsByDateKey(events), [events]);
 
   const selectedEvents = eventsByDay.get(selectedDateKey) ?? [];
+  const selectedAgendaGroups = useMemo(
+    () => groupDayAgendaEvents(selectedEvents),
+    [selectedEvents],
+  );
   const selectedInMonth = grid.some(
     (day) => toDateKey(day) === selectedDateKey,
   );
@@ -304,45 +394,28 @@ export function ActivityCalendar({
               )}
             </div>
           ) : (
-            <ul className="space-y-2">
-              {selectedEvents.map((event) => (
-                <li key={event.id}>
-                  <Link
-                    href={activityDetailPath(event.id)}
-                    className={cn(
-                      "block rounded-xl border px-3 py-2.5 transition-colors hover:bg-muted/40",
-                      event.isChurchWide
-                        ? "border-foreground/15 bg-muted/30"
-                        : "border-border/70",
-                    )}
-                  >
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <p className="truncate text-sm font-medium text-foreground">
-                        {event.name}
-                      </p>
-                      {event.isChurchWide && (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-muted-foreground">
-                          <Sparkles className="size-3" />
-                          Igreja
-                        </span>
+            <div className="space-y-4">
+              {selectedAgendaGroups.map((group) => (
+                <section key={group.key}>
+                  <h4 className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    <span
+                      className={cn(
+                        "size-2 rounded-full",
+                        group.kind === "church" ? "bg-foreground" : "bg-sky-500",
                       )}
-                      {event.recurrence && (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-muted-foreground">
-                          <Repeat className="size-3" />
-                          Recorrente
-                        </span>
-                      )}
-                    </div>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {formatEventTime(event.startsAt)}
-                      {!event.isChurchWide && event.ministryName
-                        ? ` · ${event.ministryName}`
-                        : ""}
-                    </p>
-                  </Link>
-                </li>
+                    />
+                    {group.label}
+                  </h4>
+                  <ul className="space-y-2">
+                    {group.events.map((event) => (
+                      <li key={event.id}>
+                        <DayAgendaEventItem event={event} />
+                      </li>
+                    ))}
+                  </ul>
+                </section>
               ))}
-            </ul>
+            </div>
           )}
         </aside>
       </div>

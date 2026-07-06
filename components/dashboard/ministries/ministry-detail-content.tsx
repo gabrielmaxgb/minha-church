@@ -42,7 +42,7 @@ import {
   MINISTRY_SETTINGS_SECTIONS,
   type MinistrySettingsSection,
 } from "@/lib/ministries/constants";
-import { canManageMembers, canManageMinistries, canCreateMinistryActivity, canManageMinistryRoster } from "@/lib/permissions";
+import { canManageMembers, canManageMinistries, canManageMinistryRoster } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 import type { Ministry, MinistryRole } from "@/types/ministries";
@@ -267,9 +267,6 @@ export function MinistryDetailContent({ ministryId }: MinistryDetailContentProps
   const [section, setSection] = useState<MinistrySettingsSection>("dashboard");
   const canManage = permissions ? canManageMinistries(permissions) : false;
   const canManageTeam = permissions ? canManageMembers(permissions) : false;
-  const canManageMinistryEvents = permissions
-    ? canCreateMinistryActivity(permissions, ministryId)
-    : false;
   const canManageRosters =
     permissions && ministry
       ? canManageMinistryRoster(permissions, ministry.id)
@@ -358,7 +355,6 @@ export function MinistryDetailContent({ ministryId }: MinistryDetailContentProps
           {section === "availability" && (
             <WorshipAvailabilitySection
               ministryId={ministry.id}
-              canManage={canManageMinistryEvents}
               canManageRosters={canManageRosters}
             />
           )}

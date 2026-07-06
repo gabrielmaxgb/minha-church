@@ -7,6 +7,7 @@ import {
 	deleteChurchEvent,
 	eventsKeys,
 	removeEventRoster,
+	setEventRosterCollection,
 	updateChurchEvent,
 	updateChurchEventAvailability,
 	upsertEventRoster,
@@ -101,6 +102,22 @@ function patchEventRosterCache(
 			};
 		},
 	);
+}
+
+export function useSetEventRosterCollection(eventId: string) {
+	const { churchId } = useTenant();
+	const invalidate = useInvalidateEvents();
+
+	return useMutation({
+		mutationFn: (payload: { rosterOpen: boolean; eventIds: string[] }) => {
+			if (!churchId) {
+				throw new Error("Igreja não selecionada.");
+			}
+
+			return setEventRosterCollection(churchId, eventId, payload);
+		},
+		onSuccess: invalidate,
+	});
 }
 
 export function useUpdateChurchEventAvailability(eventId: string) {

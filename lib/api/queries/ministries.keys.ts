@@ -7,7 +7,6 @@ import type {
   MinistryEvent,
   MinistryMember,
   MinistryRole,
-  RosterAvailabilityWindow,
   RosterProfile,
 } from "@/types/ministries";
 
@@ -244,40 +243,6 @@ async function updateEventAvailability(
   );
 }
 
-async function openAvailabilityWindow(
-  churchId: string,
-  ministryId: string,
-  payload: { periodType: string; startDate?: string },
-): Promise<RosterAvailabilityWindow> {
-  return apiClient<RosterAvailabilityWindow>(
-    buildTenantPath(
-      churchId,
-      `/ministries/${ministryId}/roster/availability-window`,
-    ),
-    {
-      churchId,
-      method: "POST",
-      body: JSON.stringify(payload),
-    },
-  );
-}
-
-async function closeAvailabilityWindow(
-  churchId: string,
-  ministryId: string,
-): Promise<RosterAvailabilityWindow> {
-  return apiClient<RosterAvailabilityWindow>(
-    buildTenantPath(
-      churchId,
-      `/ministries/${ministryId}/roster/availability-window`,
-    ),
-    {
-      churchId,
-      method: "DELETE",
-    },
-  );
-}
-
 async function setRosterCollection(
   churchId: string,
   ministryId: string,
@@ -335,8 +300,6 @@ export {
   fetchMinistryEvents,
   fetchMinistryMembers,
   fetchRosterProfile,
-  closeAvailabilityWindow,
-  openAvailabilityWindow,
   setRosterCollection,
   updateEventAvailability,
   updateEventRoleProfile,

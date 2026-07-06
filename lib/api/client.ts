@@ -97,7 +97,12 @@ export async function apiClient<T>(
     return undefined as T;
   }
 
-  return response.json() as Promise<T>;
+  const raw = await response.text();
+  if (!raw.trim()) {
+    return undefined as T;
+  }
+
+  return JSON.parse(raw) as T;
 }
 
 export function buildTenantPath(churchId: string, path: string): string {

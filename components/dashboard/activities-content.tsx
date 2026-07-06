@@ -26,7 +26,7 @@ type ActivityFilter = "all" | "church" | string;
 type ActivityView = "calendar" | "list";
 
 export function ActivitiesContent() {
-  const { permissions } = useAuth();
+  const { permissions, user } = useAuth();
   const now = new Date();
   const [view, setView] = useState<ActivityView>("calendar");
   const [filter, setFilter] = useState<ActivityFilter>("all");
@@ -103,7 +103,9 @@ export function ActivitiesContent() {
     filter !== "all" && filter !== "church" ? filter : "";
 
   function canManageEvent(event: ChurchEvent) {
-    return permissions ? canManageActivity(permissions, event) : false;
+    return permissions
+      ? canManageActivity(permissions, event, user?.id ?? null)
+      : false;
   }
 
   function openCreateModal(startsAtValue?: string) {

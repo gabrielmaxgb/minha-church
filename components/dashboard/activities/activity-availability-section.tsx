@@ -64,13 +64,13 @@ export function ActivityAvailabilitySection({
   }
 
   return (
-    <Card>
+    <Card className="border-emerald-500/20 bg-emerald-500/5">
       <CardHeader>
         <CardTitle className="font-display text-base">
-          Sua disponibilidade
+          Você pode ir?
         </CardTitle>
         <CardDescription>
-          Informe se você pode ajudar e em quais funções deste evento.
+          A coleta está aberta. Informe se pode ajudar e em quais funções.
         </CardDescription>
       </CardHeader>
       <CardContent>

@@ -8,11 +8,14 @@ import { Bell, ClipboardList, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AUTH_ROUTES,
-  myScheduleMinistryPath,
   settingsSectionPath,
 } from "@/constants/routes";
 import { useMySchedules, usePasswordResetRequests } from "@/lib/api/queries";
 import { canManageChurchMemberships } from "@/lib/church-memberships/constants";
+import {
+  firstPendingScheduleHref,
+  schedulePendingCount,
+} from "@/lib/my-schedule/schedule-notifications";
 import { pendingNotificationStyles } from "@/lib/ui/notification-styles";
 import { cn, formatDateTime } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
@@ -28,10 +31,10 @@ function useNotificationCount(): number {
   const { data: schedules } = useMySchedules();
 
   const passwordResetCount = canManage ? (passwordResetRequests?.length ?? 0) : 0;
-  const pendingScheduleCount =
-    hasSchedulesAccess && schedules?.hasRosterMinistries
-      ? schedules.summary.pendingAvailabilityCount
-      : 0;
+  const pendingScheduleCount = schedulePendingCount(
+    schedules,
+    hasSchedulesAccess,
+  );
 
   return passwordResetCount + pendingScheduleCount;
 }
@@ -63,17 +66,14 @@ function NotificationsPanel({
   } = useMySchedules();
 
   const passwordResetCount = canManage ? (passwordResetRequests?.length ?? 0) : 0;
-  const pendingScheduleCount =
-    hasSchedulesAccess && schedules?.hasRosterMinistries
-      ? schedules.summary.pendingAvailabilityCount
-      : 0;
+  const pendingScheduleCount = schedulePendingCount(
+    schedules,
+    hasSchedulesAccess,
+  );
   const count = passwordResetCount + pendingScheduleCount;
 
-  const firstPendingMinistry = schedules?.ministries.find(
-    (ministry) => ministry.pendingAvailability.length > 0,
-  );
-  const respondHref = firstPendingMinistry
-    ? myScheduleMinistryPath(firstPendingMinistry.ministryId)
+  const respondHref = schedules
+    ? firstPendingScheduleHref(schedules)
     : AUTH_ROUTES.mySchedules;
 
   const isLoading =

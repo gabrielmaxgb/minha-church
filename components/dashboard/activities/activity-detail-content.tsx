@@ -15,7 +15,9 @@ import {
 
 import { EditActivityModal } from "@/components/dashboard/activities/edit-activity-modal";
 import { ActivityAvailabilitySection } from "@/components/dashboard/activities/activity-availability-section";
-import { EventRosterSection } from "@/components/dashboard/activities/event-roster-section";
+import { ActivityRosterWorkflow } from "@/components/dashboard/activities/activity-roster-workflow";
+import { ActivityVisibilitySection } from "@/components/dashboard/activities/activity-visibility-section";
+import { EventRosterPublicCard } from "@/components/dashboard/activities/event-roster-assignments";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -84,13 +86,15 @@ export function ActivityDetailContent({ eventId }: ActivityDetailContentProps) {
   const { data: event, isLoading, isError, error } = useChurchEvent(eventId);
   const [editOpen, setEditOpen] = useState(false);
 
-  const canManage = event && permissions ? canManageActivity(permissions, event) : false;
+  const canManage =
+    event && permissions
+      ? canManageActivity(permissions, event, user?.id ?? null)
+      : false;
   const canManageRoster =
     event && permissions
       ? canManageEventRoster(permissions, event, user?.id ?? null)
       : false;
-  const showAvailabilityPanel =
-    Boolean(event?.usesRoster && event.rosterOpen && !canManageRoster);
+  const showAvailabilityPanel = Boolean(event?.usesRoster && event.rosterOpen);
 
   const upcomingOccurrences =
     event?.seriesOccurrences.filter(
@@ -242,12 +246,18 @@ export function ActivityDetailContent({ eventId }: ActivityDetailContentProps) {
           </CardContent>
         </Card>
 
+        {canManage && !event.isChurchWide && (
+          <ActivityVisibilitySection event={event} />
+        )}
+
+        {canManageRoster && <ActivityRosterWorkflow event={event} />}
+
         {showAvailabilityPanel && (
           <ActivityAvailabilitySection event={event} />
         )}
 
-        {event.usesRoster && (
-          <EventRosterSection event={event} canManage={canManageRoster} />
+        {!canManageRoster && event.usesRoster && (
+          <EventRosterPublicCard event={event} />
         )}
 
         {event.recurrence && event.seriesOccurrences.length > 1 && (
