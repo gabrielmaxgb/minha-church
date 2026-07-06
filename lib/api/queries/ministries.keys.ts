@@ -311,7 +311,7 @@ export const ministriesKeys = createQueryKeys("ministries", {
     ministryId: string,
     params?: { from?: string; to?: string },
   ) => ({
-    queryKey: [churchId, ministryId, "events", params ?? null],
+    queryKey: [churchId, ministryId, "events", params],
     queryFn: () => fetchMinistryEvents(churchId, ministryId, params),
   }),
   members: (churchId: string, ministryId: string) => ({

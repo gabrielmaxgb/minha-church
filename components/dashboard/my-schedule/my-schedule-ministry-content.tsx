@@ -8,6 +8,7 @@ import { MyScheduleCalendar } from "@/components/dashboard/my-schedule/my-schedu
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AUTH_ROUTES, ministryAvailabilityPath } from "@/constants/routes";
+import { CHURCH_WIDE_SCHEDULE_ID } from "@/lib/events/church-wide-schedule";
 import { useMySchedules } from "@/lib/api/queries";
 import { useRespondToRosterAvailability } from "@/lib/api/queries/use-respond-worship-availability";
 import type { EventAvailabilityPayload } from "@/components/dashboard/my-schedule/event-availability-panel";
@@ -91,10 +92,13 @@ export function MyScheduleMinistryContent({
   const [busyEventId, setBusyEventId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const ministry = data?.ministries.find(
-    (item) => item.ministryId === ministryId,
-  );
-  const showMinistryLink = canListMinistries(permissions);
+  const ministry =
+    ministryId === CHURCH_WIDE_SCHEDULE_ID
+      ? data?.churchWide
+      : data?.ministries.find((item) => item.ministryId === ministryId);
+  const showMinistryLink =
+    canListMinistries(permissions) &&
+    ministryId !== CHURCH_WIDE_SCHEDULE_ID;
 
   async function handleRespond(
     targetMinistryId: string,
@@ -109,6 +113,7 @@ export function MyScheduleMinistryContent({
         ministryId: targetMinistryId,
         eventId,
         status: payload.status,
+        roleLabels: payload.roleLabels,
       });
     } catch (error) {
       setActionError(
@@ -153,7 +158,9 @@ export function MyScheduleMinistryContent({
             Ministério não encontrado
           </p>
           <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-            Você não participa deste ministério ou ele não usa escalas.
+            {ministryId === CHURCH_WIDE_SCHEDULE_ID
+              ? "Não há eventos da igreja com escala para você no momento."
+              : "Você não participa deste ministério ou ele não usa escalas."}
           </p>
         </div>
       </div>
@@ -179,8 +186,8 @@ export function MyScheduleMinistryContent({
         ministry={ministry}
         busyEventId={busyEventId}
         respondBusy={respond.isPending}
-        onRespond={(targetMinistryId, eventId, status) =>
-          void handleRespond(targetMinistryId, eventId, status)
+        onRespond={(targetMinistryId, eventId, payload) =>
+          void handleRespond(targetMinistryId, eventId, payload)
         }
         showMinistryLink={showMinistryLink}
       />

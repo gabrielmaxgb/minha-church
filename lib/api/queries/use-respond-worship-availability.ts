@@ -6,7 +6,9 @@ import {
   ministriesKeys,
   updateEventAvailability,
 } from "@/lib/api/queries/ministries.keys";
+import { updateChurchEventAvailability } from "@/lib/api/queries/events.keys";
 import { rosterKeys } from "@/lib/api/queries/roster.keys";
+import { CHURCH_WIDE_SCHEDULE_ID } from "@/lib/events/church-wide-schedule";
 import { useTenant } from "@/providers/auth-provider";
 
 export function useRespondToRosterAvailability() {
@@ -14,7 +16,7 @@ export function useRespondToRosterAvailability() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       ministryId,
       eventId,
       status,
@@ -29,13 +31,25 @@ export function useRespondToRosterAvailability() {
         throw new Error("Igreja não selecionada.");
       }
 
+      if (ministryId === CHURCH_WIDE_SCHEDULE_ID) {
+        await updateChurchEventAvailability(churchId, eventId, {
+          status,
+          roleLabels,
+        });
+        return null;
+      }
+
       return updateEventAvailability(churchId, ministryId, eventId, {
         status,
         roleLabels,
       });
     },
     onSuccess: async (profile, variables) => {
-      if (churchId) {
+      if (
+        churchId &&
+        profile &&
+        variables.ministryId !== CHURCH_WIDE_SCHEDULE_ID
+      ) {
         queryClient.setQueryData(
           ministriesKeys.rosterProfile(
             churchId,

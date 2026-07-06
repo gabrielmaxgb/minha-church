@@ -6,6 +6,7 @@ import { ChevronRight, Layers } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { myScheduleMinistryPath } from "@/constants/routes";
+import { CHURCH_WIDE_SCHEDULE_ID } from "@/lib/events/church-wide-schedule";
 import { pendingNotificationStyles } from "@/lib/ui/notification-styles";
 import { useMySchedules } from "@/lib/api/queries";
 import type { MyMinistrySchedule } from "@/types/ministries";
@@ -27,6 +28,14 @@ function ministrySummary(ministry: MyMinistrySchedule): string {
 
 function sortMinistries(ministries: MyMinistrySchedule[]): MyMinistrySchedule[] {
   return [...ministries].sort((a, b) => {
+    if (a.ministryId === CHURCH_WIDE_SCHEDULE_ID) {
+      return -1;
+    }
+
+    if (b.ministryId === CHURCH_WIDE_SCHEDULE_ID) {
+      return 1;
+    }
+
     const pendingDiff =
       b.pendingAvailability.length - a.pendingAvailability.length;
 
@@ -59,23 +68,27 @@ export function MyScheduleContent() {
     );
   }
 
-  if (!data.hasRosterMinistries) {
+  if (!data.hasSchedule) {
     return (
       <div className="rounded-2xl border border-dashed border-border bg-muted/15 px-6 py-12 text-center">
         <Layers className="mx-auto size-10 text-muted-foreground" />
         <p className="mt-4 font-display text-lg font-semibold text-foreground">
-          Você ainda não participa de ministérios
+          Nenhuma escala no momento
         </p>
         <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-          Quando o líder te adicionar a um ministério, suas disponibilidades e
-          escalas aparecem aqui, separadas por ministério.
+          Quando houver eventos com coleta de disponibilidade aberta ou escalas
+          confirmadas para você, elas aparecem aqui.
         </p>
       </div>
     );
   }
 
   const totalPending = data.summary.pendingAvailabilityCount;
-  const ministries = sortMinistries(data.ministries);
+  const ministries = sortMinistries([
+    ...(data.churchWide ? [data.churchWide] : []),
+    ...data.ministries,
+  ]);
+  const groupCount = ministries.length;
 
   return (
     <div className="space-y-6">
@@ -83,14 +96,14 @@ export function MyScheduleContent() {
         <div className={pendingNotificationStyles.banner.inline}>
           <p className="text-sm font-medium text-foreground">
             {totalPending} evento{totalPending === 1 ? "" : "s"} aguardando sua
-            resposta em {data.ministries.length} ministério
-            {data.ministries.length === 1 ? "" : "s"}
+            resposta em {groupCount} grupo
+            {groupCount === 1 ? "" : "s"}
           </p>
         </div>
       )}
 
       <p className="text-sm text-muted-foreground">
-        Escolha um ministério para ver o calendário, responder disponibilidade e
+        Escolha um grupo para ver o calendário, responder disponibilidade e
         acompanhar suas escalas.
       </p>
 

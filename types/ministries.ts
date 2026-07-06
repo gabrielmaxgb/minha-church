@@ -169,8 +169,8 @@ export interface EventRosterCandidate {
 
 export interface MyScheduleAssignment {
   eventId: string;
-  ministryId: string;
-  ministryName: string;
+  ministryId: string | null;
+  ministryName: string | null;
   name: string;
   startsAt: string;
   endsAt: string | null;
@@ -186,8 +186,8 @@ export interface MyScheduleRosterEntry {
 
 export interface MyScheduleEvent {
   eventId: string;
-  ministryId: string;
-  ministryName: string;
+  ministryId: string | null;
+  ministryName: string | null;
   name: string;
   startsAt: string;
   endsAt: string | null;
@@ -204,8 +204,8 @@ export interface MyScheduleEvent {
 
 export interface MySchedulePending {
   eventId: string;
-  ministryId: string;
-  ministryName: string;
+  ministryId: string | null;
+  ministryName: string | null;
   name: string;
   startsAt: string;
   location: string | null;
@@ -230,6 +230,8 @@ export interface MyMinistrySchedule {
 
 export interface MySchedules {
   hasRosterMinistries: boolean;
+  hasSchedule: boolean;
+  churchWide: MyMinistrySchedule | null;
   summary: {
     pendingAvailabilityCount: number;
     upcomingAssignmentsCount: number;

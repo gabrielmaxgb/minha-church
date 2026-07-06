@@ -188,14 +188,10 @@ export function EditActivityModal({
         location: location.trim() || null,
         startsAt: new Date(startsAt).toISOString(),
         endsAt: endsAt ? new Date(endsAt).toISOString() : null,
-        ...(event.ministryId
-          ? {
-              usesRoster,
-              visibleToChurch,
-              rosterOpen: usesRoster ? rosterOpen : false,
-              rosterRoles: usesRoster ? rosterRoles : [],
-            }
-          : {}),
+        usesRoster,
+        visibleToChurch: event.ministryId ? visibleToChurch : undefined,
+        rosterOpen: usesRoster ? rosterOpen : false,
+        rosterRoles: usesRoster ? rosterRoles : [],
         ...(isRecurring ? { scope: editScope } : {}),
       });
       onClose();
@@ -394,23 +390,21 @@ export function EditActivityModal({
               </EventFormSection>
             )}
 
-            {event.ministryId && (
-              <EventFormSection
-                title="Escala da equipe"
-                description="Disponibilidade, funções e montagem de escala neste evento."
-                icon={ClipboardList}
-              >
-                <EventRosterOptionsFields
-                  usesRoster={usesRoster}
-                  rosterOpen={rosterOpen}
-                  rosterRoles={rosterRoles}
-                  onUsesRosterChange={setUsesRoster}
-                  onRosterOpenChange={setRosterOpen}
-                  onRosterRolesChange={setRosterRoles}
-                  disabled={isPending}
-                />
-              </EventFormSection>
-            )}
+            <EventFormSection
+              title="Escala da equipe"
+              description="Disponibilidade, funções e montagem de escala neste evento."
+              icon={ClipboardList}
+            >
+              <EventRosterOptionsFields
+                usesRoster={usesRoster}
+                rosterOpen={rosterOpen}
+                rosterRoles={rosterRoles}
+                onUsesRosterChange={setUsesRoster}
+                onRosterOpenChange={setRosterOpen}
+                onRosterRolesChange={setRosterRoles}
+                disabled={isPending}
+              />
+            </EventFormSection>
 
             {isRecurring && (
               <EventFormSection

@@ -8,6 +8,7 @@ import {
 	eventsKeys,
 	removeEventRoster,
 	updateChurchEvent,
+	updateChurchEventAvailability,
 	upsertEventRoster,
 	type CreateChurchEventPayload,
 	type UpdateChurchEventPayload,
@@ -100,6 +101,35 @@ function patchEventRosterCache(
 			};
 		},
 	);
+}
+
+export function useUpdateChurchEventAvailability(eventId: string) {
+	const { churchId } = useTenant();
+	const queryClient = useQueryClient();
+	const invalidate = useInvalidateEvents();
+
+	return useMutation({
+		mutationFn: (payload: {
+			status: "available" | "unavailable" | "clear";
+			roleLabels?: string[];
+		}) => {
+			if (!churchId) {
+				throw new Error("Igreja não selecionada.");
+			}
+
+			return updateChurchEventAvailability(churchId, eventId, payload);
+		},
+		onSuccess: async () => {
+			if (churchId) {
+				await queryClient.invalidateQueries({
+					queryKey: eventsKeys.detail(churchId, eventId).queryKey,
+				});
+			}
+
+			await invalidate();
+			await queryClient.invalidateQueries({ queryKey: rosterKeys._def });
+		},
+	});
 }
 
 export function useUpsertEventRoster(eventId: string) {

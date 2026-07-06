@@ -200,13 +200,9 @@ export function CreateActivityModal({
       endsAt: endsAt ? new Date(endsAt).toISOString() : undefined,
       ministryId: ministryId || undefined,
       recurrence: recurrencePayload,
-      ...(ministryId
-        ? {
-            usesRoster,
-            visibleToChurch,
-            ...(usesRoster ? { rosterOpen, rosterRoles } : {}),
-          }
-        : {}),
+      usesRoster,
+      ...(ministryId ? { visibleToChurch } : {}),
+      ...(usesRoster ? { rosterOpen, rosterRoles } : {}),
     };
 
     try {
@@ -380,36 +376,34 @@ export function CreateActivityModal({
             </EventFormSection>
 
             {ministryId ? (
-              <>
-                <EventFormSection
-                  title="Quem pode ver"
-                  description="Controle se o evento aparece na agenda geral da igreja."
-                  icon={Eye}
-                >
-                  <EventVisibilityFields
-                    visibleToChurch={visibleToChurch}
-                    onVisibleToChurchChange={setVisibleToChurch}
-                    disabled={createEvent.isPending}
-                  />
-                </EventFormSection>
-
-                <EventFormSection
-                  title="Escala da equipe"
-                  description="Disponibilidade, funções e montagem de escala neste evento."
-                  icon={ClipboardList}
-                >
-                  <EventRosterOptionsFields
-                    usesRoster={usesRoster}
-                    rosterOpen={rosterOpen}
-                    rosterRoles={rosterRoles}
-                    onUsesRosterChange={setUsesRoster}
-                    onRosterOpenChange={setRosterOpen}
-                    onRosterRolesChange={setRosterRoles}
-                    disabled={createEvent.isPending}
-                  />
-                </EventFormSection>
-              </>
+              <EventFormSection
+                title="Quem pode ver"
+                description="Controle se o evento aparece na agenda geral da igreja."
+                icon={Eye}
+              >
+                <EventVisibilityFields
+                  visibleToChurch={visibleToChurch}
+                  onVisibleToChurchChange={setVisibleToChurch}
+                  disabled={createEvent.isPending}
+                />
+              </EventFormSection>
             ) : null}
+
+            <EventFormSection
+              title="Escala da equipe"
+              description="Disponibilidade, funções e montagem de escala neste evento."
+              icon={ClipboardList}
+            >
+              <EventRosterOptionsFields
+                usesRoster={usesRoster}
+                rosterOpen={rosterOpen}
+                rosterRoles={rosterRoles}
+                onUsesRosterChange={setUsesRoster}
+                onRosterOpenChange={setRosterOpen}
+                onRosterRolesChange={setRosterRoles}
+                disabled={createEvent.isPending}
+              />
+            </EventFormSection>
           </div>
 
           <Separator />

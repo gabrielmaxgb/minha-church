@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { EditActivityModal } from "@/components/dashboard/activities/edit-activity-modal";
+import { ActivityAvailabilitySection } from "@/components/dashboard/activities/activity-availability-section";
 import { EventRosterSection } from "@/components/dashboard/activities/event-roster-section";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,7 +33,7 @@ import {
 } from "@/constants/routes";
 import { useChurchEvent } from "@/lib/api/queries";
 import { formatRecurrenceSummary } from "@/lib/events/recurrence";
-import { canManageActivity, canManageMinistryRoster } from "@/lib/permissions";
+import { canManageActivity, canManageEventRoster } from "@/lib/permissions";
 import { cn, formatDateTime } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 import type { ChurchEvent } from "@/types/events";
@@ -79,15 +80,17 @@ function OccurrenceRow({
 
 export function ActivityDetailContent({ eventId }: ActivityDetailContentProps) {
   const router = useRouter();
-  const { permissions } = useAuth();
+  const { user, permissions } = useAuth();
   const { data: event, isLoading, isError, error } = useChurchEvent(eventId);
   const [editOpen, setEditOpen] = useState(false);
 
   const canManage = event && permissions ? canManageActivity(permissions, event) : false;
   const canManageRoster =
-    event && permissions && event.ministryId
-      ? canManageMinistryRoster(permissions, event.ministryId)
+    event && permissions
+      ? canManageEventRoster(permissions, event, user?.id ?? null)
       : false;
+  const showAvailabilityPanel =
+    Boolean(event?.usesRoster && event.rosterOpen && !canManageRoster);
 
   const upcomingOccurrences =
     event?.seriesOccurrences.filter(
@@ -238,6 +241,10 @@ export function ActivityDetailContent({ eventId }: ActivityDetailContentProps) {
             )}
           </CardContent>
         </Card>
+
+        {showAvailabilityPanel && (
+          <ActivityAvailabilitySection event={event} />
+        )}
 
         {event.usesRoster && (
           <EventRosterSection event={event} canManage={canManageRoster} />

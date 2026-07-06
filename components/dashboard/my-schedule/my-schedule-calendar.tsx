@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { ScheduleEventRosterList } from "@/components/dashboard/my-schedule/schedule-event-roster-list";
+import { EventAvailabilityPanel } from "@/components/dashboard/my-schedule/event-availability-panel";
 import { EventRoleProfileSection } from "@/components/dashboard/my-schedule/event-role-profile-section";
 import { OccurrenceAvailabilityActions } from "@/components/dashboard/my-schedule/occurrence-availability-actions";
 import type { EventAvailabilityPayload } from "@/components/dashboard/my-schedule/event-availability-panel";
@@ -29,6 +30,7 @@ import {
   scheduleEventStyle,
 } from "@/lib/my-schedule/event-display";
 import { formatRosterRole } from "@/lib/ministries/roster";
+import { isChurchWideScheduleId } from "@/lib/events/church-wide-schedule";
 import { pendingNotificationStyles } from "@/lib/ui/notification-styles";
 import { cn } from "@/lib/utils";
 import type { MyScheduleEvent } from "@/types/ministries";
@@ -317,6 +319,7 @@ export function MyScheduleCalendar({
                 const kind = getScheduleEventDisplayKind(event);
                 const canRespond =
                   event.rosterOpen && kind !== "assigned";
+                const isChurchWide = isChurchWideScheduleId(event.ministryId);
                 const groupKey = `${event.ministryId}:${event.profileKey}`;
                 const profileRoles =
                   profileRolesByKey[groupKey] ?? event.myProfileRoleLabels;
@@ -360,20 +363,49 @@ export function MyScheduleCalendar({
                       {event.location ? ` · ${event.location}` : ""}
                     </p>
 
-                    {canRespond && (
-                      <EventRoleProfileSection
+                    {canRespond && isChurchWide && (
+                      <EventAvailabilityPanel
                         className="mt-3 border-t border-border/60 pt-3"
-                        ministryId={event.ministryId}
-                        profileKey={event.profileKey}
                         rosterRoles={event.rosterRoles}
-                        myProfileRoleLabels={event.myProfileRoleLabels}
-                        onRolesChange={(roles) =>
-                          setProfileRolesByKey((current) => ({
-                            ...current,
-                            [groupKey]: roles,
-                          }))
+                        myRoleLabels={event.myRoleLabels}
+                        availabilityStatus={event.myAvailabilityStatus}
+                        busy={busy}
+                        layout="compact"
+                        onRespond={(payload) =>
+                          onRespond(event.ministryId!, event.eventId, payload)
                         }
                       />
+                    )}
+
+                    {canRespond && !isChurchWide && event.ministryId && (
+                      <>
+                        <EventRoleProfileSection
+                          className="mt-3 border-t border-border/60 pt-3"
+                          ministryId={event.ministryId}
+                          profileKey={event.profileKey}
+                          rosterRoles={event.rosterRoles}
+                          myProfileRoleLabels={event.myProfileRoleLabels}
+                          onRolesChange={(roles) =>
+                            setProfileRolesByKey((current) => ({
+                              ...current,
+                              [groupKey]: roles,
+                            }))
+                          }
+                        />
+
+                        <OccurrenceAvailabilityActions
+                          className="mt-3 border-t border-border/60 pt-3"
+                          availabilityStatus={event.myAvailabilityStatus}
+                          hasProfileRoles={profileRoles.length > 0}
+                          busy={busy}
+                          onRespond={(status) =>
+                            onRespond(event.ministryId!, event.eventId, {
+                              status,
+                              roleLabels: profileRoles,
+                            })
+                          }
+                        />
+                      </>
                     )}
 
                     <ScheduleEventRosterList
@@ -388,21 +420,6 @@ export function MyScheduleCalendar({
                       >
                         Ver evento
                       </Link>
-                    )}
-
-                    {canRespond && (
-                      <OccurrenceAvailabilityActions
-                        className="mt-3 border-t border-border/60 pt-3"
-                        availabilityStatus={event.myAvailabilityStatus}
-                        hasProfileRoles={profileRoles.length > 0}
-                        busy={busy}
-                        onRespond={(status) =>
-                          onRespond(event.ministryId, event.eventId, {
-                            status,
-                            roleLabels: [],
-                          })
-                        }
-                      />
                     )}
                   </li>
                 );

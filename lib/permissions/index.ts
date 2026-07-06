@@ -72,6 +72,30 @@ export function canCreateAnyActivity(permissions: UserPermissions) {
   );
 }
 
+export function canManageEventRoster(
+  permissions: UserPermissions,
+  event: {
+    isChurchWide: boolean;
+    ministryId: string | null;
+    createdByUserId: string | null;
+  },
+  currentUserId: string | null,
+) {
+  if (event.ministryId) {
+    return canManageMinistryRoster(permissions, event.ministryId);
+  }
+
+  if (
+    event.createdByUserId &&
+    currentUserId &&
+    event.createdByUserId === currentUserId
+  ) {
+    return true;
+  }
+
+  return canCreateChurchWideActivity(permissions);
+}
+
 export function canManageActivity(
   permissions: UserPermissions,
   event: { isChurchWide: boolean; ministryId: string | null },

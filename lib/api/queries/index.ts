@@ -34,6 +34,7 @@ export {
 	useDeleteChurchEvent,
 	useRemoveEventRoster,
 	useUpdateChurchEvent,
+	useUpdateChurchEventAvailability,
 	useUpsertEventRoster,
 } from "@/lib/api/queries/use-event-mutations";
 export { useDashboardSummary } from "@/lib/api/queries/use-dashboard-summary";

@@ -125,6 +125,24 @@ async function removeEventRoster(
 	);
 }
 
+async function updateChurchEventAvailability(
+	churchId: string,
+	eventId: string,
+	payload: {
+		status: "available" | "unavailable" | "clear";
+		roleLabels?: string[];
+	},
+): Promise<void> {
+	await apiClient<void>(
+		buildTenantPath(churchId, `/events/${eventId}/availability`),
+		{
+			churchId,
+			method: "PATCH",
+			body: JSON.stringify(payload),
+		},
+	);
+}
+
 export const eventsKeys = createQueryKeys("events", {
 	list: (churchId: string, params: ListChurchEventsParams = {}) => ({
 		queryKey: [churchId, params],
@@ -143,6 +161,7 @@ export {
 	fetchChurchEvents,
 	removeEventRoster,
 	updateChurchEvent,
+	updateChurchEventAvailability,
 	upsertEventRoster,
 };
 

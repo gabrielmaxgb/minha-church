@@ -37,6 +37,8 @@ export interface ChurchEventDetail extends ChurchEvent {
   /** @deprecated Use usesRoster */
   isRosterMinistry: boolean;
   usesRoster: boolean;
+  myAvailabilityStatus?: "available" | "unavailable" | null;
+  myRoleLabels?: string[];
 }
 
 export interface CreateChurchEventPayload {
