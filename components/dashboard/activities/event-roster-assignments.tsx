@@ -7,7 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SelectField } from "@/components/ui/select-field";
 import { useRemoveEventRoster, useUpsertEventRoster } from "@/lib/api/queries";
-import { formatRosterRole, memberCanFillEventRole } from "@/lib/ministries/roster";
+import {
+  countFilledRosterPositions,
+  countRequiredRosterPositions,
+  formatRosterRole,
+  isRosterFullyStaffed,
+  memberCanFillEventRole,
+  slotHasVacancy,
+} from "@/lib/ministries/roster";
 import { cn } from "@/lib/utils";
 import type { ChurchEventDetail } from "@/types/events";
 
@@ -41,8 +48,12 @@ export function EventRosterAssignments({
   const [error, setError] = useState<string | null>(null);
 
   const slots = event.rosterSlots ?? [];
-  const vacantSlots = slots.filter((slot) => !slot.assignedMemberId);
-  const filledSlots = slots.filter((slot) => slot.assignedMemberId);
+  const vacantSlots = slots.filter((slot) => slotHasVacancy(slot));
+  const filledCount = countFilledRosterPositions(slots);
+  const requiredCount = countRequiredRosterPositions(slots);
+  const rosterComplete = isRosterFullyStaffed(slots);
+
+  const assignments = event.roster;
 
   const availableCandidates = useMemo(
     () =>
@@ -53,8 +64,8 @@ export function EventRosterAssignments({
   );
 
   const assignedMemberIds = useMemo(
-    () => new Set(event.roster.map((item) => item.memberId)),
-    [event.roster],
+    () => new Set(assignments.map((item) => item.memberId)),
+    [assignments],
   );
 
   const selectableCandidates = useMemo(() => {
@@ -180,8 +191,8 @@ export function EventRosterAssignments({
           Defina as funções primeiro
         </p>
         <p className="mt-1 text-xs text-muted-foreground">
-          No passo 1, informe quais vagas existem neste evento. Depois você
-          escolhe quem vai servir em cada uma.
+          No passo 1, informe quais funções e quantidades são necessárias. Depois
+          você escolhe quem vai servir em cada uma.
         </p>
       </div>
     );
@@ -195,53 +206,54 @@ export function EventRosterAssignments({
         </p>
       )}
 
-      {filledSlots.length > 0 && (
+      {assignments.length > 0 && (
         <ul className="space-y-2">
-          {filledSlots.map((slot) => {
-            const assignment = event.roster.find(
-              (item) => item.rosterSlotId === slot.id,
-            );
+          {assignments.map((assignment) => {
+            const slot = slots.find((item) => item.id === assignment.rosterSlotId);
 
             return (
               <li
-                key={slot.id}
+                key={assignment.id}
                 className="flex items-center justify-between gap-3 rounded-xl border border-border/70 bg-background px-4 py-3"
               >
                 <div className="min-w-0">
                   <p className="font-medium text-foreground">
-                    {slot.assignedMemberName}
+                    {assignment.memberName}
                   </p>
                   <div className="mt-1 flex flex-wrap items-center gap-2">
                     <Badge variant="secondary">
-                      {formatRosterRole(slot.label)}
+                      {formatRosterRole(assignment.roleLabel)}
                     </Badge>
-                    {assignment && (
-                      <span
-                        className={cn(
-                          "text-xs",
-                          assignment.availabilityStatus === "available" &&
-                            "text-emerald-700 dark:text-emerald-300",
-                          assignment.availabilityStatus === "unavailable" &&
-                            "text-destructive",
-                          !assignment.availabilityStatus &&
-                            "text-muted-foreground",
-                        )}
-                      >
-                        {availabilityLabel(assignment.availabilityStatus)}
+                    {slot && slot.requiredCount > 1 && (
+                      <span className="text-xs text-muted-foreground">
+                        {slot.assignedCount}/{slot.requiredCount} na função
                       </span>
                     )}
+                    <span
+                      className={cn(
+                        "text-xs",
+                        assignment.availabilityStatus === "available" &&
+                          "text-emerald-700 dark:text-emerald-300",
+                        assignment.availabilityStatus === "unavailable" &&
+                          "text-destructive",
+                        !assignment.availabilityStatus &&
+                          "text-muted-foreground",
+                      )}
+                    >
+                      {availabilityLabel(assignment.availabilityStatus)}
+                    </span>
                   </div>
                 </div>
 
-                {canManage && slot.assignedMemberId && (
+                {canManage && (
                   <Button
                     type="button"
                     size="sm"
                     variant="ghost"
                     className="text-muted-foreground hover:text-destructive"
                     disabled={removeRoster.isPending}
-                    onClick={() => void handleRemove(slot.assignedMemberId!)}
-                    aria-label={`Remover ${slot.assignedMemberName} da escala`}
+                    onClick={() => void handleRemove(assignment.memberId)}
+                    aria-label={`Remover ${assignment.memberName} da escala`}
                   >
                     <Trash2 className="size-4" />
                   </Button>
@@ -252,7 +264,7 @@ export function EventRosterAssignments({
         </ul>
       )}
 
-      {filledSlots.length === 0 && !canManage && (
+      {assignments.length === 0 && !canManage && (
         <div className="rounded-xl border border-dashed border-border bg-muted/15 px-4 py-6 text-center text-sm text-muted-foreground">
           A escala deste dia ainda não foi montada.
         </div>
@@ -303,6 +315,9 @@ export function EventRosterAssignments({
                 {selectableSlots.map((slot) => (
                   <option key={slot.id} value={slot.id}>
                     {formatRosterRole(slot.label)}
+                    {slot.requiredCount > 1
+                      ? ` (${slot.assignedCount}/${slot.requiredCount})`
+                      : ""}
                   </option>
                 ))}
               </SelectField>
@@ -334,13 +349,13 @@ export function EventRosterAssignments({
         </div>
       )}
 
-      {canManage &&
-        vacantSlots.length === 0 &&
-        filledSlots.length > 0 && (
-          <p className="text-xs text-emerald-800 dark:text-emerald-300">
-            Todas as vagas deste dia estão preenchidas.
-          </p>
-        )}
+      {canManage && rosterComplete && (
+        <p className="text-xs text-emerald-800 dark:text-emerald-300">
+          Todas as vagas deste dia estão preenchidas ({filledCount}/
+          {requiredCount}
+          {event.rosterOpen ? "" : " · coleta fechada automaticamente"}).
+        </p>
+      )}
     </div>
   );
 }
@@ -351,9 +366,8 @@ export function EventRosterPublicCard({
   event: ChurchEventDetail;
 }) {
   const slots = event.rosterSlots ?? [];
-  const filledSlots = slots.filter((slot) => slot.assignedMemberId);
 
-  if (!event.usesRoster || filledSlots.length === 0) {
+  if (!event.usesRoster || event.roster.length === 0) {
     return null;
   }
 

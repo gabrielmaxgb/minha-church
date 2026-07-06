@@ -369,6 +369,7 @@ export function MyScheduleCalendar({
                         rosterRoles={event.rosterRoles}
                         myRoleLabels={event.myRoleLabels}
                         availabilityStatus={event.myAvailabilityStatus}
+                        availabilityMessage={event.availabilityMessage}
                         busy={busy}
                         layout="compact"
                         onRespond={(payload) =>
@@ -379,6 +380,17 @@ export function MyScheduleCalendar({
 
                     {canRespond && !isChurchWide && event.ministryId && (
                       <>
+                        {event.availabilityMessage?.trim() ? (
+                          <div className="mt-3 rounded-xl border border-sky-500/20 bg-sky-500/8 px-3 py-2.5 text-sm leading-relaxed text-foreground">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-sky-800 dark:text-sky-300">
+                              Mensagem do líder
+                            </p>
+                            <p className="mt-1 whitespace-pre-wrap">
+                              {event.availabilityMessage.trim()}
+                            </p>
+                          </div>
+                        ) : null}
+
                         <EventRoleProfileSection
                           className="mt-3 border-t border-border/60 pt-3"
                           ministryId={event.ministryId}

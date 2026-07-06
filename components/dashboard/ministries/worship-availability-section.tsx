@@ -185,6 +185,11 @@ function OccurrenceRow({
               {event.rosterRoles.map((role) => formatRosterRole(role)).join(", ")}
             </p>
           )}
+          {event.availabilityMessage?.trim() ? (
+            <p className="mt-2 rounded-lg border border-sky-500/20 bg-sky-500/8 px-2.5 py-2 text-xs leading-relaxed text-foreground whitespace-pre-wrap">
+              {event.availabilityMessage.trim()}
+            </p>
+          ) : null}
         </div>
 
         {canManageRosters && (

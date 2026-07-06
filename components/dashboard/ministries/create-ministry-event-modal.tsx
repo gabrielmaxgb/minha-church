@@ -21,6 +21,7 @@ import {
   type EventRecurrenceFormState,
 } from "@/lib/events/recurrence";
 import type { CreateMinistryEventPayload } from "@/types/ministries";
+import type { RosterSlotPlanItem } from "@/lib/ministries/roster";
 
 interface CreateMinistryEventModalProps {
   ministryId: string;
@@ -57,7 +58,8 @@ export function CreateMinistryEventModal({
   const [endsAt, setEndsAt] = useState("");
   const [usesRoster, setUsesRoster] = useState(false);
   const [rosterOpen, setRosterOpen] = useState(false);
-  const [rosterRoles, setRosterRoles] = useState<string[]>([]);
+  const [rosterSlotPlan, setRosterSlotPlan] = useState<RosterSlotPlanItem[]>([]);
+  const [availabilityMessage, setAvailabilityMessage] = useState("");
   const [visibleToChurch, setVisibleToChurch] = useState(true);
   const [recurrence, setRecurrence] = useState<EventRecurrenceFormState>(
     defaultRecurrenceFormState(defaultStartsAt()),
@@ -74,7 +76,8 @@ export function CreateMinistryEventModal({
       setEndsAt("");
       setUsesRoster(false);
       setRosterOpen(false);
-      setRosterRoles([]);
+      setRosterSlotPlan([]);
+      setAvailabilityMessage("");
       setVisibleToChurch(true);
       setRecurrence(defaultRecurrenceFormState(defaultStartsAt()));
       setError(null);
@@ -138,7 +141,13 @@ export function CreateMinistryEventModal({
       recurrence: recurrencePayload,
       usesRoster,
       visibleToChurch,
-      ...(usesRoster ? { rosterOpen, rosterRoles } : {}),
+      ...(usesRoster
+        ? {
+            rosterOpen,
+            rosterSlotPlan,
+            availabilityMessage: availabilityMessage.trim() || undefined,
+          }
+        : {}),
     };
 
     try {
@@ -306,10 +315,12 @@ export function CreateMinistryEventModal({
               <EventRosterOptionsFields
                 usesRoster={usesRoster}
                 rosterOpen={rosterOpen}
-                rosterRoles={rosterRoles}
+                rosterSlotPlan={rosterSlotPlan}
+                availabilityMessage={availabilityMessage}
                 onUsesRosterChange={setUsesRoster}
                 onRosterOpenChange={setRosterOpen}
-                onRosterRolesChange={setRosterRoles}
+                onRosterSlotPlanChange={setRosterSlotPlan}
+                onAvailabilityMessageChange={setAvailabilityMessage}
                 disabled={createEvent.isPending}
               />
             </EventFormSection>

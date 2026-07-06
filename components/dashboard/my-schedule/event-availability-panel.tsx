@@ -22,6 +22,7 @@ interface EventAvailabilityPanelProps {
   rosterRoles: string[];
   myRoleLabels: string[];
   availabilityStatus: "available" | "unavailable" | null;
+  availabilityMessage?: string | null;
   busy?: boolean;
   layout?: "compact" | "default";
   className?: string;
@@ -32,6 +33,7 @@ export function EventAvailabilityPanel({
   rosterRoles,
   myRoleLabels,
   availabilityStatus,
+  availabilityMessage,
   busy = false,
   layout = "default",
   className,
@@ -82,10 +84,20 @@ export function EventAvailabilityPanel({
 
   return (
     <div className={cn("space-y-3", className)}>
+      {availabilityMessage?.trim() ? (
+        <div className="rounded-xl border border-sky-500/20 bg-sky-500/8 px-3 py-2.5 text-sm leading-relaxed text-foreground">
+          <p className="text-xs font-semibold uppercase tracking-wide text-sky-800 dark:text-sky-300">
+            Mensagem do líder
+          </p>
+          <p className="mt-1 whitespace-pre-wrap">{availabilityMessage.trim()}</p>
+        </div>
+      ) : null}
+
       {hasEventRoles ? (
         <div className="space-y-2">
           <p className="text-xs font-medium text-muted-foreground">
-            Em quais funções você pode servir neste evento?
+            Precisamos das seguintes funções para servir neste ministério,
+            pode nos ajudar em alguma delas?
           </p>
           <div className="flex flex-wrap gap-2">
             {rosterRoles.map((role) => {

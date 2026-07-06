@@ -2,7 +2,10 @@ import type { EventRecurrence, EventRecurrenceInput } from "@/lib/events/recurre
 import type {
   EventAvailabilityStatus,
   RosterAvailabilityPeriod,
+  RosterSlotPlanItem,
 } from "@/lib/ministries/roster";
+
+export type { RosterSlotPlanItem };
 
 export interface RosterAvailabilityWindow {
   active: boolean;
@@ -47,6 +50,7 @@ export interface MinistryEvent {
   isChurchWide: boolean;
   name: string;
   description: string | null;
+  availabilityMessage: string | null;
   location: string | null;
   startsAt: string;
   endsAt: string | null;
@@ -66,6 +70,8 @@ export interface EventRosterSlot {
   eventId: string;
   label: string;
   sortOrder: number;
+  requiredCount: number;
+  assignedCount: number;
   assignedMemberId: string | null;
   assignedMemberName: string | null;
 }
@@ -92,6 +98,7 @@ export interface MinistryMember {
 export interface CreateMinistryEventPayload {
   name: string;
   description?: string;
+  availabilityMessage?: string;
   location?: string;
   startsAt: string;
   endsAt?: string;
@@ -99,6 +106,7 @@ export interface CreateMinistryEventPayload {
   usesRoster?: boolean;
   rosterOpen?: boolean;
   rosterRoles?: string[];
+  rosterSlotPlan?: RosterSlotPlanItem[];
   visibleToChurch?: boolean;
 }
 
@@ -112,6 +120,7 @@ export interface RosterAvailabilityEvent {
   isRecurring: boolean;
   rosterOpen: boolean;
   rosterRoles: string[];
+  availabilityMessage: string | null;
   myStatus: EventAvailabilityStatus | null;
   myRoleLabels: string[];
   availableCount: number;
@@ -194,6 +203,7 @@ export interface MyScheduleEvent {
   location: string | null;
   rosterOpen: boolean;
   rosterRoles: string[];
+  availabilityMessage: string | null;
   profileKey: string;
   myProfileRoleLabels: string[];
   myAvailabilityStatus: EventAvailabilityStatus | null;

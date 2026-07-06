@@ -1,18 +1,23 @@
 "use client";
 
-import { CalendarCheck, ClipboardList } from "lucide-react";
+import { CalendarCheck, ClipboardList, MessageSquareText } from "lucide-react";
 
 import { EventOptionCard } from "@/components/dashboard/activities/event-option-card";
 import { EventRosterSlotsEditor } from "@/components/dashboard/activities/event-roster-slots-editor";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import type { RosterSlotPlanItem } from "@/lib/ministries/roster";
 
 interface EventRosterOptionsFieldsProps {
   usesRoster: boolean;
   rosterOpen: boolean;
-  rosterRoles: string[];
+  rosterSlotPlan: RosterSlotPlanItem[];
+  availabilityMessage?: string;
   onUsesRosterChange: (value: boolean) => void;
   onRosterOpenChange: (value: boolean) => void;
-  onRosterRolesChange: (value: string[]) => void;
+  onRosterSlotPlanChange: (value: RosterSlotPlanItem[]) => void;
+  onAvailabilityMessageChange?: (value: string) => void;
   disabled?: boolean;
   className?: string;
   /** Na página do evento a coleta é controlada no passo 2 do fluxo */
@@ -22,10 +27,12 @@ interface EventRosterOptionsFieldsProps {
 export function EventRosterOptionsFields({
   usesRoster,
   rosterOpen,
-  rosterRoles,
+  rosterSlotPlan,
+  availabilityMessage = "",
   onUsesRosterChange,
   onRosterOpenChange,
-  onRosterRolesChange,
+  onRosterSlotPlanChange,
+  onAvailabilityMessageChange,
   disabled,
   className,
   hideCollectionToggle = false,
@@ -39,7 +46,8 @@ export function EventRosterOptionsFields({
           onUsesRosterChange(next);
           if (!next) {
             onRosterOpenChange(false);
-            onRosterRolesChange([]);
+            onRosterSlotPlanChange([]);
+            onAvailabilityMessageChange?.("");
           }
         }}
         title="Este evento usa escala"
@@ -55,12 +63,39 @@ export function EventRosterOptionsFields({
               Funções na escala
             </p>
             <EventRosterSlotsEditor
-              value={rosterRoles}
-              onChange={onRosterRolesChange}
+              value={rosterSlotPlan}
+              onChange={onRosterSlotPlanChange}
               disabled={disabled}
               embedded
             />
           </div>
+
+          {onAvailabilityMessageChange ? (
+            <div className="space-y-2">
+              <Label
+                htmlFor="event-availability-message"
+                className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+              >
+                <MessageSquareText className="size-3.5" />
+                Mensagem para a equipe
+              </Label>
+              <Textarea
+                id="event-availability-message"
+                value={availabilityMessage}
+                onChange={(event) =>
+                  onAvailabilityMessageChange(event.target.value)
+                }
+                rows={3}
+                maxLength={1000}
+                disabled={disabled}
+                className="min-h-[88px] resize-y rounded-xl"
+                placeholder="Ex.: Cheguem 30 min antes para o ensaio. Tragam a partitura do hino 245."
+              />
+              <p className="text-xs text-muted-foreground">
+                Aparece para quem for marcar disponibilidade neste evento.
+              </p>
+            </div>
+          ) : null}
 
           {!hideCollectionToggle ? (
             <div className="space-y-2">

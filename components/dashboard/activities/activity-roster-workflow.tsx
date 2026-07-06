@@ -18,6 +18,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
+  countFilledRosterPositions,
+  countRequiredRosterPositions,
+  isRosterFullyStaffed,
+  rosterSlotPlanEqual,
+  rosterSlotsToPlan,
+  type RosterSlotPlanItem,
+} from "@/lib/ministries/roster";
+import {
   useSetEventRosterCollection,
   useUpdateChurchEvent,
 } from "@/lib/api/queries";
@@ -29,8 +37,8 @@ interface ActivityRosterWorkflowProps {
 
 function RosterWorkflowSummary({ event }: { event: ChurchEventDetail }) {
   const slots = event.rosterSlots ?? [];
-  const filled = slots.filter((slot) => slot.assignedMemberId).length;
-  const total = slots.length;
+  const filled = countFilledRosterPositions(slots);
+  const total = countRequiredRosterPositions(slots);
 
   return (
     <div className="flex flex-wrap gap-2">
@@ -63,8 +71,11 @@ export function ActivityRosterWorkflow({ event }: ActivityRosterWorkflowProps) {
   const setCollection = useSetEventRosterCollection(event.id);
 
   const [usesRoster, setUsesRoster] = useState(event.usesRoster);
-  const [rosterRoles, setRosterRoles] = useState(
-    (event.rosterSlots ?? []).map((slot) => slot.label),
+  const [rosterSlotPlan, setRosterSlotPlan] = useState<RosterSlotPlanItem[]>(
+    rosterSlotsToPlan(event.rosterSlots ?? []),
+  );
+  const [availabilityMessage, setAvailabilityMessage] = useState(
+    event.availabilityMessage ?? "",
   );
   const [settingsScope, setSettingsScope] = useState<EventMutationScope>("this");
   const [planError, setPlanError] = useState<string | null>(null);
@@ -72,20 +83,23 @@ export function ActivityRosterWorkflow({ event }: ActivityRosterWorkflowProps) {
 
   const isRecurring = Boolean(event.recurrence);
   const slots = event.rosterSlots ?? [];
-  const filledCount = slots.filter((slot) => slot.assignedMemberId).length;
 
   useEffect(() => {
     setUsesRoster(event.usesRoster);
-    setRosterRoles((event.rosterSlots ?? []).map((slot) => slot.label));
+    setRosterSlotPlan(rosterSlotsToPlan(event.rosterSlots ?? []));
+    setAvailabilityMessage(event.availabilityMessage ?? "");
     setSettingsScope("this");
     setPlanError(null);
     setCollectionError(null);
-  }, [event.id, event.usesRoster, event.rosterSlots]);
+  }, [event.id, event.usesRoster, event.rosterSlots, event.availabilityMessage]);
 
   const planDirty =
     usesRoster !== event.usesRoster ||
-    rosterRoles.join("|") !==
-      (event.rosterSlots ?? []).map((slot) => slot.label).join("|");
+    !rosterSlotPlanEqual(
+      rosterSlotPlan,
+      rosterSlotsToPlan(event.rosterSlots ?? []),
+    ) ||
+    (availabilityMessage.trim() || "") !== (event.availabilityMessage ?? "");
 
   const hasCollectionTargets = useMemo(() => {
     const futureWithRoster = event.seriesOccurrences.filter(
@@ -106,7 +120,7 @@ export function ActivityRosterWorkflow({ event }: ActivityRosterWorkflowProps) {
   const step1Complete = event.usesRoster && slots.length > 0;
   const step2Complete = event.usesRoster && event.rosterOpen;
   const step3Complete =
-    event.usesRoster && slots.length > 0 && filledCount === slots.length;
+    event.usesRoster && slots.length > 0 && isRosterFullyStaffed(slots);
 
   async function handleSavePlan() {
     setPlanError(null);
@@ -115,7 +129,10 @@ export function ActivityRosterWorkflow({ event }: ActivityRosterWorkflowProps) {
       await updateEvent.mutateAsync({
         usesRoster,
         rosterOpen: usesRoster ? event.rosterOpen : false,
-        rosterRoles: usesRoster ? rosterRoles : [],
+        rosterSlotPlan: usesRoster ? rosterSlotPlan : [],
+        availabilityMessage: usesRoster
+          ? availabilityMessage.trim() || null
+          : null,
         ...(isRecurring ? { scope: settingsScope } : {}),
       });
     } catch (saveError) {
@@ -179,10 +196,12 @@ export function ActivityRosterWorkflow({ event }: ActivityRosterWorkflowProps) {
           <EventRosterOptionsFields
             usesRoster={usesRoster}
             rosterOpen={event.rosterOpen}
-            rosterRoles={rosterRoles}
+            rosterSlotPlan={rosterSlotPlan}
+            availabilityMessage={availabilityMessage}
             onUsesRosterChange={setUsesRoster}
             onRosterOpenChange={() => undefined}
-            onRosterRolesChange={setRosterRoles}
+            onRosterSlotPlanChange={setRosterSlotPlan}
+            onAvailabilityMessageChange={setAvailabilityMessage}
             disabled={planBusy}
             hideCollectionToggle
           />

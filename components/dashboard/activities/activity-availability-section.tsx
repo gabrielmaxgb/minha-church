@@ -84,6 +84,7 @@ export function ActivityAvailabilitySection({
           rosterRoles={rosterRoles}
           myRoleLabels={event.myRoleLabels ?? []}
           availabilityStatus={event.myAvailabilityStatus ?? null}
+          availabilityMessage={event.availabilityMessage}
           busy={busy}
           onRespond={(payload) => void handleRespond(payload)}
         />

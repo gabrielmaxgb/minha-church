@@ -6,6 +6,7 @@ import type {
   EventRosterAssignment,
   EventRosterCandidate,
   EventRosterSlot,
+  RosterSlotPlanItem,
 } from "@/types/ministries";
 
 export interface ChurchEvent {
@@ -16,6 +17,7 @@ export interface ChurchEvent {
   isChurchWide: boolean;
   name: string;
   description: string | null;
+  availabilityMessage: string | null;
   location: string | null;
   startsAt: string;
   endsAt: string | null;
@@ -45,6 +47,7 @@ export interface CreateChurchEventPayload {
   name: string;
   ministryId?: string;
   description?: string;
+  availabilityMessage?: string;
   location?: string;
   startsAt: string;
   endsAt?: string;
@@ -52,6 +55,7 @@ export interface CreateChurchEventPayload {
   usesRoster?: boolean;
   rosterOpen?: boolean;
   rosterRoles?: string[];
+  rosterSlotPlan?: RosterSlotPlanItem[];
   visibleToChurch?: boolean;
 }
 
@@ -64,12 +68,14 @@ export type EventMutationScope = "this" | "this_and_following" | "all";
 export interface UpdateChurchEventPayload {
   name?: string;
   description?: string | null;
+  availabilityMessage?: string | null;
   location?: string | null;
   startsAt?: string;
   endsAt?: string | null;
   usesRoster?: boolean;
   rosterOpen?: boolean;
   rosterRoles?: string[];
+  rosterSlotPlan?: RosterSlotPlanItem[];
   visibleToChurch?: boolean;
   scope?: EventMutationScope;
 }

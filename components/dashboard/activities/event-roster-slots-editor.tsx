@@ -1,23 +1,28 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, X } from "lucide-react";
+import { Minus, Plus, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  addRosterRole,
+  addRosterSlotPlanItem,
+  clampRosterRequiredCount,
   formatRosterRole,
   isRosterRoleSelected,
-  normalizeRosterRoleList,
-  removeRosterRole,
+  normalizeRosterSlotPlan,
+  removeRosterSlotPlanItem,
   ROSTER_ROLE_PRESETS,
+  ROSTER_SLOT_MAX_REQUIRED_COUNT,
+  ROSTER_SLOT_MIN_REQUIRED_COUNT,
+  updateRosterSlotPlanCount,
+  type RosterSlotPlanItem,
 } from "@/lib/ministries/roster";
 import { cn } from "@/lib/utils";
 
 interface EventRosterSlotsEditorProps {
-  value: string[];
-  onChange: (next: string[]) => void;
+  value: RosterSlotPlanItem[];
+  onChange: (next: RosterSlotPlanItem[]) => void;
   disabled?: boolean;
   className?: string;
   embedded?: boolean;
@@ -32,9 +37,9 @@ export function EventRosterSlotsEditor({
 }: EventRosterSlotsEditorProps) {
   const [customValue, setCustomValue] = useState("");
 
-  const selected = normalizeRosterRoleList(value);
+  const selected = normalizeRosterSlotPlan(value);
   const suggestions = ROSTER_ROLE_PRESETS.filter(
-    (preset) => !isRosterRoleSelected(selected, preset.id),
+    (preset) => !isRosterRoleSelected(selected.map((item) => item.label), preset.id),
   );
 
   function addCustomValue() {
@@ -44,7 +49,7 @@ export function EventRosterSlotsEditor({
       return;
     }
 
-    onChange(addRosterRole(value, trimmed));
+    onChange(addRosterSlotPlanItem(value, trimmed));
     setCustomValue("");
   }
 
@@ -64,8 +69,7 @@ export function EventRosterSlotsEditor({
             Funções necessárias neste evento
           </p>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Defina as vagas da escala para esta data. Você pode editar depois na
-            tela da atividade.
+            Defina cada função e quantas pessoas são necessárias nesta data.
           </p>
         </div>
       ) : null}
@@ -76,25 +80,98 @@ export function EventRosterSlotsEditor({
             Nenhuma função definida ainda.
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Adicione pelo menos uma vaga para montar a escala depois.
+            Adicione pelo menos uma função para montar a escala depois.
           </p>
         </div>
       ) : (
-        <ul className="flex flex-wrap gap-2">
+        <ul className="space-y-2">
           {selected.map((item) => (
-            <li key={item}>
-              <span className="inline-flex max-w-full items-center gap-1 rounded-full border border-foreground/15 bg-foreground px-1 pl-3 text-sm font-medium text-background">
-                <span className="truncate">{formatRosterRole(item)}</span>
+            <li
+              key={item.label}
+              className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 bg-background px-3 py-2.5"
+            >
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-foreground">
+                  {formatRosterRole(item.label)}
+                </p>
+                <p className="text-xs text-muted-foreground">Pessoas necessárias</p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <div className="flex items-center rounded-lg border border-border/70 bg-muted/20">
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    className="size-8 shrink-0"
+                    disabled={
+                      disabled || item.requiredCount <= ROSTER_SLOT_MIN_REQUIRED_COUNT
+                    }
+                    aria-label={`Diminuir quantidade de ${formatRosterRole(item.label)}`}
+                    onClick={() =>
+                      onChange(
+                        updateRosterSlotPlanCount(
+                          value,
+                          item.label,
+                          item.requiredCount - 1,
+                        ),
+                      )
+                    }
+                  >
+                    <Minus className="size-3.5" />
+                  </Button>
+                  <Input
+                    type="number"
+                    min={ROSTER_SLOT_MIN_REQUIRED_COUNT}
+                    max={ROSTER_SLOT_MAX_REQUIRED_COUNT}
+                    value={item.requiredCount}
+                    disabled={disabled}
+                    onChange={(event) =>
+                      onChange(
+                        updateRosterSlotPlanCount(
+                          value,
+                          item.label,
+                          clampRosterRequiredCount(Number(event.target.value)),
+                        ),
+                      )
+                    }
+                    className="h-8 w-12 border-0 bg-transparent px-1 text-center [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                    aria-label={`Quantidade para ${formatRosterRole(item.label)}`}
+                  />
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    className="size-8 shrink-0"
+                    disabled={
+                      disabled ||
+                      item.requiredCount >= ROSTER_SLOT_MAX_REQUIRED_COUNT
+                    }
+                    aria-label={`Aumentar quantidade de ${formatRosterRole(item.label)}`}
+                    onClick={() =>
+                      onChange(
+                        updateRosterSlotPlanCount(
+                          value,
+                          item.label,
+                          item.requiredCount + 1,
+                        ),
+                      )
+                    }
+                  >
+                    <Plus className="size-3.5" />
+                  </Button>
+                </div>
+
                 <button
                   type="button"
                   disabled={disabled}
-                  aria-label={`Remover ${formatRosterRole(item)}`}
-                  onClick={() => onChange(removeRosterRole(value, item))}
-                  className="rounded-full p-1 text-background/80 transition-colors hover:bg-background/15 hover:text-background disabled:opacity-50"
+                  aria-label={`Remover ${formatRosterRole(item.label)}`}
+                  onClick={() => onChange(removeRosterSlotPlanItem(value, item.label))}
+                  className="rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
                 >
-                  <X className="size-3.5" aria-hidden />
+                  <X className="size-4" aria-hidden />
                 </button>
-              </span>
+              </div>
             </li>
           ))}
         </ul>
@@ -111,7 +188,7 @@ export function EventRosterSlotsEditor({
                 key={preset.id}
                 type="button"
                 disabled={disabled}
-                onClick={() => onChange(addRosterRole(value, preset.id))}
+                onClick={() => onChange(addRosterSlotPlanItem(value, preset.id))}
                 className={cn(
                   "inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-background px-3 py-1.5 text-sm text-muted-foreground transition-colors",
                   "hover:border-foreground/20 hover:text-foreground disabled:opacity-50",

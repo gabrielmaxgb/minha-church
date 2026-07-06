@@ -30,6 +30,11 @@ import {
   useUpdateChurchEvent,
 } from "@/lib/api/queries";
 import { toDatetimeLocalValue } from "@/lib/activities/datetime";
+import {
+  rosterSlotPlanEqual,
+  rosterSlotsToPlan,
+  type RosterSlotPlanItem,
+} from "@/lib/ministries/roster";
 import { cn, formatDateTime } from "@/lib/utils";
 import type { ChurchEvent, EventMutationScope } from "@/types/events";
 
@@ -76,7 +81,8 @@ export function EditActivityModal({
   const [endsAt, setEndsAt] = useState("");
   const [usesRoster, setUsesRoster] = useState(false);
   const [rosterOpen, setRosterOpen] = useState(false);
-  const [rosterRoles, setRosterRoles] = useState<string[]>([]);
+  const [rosterSlotPlan, setRosterSlotPlan] = useState<RosterSlotPlanItem[]>([]);
+  const [availabilityMessage, setAvailabilityMessage] = useState("");
   const [visibleToChurch, setVisibleToChurch] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -103,10 +109,13 @@ export function EditActivityModal({
       usesRoster !== event.usesRoster ||
       rosterOpen !== event.rosterOpen ||
       visibleToChurch !== (event.visibleToChurch ?? true) ||
-      rosterRoles.join("\n") !==
-        (event.rosterSlots ?? []).map((slot) => slot.label).join("\n")
+      !rosterSlotPlanEqual(
+        rosterSlotPlan,
+        rosterSlotsToPlan(event.rosterSlots ?? []),
+      ) ||
+      (availabilityMessage.trim() || "") !== (event.availabilityMessage ?? "")
     );
-  }, [event, name, description, location, startsAt, endsAt, usesRoster, rosterOpen, rosterRoles, visibleToChurch]);
+  }, [event, name, description, location, startsAt, endsAt, usesRoster, rosterOpen, rosterSlotPlan, availabilityMessage, visibleToChurch]);
 
   useEffect(() => {
     if (!open || !event) {
@@ -117,7 +126,8 @@ export function EditActivityModal({
       setEndsAt("");
       setUsesRoster(false);
       setRosterOpen(false);
-      setRosterRoles([]);
+      setRosterSlotPlan([]);
+      setAvailabilityMessage("");
       setVisibleToChurch(true);
       setError(null);
       setConfirmDelete(false);
@@ -134,7 +144,8 @@ export function EditActivityModal({
     setUsesRoster(event.usesRoster);
     setRosterOpen(event.rosterOpen);
     setVisibleToChurch(event.visibleToChurch ?? true);
-    setRosterRoles((event.rosterSlots ?? []).map((slot) => slot.label));
+    setRosterSlotPlan(rosterSlotsToPlan(event.rosterSlots ?? []));
+    setAvailabilityMessage(event.availabilityMessage ?? "");
     setError(null);
     setConfirmDelete(false);
     setEditScope("this");
@@ -191,7 +202,10 @@ export function EditActivityModal({
         usesRoster,
         visibleToChurch: event.ministryId ? visibleToChurch : undefined,
         rosterOpen: usesRoster ? rosterOpen : false,
-        rosterRoles: usesRoster ? rosterRoles : [],
+        rosterSlotPlan: usesRoster ? rosterSlotPlan : [],
+        availabilityMessage: usesRoster
+          ? availabilityMessage.trim() || null
+          : null,
         ...(isRecurring ? { scope: editScope } : {}),
       });
       onClose();
@@ -398,10 +412,12 @@ export function EditActivityModal({
               <EventRosterOptionsFields
                 usesRoster={usesRoster}
                 rosterOpen={rosterOpen}
-                rosterRoles={rosterRoles}
+                rosterSlotPlan={rosterSlotPlan}
+                availabilityMessage={availabilityMessage}
                 onUsesRosterChange={setUsesRoster}
                 onRosterOpenChange={setRosterOpen}
-                onRosterRolesChange={setRosterRoles}
+                onRosterSlotPlanChange={setRosterSlotPlan}
+                onAvailabilityMessageChange={setAvailabilityMessage}
                 disabled={isPending}
               />
             </EventFormSection>
