@@ -5,6 +5,7 @@ import type {
 import type {
   EventRosterAssignment,
   EventRosterCandidate,
+  EventRosterSlot,
 } from "@/types/ministries";
 
 export interface ChurchEvent {
@@ -21,7 +22,10 @@ export interface ChurchEvent {
   createdByUserId: string | null;
   recurrenceSeriesId: string | null;
   recurrence: EventRecurrence | null;
+  usesRoster: boolean;
   rosterOpen: boolean;
+  visibleToChurch: boolean;
+  rosterSlots?: EventRosterSlot[];
   createdAt: string;
   updatedAt: string;
 }
@@ -30,7 +34,9 @@ export interface ChurchEventDetail extends ChurchEvent {
   seriesOccurrences: ChurchEvent[];
   roster: EventRosterAssignment[];
   rosterCandidates: EventRosterCandidate[];
+  /** @deprecated Use usesRoster */
   isRosterMinistry: boolean;
+  usesRoster: boolean;
 }
 
 export interface CreateChurchEventPayload {
@@ -41,6 +47,10 @@ export interface CreateChurchEventPayload {
   startsAt: string;
   endsAt?: string;
   recurrence?: EventRecurrenceInput;
+  usesRoster?: boolean;
+  rosterOpen?: boolean;
+  rosterRoles?: string[];
+  visibleToChurch?: boolean;
 }
 
 export interface CreateChurchEventResponse extends ChurchEvent {
@@ -55,5 +65,9 @@ export interface UpdateChurchEventPayload {
   location?: string | null;
   startsAt?: string;
   endsAt?: string | null;
+  usesRoster?: boolean;
+  rosterOpen?: boolean;
+  rosterRoles?: string[];
+  visibleToChurch?: boolean;
   scope?: EventMutationScope;
 }

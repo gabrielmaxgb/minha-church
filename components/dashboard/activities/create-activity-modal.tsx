@@ -1,10 +1,13 @@
 "use client";
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { Calendar, Loader2, X } from "lucide-react";
+import { Calendar, ClipboardList, Clock, Eye, FileText, Loader2, MapPin, Repeat, X } from "lucide-react";
 
 import { ActivityScheduleFields } from "@/components/dashboard/activities/activity-schedule-fields";
+import { EventFormSection } from "@/components/dashboard/activities/event-form-section";
 import { EventRecurrenceFields } from "@/components/dashboard/activities/event-recurrence-fields";
+import { EventRosterOptionsFields } from "@/components/dashboard/activities/event-roster-options-fields";
+import { EventVisibilityFields } from "@/components/dashboard/activities/event-visibility-fields";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -70,6 +73,10 @@ export function CreateActivityModal({
   const initialStartsAt = defaultStartsAtValue ?? fallbackStartsAt();
   const [startsAt, setStartsAt] = useState(initialStartsAt);
   const [endsAt, setEndsAt] = useState("");
+  const [usesRoster, setUsesRoster] = useState(false);
+  const [rosterOpen, setRosterOpen] = useState(false);
+  const [rosterRoles, setRosterRoles] = useState<string[]>([]);
+  const [visibleToChurch, setVisibleToChurch] = useState(true);
   const [recurrence, setRecurrence] = useState<EventRecurrenceFormState>(
     defaultRecurrenceFormState(initialStartsAt),
   );
@@ -114,6 +121,10 @@ export function CreateActivityModal({
         setLocation("");
         setStartsAt(fallbackStartsAt());
         setEndsAt("");
+        setUsesRoster(false);
+        setRosterOpen(false);
+        setRosterRoles([]);
+        setVisibleToChurch(true);
         setRecurrence(defaultRecurrenceFormState(fallbackStartsAt()));
         setError(null);
       }
@@ -189,6 +200,13 @@ export function CreateActivityModal({
       endsAt: endsAt ? new Date(endsAt).toISOString() : undefined,
       ministryId: ministryId || undefined,
       recurrence: recurrencePayload,
+      ...(ministryId
+        ? {
+            usesRoster,
+            visibleToChurch,
+            ...(usesRoster ? { rosterOpen, rosterRoles } : {}),
+          }
+        : {}),
     };
 
     try {
@@ -221,7 +239,7 @@ export function CreateActivityModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative z-10 flex max-h-[min(92dvh,720px)] w-full max-w-lg flex-col rounded-t-2xl border border-border bg-background shadow-2xl sm:rounded-2xl"
+        className="relative z-10 flex max-h-[min(92dvh,780px)] w-full max-w-xl flex-col rounded-t-2xl border border-border bg-background shadow-2xl sm:rounded-2xl"
       >
         <header className="flex items-start gap-4 px-6 pb-4 pt-6">
           <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
@@ -249,88 +267,149 @@ export function CreateActivityModal({
         <Separator />
 
         <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
-          <div className="space-y-4 overflow-y-auto px-6 py-5">
+          <div className="space-y-8 overflow-y-auto px-6 py-6">
             {error && (
               <div
                 role="alert"
-                className="rounded-lg border border-border bg-muted/60 px-3 py-2.5 text-sm"
+                className="rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2.5 text-sm text-destructive"
               >
                 {error}
               </div>
             )}
 
-            <div className="space-y-2">
-              <Label htmlFor="activity-name">Nome</Label>
-              <Input
-                id="activity-name"
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                placeholder="Ex.: Culto de domingo, Conferência, Ensaio"
+            <EventFormSection
+              title="Informações básicas"
+              description="Nome, ministério e detalhes que aparecem na agenda."
+              icon={FileText}
+            >
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="activity-name">Nome</Label>
+                  <Input
+                    id="activity-name"
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    placeholder="Ex.: Culto de domingo, Conferência, Ensaio"
+                    disabled={createEvent.isPending}
+                    autoFocus
+                    className="h-11 rounded-xl"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="activity-ministry">Ministério</Label>
+                  <SelectField
+                    id="activity-ministry"
+                    value={ministryId}
+                    onChange={(event) => setMinistryId(event.target.value)}
+                    disabled={createEvent.isPending}
+                    className="h-11 rounded-xl"
+                  >
+                    {canSelectChurchWide && (
+                      <option value="">Igreja inteira (destaque)</option>
+                    )}
+                    {creatableMinistries.map((ministry) => (
+                      <option key={ministry.id} value={ministry.id}>
+                        {ministry.name}
+                      </option>
+                    ))}
+                  </SelectField>
+                  <p className="text-xs text-muted-foreground">
+                    {canSelectChurchWide
+                      ? "Atividades da igreja aparecem em destaque no painel."
+                      : "Selecione um ministério em que você pode criar atividades."}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="activity-description">Descrição</Label>
+                  <Textarea
+                    id="activity-description"
+                    value={description}
+                    onChange={(event) => setDescription(event.target.value)}
+                    rows={2}
+                    disabled={createEvent.isPending}
+                    className="min-h-[80px] resize-y rounded-xl"
+                    placeholder="Detalhes opcionais para a equipe ou participantes"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="activity-location">Local</Label>
+                  <div className="relative">
+                    <MapPin className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="activity-location"
+                      value={location}
+                      onChange={(event) => setLocation(event.target.value)}
+                      disabled={createEvent.isPending}
+                      placeholder="Ex.: Templo principal"
+                      className="h-11 rounded-xl pl-10"
+                    />
+                  </div>
+                </div>
+              </div>
+            </EventFormSection>
+
+            <EventFormSection
+              title="Data e horário"
+              description="Quando a atividade acontece e por quanto tempo."
+              icon={Clock}
+            >
+              <ActivityScheduleFields
+                idPrefix="activity"
+                startsAt={startsAt}
+                endsAt={endsAt}
+                onStartsAtChange={setStartsAt}
+                onEndsAtChange={setEndsAt}
                 disabled={createEvent.isPending}
-                autoFocus
               />
-            </div>
+            </EventFormSection>
 
-            <div className="space-y-2">
-              <Label htmlFor="activity-ministry">Ministério</Label>
-              <SelectField
-                id="activity-ministry"
-                value={ministryId}
-                onChange={(event) => setMinistryId(event.target.value)}
-                disabled={createEvent.isPending}
-              >
-                {canSelectChurchWide && (
-                  <option value="">Igreja inteira (destaque)</option>
-                )}
-                {creatableMinistries.map((ministry) => (
-                  <option key={ministry.id} value={ministry.id}>
-                    {ministry.name}
-                  </option>
-                ))}
-              </SelectField>
-              <p className="text-xs text-muted-foreground">
-                {canSelectChurchWide
-                  ? "Atividades da igreja aparecem em destaque no painel e em Atividades."
-                  : "Selecione um ministério em que você pode criar atividades."}
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="activity-description">Descrição</Label>
-              <Textarea
-                id="activity-description"
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
-                rows={2}
+            <EventFormSection
+              title="Repetição"
+              description="Opcional. Crie uma série de ocorrências com a mesma configuração."
+              icon={Repeat}
+            >
+              <EventRecurrenceFields
+                value={recurrence}
+                onChange={setRecurrence}
+                startsAt={startsAt}
                 disabled={createEvent.isPending}
               />
-            </div>
+            </EventFormSection>
 
-            <div className="space-y-2">
-              <Label htmlFor="activity-location">Local</Label>
-              <Input
-                id="activity-location"
-                value={location}
-                onChange={(event) => setLocation(event.target.value)}
-                disabled={createEvent.isPending}
-              />
-            </div>
+            {ministryId ? (
+              <>
+                <EventFormSection
+                  title="Quem pode ver"
+                  description="Controle se o evento aparece na agenda geral da igreja."
+                  icon={Eye}
+                >
+                  <EventVisibilityFields
+                    visibleToChurch={visibleToChurch}
+                    onVisibleToChurchChange={setVisibleToChurch}
+                    disabled={createEvent.isPending}
+                  />
+                </EventFormSection>
 
-            <ActivityScheduleFields
-              idPrefix="activity"
-              startsAt={startsAt}
-              endsAt={endsAt}
-              onStartsAtChange={setStartsAt}
-              onEndsAtChange={setEndsAt}
-              disabled={createEvent.isPending}
-            />
-
-            <EventRecurrenceFields
-              value={recurrence}
-              onChange={setRecurrence}
-              startsAt={startsAt}
-              disabled={createEvent.isPending}
-            />
+                <EventFormSection
+                  title="Escala da equipe"
+                  description="Disponibilidade, funções e montagem de escala neste evento."
+                  icon={ClipboardList}
+                >
+                  <EventRosterOptionsFields
+                    usesRoster={usesRoster}
+                    rosterOpen={rosterOpen}
+                    rosterRoles={rosterRoles}
+                    onUsesRosterChange={setUsesRoster}
+                    onRosterOpenChange={setRosterOpen}
+                    onRosterRolesChange={setRosterRoles}
+                    disabled={createEvent.isPending}
+                  />
+                </EventFormSection>
+              </>
+            ) : null}
           </div>
 
           <Separator />

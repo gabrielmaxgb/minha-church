@@ -4,12 +4,6 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ArrowLeft, Layers } from "lucide-react";
 
-import {
-  AssignmentCard,
-  AvailabilityCard,
-  PendingCard,
-} from "@/components/dashboard/my-schedule/my-schedule-cards";
-import { RosterFunctionsReminder } from "@/components/dashboard/ministries/roster-functions-reminder";
 import { MyScheduleCalendar } from "@/components/dashboard/my-schedule/my-schedule-calendar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,32 +13,10 @@ import { useRespondToRosterAvailability } from "@/lib/api/queries/use-respond-wo
 import type { ScheduleAvailabilityAction } from "@/lib/my-schedule/event-display";
 import { canListMinistries } from "@/lib/permissions";
 import { useAuth } from "@/providers/auth-provider";
-import type { MyMinistrySchedule, MyScheduleEvent } from "@/types/ministries";
+import type { MyMinistrySchedule } from "@/types/ministries";
 
 interface MyScheduleMinistryContentProps {
   ministryId: string;
-}
-
-function filterPendingEvents(events: MyScheduleEvent[]) {
-  return events.filter(
-    (event) =>
-      event.rosterOpen &&
-      event.myAvailabilityStatus === null &&
-      event.myRoleLabel === null,
-  );
-}
-
-function filterAssignedEvents(events: MyScheduleEvent[]) {
-  return events.filter((event) => event.myRoleLabel !== null);
-}
-
-function filterRespondedEvents(events: MyScheduleEvent[]) {
-  return events.filter(
-    (event) =>
-      event.rosterOpen &&
-      event.myAvailabilityStatus !== null &&
-      event.myRoleLabel === null,
-  );
 }
 
 function MinistryScheduleDetail({
@@ -64,16 +36,8 @@ function MinistryScheduleDetail({
   ) => void;
   showMinistryLink: boolean;
 }) {
-  const pendingEvents = useMemo(
-    () => filterPendingEvents(ministry.events ?? []),
-    [ministry.events],
-  );
-  const assignedEvents = useMemo(
-    () => filterAssignedEvents(ministry.events ?? []),
-    [ministry.events],
-  );
-  const respondedEvents = useMemo(
-    () => filterRespondedEvents(ministry.events ?? []),
+  const hasOpenCollection = useMemo(
+    () => (ministry.events ?? []).some((event) => event.rosterOpen),
     [ministry.events],
   );
   const isEmpty = (ministry.events ?? []).length === 0;
@@ -90,20 +54,13 @@ function MinistryScheduleDetail({
         </div>
       )}
 
-      {ministry.needsRosterFunctions && (
-        <RosterFunctionsReminder
-          ministryId={ministry.ministryId}
-          ministryName={ministry.ministryName}
-        />
-      )}
-
-      {ministry.availabilityWindow.active && ministry.availabilityWindow.label && (
+      {hasOpenCollection && (
         <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
           <p className="text-xs font-semibold uppercase tracking-wider text-primary">
-            Período aberto para respostas
+            Coleta aberta
           </p>
           <p className="mt-1 text-sm font-medium text-foreground">
-            {ministry.availabilityWindow.label}
+            Eventos liberados para você marcar disponibilidade
           </p>
         </div>
       )}
@@ -112,54 +69,8 @@ function MinistryScheduleDetail({
         events={ministry.events ?? []}
         busyEventId={busyEventId}
         respondBusy={respondBusy}
-        needsRosterFunctions={ministry.needsRosterFunctions}
         onRespond={onRespond}
       />
-
-      {pendingEvents.length > 0 && (
-        <div className="space-y-3">
-          <h2 className="text-sm font-semibold text-foreground">Responder agora</h2>
-          {pendingEvents.map((event) => (
-            <PendingCard
-              key={event.eventId}
-              event={event}
-              busy={busyEventId === event.eventId || respondBusy}
-              needsRosterFunctions={ministry.needsRosterFunctions}
-              onRespond={(status) =>
-                onRespond(ministry.ministryId, event.eventId, status)
-              }
-            />
-          ))}
-        </div>
-      )}
-
-      {respondedEvents.length > 0 && (
-        <div className="space-y-3">
-          <h2 className="text-sm font-semibold text-foreground">Suas respostas</h2>
-          {respondedEvents.map((event) => (
-            <AvailabilityCard
-              key={event.eventId}
-              event={event}
-              busy={busyEventId === event.eventId || respondBusy}
-              needsRosterFunctions={ministry.needsRosterFunctions}
-              onRespond={(status) =>
-                onRespond(ministry.ministryId, event.eventId, status)
-              }
-            />
-          ))}
-        </div>
-      )}
-
-      {assignedEvents.length > 0 && (
-        <div className="space-y-3">
-          <h2 className="text-sm font-semibold text-foreground">
-            Escalas confirmadas
-          </h2>
-          {assignedEvents.map((event) => (
-            <AssignmentCard key={event.eventId} event={event} />
-          ))}
-        </div>
-      )}
 
       {isEmpty && (
         <p className="rounded-xl border border-dashed border-border bg-muted/15 px-4 py-6 text-center text-sm text-muted-foreground">
@@ -190,13 +101,6 @@ export function MyScheduleMinistryContent({
     eventId: string,
     status: ScheduleAvailabilityAction,
   ) {
-    if (ministry?.needsRosterFunctions && status !== "clear") {
-      setActionError(
-        "Cadastre pelo menos uma função na escala antes de informar disponibilidade.",
-      );
-      return;
-    }
-
     setActionError(null);
     setBusyEventId(eventId);
 

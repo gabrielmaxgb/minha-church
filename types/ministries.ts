@@ -11,6 +11,7 @@ export interface RosterAvailabilityWindow {
   periodEnd: string | null;
   label: string | null;
   eventsInPeriod: number;
+  openEventsInPeriod: number;
   teamPendingCount: number;
 }
 
@@ -52,9 +53,21 @@ export interface MinistryEvent {
   createdByUserId: string | null;
   recurrenceSeriesId: string | null;
   recurrence: EventRecurrence | null;
+  usesRoster: boolean;
   rosterOpen: boolean;
+  visibleToChurch: boolean;
+  rosterSlots?: EventRosterSlot[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface EventRosterSlot {
+  id: string;
+  eventId: string;
+  label: string;
+  sortOrder: number;
+  assignedMemberId: string | null;
+  assignedMemberName: string | null;
 }
 
 export interface MinistryMemberRole {
@@ -83,7 +96,10 @@ export interface CreateMinistryEventPayload {
   startsAt: string;
   endsAt?: string;
   recurrence?: EventRecurrenceInput;
+  usesRoster?: boolean;
   rosterOpen?: boolean;
+  rosterRoles?: string[];
+  visibleToChurch?: boolean;
 }
 
 export interface RosterAvailabilityEvent {
@@ -117,9 +133,6 @@ export interface RosterProfile {
   ministryName: string;
   hasRoster: true;
   memberId: string;
-  /** Funções na escala cadastradas pelo membro (campo legado `instruments` na API). */
-  instruments: string[];
-  needsRosterFunctions: boolean;
   availabilityWindow: RosterAvailabilityWindow;
   series: RosterSeriesGroup[];
   summary: {
@@ -135,16 +148,14 @@ export interface EventRosterAssignment {
   eventId: string;
   memberId: string;
   memberName: string;
+  rosterSlotId: string;
   roleLabel: string;
-  instruments: string[];
   availabilityStatus: EventAvailabilityStatus | null;
 }
 
 export interface EventRosterCandidate {
   memberId: string;
   memberName: string;
-  /** Funções que o membro cadastrou no perfil da escala. */
-  instruments: string[];
   availabilityStatus: EventAvailabilityStatus | null;
 }
 
@@ -201,8 +212,6 @@ export interface MyMinistrySchedule {
   pendingAvailability: MySchedulePending[];
   upcomingAssignments: MyScheduleAssignment[];
   events: MyScheduleEvent[];
-  rosterFunctions: string[];
-  needsRosterFunctions: boolean;
 }
 
 export interface MySchedules {
@@ -210,7 +219,6 @@ export interface MySchedules {
   summary: {
     pendingAvailabilityCount: number;
     upcomingAssignmentsCount: number;
-    missingRosterFunctionsCount: number;
     nextAssignment: MyScheduleAssignment | null;
   };
   ministries: MyMinistrySchedule[];

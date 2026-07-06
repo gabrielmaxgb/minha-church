@@ -22,7 +22,6 @@ interface MinistryPermissionDefinition {
   label: string;
   description: string;
   icon: LucideIcon;
-  rosterOnly?: boolean;
 }
 
 const MINISTRY_PERMISSIONS: MinistryPermissionDefinition[] = [
@@ -38,7 +37,6 @@ const MINISTRY_PERMISSIONS: MinistryPermissionDefinition[] = [
     description:
       "Monta a escala oficial escolhendo entre quem marcou disponibilidade.",
     icon: CalendarDays,
-    rosterOnly: true,
   },
 ];
 
@@ -150,19 +148,15 @@ function MinistryPermissionToggle({
 function MinistryRolePermissionsCard({
   role,
   ministryId,
-  hasRoster,
   canManage,
 }: {
   role: MinistryRole;
   ministryId: string;
-  hasRoster: boolean;
   canManage: boolean;
 }) {
   const updateRole = useUpdateMinistryRole(ministryId);
 
-  const permissions = MINISTRY_PERMISSIONS.filter(
-    (permission) => !permission.rosterOnly || hasRoster,
-  );
+  const permissions = MINISTRY_PERMISSIONS;
 
   const enabledCount = permissions.filter(
     (permission) => role[permission.field],
@@ -296,7 +290,6 @@ export function MinistryRolePermissionsSection({
               key={role.id}
               role={role}
               ministryId={ministry.id}
-              hasRoster={ministry.hasRoster}
               canManage={canManage}
             />
           ))

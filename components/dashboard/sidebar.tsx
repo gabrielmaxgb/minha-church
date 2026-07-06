@@ -95,8 +95,7 @@ export function DashboardSidebar({
 
   const pendingCount =
     permissions?.schedules.access && schedule
-      ? schedule.summary.pendingAvailabilityCount +
-        schedule.summary.missingRosterFunctionsCount
+      ? schedule.summary.pendingAvailabilityCount
       : 0;
 
   const visibleSecondaryNavItems = useMemo(() => {

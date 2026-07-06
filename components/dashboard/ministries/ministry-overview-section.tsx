@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
   AlignLeft,
-  CalendarDays,
   Layers,
   Power,
   Tag,
@@ -26,7 +25,7 @@ import { cn } from "@/lib/utils";
 import type { Ministry } from "@/types/ministries";
 
 interface MinistrySettingDefinition {
-  field: "isActive" | "hasRoster";
+  field: "isActive";
   label: string;
   description: string;
   icon: LucideIcon;
@@ -50,19 +49,6 @@ const MINISTRY_SETTINGS: MinistrySettingDefinition[] = [
       activeBg: "bg-emerald-500/6",
       iconBg: "bg-emerald-500/10",
       iconColor: "text-emerald-800 dark:text-emerald-300",
-    },
-  },
-  {
-    field: "hasRoster",
-    label: "Usar escalas",
-    description:
-      "Ativa disponibilidade da equipe, funções e montagem de escala nos eventos.",
-    icon: CalendarDays,
-    accent: {
-      activeBorder: "border-violet-500/35",
-      activeBg: "bg-violet-500/6",
-      iconBg: "bg-violet-500/10",
-      iconColor: "text-violet-800 dark:text-violet-300",
     },
   },
 ];
@@ -183,20 +169,17 @@ export function MinistryOverviewSection({
   const [name, setName] = useState(ministry.name);
   const [description, setDescription] = useState(ministry.description ?? "");
   const [isActive, setIsActive] = useState(ministry.isActive);
-  const [hasRosterEnabled, setHasRosterEnabled] = useState(ministry.hasRoster);
 
   useEffect(() => {
     setName(ministry.name);
     setDescription(ministry.description ?? "");
     setIsActive(ministry.isActive);
-    setHasRosterEnabled(ministry.hasRoster);
   }, [ministry]);
 
   const hasChanges =
     name.trim() !== ministry.name ||
     (description.trim() || null) !== (ministry.description ?? null) ||
-    isActive !== ministry.isActive ||
-    hasRosterEnabled !== ministry.hasRoster;
+    isActive !== ministry.isActive;
 
   const disabled = !canManage || updateMinistry.isPending;
 
@@ -204,7 +187,6 @@ export function MinistryOverviewSection({
     setName(ministry.name);
     setDescription(ministry.description ?? "");
     setIsActive(ministry.isActive);
-    setHasRosterEnabled(ministry.hasRoster);
   }
 
   async function handleSave() {
@@ -216,25 +198,15 @@ export function MinistryOverviewSection({
       name: name.trim(),
       description: description.trim() || null,
       isActive,
-      hasRoster: hasRosterEnabled,
     });
   }
 
-  function getSettingValue(field: MinistrySettingDefinition["field"]) {
-    if (field === "isActive") {
-      return isActive;
-    }
-
-    return hasRosterEnabled;
+  function getSettingValue() {
+    return isActive;
   }
 
-  function setSettingValue(field: MinistrySettingDefinition["field"], next: boolean) {
-    if (field === "isActive") {
-      setIsActive(next);
-      return;
-    }
-
-    setHasRosterEnabled(next);
+  function setSettingValue(next: boolean) {
+    setIsActive(next);
   }
 
   return (
@@ -331,7 +303,7 @@ export function MinistryOverviewSection({
                   </h3>
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Controle visibilidade e recursos disponíveis neste ministério.
+                  Controle a visibilidade deste ministério na lista.
                 </p>
               </header>
 
@@ -340,11 +312,9 @@ export function MinistryOverviewSection({
                   <MinistrySettingToggle
                     key={setting.field}
                     setting={setting}
-                    checked={getSettingValue(setting.field)}
+                    checked={getSettingValue()}
                     disabled={disabled}
-                    onToggle={() =>
-                      setSettingValue(setting.field, !getSettingValue(setting.field))
-                    }
+                    onToggle={() => setSettingValue(!getSettingValue())}
                   />
                 ))}
               </div>

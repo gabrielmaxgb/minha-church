@@ -50,7 +50,6 @@ interface MyScheduleCalendarProps {
   events: MyScheduleEvent[];
   busyEventId: string | null;
   respondBusy: boolean;
-  needsRosterFunctions?: boolean;
   onRespond: (
     ministryId: string,
     eventId: string,
@@ -62,7 +61,6 @@ export function MyScheduleCalendar({
   events,
   busyEventId,
   respondBusy,
-  needsRosterFunctions = false,
   onRespond,
 }: MyScheduleCalendarProps) {
   const now = new Date();
@@ -365,8 +363,6 @@ export function MyScheduleCalendar({
                     {canRespond && (
                       <AvailabilityRespondActions
                         className="mt-3"
-                        ministryId={event.ministryId}
-                        needsRosterFunctions={needsRosterFunctions}
                         busy={busy}
                         availabilityStatus={event.myAvailabilityStatus}
                         showClear={Boolean(event.myAvailabilityStatus)}

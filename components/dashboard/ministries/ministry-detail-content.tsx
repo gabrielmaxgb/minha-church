@@ -54,19 +54,13 @@ interface MinistryDetailContentProps {
 function SettingsNav({
   active,
   onChange,
-  hasRoster,
 }: {
   active: MinistrySettingsSection;
   onChange: (section: MinistrySettingsSection) => void;
-  hasRoster: boolean;
 }) {
-  const sections = MINISTRY_SETTINGS_SECTIONS.filter(
-    (item) => !item.rosterOnly || hasRoster,
-  );
-
   return (
     <nav className="flex shrink-0 flex-col gap-0.5 lg:w-56">
-      {sections.map((item) => (
+      {MINISTRY_SETTINGS_SECTIONS.map((item) => (
         <button
           key={item.id}
           type="button"
@@ -177,7 +171,7 @@ function RolesSection({
               <Input
                 value={name}
                 onChange={(event) => setName(event.target.value)}
-                placeholder="Ex.: Regente, Líder, Vocalista"
+                placeholder="Ex.: Líder"
                 disabled={createRole.isPending}
               />
               <Button
@@ -280,20 +274,13 @@ export function MinistryDetailContent({ ministryId }: MinistryDetailContentProps
     permissions && ministry
       ? canManageMinistryRoster(permissions, ministry.id)
       : false;
-  const hasRoster = ministry?.hasRoster ?? false;
 
   useEffect(() => {
     const requested = searchParams.get("section");
-    if (requested === "availability" && ministry?.hasRoster) {
+    if (requested === "availability") {
       setSection("availability");
     }
-  }, [searchParams, ministry?.hasRoster]);
-
-  useEffect(() => {
-    if (section === "availability" && ministry && !ministry.hasRoster) {
-      setSection("dashboard");
-    }
-  }, [ministry, section]);
+  }, [searchParams]);
 
   if (isLoading) {
     return (
@@ -332,7 +319,6 @@ export function MinistryDetailContent({ ministryId }: MinistryDetailContentProps
 
       <div className="flex flex-wrap items-center gap-2">
         <h1 className="font-display text-2xl font-semibold">{ministry.name}</h1>
-        {hasRoster && <Badge variant="secondary">Escalas</Badge>}
         {!ministry.isActive && (
           <Badge variant="outline">Inativo</Badge>
         )}
@@ -349,7 +335,6 @@ export function MinistryDetailContent({ ministryId }: MinistryDetailContentProps
         <SettingsNav
           active={section}
           onChange={setSection}
-          hasRoster={hasRoster}
         />
 
         <Separator className="lg:hidden" />
@@ -370,7 +355,7 @@ export function MinistryDetailContent({ ministryId }: MinistryDetailContentProps
               onGoToAvailability={() => setSection("availability")}
             />
           )}
-          {section === "availability" && hasRoster && (
+          {section === "availability" && (
             <WorshipAvailabilitySection
               ministryId={ministry.id}
               canManage={canManageMinistryEvents}

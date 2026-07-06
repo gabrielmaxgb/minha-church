@@ -7,7 +7,8 @@ import { Bell, ClipboardList, KeyRound } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
-  ministryAvailabilityPath,
+  AUTH_ROUTES,
+  myScheduleMinistryPath,
   settingsSectionPath,
 } from "@/constants/routes";
 import { useMySchedules, usePasswordResetRequests } from "@/lib/api/queries";
@@ -27,12 +28,12 @@ function useNotificationCount(): number {
   const { data: schedules } = useMySchedules();
 
   const passwordResetCount = canManage ? (passwordResetRequests?.length ?? 0) : 0;
-  const missingFunctionsCount =
-    hasSchedulesAccess && schedules
-      ? schedules.summary.missingRosterFunctionsCount
+  const pendingScheduleCount =
+    hasSchedulesAccess && schedules?.hasRosterMinistries
+      ? schedules.summary.pendingAvailabilityCount
       : 0;
 
-  return passwordResetCount + missingFunctionsCount;
+  return passwordResetCount + pendingScheduleCount;
 }
 
 function NotificationsPanel({
@@ -62,12 +63,18 @@ function NotificationsPanel({
   } = useMySchedules();
 
   const passwordResetCount = canManage ? (passwordResetRequests?.length ?? 0) : 0;
-  const missingFunctionsMinistries =
-    hasSchedulesAccess && schedules
-      ? schedules.ministries.filter((ministry) => ministry.needsRosterFunctions)
-      : [];
-  const missingFunctionsCount = missingFunctionsMinistries.length;
-  const count = passwordResetCount + missingFunctionsCount;
+  const pendingScheduleCount =
+    hasSchedulesAccess && schedules?.hasRosterMinistries
+      ? schedules.summary.pendingAvailabilityCount
+      : 0;
+  const count = passwordResetCount + pendingScheduleCount;
+
+  const firstPendingMinistry = schedules?.ministries.find(
+    (ministry) => ministry.pendingAvailability.length > 0,
+  );
+  const respondHref = firstPendingMinistry
+    ? myScheduleMinistryPath(firstPendingMinistry.ministryId)
+    : AUTH_ROUTES.mySchedules;
 
   const isLoading =
     (canManage && passwordResetLoading) ||
@@ -154,11 +161,8 @@ function NotificationsPanel({
 
           {!isLoading &&
             !isError &&
-            missingFunctionsMinistries.map((ministry) => (
-              <div
-                key={ministry.ministryId}
-                className="border-b border-border/70 px-4 py-3 last:border-b-0"
-              >
+            pendingScheduleCount > 0 && (
+              <div className="border-b border-border/70 px-4 py-3 last:border-b-0">
                 <div className="flex items-start gap-3">
                   <div className={pendingNotificationStyles.icon.sm}>
                     <ClipboardList
@@ -167,16 +171,16 @@ function NotificationsPanel({
                     />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium leading-snug">
-                      Cadastre suas funções na escala
+                    <p className={pendingNotificationStyles.label}>
+                      Escalas aguardando resposta
+                    </p>
+                    <p className="mt-1 text-sm font-medium leading-snug">
+                      Precisamos da sua disponibilidade
                     </p>
                     <p className="mt-0.5 text-xs text-muted-foreground">
-                      Em{" "}
-                      <span className="font-medium text-foreground">
-                        {ministry.ministryName}
-                      </span>
-                      , informe pelo menos uma função para o líder poder
-                      escalá-lo.
+                      {pendingScheduleCount} evento
+                      {pendingScheduleCount === 1 ? "" : "s"} sem sua resposta.
+                      Sem isso, o líder não consegue fechar a escala.
                     </p>
                     <Button
                       variant="outline"
@@ -185,14 +189,12 @@ function NotificationsPanel({
                       asChild
                       onClick={onClose}
                     >
-                      <Link href={ministryAvailabilityPath(ministry.ministryId)}>
-                        Adicionar funções
-                      </Link>
+                      <Link href={respondHref}>Responder agora</Link>
                     </Button>
                   </div>
                 </div>
               </div>
-            ))}
+            )}
 
           {!isLoading &&
             !isError &&

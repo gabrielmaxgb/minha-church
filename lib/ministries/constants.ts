@@ -11,7 +11,6 @@ export const MINISTRY_SETTINGS_SECTIONS: Array<{
   id: MinistrySettingsSection;
   label: string;
   description: string;
-    rosterOnly?: boolean;
 }> = [
   {
     id: "dashboard",
@@ -22,7 +21,6 @@ export const MINISTRY_SETTINGS_SECTIONS: Array<{
     id: "availability",
     label: "Escalas",
     description: "Disponibilidade e funções na equipe",
-    rosterOnly: true,
   },
   {
     id: "members",

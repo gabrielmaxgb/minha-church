@@ -239,7 +239,7 @@ export function ActivityDetailContent({ eventId }: ActivityDetailContentProps) {
           </CardContent>
         </Card>
 
-        {event.isRosterMinistry && (
+        {event.usesRoster && (
           <EventRosterSection event={event} canManage={canManageRoster} />
         )}
 

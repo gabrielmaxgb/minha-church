@@ -99,7 +99,7 @@ async function deleteChurchEvent(
 async function upsertEventRoster(
 	churchId: string,
 	eventId: string,
-	payload: { memberId: string; roleLabel: string },
+	payload: { memberId: string; rosterSlotId: string },
 ): Promise<EventRosterAssignment[]> {
 	return apiClient<EventRosterAssignment[]>(
 		buildTenantPath(churchId, `/events/${eventId}/roster`),

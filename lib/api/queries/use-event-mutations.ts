@@ -108,7 +108,7 @@ export function useUpsertEventRoster(eventId: string) {
 	const invalidate = useInvalidateEvents();
 
 	return useMutation({
-		mutationFn: (payload: { memberId: string; roleLabel: string }) => {
+		mutationFn: (payload: { memberId: string; rosterSlotId: string }) => {
 			if (!churchId) {
 				throw new Error("Igreja não selecionada.");
 			}

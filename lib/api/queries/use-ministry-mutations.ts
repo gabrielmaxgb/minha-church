@@ -12,6 +12,7 @@ import {
   deleteMinistryRole,
   ministriesKeys,
   openAvailabilityWindow,
+  setRosterCollection,
   type CreateMinistryPayload,
   type CreateMinistryRolePayload,
   type UpdateMinistryPayload,
@@ -249,6 +250,29 @@ export function useCloseAvailabilityWindow(ministryId: string) {
       }
 
       return closeAvailabilityWindow(churchId, ministryId);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ministriesKeys._def });
+      await queryClient.invalidateQueries({ queryKey: rosterKeys._def });
+    },
+  });
+}
+
+export function useSetRosterCollection(ministryId: string) {
+  const { churchId } = useTenant();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: {
+      rosterOpen: boolean;
+      eventIds?: string[];
+      recurrenceSeriesId?: string;
+    }) => {
+      if (!churchId) {
+        throw new Error("Igreja não selecionada.");
+      }
+
+      return setRosterCollection(churchId, ministryId, payload);
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ministriesKeys._def });

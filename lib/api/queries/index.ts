@@ -79,6 +79,7 @@ export {
   useDeleteMinistry,
   useDeleteMinistryRole,
   useOpenAvailabilityWindow,
+  useSetRosterCollection,
   useUpdateEventAvailability,
   useUpdateMinistry,
   useUpdateMinistryRole,

@@ -3,15 +3,23 @@
 import { useEffect, useId, useMemo, useState } from "react";
 import {
   Calendar,
+  ClipboardList,
+  Clock,
+  Eye,
+  FileText,
   Loader2,
   MapPin,
+  Repeat,
   Sparkles,
   Trash2,
   X,
 } from "lucide-react";
 
 import { ActivityScheduleFields } from "@/components/dashboard/activities/activity-schedule-fields";
+import { EventFormSection } from "@/components/dashboard/activities/event-form-section";
 import { EventMutationScopeFields } from "@/components/dashboard/activities/event-mutation-scope-fields";
+import { EventRosterOptionsFields } from "@/components/dashboard/activities/event-roster-options-fields";
+import { EventVisibilityFields } from "@/components/dashboard/activities/event-visibility-fields";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,30 +38,6 @@ interface EditActivityModalProps {
   open: boolean;
   onClose: () => void;
   onDeleted?: () => void;
-}
-
-function FormSection({
-  title,
-  description,
-  children,
-  className,
-}: {
-  title: string;
-  description?: string;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <section className={cn("space-y-5", className)}>
-      <div className="space-y-1">
-        <h3 className="text-sm font-semibold tracking-tight">{title}</h3>
-        {description && (
-          <p className="text-sm text-muted-foreground">{description}</p>
-        )}
-      </div>
-      {children}
-    </section>
-  );
 }
 
 function Field({
@@ -90,6 +74,10 @@ export function EditActivityModal({
   const [location, setLocation] = useState("");
   const [startsAt, setStartsAt] = useState("");
   const [endsAt, setEndsAt] = useState("");
+  const [usesRoster, setUsesRoster] = useState(false);
+  const [rosterOpen, setRosterOpen] = useState(false);
+  const [rosterRoles, setRosterRoles] = useState<string[]>([]);
+  const [visibleToChurch, setVisibleToChurch] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editScope, setEditScope] = useState<EventMutationScope>("this");
@@ -111,9 +99,14 @@ export function EditActivityModal({
       (location.trim() || "") !== (event.location ?? "") ||
       startsAt !== toDatetimeLocalValue(event.startsAt) ||
       (endsAt || "") !==
-        (event.endsAt ? toDatetimeLocalValue(event.endsAt) : "")
+        (event.endsAt ? toDatetimeLocalValue(event.endsAt) : "") ||
+      usesRoster !== event.usesRoster ||
+      rosterOpen !== event.rosterOpen ||
+      visibleToChurch !== (event.visibleToChurch ?? true) ||
+      rosterRoles.join("\n") !==
+        (event.rosterSlots ?? []).map((slot) => slot.label).join("\n")
     );
-  }, [event, name, description, location, startsAt, endsAt]);
+  }, [event, name, description, location, startsAt, endsAt, usesRoster, rosterOpen, rosterRoles, visibleToChurch]);
 
   useEffect(() => {
     if (!open || !event) {
@@ -122,6 +115,10 @@ export function EditActivityModal({
       setLocation("");
       setStartsAt("");
       setEndsAt("");
+      setUsesRoster(false);
+      setRosterOpen(false);
+      setRosterRoles([]);
+      setVisibleToChurch(true);
       setError(null);
       setConfirmDelete(false);
       setEditScope("this");
@@ -134,6 +131,10 @@ export function EditActivityModal({
     setLocation(event.location ?? "");
     setStartsAt(toDatetimeLocalValue(event.startsAt));
     setEndsAt(event.endsAt ? toDatetimeLocalValue(event.endsAt) : "");
+    setUsesRoster(event.usesRoster);
+    setRosterOpen(event.rosterOpen);
+    setVisibleToChurch(event.visibleToChurch ?? true);
+    setRosterRoles((event.rosterSlots ?? []).map((slot) => slot.label));
     setError(null);
     setConfirmDelete(false);
     setEditScope("this");
@@ -171,6 +172,10 @@ export function EditActivityModal({
     submitEvent.preventDefault();
     setError(null);
 
+    if (!event) {
+      return;
+    }
+
     if (!name.trim()) {
       setError("Informe o nome da atividade.");
       return;
@@ -183,6 +188,14 @@ export function EditActivityModal({
         location: location.trim() || null,
         startsAt: new Date(startsAt).toISOString(),
         endsAt: endsAt ? new Date(endsAt).toISOString() : null,
+        ...(event.ministryId
+          ? {
+              usesRoster,
+              visibleToChurch,
+              rosterOpen: usesRoster ? rosterOpen : false,
+              rosterRoles: usesRoster ? rosterRoles : [],
+            }
+          : {}),
         ...(isRecurring ? { scope: editScope } : {}),
       });
       onClose();
@@ -301,11 +314,12 @@ export function EditActivityModal({
               </div>
             )}
 
-            <FormSection
+            <EventFormSection
               title="Informações principais"
               description="Nome, descrição e local onde a atividade acontece."
+              icon={FileText}
             >
-              <div className="space-y-6 rounded-2xl border border-border/80 bg-muted/10 p-5 sm:p-6">
+              <div className="space-y-6">
                 <Field label="Nome da atividade" htmlFor="edit-activity-name">
                   <Input
                     id="edit-activity-name"
@@ -348,14 +362,14 @@ export function EditActivityModal({
                   </div>
                 </Field>
               </div>
-            </FormSection>
+            </EventFormSection>
 
-            <FormSection
+            <EventFormSection
               title="Data e horário"
               description="Defina o dia, o horário de início e a duração da atividade."
+              icon={Clock}
             >
-              <div className="rounded-2xl border border-border/80 bg-muted/10 p-5 sm:p-6">
-                <ActivityScheduleFields
+              <ActivityScheduleFields
                   idPrefix="edit-activity"
                   startsAt={startsAt}
                   endsAt={endsAt}
@@ -364,32 +378,62 @@ export function EditActivityModal({
                   disabled={isPending}
                   elevated
                 />
-              </div>
-            </FormSection>
+            </EventFormSection>
 
-            {isRecurring && (
-              <FormSection
-                title="Alcance das alterações"
-                description="Defina se a edição vale só para esta data ou para a série inteira."
+            {event.ministryId && (
+              <EventFormSection
+                title="Quem pode ver"
+                description="Controle se o evento aparece na agenda geral da igreja."
+                icon={Eye}
               >
-                <div className="rounded-2xl border border-border/80 bg-muted/10 p-5 sm:p-6">
-                  <EventMutationScopeFields
-                    name="edit-event-scope"
-                    value={editScope}
-                    onChange={setEditScope}
-                    disabled={isPending}
-                    actionLabel="edit"
-                  />
-                </div>
-              </FormSection>
+                <EventVisibilityFields
+                  visibleToChurch={visibleToChurch}
+                  onVisibleToChurchChange={setVisibleToChurch}
+                  disabled={isPending}
+                />
+              </EventFormSection>
             )}
 
-            <FormSection
+            {event.ministryId && (
+              <EventFormSection
+                title="Escala da equipe"
+                description="Disponibilidade, funções e montagem de escala neste evento."
+                icon={ClipboardList}
+              >
+                <EventRosterOptionsFields
+                  usesRoster={usesRoster}
+                  rosterOpen={rosterOpen}
+                  rosterRoles={rosterRoles}
+                  onUsesRosterChange={setUsesRoster}
+                  onRosterOpenChange={setRosterOpen}
+                  onRosterRolesChange={setRosterRoles}
+                  disabled={isPending}
+                />
+              </EventFormSection>
+            )}
+
+            {isRecurring && (
+              <EventFormSection
+                title="Alcance das alterações"
+                description="Defina se a edição vale só para esta data ou para a série inteira."
+                icon={Repeat}
+              >
+                <EventMutationScopeFields
+                  name="edit-event-scope"
+                  value={editScope}
+                  onChange={setEditScope}
+                  disabled={isPending}
+                  actionLabel="edit"
+                />
+              </EventFormSection>
+            )}
+
+            <EventFormSection
               title="Zona de perigo"
               description="A exclusão remove a atividade da agenda. Essa ação não pode ser desfeita."
               className="border-t border-border/80 pt-2"
+              contentClassName="border-destructive/15 bg-destructive/3"
             >
-              <div className="rounded-2xl border border-destructive/15 bg-destructive/3 p-5 sm:p-6">
                 {confirmDelete ? (
                   <div className="space-y-5">
                     <div className="space-y-1.5">
@@ -456,8 +500,7 @@ export function EditActivityModal({
                     Excluir atividade
                   </Button>
                 )}
-              </div>
-            </FormSection>
+            </EventFormSection>
           </div>
 
           <footer className="flex flex-col-reverse gap-3 border-t border-border/80 bg-muted/20 px-6 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">

@@ -5,7 +5,6 @@ import { useMemo, useState } from "react";
 import { Calendar, MapPin, Music2, Pencil, Plus, Repeat, UserPlus } from "lucide-react";
 
 import { AddMinistryMemberModal } from "@/components/dashboard/ministries/add-ministry-member-modal";
-import { RosterFunctionsReminder } from "@/components/dashboard/ministries/roster-functions-reminder";
 import { MinistryMembersList } from "@/components/dashboard/ministries/ministry-members-list";
 import { CreateMinistryEventModal } from "@/components/dashboard/ministries/create-ministry-event-modal";
 import { EditActivityModal } from "@/components/dashboard/activities/edit-activity-modal";
@@ -24,7 +23,6 @@ import {
   useMinistryEvents,
   useMinistryMembers,
   useRemoveMemberFromMinistry,
-  useRosterProfile,
   useUpdateMemberMinistryRole,
 } from "@/lib/api/queries";
 import { activityDetailPath } from "@/constants/routes";
@@ -71,11 +69,8 @@ export function MinistryDashboardSection({
   onGoToAvailability,
 }: MinistryDashboardSectionProps) {
   const { permissions } = useAuth();
-  const hasRoster = ministry.hasRoster;
   const { data: members, isLoading: membersLoading } = useMinistryMembers(ministry.id);
   const { data: events, isLoading: eventsLoading } = useMinistryEvents(ministry.id);
-  const { data: rosterProfile } = useRosterProfile(ministry.id, hasRoster);
-
   const [eventModalOpen, setEventModalOpen] = useState(false);
   const [memberModalOpen, setMemberModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<MinistryEvent | null>(null);
@@ -94,13 +89,6 @@ export function MinistryDashboardSection({
   return (
     <>
       <div className="space-y-6">
-        {hasRoster && rosterProfile?.needsRosterFunctions && (
-          <RosterFunctionsReminder
-            ministryId={ministry.id}
-            ministryName={ministry.name}
-          />
-        )}
-
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
             label="Membros"
@@ -124,25 +112,23 @@ export function MinistryDashboardSection({
           />
         </div>
 
-        {hasRoster && (
-          <Link
-            href={myScheduleMinistryPath(ministry.id)}
-            className="flex w-full items-start gap-4 rounded-2xl border border-foreground/10 bg-gradient-to-br from-muted/50 to-card px-5 py-4 text-left shadow-soft transition-all hover:shadow-elevated"
-          >
-            <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-foreground text-background">
-              <Music2 className="size-5" aria-hidden />
+        <Link
+          href={myScheduleMinistryPath(ministry.id)}
+          className="flex w-full items-start gap-4 rounded-2xl border border-foreground/10 bg-gradient-to-br from-muted/50 to-card px-5 py-4 text-left shadow-soft transition-all hover:shadow-elevated"
+        >
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-foreground text-background">
+            <Music2 className="size-5" aria-hidden />
+          </span>
+          <span className="min-w-0">
+            <span className="block font-display text-base font-semibold tracking-tight">
+              Minhas escalas
             </span>
-            <span className="min-w-0">
-              <span className="block font-display text-base font-semibold tracking-tight">
-                Minhas escalas
-              </span>
-              <span className="mt-1 block text-sm leading-relaxed text-muted-foreground">
-                Veja suas escalas, responda se pode ir e ajude o líder a montar
-                a equipe.
-              </span>
+            <span className="mt-1 block text-sm leading-relaxed text-muted-foreground">
+              Veja suas escalas, responda se pode ir e ajude o líder a montar
+              a equipe.
             </span>
-          </Link>
-        )}
+          </span>
+        </Link>
 
         <div className="flex flex-wrap gap-2">
           {canAddMembers && (
@@ -157,7 +143,7 @@ export function MinistryDashboardSection({
               Novo evento
             </Button>
           )}
-          {hasRoster && onGoToAvailability && (
+          {onGoToAvailability && (
             <Button size="sm" variant="outline" onClick={onGoToAvailability}>
               <Calendar className="size-4" />
               Escalas
@@ -265,7 +251,6 @@ export function MinistryDashboardSection({
       <CreateMinistryEventModal
         ministryId={ministry.id}
         ministryName={ministry.name}
-        isRoster={hasRoster}
         open={eventModalOpen}
         onClose={() => setEventModalOpen(false)}
       />

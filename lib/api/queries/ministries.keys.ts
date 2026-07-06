@@ -67,9 +67,20 @@ async function fetchMinistryMembers(
 async function fetchMinistryEvents(
   churchId: string,
   ministryId: string,
+  query?: { from?: string; to?: string },
 ): Promise<MinistryEvent[]> {
+  const params = new URLSearchParams();
+  if (query?.from) {
+    params.set("from", query.from);
+  }
+  if (query?.to) {
+    params.set("to", query.to);
+  }
+
+  const suffix = params.size > 0 ? `?${params.toString()}` : "";
+
   return apiClient<MinistryEvent[]>(
-    buildTenantPath(churchId, `/ministries/${ministryId}/events`),
+    buildTenantPath(churchId, `/ministries/${ministryId}/events${suffix}`),
     { churchId },
   );
 }
@@ -245,6 +256,25 @@ async function closeAvailabilityWindow(
   );
 }
 
+async function setRosterCollection(
+  churchId: string,
+  ministryId: string,
+  payload: {
+    rosterOpen: boolean;
+    eventIds?: string[];
+    recurrenceSeriesId?: string;
+  },
+): Promise<{ updated: number }> {
+  return apiClient<{ updated: number }>(
+    buildTenantPath(churchId, `/ministries/${ministryId}/roster/collection`),
+    {
+      churchId,
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    },
+  );
+}
+
 export const ministriesKeys = createQueryKeys("ministries", {
   list: (churchId: string) => ({
     queryKey: [churchId],
@@ -254,9 +284,13 @@ export const ministriesKeys = createQueryKeys("ministries", {
     queryKey: [churchId, ministryId],
     queryFn: () => fetchMinistry(churchId, ministryId),
   }),
-  events: (churchId: string, ministryId: string) => ({
-    queryKey: [churchId, ministryId, "events"],
-    queryFn: () => fetchMinistryEvents(churchId, ministryId),
+  events: (
+    churchId: string,
+    ministryId: string,
+    params?: { from?: string; to?: string },
+  ) => ({
+    queryKey: [churchId, ministryId, "events", params ?? null],
+    queryFn: () => fetchMinistryEvents(churchId, ministryId, params),
   }),
   members: (churchId: string, ministryId: string) => ({
     queryKey: [churchId, ministryId, "members"],
@@ -281,6 +315,7 @@ export {
   fetchRosterProfile,
   closeAvailabilityWindow,
   openAvailabilityWindow,
+  setRosterCollection,
   updateEventAvailability,
   updateMinistry,
   updateMinistryRole,

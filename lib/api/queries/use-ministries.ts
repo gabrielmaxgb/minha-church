@@ -28,11 +28,18 @@ export function useMinistry(ministryId: string) {
   });
 }
 
-export function useMinistryEvents(ministryId: string | null) {
+export function useMinistryEvents(
+  ministryId: string | null,
+  params?: { from?: string; to?: string },
+) {
   const { churchId } = useTenant();
 
   return useQuery({
-    ...ministriesKeys.events(churchId ?? "unknown", ministryId ?? "unknown"),
+    ...ministriesKeys.events(
+      churchId ?? "unknown",
+      ministryId ?? "unknown",
+      params,
+    ),
     enabled: Boolean(churchId && ministryId),
   });
 }

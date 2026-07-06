@@ -1,4 +1,5 @@
 import type { MyScheduleRosterEntry } from "@/types/ministries";
+import { formatRosterRole } from "@/lib/ministries/roster";
 
 export function ScheduleEventRosterList({
   roster,
@@ -24,7 +25,7 @@ export function ScheduleEventRosterList({
           >
             <span className="truncate text-foreground">{entry.memberName}</span>
             <span className="shrink-0 text-muted-foreground">
-              {entry.roleLabel}
+              {formatRosterRole(entry.roleLabel)}
             </span>
           </li>
         ))}

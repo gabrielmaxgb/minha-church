@@ -1,17 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { Check, RotateCcw, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { ministryAvailabilityPath } from "@/constants/routes";
-import { scrollToRosterProfileSection } from "@/lib/ministries/roster-profile-scroll";
 import type { ScheduleAvailabilityAction } from "@/lib/my-schedule/event-display";
 import { cn } from "@/lib/utils";
 
 interface AvailabilityRespondActionsProps {
-  ministryId: string;
-  needsRosterFunctions: boolean;
   busy?: boolean;
   layout?: "compact" | "default" | "card";
   availabilityStatus?: "available" | "unavailable" | null;
@@ -20,45 +15,7 @@ interface AvailabilityRespondActionsProps {
   className?: string;
 }
 
-export function AvailabilityFunctionsGate({
-  ministryId,
-  className,
-}: {
-  ministryId: string;
-  className?: string;
-}) {
-  const href = ministryAvailabilityPath(ministryId);
-
-  return (
-    <div
-      className={cn(
-        "rounded-xl border border-attention-border bg-attention-subtle px-3 py-2.5",
-        className,
-      )}
-    >
-      <p className="text-xs leading-relaxed text-attention-foreground">
-        Cadastre <span className="font-medium">como você serve</span> neste
-        ministério antes de informar disponibilidade.
-      </p>
-      <Button size="sm" variant="outline" className="mt-2 h-8" asChild>
-        <Link
-          href={href}
-          onClick={(event) => {
-            if (scrollToRosterProfileSection()) {
-              event.preventDefault();
-            }
-          }}
-        >
-          Adicionar funções
-        </Link>
-      </Button>
-    </div>
-  );
-}
-
 export function AvailabilityRespondActions({
-  ministryId,
-  needsRosterFunctions,
   busy = false,
   layout = "default",
   availabilityStatus = null,
@@ -66,27 +23,6 @@ export function AvailabilityRespondActions({
   onRespond,
   className,
 }: AvailabilityRespondActionsProps) {
-  if (needsRosterFunctions) {
-    return (
-      <div className={cn("space-y-2", className)}>
-        <AvailabilityFunctionsGate ministryId={ministryId} />
-        {showClear && availabilityStatus && (
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            disabled={busy}
-            className="w-full text-muted-foreground"
-            onClick={() => onRespond("clear")}
-          >
-            <RotateCcw className="size-4" />
-            Desfazer resposta
-          </Button>
-        )}
-      </div>
-    );
-  }
-
   const isAvailable = availabilityStatus === "available";
   const isUnavailable = availabilityStatus === "unavailable";
 
@@ -131,9 +67,7 @@ export function AvailabilityRespondActions({
           className={cn(
             isAvailable && "bg-emerald-600 hover:bg-emerald-600/90",
           )}
-          onClick={() =>
-            onRespond(isAvailable ? "clear" : "available")
-          }
+          onClick={() => onRespond(isAvailable ? "clear" : "available")}
         >
           <Check className="size-4" />
           Posso
@@ -143,9 +77,7 @@ export function AvailabilityRespondActions({
           size="sm"
           variant={isUnavailable ? "destructive" : "outline"}
           disabled={busy}
-          onClick={() =>
-            onRespond(isUnavailable ? "clear" : "unavailable")
-          }
+          onClick={() => onRespond(isUnavailable ? "clear" : "unavailable")}
         >
           <X className="size-4" />
           Não posso
@@ -194,8 +126,4 @@ export function AvailabilityRespondActions({
       )}
     </div>
   );
-}
-
-export function availabilityRespondBlockedMessage(): string {
-  return "Cadastre pelo menos uma função na escala antes de informar disponibilidade.";
 }

@@ -5,17 +5,12 @@ import { ChevronRight, Layers } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { RosterFunctionsReminder } from "@/components/dashboard/ministries/roster-functions-reminder";
 import { myScheduleMinistryPath } from "@/constants/routes";
 import { pendingNotificationStyles } from "@/lib/ui/notification-styles";
 import { useMySchedules } from "@/lib/api/queries";
 import type { MyMinistrySchedule } from "@/types/ministries";
 
 function ministrySummary(ministry: MyMinistrySchedule): string {
-  if (ministry.needsRosterFunctions) {
-    return "Cadastre pelo menos uma função na escala";
-  }
-
   const pending = ministry.pendingAvailability.length;
   const assignments = ministry.upcomingAssignments.length;
 
@@ -32,13 +27,6 @@ function ministrySummary(ministry: MyMinistrySchedule): string {
 
 function sortMinistries(ministries: MyMinistrySchedule[]): MyMinistrySchedule[] {
   return [...ministries].sort((a, b) => {
-    const functionsDiff =
-      Number(b.needsRosterFunctions) - Number(a.needsRosterFunctions);
-
-    if (functionsDiff !== 0) {
-      return functionsDiff;
-    }
-
     const pendingDiff =
       b.pendingAvailability.length - a.pendingAvailability.length;
 
@@ -76,33 +64,21 @@ export function MyScheduleContent() {
       <div className="rounded-2xl border border-dashed border-border bg-muted/15 px-6 py-12 text-center">
         <Layers className="mx-auto size-10 text-muted-foreground" />
         <p className="mt-4 font-display text-lg font-semibold text-foreground">
-          Você ainda não participa de ministérios com escalas
+          Você ainda não participa de ministérios
         </p>
         <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-          Quando o líder te adicionar a um ministério que usa escalas (recepção,
-          mídia, louvor, etc.), suas disponibilidades e escalas aparecem aqui,
-          separadas por ministério.
+          Quando o líder te adicionar a um ministério, suas disponibilidades e
+          escalas aparecem aqui, separadas por ministério.
         </p>
       </div>
     );
   }
 
   const totalPending = data.summary.pendingAvailabilityCount;
-  const missingFunctions = data.summary.missingRosterFunctionsCount;
   const ministries = sortMinistries(data.ministries);
-  const firstMissingFunctions = ministries.find(
-    (ministry) => ministry.needsRosterFunctions,
-  );
 
   return (
     <div className="space-y-6">
-      {missingFunctions > 0 && firstMissingFunctions && (
-        <RosterFunctionsReminder
-          ministryId={firstMissingFunctions.ministryId}
-          ministryName={firstMissingFunctions.ministryName}
-        />
-      )}
-
       {totalPending > 0 && (
         <div className={pendingNotificationStyles.banner.inline}>
           <p className="text-sm font-medium text-foreground">
@@ -121,9 +97,9 @@ export function MyScheduleContent() {
       <div className="overflow-hidden rounded-xl border border-border bg-background">
         {ministries.map((ministry) => {
           const pending = ministry.pendingAvailability.length;
-          const hasOpenWindow =
-            ministry.availabilityWindow.active &&
-            Boolean(ministry.availabilityWindow.label);
+          const openEvents = (ministry.events ?? []).filter(
+            (event) => event.rosterOpen,
+          ).length;
 
           return (
             <Link
@@ -140,11 +116,6 @@ export function MyScheduleContent() {
                   <p className="font-display text-base font-semibold tracking-tight text-foreground">
                     {ministry.ministryName}
                   </p>
-                  {ministry.needsRosterFunctions && (
-                    <Badge className={pendingNotificationStyles.badge}>
-                      Funções pendentes
-                    </Badge>
-                  )}
                   {pending > 0 && (
                     <Badge className={pendingNotificationStyles.badge}>
                       {pending} pendente{pending === 1 ? "" : "s"}
@@ -154,9 +125,10 @@ export function MyScheduleContent() {
                 <p className="mt-0.5 text-sm text-muted-foreground">
                   {ministrySummary(ministry)}
                 </p>
-                {hasOpenWindow && (
+                {openEvents > 0 && (
                   <p className="mt-1 text-xs font-medium text-primary">
-                    Período aberto · {ministry.availabilityWindow.label}
+                    {openEvents} evento{openEvents === 1 ? "" : "s"} aberto
+                    {openEvents === 1 ? "" : "s"} para resposta
                   </p>
                 )}
               </div>

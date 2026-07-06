@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { AlertCircle, CalendarDays, ChevronRight } from "lucide-react";
 
-import { RosterFunctionsReminder } from "@/components/dashboard/ministries/roster-functions-reminder";
 import { Button } from "@/components/ui/button";
 import { AUTH_ROUTES, activityDetailPath, myScheduleMinistryPath } from "@/constants/routes";
 import { pendingNotificationStyles } from "@/lib/ui/notification-styles";
@@ -12,6 +11,7 @@ import {
   formatEventTime,
   formatRelativeEventDay,
 } from "@/lib/dashboard/date-utils";
+import { formatRosterRole } from "@/lib/ministries/roster";
 
 export function ScheduleBanner() {
   const { data, isLoading } = useMySchedules();
@@ -21,26 +21,10 @@ export function ScheduleBanner() {
   }
 
   const pending = data.summary.pendingAvailabilityCount;
-  const missingFunctions = data.summary.missingRosterFunctionsCount;
   const next = data.summary.nextAssignment;
 
-  if (pending === 0 && !next && missingFunctions === 0) {
+  if (pending === 0 && !next) {
     return null;
-  }
-
-  if (missingFunctions > 0) {
-    const firstMissing = data.ministries.find(
-      (ministry) => ministry.needsRosterFunctions,
-    );
-
-    if (firstMissing) {
-      return (
-        <RosterFunctionsReminder
-          ministryId={firstMissing.ministryId}
-          ministryName={firstMissing.ministryName}
-        />
-      );
-    }
   }
 
   if (pending > 0) {
@@ -103,7 +87,7 @@ export function ScheduleBanner() {
                 Próxima escala · {next.ministryName}
               </p>
               <p className="mt-1 font-display text-lg font-bold tracking-tight text-foreground">
-                {next.roleLabel} · {next.name}
+                {formatRosterRole(next.roleLabel)} · {next.name}
               </p>
               <p className="mt-1 text-sm text-muted-foreground">
                 {relative ? `${relative} · ` : ""}
