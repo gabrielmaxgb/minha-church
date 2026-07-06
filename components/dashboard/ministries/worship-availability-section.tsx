@@ -305,7 +305,7 @@ export function WorshipAvailabilitySection({
       <section className="space-y-3">
         <div>
           <h4 className="text-sm font-semibold text-foreground">
-            Coleta aberta
+            Coleta de disponibilidade aberta
           </h4>
           <p className="mt-0.5 text-xs text-muted-foreground">
             Defina suas funções uma vez por evento e marque cada data.
@@ -319,7 +319,7 @@ export function WorshipAvailabilitySection({
               Nenhum evento aberto no momento
             </p>
             <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
-              Quando o líder abrir a coleta de um evento, ele aparece aqui para
+              Quando o líder abrir a coleta de disponibilidade de um evento, ele aparece aqui para
               você responder.
             </p>
           </div>

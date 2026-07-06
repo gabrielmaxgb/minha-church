@@ -57,7 +57,7 @@ function MinistryScheduleDetail({
       {hasOpenCollection && (
         <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
           <p className="text-xs font-semibold uppercase tracking-wider text-primary">
-            Coleta aberta
+            Coleta de disponibilidade aberta
           </p>
           <p className="mt-1 text-sm font-medium text-foreground">
             Eventos liberados para você marcar disponibilidade

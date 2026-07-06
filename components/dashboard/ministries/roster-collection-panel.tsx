@@ -84,7 +84,13 @@ export function RosterCollectionPanel({
       )
     : [];
 
-  function openGroup(group: RosterEventGroup) {
+  function toggleGroup(group: RosterEventGroup) {
+    if (activeKey === group.key) {
+      setActiveKey(null);
+      setError(null);
+      return;
+    }
+
     setActiveKey(group.key);
     setScope(group.isRecurring && group.occurrences.length > 1 ? "monthly" : "all");
     setCustomIds(new Set());
@@ -133,7 +139,7 @@ export function RosterCollectionPanel({
       setError(
         batchError instanceof Error
           ? batchError.message
-          : "Não foi possível atualizar a coleta.",
+          : "Não foi possível atualizar a coleta de disponibilidade.",
       );
     }
   }
@@ -147,7 +153,7 @@ export function RosterCollectionPanel({
             Nenhuma data liberada ainda
           </p>
           <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-            Quando o líder abrir a coleta de um evento, você poderá marcar sua
+            Quando o líder abrir a coleta de disponibilidade de um evento, você poderá marcar sua
             disponibilidade nas datas abaixo.
           </p>
         </div>
@@ -157,7 +163,7 @@ export function RosterCollectionPanel({
     return (
       <div className="rounded-2xl border border-primary/20 bg-primary/5 px-5 py-4">
         <p className="text-xs font-semibold uppercase tracking-wider text-primary">
-          Coleta aberta
+          Coleta de disponibilidade aberta
         </p>
         <p className="mt-1 font-display text-lg font-bold text-foreground">
           {openEventsCount} data{openEventsCount === 1 ? "" : "s"} para responder
@@ -178,11 +184,11 @@ export function RosterCollectionPanel({
           </div>
           <div>
             <h3 className="font-display text-base font-semibold tracking-tight">
-              Liberar coleta
+              Liberar coleta de disponibilidade
             </h3>
             <p className="mt-0.5 text-sm text-muted-foreground">
               Escolha um evento, defina o alcance das datas e toque em{" "}
-              <strong className="font-medium text-foreground">Abrir coleta</strong>.
+              <strong className="font-medium text-foreground">Abrir coleta de disponibilidade</strong>.
             </p>
           </div>
         </div>
@@ -220,7 +226,7 @@ export function RosterCollectionPanel({
                   activeKey === group.key ? resolvedIds.length : 0
                 }
                 busy={setCollection.isPending}
-                onOpen={() => openGroup(group)}
+                onOpen={() => toggleGroup(group)}
                 onScopeChange={setScope}
                 onToggleCustom={toggleCustomDate}
                 onApply={applyCollection}
@@ -298,7 +304,7 @@ function GroupCard({
               : ""}
             {group.openCount > 0
               ? ` · ${group.openCount} aberta${group.openCount === 1 ? "" : "s"}`
-              : " · coleta fechada"}
+              : " · coleta de disponibilidade fechada"}
           </span>
         </span>
 
@@ -395,7 +401,7 @@ function GroupCard({
             >
               {busy
                 ? "Abrindo..."
-                : `Abrir coleta${resolvedCount > 0 ? ` (${resolvedCount})` : ""}`}
+                : `Abrir coleta de disponibilidade${resolvedCount > 0 ? ` (${resolvedCount})` : ""}`}
             </Button>
             <Button
               type="button"
@@ -404,7 +410,7 @@ function GroupCard({
               disabled={busy || resolvedCount === 0}
               onClick={() => void onApply(false)}
             >
-              {busy ? "Fechando..." : "Fechar coleta"}
+              {busy ? "Fechando..." : "Fechar coleta de disponibilidade"}
             </Button>
           </div>
 
