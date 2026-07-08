@@ -1,9 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { Check, ChevronRight, RotateCcw, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { scrollToRosterProfileSection } from "@/lib/ministries/roster-profile-scroll";
+import { settingsSectionPath } from "@/constants/routes";
 import type { ScheduleAvailabilityAction } from "@/lib/my-schedule/event-display";
 import { pendingNotificationStyles } from "@/lib/ui/notification-styles";
 import { cn } from "@/lib/utils";
@@ -15,28 +16,26 @@ interface AvailabilityFunctionsGateProps {
 export function AvailabilityFunctionsGate({
   className,
 }: AvailabilityFunctionsGateProps) {
-  function handleScroll() {
-    scrollToRosterProfileSection();
-  }
-
   return (
     <div className={cn(pendingNotificationStyles.banner.compact, className)}>
       <p className="text-sm font-medium text-foreground">
         Cadastre suas funções antes de responder
       </p>
       <p className="mt-1 text-xs text-muted-foreground">
-        Informe pelo menos uma função em &quot;Seu perfil na escala&quot; para
-        o líder saber como você pode servir.
+        Em Configurações → Ministérios, informe pelo menos uma função para o
+        líder saber como você pode servir.
       </p>
       <Button
         type="button"
         size="sm"
         variant="outline"
         className="mt-3"
-        onClick={handleScroll}
+        asChild
       >
-        Adicionar funções
-        <ChevronRight className="size-4" />
+        <Link href={settingsSectionPath("ministries")}>
+          Configurar funções
+          <ChevronRight className="size-4" />
+        </Link>
       </Button>
     </div>
   );

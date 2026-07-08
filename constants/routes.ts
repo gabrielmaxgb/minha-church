@@ -49,7 +49,11 @@ export function activityDetailPath(eventId: string): string {
 }
 
 export function settingsSectionPath(
-  section: "password-reset-requests" | "pending-users",
+  section:
+    | "password-reset-requests"
+    | "pending-users"
+    | "ministries"
+    | "profile",
 ): string {
   return `${AUTH_ROUTES.settings}?section=${section}`;
 }

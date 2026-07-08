@@ -11,6 +11,7 @@ import {
   fetchMembers,
   membersKeys,
   receiveMember,
+  ackMinistryCatalogNotifications,
 } from "@/lib/api/queries/members.keys";
 import { queries } from "@/lib/api/queries";
 import type { ListMembersParams } from "@/types/members";
@@ -72,6 +73,45 @@ export function useMember(memberId: string) {
   return useQuery({
     ...membersKeys.detail(churchId ?? "unknown", memberId),
     enabled: Boolean(churchId && memberId),
+  });
+}
+
+export function useMyMember(options?: { enabled?: boolean }) {
+  const { churchId } = useTenant();
+
+  return useQuery({
+    ...membersKeys.me(churchId ?? "unknown"),
+    enabled: Boolean(churchId) && (options?.enabled ?? true),
+    retry: false,
+  });
+}
+
+export function useMyMinistryNotifications(options?: { enabled?: boolean }) {
+  const { churchId } = useTenant();
+
+  return useQuery({
+    ...membersKeys.ministryNotifications(churchId ?? "unknown"),
+    enabled: Boolean(churchId) && (options?.enabled ?? true),
+    staleTime: 30_000,
+    retry: false,
+  });
+}
+
+export function useAckMinistryCatalogNotifications() {
+  const { churchId } = useTenant();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (ministryIds: string[]) => {
+      if (!churchId) {
+        throw new Error("Igreja não selecionada.");
+      }
+
+      return ackMinistryCatalogNotifications(churchId, ministryIds);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: membersKeys._def });
+    },
   });
 }
 

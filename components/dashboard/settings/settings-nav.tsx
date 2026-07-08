@@ -9,6 +9,7 @@ import type { UserPermissions } from "@/types/auth";
 
 export type SettingsSection =
   | "profile"
+  | "ministries"
   | "pending-users"
   | "password-reset-requests"
   | "roles"
@@ -27,6 +28,11 @@ const ALL_ITEMS: SettingsNavItem[] = [
     id: "profile",
     label: "Perfil",
     description: "Seus dados pessoais",
+  },
+  {
+    id: "ministries",
+    label: "Ministérios",
+    description: "Funções em que você serve",
   },
   {
     id: "roles",
@@ -63,7 +69,7 @@ const ALL_ITEMS: SettingsNavItem[] = [
 export function useSettingsNav(permissions: UserPermissions | null) {
   return useMemo(() => {
     return ALL_ITEMS.filter((item) => {
-      if (item.id === "profile") {
+      if (item.id === "profile" || item.id === "ministries") {
         return true;
       }
 

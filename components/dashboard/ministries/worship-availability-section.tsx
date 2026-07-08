@@ -1,15 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   CalendarDays,
   ChevronDown,
   Repeat,
 } from "lucide-react";
 
-import { EventRoleProfileSection } from "@/components/dashboard/my-schedule/event-role-profile-section";
 import { OccurrenceAvailabilityActions } from "@/components/dashboard/my-schedule/occurrence-availability-actions";
+import { RosterFunctionsReminder } from "@/components/dashboard/ministries/roster-functions-reminder";
 import type { EventAvailabilityPayload } from "@/components/dashboard/my-schedule/event-availability-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,6 @@ import {
   useUpdateEventAvailability,
   useWorshipProfile,
 } from "@/lib/api/queries";
-import { formatRosterRole } from "@/lib/ministries/roster";
 import { cn } from "@/lib/utils";
 import type {
   WorshipAvailabilityEvent,
@@ -41,26 +40,23 @@ function formatEventDay(iso: string): string {
 }
 
 function SeriesCard({
-  ministryId,
   group,
   busyEventId,
+  needsRosterFunctions,
+  ministryName,
   onRespond,
   canManageRosters = false,
 }: {
-  ministryId: string;
   group: WorshipSeriesGroup;
   busyEventId: string | null;
+  needsRosterFunctions: boolean;
+  ministryName: string;
   onRespond: (eventId: string, payload: EventAvailabilityPayload) => void;
   canManageRosters?: boolean;
 }) {
   const [open, setOpen] = useState(group.myPendingCount > 0);
-  const [profileRoles, setProfileRoles] = useState(group.myProfileRoleLabels);
   const firstOpen = group.occurrences[0];
   const timeLabel = firstOpen ? formatEventTime(firstOpen.startsAt) : "";
-
-  useEffect(() => {
-    setProfileRoles(group.myProfileRoleLabels);
-  }, [group.key, group.myProfileRoleLabels.join("|")]);
 
   return (
     <article className="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-soft">
@@ -116,14 +112,6 @@ function SeriesCard({
 
       {open && (
         <div className="space-y-4 border-t border-border/60 bg-muted/10 px-4 py-4 sm:px-5">
-          <EventRoleProfileSection
-            ministryId={ministryId}
-            profileKey={group.key}
-            rosterRoles={group.rosterRoles}
-            myProfileRoleLabels={group.myProfileRoleLabels}
-            onRolesChange={setProfileRoles}
-          />
-
           <div className="space-y-2">
             <p className="text-xs text-muted-foreground">
               Marque sua disponibilidade em cada data.
@@ -134,7 +122,8 @@ function SeriesCard({
                 key={event.id}
                 event={event}
                 busy={busyEventId === event.id}
-                hasProfileRoles={profileRoles.length > 0}
+                needsRosterFunctions={needsRosterFunctions}
+                ministryName={ministryName}
                 onRespond={onRespond}
                 canManageRosters={canManageRosters}
               />
@@ -149,13 +138,15 @@ function SeriesCard({
 function OccurrenceRow({
   event,
   busy,
-  hasProfileRoles,
+  needsRosterFunctions,
+  ministryName,
   onRespond,
   canManageRosters = false,
 }: {
   event: WorshipAvailabilityEvent;
   busy: boolean;
-  hasProfileRoles: boolean;
+  needsRosterFunctions: boolean;
+  ministryName: string;
   onRespond: (eventId: string, payload: EventAvailabilityPayload) => void;
   canManageRosters?: boolean;
 }) {
@@ -179,12 +170,6 @@ function OccurrenceRow({
             {formatEventTime(event.startsAt)}
             {event.location ? ` · ${event.location}` : ""}
           </p>
-          {event.rosterRoles.length > 0 && (
-            <p className="mt-2 text-xs text-muted-foreground">
-              Funções:{" "}
-              {event.rosterRoles.map((role) => formatRosterRole(role)).join(", ")}
-            </p>
-          )}
           {event.availabilityMessage?.trim() ? (
             <p className="mt-2 rounded-lg border border-sky-500/20 bg-sky-500/8 px-2.5 py-2 text-xs leading-relaxed text-foreground whitespace-pre-wrap">
               {event.availabilityMessage.trim()}
@@ -201,7 +186,8 @@ function OccurrenceRow({
 
       <OccurrenceAvailabilityActions
         availabilityStatus={event.myStatus}
-        hasProfileRoles={hasProfileRoles}
+        needsRosterFunctions={needsRosterFunctions}
+        ministryName={ministryName}
         busy={busy}
         layout="compact"
         onRespond={(status) => onRespond(event.id, { status, roleLabels: [] })}
@@ -269,6 +255,13 @@ export function WorshipAvailabilitySection({
         </p>
       )}
 
+      {data.needsRosterFunctions ? (
+        <RosterFunctionsReminder
+          ministryId={data.ministryId}
+          ministryName={data.ministryName}
+        />
+      ) : null}
+
       {data.summary.totalOpen > 0 && (
         <div className="grid gap-2 sm:grid-cols-3">
           <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/8 px-3 py-2.5">
@@ -302,7 +295,8 @@ export function WorshipAvailabilitySection({
             Coleta de disponibilidade aberta
           </h4>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Defina suas funções uma vez por evento e marque cada data.
+            Marque se pode ir em cada data. Suas funções ficam em Configurações
+            → Ministérios.
           </p>
         </div>
 
@@ -321,9 +315,10 @@ export function WorshipAvailabilitySection({
           data.series.map((group) => (
             <SeriesCard
               key={group.key}
-              ministryId={ministryId}
               group={group}
               busyEventId={busyEventId}
+              needsRosterFunctions={data.needsRosterFunctions}
+              ministryName={data.ministryName}
               onRespond={(eventId, payload) => void handleRespond(eventId, payload)}
               canManageRosters={canManageRosters}
             />

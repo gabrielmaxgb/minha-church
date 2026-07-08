@@ -21,7 +21,7 @@ export default function ActivityDetailPage() {
             ? "Atividade da igreja"
             : event?.ministryName ?? "Detalhes do evento"
         }
-        className="max-w-3xl"
+        className="max-w-7xl"
       >
         <ActivityDetailContent eventId={eventId} />
       </DashboardPage>

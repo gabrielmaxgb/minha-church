@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye } from "lucide-react";
+import { Eye, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { EventFormSection } from "@/components/dashboard/activities/event-form-section";
@@ -18,9 +18,14 @@ import type { ChurchEventDetail } from "@/types/events";
 
 interface ActivityVisibilitySectionProps {
   event: ChurchEventDetail;
+  /** Uma linha dentro do card do evento */
+  inline?: boolean;
 }
 
-export function ActivityVisibilitySection({ event }: ActivityVisibilitySectionProps) {
+export function ActivityVisibilitySection({
+  event,
+  inline = false,
+}: ActivityVisibilitySectionProps) {
   const updateEvent = useUpdateChurchEvent(event.id);
   const [visibleToChurch, setVisibleToChurch] = useState(event.visibleToChurch);
   const [error, setError] = useState<string | null>(null);
@@ -44,6 +49,51 @@ export function ActivityVisibilitySection({ event }: ActivityVisibilitySectionPr
           : "Não foi possível salvar a visibilidade.",
       );
     }
+  }
+
+  if (inline) {
+    return (
+      <div className="space-y-2">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Eye className="size-4 shrink-0" />
+            <span>Quem vê na agenda</span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <EventVisibilityFields
+              layout="inline"
+              visibleToChurch={visibleToChurch}
+              onVisibleToChurchChange={setVisibleToChurch}
+              disabled={updateEvent.isPending}
+            />
+            {dirty && (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-8"
+                disabled={updateEvent.isPending}
+                onClick={() => void handleSave()}
+              >
+                {updateEvent.isPending ? (
+                  <>
+                    <Loader2 className="size-3.5 animate-spin" />
+                    Salvando
+                  </>
+                ) : (
+                  "Salvar"
+                )}
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {error && (
+          <p className="text-xs text-destructive">{error}</p>
+        )}
+      </div>
+    );
   }
 
   return (

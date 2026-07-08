@@ -33,14 +33,23 @@ export interface ChurchEvent {
 }
 
 export interface ChurchEventDetail extends ChurchEvent {
-  seriesOccurrences: ChurchEvent[];
   roster: EventRosterAssignment[];
   rosterCandidates: EventRosterCandidate[];
-  /** @deprecated Use usesRoster */
+  /** @deprecated Use GET /events/series/:seriesId/occurrences */
   isRosterMinistry: boolean;
   usesRoster: boolean;
   myAvailabilityStatus?: "available" | "unavailable" | null;
   myRoleLabels?: string[];
+  needsRosterFunctions?: boolean;
+}
+
+/** Resumo leve de uma ocorrência na série — para navegação lateral */
+export interface EventSeriesOccurrence {
+  id: string;
+  startsAt: string;
+  endsAt: string | null;
+  rosterOpen: boolean;
+  usesRoster: boolean;
 }
 
 export interface CreateChurchEventPayload {

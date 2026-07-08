@@ -58,8 +58,17 @@ export const ROSTER_AVAILABILITY_PERIODS: Array<{
   },
 ];
 
-export function formatRosterRole(id: string): string {
-  return ROSTER_ROLE_PRESETS.find((item) => item.id === id)?.label ?? id;
+export function formatRosterRole(value: string): string {
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return "";
+  }
+
+  const normalized = normalizeRosterRoleValue(trimmed);
+  const preset = ROSTER_ROLE_PRESETS.find((item) => item.id === normalized);
+
+  return preset?.label ?? trimmed;
 }
 
 export function normalizeRosterRoleValue(value: string): string {
@@ -298,6 +307,37 @@ export function isRosterFullyStaffed(
   }
 
   return slots.every((slot) => (slot.assignedCount ?? 0) >= slot.requiredCount);
+}
+
+export function isRosterCollectionComplete(event: {
+  usesRoster: boolean;
+  rosterOpen: boolean;
+  rosterSlots?: Array<{ requiredCount: number; assignedCount?: number }>;
+  rosterCandidates?: Array<{ availabilityStatus: EventAvailabilityStatus | null }>;
+  roster?: unknown[];
+}): boolean {
+  const slots = event.rosterSlots ?? [];
+
+  if (!event.usesRoster || slots.length === 0) {
+    return false;
+  }
+
+  if (isRosterFullyStaffed(slots)) {
+    return true;
+  }
+
+  if (event.rosterOpen) {
+    return false;
+  }
+
+  const hasAvailabilityResponses = (event.rosterCandidates ?? []).some(
+    (candidate) =>
+      candidate.availabilityStatus === "available" ||
+      candidate.availabilityStatus === "unavailable",
+  );
+  const hasAssignments = (event.roster?.length ?? 0) > 0;
+
+  return hasAvailabilityResponses || hasAssignments;
 }
 
 /** @deprecated Use ROSTER_ROLE_PRESETS */

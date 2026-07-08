@@ -1,12 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import type { MouseEvent, ReactNode } from "react";
+import type { ReactNode } from "react";
 import { ClipboardList, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { ministryAvailabilityPath } from "@/constants/routes";
-import { scrollToRosterProfileSection } from "@/lib/ministries/roster-profile-scroll";
+import { settingsSectionPath } from "@/constants/routes";
 import { pendingNotificationStyles } from "@/lib/ui/notification-styles";
 import { cn } from "@/lib/utils";
 
@@ -30,28 +29,20 @@ function ReminderActionButton({
   className?: string;
   children: ReactNode;
 }) {
-  function handleClick(event: MouseEvent<HTMLAnchorElement>) {
-    if (scrollToRosterProfileSection()) {
-      event.preventDefault();
-    }
-  }
-
   return (
     <Button size={size} variant={variant} className={className} asChild>
-      <Link href={href} onClick={handleClick}>
-        {children}
-      </Link>
+      <Link href={href}>{children}</Link>
     </Button>
   );
 }
 
 export function RosterFunctionsReminder({
-  ministryId,
+  ministryId: _ministryId,
   ministryName,
   className,
   compact = false,
 }: RosterFunctionsReminderProps) {
-  const href = ministryAvailabilityPath(ministryId);
+  const href = settingsSectionPath("ministries");
 
   if (compact) {
     return (
@@ -61,7 +52,8 @@ export function RosterFunctionsReminder({
         </p>
         <p className="mt-1 text-xs text-muted-foreground">
           Em <span className="font-medium text-foreground">{ministryName}</span>,
-          informe pelo menos uma função para o líder poder escalá-lo.
+          configure suas funções em Configurações → Ministérios para responder
+          disponibilidade.
         </p>
         <ReminderActionButton
           href={href}
@@ -69,7 +61,7 @@ export function RosterFunctionsReminder({
           variant="outline"
           className="mt-3"
         >
-          Adicionar funções
+          Configurar funções
           <ChevronRight className="size-4" />
         </ReminderActionButton>
       </div>

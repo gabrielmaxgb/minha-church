@@ -20,7 +20,11 @@ import {
   updateMinistry,
   updateMinistryRole,
   updateRosterProfile,
+  replaceMinistryServiceFunctions,
+  updateMemberMinistryInstruments,
 } from "@/lib/api/queries/ministries.keys";
+import { eventsKeys } from "@/lib/api/queries/events.keys";
+import { membersKeys } from "@/lib/api/queries/members.keys";
 import { rosterKeys } from "@/lib/api/queries/roster.keys";
 import { queries } from "@/lib/api/queries";
 import { ministryDetailPath } from "@/constants/routes";
@@ -251,12 +255,23 @@ export function useUpdateEventAvailability(ministryId: string) {
         roleLabels,
       });
     },
-    onSuccess: (profile) => {
-      queryClient.setQueryData(
-        ministriesKeys.rosterProfile(churchId ?? "unknown", ministryId).queryKey,
-        profile,
-      );
-      void queryClient.invalidateQueries({ queryKey: rosterKeys._def });
+    onSuccess: async (profile, variables) => {
+      if (churchId) {
+        queryClient.setQueryData(
+          ministriesKeys.rosterProfile(churchId, ministryId).queryKey,
+          profile,
+        );
+        await queryClient.invalidateQueries({
+          queryKey: ministriesKeys.rosterProfile(churchId, ministryId).queryKey,
+        });
+        await queryClient.invalidateQueries({
+          queryKey: eventsKeys.detail(churchId, variables.eventId).queryKey,
+        });
+        await queryClient.invalidateQueries({ queryKey: eventsKeys._def });
+        await queryClient.invalidateQueries({ queryKey: queries.dashboard._def });
+      }
+
+      await queryClient.invalidateQueries({ queryKey: rosterKeys._def });
     },
   });
 }
@@ -280,6 +295,60 @@ export function useSetRosterCollection(ministryId: string) {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ministriesKeys._def });
       await queryClient.invalidateQueries({ queryKey: rosterKeys._def });
+    },
+  });
+}
+
+export function useReplaceMinistryServiceFunctions(ministryId: string) {
+  const { churchId } = useTenant();
+  const queryClient = useQueryClient();
+  const invalidate = useInvalidateMinistries();
+
+  return useMutation({
+    mutationFn: (labels: string[]) => {
+      if (!churchId) {
+        throw new Error("Igreja não selecionada.");
+      }
+
+      return replaceMinistryServiceFunctions(churchId, ministryId, labels);
+    },
+    onSuccess: async () => {
+      await invalidate();
+      if (churchId) {
+        await queryClient.invalidateQueries({
+          queryKey: ministriesKeys.detail(churchId, ministryId).queryKey,
+        });
+      }
+    },
+  });
+}
+
+export function useUpdateMemberMinistryInstruments(ministryId: string) {
+  const { churchId } = useTenant();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      memberId,
+      instruments,
+    }: {
+      memberId: string;
+      instruments: string[];
+    }) => {
+      if (!churchId) {
+        throw new Error("Igreja não selecionada.");
+      }
+
+      return updateMemberMinistryInstruments(
+        churchId,
+        ministryId,
+        memberId,
+        instruments,
+      );
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ministriesKeys._def });
+      await queryClient.invalidateQueries({ queryKey: membersKeys._def });
     },
   });
 }

@@ -1,15 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Check, RotateCcw, X } from "lucide-react";
 
+import { RosterFunctionsReminder } from "@/components/dashboard/ministries/roster-functions-reminder";
 import { Button } from "@/components/ui/button";
-import {
-  addRosterRole,
-  formatRosterRole,
-  isRosterRoleSelected,
-  removeRosterRole,
-} from "@/lib/ministries/roster";
+import { getAvailabilityTheme } from "@/lib/my-schedule/availability-theme";
 import type { ScheduleAvailabilityAction } from "@/lib/my-schedule/event-display";
 import { cn } from "@/lib/utils";
 
@@ -19,59 +14,36 @@ export interface EventAvailabilityPayload {
 }
 
 interface EventAvailabilityPanelProps {
-  rosterRoles: string[];
-  myRoleLabels: string[];
   availabilityStatus: "available" | "unavailable" | null;
   availabilityMessage?: string | null;
+  needsRosterFunctions?: boolean;
+  ministryName?: string;
   busy?: boolean;
   layout?: "compact" | "default";
   className?: string;
+  showHeader?: boolean;
   onRespond: (payload: EventAvailabilityPayload) => void;
 }
 
 export function EventAvailabilityPanel({
-  rosterRoles,
-  myRoleLabels,
   availabilityStatus,
   availabilityMessage,
+  needsRosterFunctions = false,
+  ministryName = "este ministério",
   busy = false,
   layout = "default",
   className,
+  showHeader = false,
   onRespond,
 }: EventAvailabilityPanelProps) {
-  const [selectedRoles, setSelectedRoles] = useState<string[]>(myRoleLabels);
-  const [roleError, setRoleError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setSelectedRoles(myRoleLabels);
-    setRoleError(null);
-  }, [myRoleLabels.join("|"), availabilityStatus]);
-
+  const theme = getAvailabilityTheme(
+    needsRosterFunctions ? null : availabilityStatus,
+  );
   const isAvailable = availabilityStatus === "available";
   const isUnavailable = availabilityStatus === "unavailable";
-  const hasEventRoles = rosterRoles.length > 0;
-
-  function toggleRole(role: string) {
-    setRoleError(null);
-    setSelectedRoles((current) =>
-      isRosterRoleSelected(current, role)
-        ? removeRosterRole(current, role)
-        : addRosterRole(current, role),
-    );
-  }
 
   function submitAvailable() {
-    if (!hasEventRoles) {
-      setRoleError("O líder ainda não definiu as funções deste evento.");
-      return;
-    }
-
-    if (selectedRoles.length === 0) {
-      setRoleError("Selecione pelo menos uma função deste evento.");
-      return;
-    }
-
-    onRespond({ status: "available", roleLabels: selectedRoles });
+    onRespond({ status: "available", roleLabels: [] });
   }
 
   function submitUnavailable() {
@@ -83,68 +55,80 @@ export function EventAvailabilityPanel({
   }
 
   return (
-    <div className={cn("space-y-3", className)}>
+    <div
+      className={cn(
+        "space-y-3 rounded-2xl border p-4 sm:p-5",
+        theme.shell,
+        className,
+      )}
+    >
+      {showHeader ? (
+        <div className="space-y-1 border-b border-current/10 pb-3">
+          <h3 className="font-display text-base font-semibold tracking-tight">
+            Você pode ir?
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            A coleta está aberta. Informe se pode servir neste dia.
+          </p>
+        </div>
+      ) : null}
+
+      <div className={cn("space-y-0.5", theme.statusTone)} role="status">
+        {needsRosterFunctions ? (
+          <>
+            <p className="text-sm font-semibold">Funções não configuradas</p>
+            <p className={cn("text-xs", theme.statusHintTone)}>
+              Cadastre suas funções no perfil antes de responder.
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="text-sm font-semibold">{theme.statusTitle}</p>
+            <p className={cn("text-xs", theme.statusHintTone)}>
+              {theme.statusHint}
+            </p>
+          </>
+        )}
+      </div>
+
       {availabilityMessage?.trim() ? (
-        <div className="rounded-xl border border-sky-500/20 bg-sky-500/8 px-3 py-2.5 text-sm leading-relaxed text-foreground">
-          <p className="text-xs font-semibold uppercase tracking-wide text-sky-800 dark:text-sky-300">
+        <div
+          className={cn(
+            "rounded-xl border px-3 py-2.5 text-sm leading-relaxed text-foreground",
+            theme.messageBox,
+          )}
+        >
+          <p
+            className={cn(
+              "text-xs font-semibold uppercase tracking-wide",
+              theme.messageLabel,
+            )}
+          >
             Mensagem do líder
           </p>
           <p className="mt-1 whitespace-pre-wrap">{availabilityMessage.trim()}</p>
         </div>
       ) : null}
 
-      {hasEventRoles ? (
-        <div className="space-y-2">
-          <p className="text-xs font-medium text-muted-foreground">
-            Precisamos das seguintes funções para servir neste ministério,
-            pode nos ajudar em alguma delas?
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {rosterRoles.map((role) => {
-              const active = isRosterRoleSelected(selectedRoles, role);
-
-              return (
-                <button
-                  key={role}
-                  type="button"
-                  disabled={busy}
-                  onClick={() => toggleRole(role)}
-                  className={cn(
-                    "rounded-full border px-3 py-1.5 text-sm transition-colors disabled:opacity-50",
-                    active
-                      ? "border-foreground bg-foreground text-background"
-                      : "border-border bg-background text-muted-foreground hover:border-foreground/30 hover:text-foreground",
-                  )}
-                >
-                  {formatRosterRole(role)}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      ) : (
-        <p className="rounded-lg border border-dashed border-border bg-muted/15 px-3 py-2 text-xs text-muted-foreground">
-          O líder ainda não definiu as funções deste evento.
-        </p>
-      )}
-
-      {roleError && (
-        <p className="text-xs text-destructive">{roleError}</p>
-      )}
-
-      {layout === "compact" ? (
+      {needsRosterFunctions ? (
+        <RosterFunctionsReminder
+          ministryId=""
+          ministryName={ministryName}
+          compact
+        />
+      ) : layout === "compact" ? (
         <div className="flex flex-wrap gap-2">
           <Button
             type="button"
             size="sm"
             variant={isAvailable ? "default" : "outline"}
-            disabled={busy || !hasEventRoles}
+            disabled={busy}
             className={cn(
-              isAvailable && "bg-emerald-600 hover:bg-emerald-600/90",
+              isAvailable && theme.primaryButton,
+              isUnavailable && !isAvailable && theme.secondaryButton,
             )}
-            onClick={() =>
-              isAvailable ? submitClear() : submitAvailable()
-            }
+            aria-pressed={isAvailable}
+            onClick={() => (isAvailable ? submitClear() : submitAvailable())}
           >
             <Check className="size-4" />
             Posso
@@ -153,6 +137,11 @@ export function EventAvailabilityPanel({
             type="button"
             size="sm"
             variant={isUnavailable ? "destructive" : "outline"}
+            className={cn(
+              isUnavailable && theme.primaryButton,
+              isAvailable && !isUnavailable && theme.secondaryButton,
+            )}
+            aria-pressed={isUnavailable}
             disabled={busy}
             onClick={() =>
               isUnavailable ? submitClear() : submitUnavailable()
@@ -168,9 +157,15 @@ export function EventAvailabilityPanel({
             <Button
               type="button"
               size="sm"
-              disabled={busy || isAvailable || !hasEventRoles}
-              className="h-9 bg-emerald-600 hover:bg-emerald-600/90"
-              onClick={submitAvailable}
+              variant={isAvailable ? "default" : "outline"}
+              disabled={busy}
+              className={cn(
+                "h-9",
+                isAvailable && theme.primaryButton,
+                isUnavailable && !isAvailable && theme.secondaryButton,
+              )}
+              aria-pressed={isAvailable}
+              onClick={() => (isAvailable ? submitClear() : submitAvailable())}
             >
               <Check className="size-3.5" />
               Posso ir
@@ -178,16 +173,23 @@ export function EventAvailabilityPanel({
             <Button
               type="button"
               size="sm"
-              variant="outline"
-              disabled={busy || isUnavailable}
-              className="h-9"
-              onClick={submitUnavailable}
+              variant={isUnavailable ? "destructive" : "outline"}
+              disabled={busy}
+              className={cn(
+                "h-9",
+                isUnavailable && theme.primaryButton,
+                isAvailable && !isUnavailable && theme.secondaryButton,
+              )}
+              aria-pressed={isUnavailable}
+              onClick={() =>
+                isUnavailable ? submitClear() : submitUnavailable()
+              }
             >
               <X className="size-3.5" />
               Não posso
             </Button>
           </div>
-          {availabilityStatus && (
+          {availabilityStatus ? (
             <Button
               type="button"
               size="sm"
@@ -197,9 +199,9 @@ export function EventAvailabilityPanel({
               onClick={submitClear}
             >
               <RotateCcw className="size-4" />
-              Desfazer resposta
+              Limpar resposta
             </Button>
-          )}
+          ) : null}
         </div>
       )}
     </div>

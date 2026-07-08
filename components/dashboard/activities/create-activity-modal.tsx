@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { Calendar, ClipboardList, Clock, Eye, FileText, Loader2, MapPin, Repeat, X } from "lucide-react";
+import { Calendar, Clock, Eye, FileText, Loader2, MapPin, Repeat, X } from "lucide-react";
 
 import { ActivityScheduleFields } from "@/components/dashboard/activities/activity-schedule-fields";
 import { EventFormSection } from "@/components/dashboard/activities/event-form-section";
 import { EventRecurrenceFields } from "@/components/dashboard/activities/event-recurrence-fields";
-import { EventRosterOptionsFields } from "@/components/dashboard/activities/event-roster-options-fields";
 import { EventVisibilityFields } from "@/components/dashboard/activities/event-visibility-fields";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,7 +20,6 @@ import {
   canListMinistries,
 } from "@/lib/permissions";
 import { useAuth } from "@/providers/auth-provider";
-import type { RosterSlotPlanItem } from "@/lib/ministries/roster";
 import {
   buildRecurrencePayload,
   defaultRecurrenceFormState,
@@ -74,10 +72,6 @@ export function CreateActivityModal({
   const initialStartsAt = defaultStartsAtValue ?? fallbackStartsAt();
   const [startsAt, setStartsAt] = useState(initialStartsAt);
   const [endsAt, setEndsAt] = useState("");
-  const [usesRoster, setUsesRoster] = useState(false);
-  const [rosterOpen, setRosterOpen] = useState(false);
-  const [rosterSlotPlan, setRosterSlotPlan] = useState<RosterSlotPlanItem[]>([]);
-  const [availabilityMessage, setAvailabilityMessage] = useState("");
   const [visibleToChurch, setVisibleToChurch] = useState(true);
   const [recurrence, setRecurrence] = useState<EventRecurrenceFormState>(
     defaultRecurrenceFormState(initialStartsAt),
@@ -123,10 +117,6 @@ export function CreateActivityModal({
         setLocation("");
         setStartsAt(fallbackStartsAt());
         setEndsAt("");
-        setUsesRoster(false);
-        setRosterOpen(false);
-        setRosterSlotPlan([]);
-        setAvailabilityMessage("");
         setVisibleToChurch(true);
         setRecurrence(defaultRecurrenceFormState(fallbackStartsAt()));
         setError(null);
@@ -203,15 +193,7 @@ export function CreateActivityModal({
       endsAt: endsAt ? new Date(endsAt).toISOString() : undefined,
       ministryId: ministryId || undefined,
       recurrence: recurrencePayload,
-      usesRoster,
       ...(ministryId ? { visibleToChurch } : {}),
-      ...(usesRoster
-        ? {
-            rosterOpen,
-            rosterSlotPlan,
-            availabilityMessage: availabilityMessage.trim() || undefined,
-          }
-        : {}),
     };
 
     try {
@@ -244,7 +226,7 @@ export function CreateActivityModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative z-10 flex max-h-[min(92dvh,780px)] w-full max-w-xl flex-col rounded-t-2xl border border-border bg-background shadow-2xl sm:rounded-2xl"
+        className="relative z-10 flex max-h-[min(96dvh,920px)] w-full max-w-5xl flex-col rounded-t-2xl border border-border bg-background shadow-2xl sm:rounded-2xl"
       >
         <header className="flex items-start gap-4 px-6 pb-4 pt-6">
           <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
@@ -397,24 +379,6 @@ export function CreateActivityModal({
                 />
               </EventFormSection>
             ) : null}
-
-            <EventFormSection
-              title="Escala da equipe"
-              description="Disponibilidade, funções e montagem de escala neste evento."
-              icon={ClipboardList}
-            >
-              <EventRosterOptionsFields
-                usesRoster={usesRoster}
-                rosterOpen={rosterOpen}
-                rosterSlotPlan={rosterSlotPlan}
-                availabilityMessage={availabilityMessage}
-                onUsesRosterChange={setUsesRoster}
-                onRosterOpenChange={setRosterOpen}
-                onRosterSlotPlanChange={setRosterSlotPlan}
-                onAvailabilityMessageChange={setAvailabilityMessage}
-                disabled={createEvent.isPending}
-              />
-            </EventFormSection>
           </div>
 
           <Separator />

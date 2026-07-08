@@ -7,20 +7,19 @@ import type {
   MinistryEvent,
   MinistryMember,
   MinistryRole,
+  MinistryServiceFunction,
   RosterProfile,
 } from "@/types/ministries";
 
 export interface CreateMinistryPayload {
   name: string;
   description?: string;
-  hasRoster?: boolean;
 }
 
 export interface UpdateMinistryPayload {
   name?: string;
   description?: string | null;
   isActive?: boolean;
-  hasRoster?: boolean;
 }
 
 export interface CreateMinistryRolePayload {
@@ -243,6 +242,40 @@ async function updateEventAvailability(
   );
 }
 
+async function replaceMinistryServiceFunctions(
+  churchId: string,
+  ministryId: string,
+  labels: string[],
+): Promise<MinistryServiceFunction[]> {
+  return apiClient<MinistryServiceFunction[]>(
+    buildTenantPath(churchId, `/ministries/${ministryId}/service-functions`),
+    {
+      churchId,
+      method: "PUT",
+      body: JSON.stringify({ labels }),
+    },
+  );
+}
+
+async function updateMemberMinistryInstruments(
+  churchId: string,
+  ministryId: string,
+  memberId: string,
+  instruments: string[],
+): Promise<MinistryMember> {
+  return apiClient<MinistryMember>(
+    buildTenantPath(
+      churchId,
+      `/ministries/${ministryId}/members/${memberId}/instruments`,
+    ),
+    {
+      churchId,
+      method: "PATCH",
+      body: JSON.stringify({ instruments }),
+    },
+  );
+}
+
 async function setRosterCollection(
   churchId: string,
   ministryId: string,
@@ -306,6 +339,8 @@ export {
   updateMinistry,
   updateMinistryRole,
   updateRosterProfile,
+  replaceMinistryServiceFunctions,
+  updateMemberMinistryInstruments,
 };
 
 export type { CreateMinistryEventPayload };

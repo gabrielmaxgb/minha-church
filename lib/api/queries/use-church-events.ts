@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 import {
   eventsKeys,
@@ -27,5 +27,20 @@ export function useChurchEvent(eventId: string) {
     ...eventsKeys.detail(churchId ?? "unknown", eventId),
     enabled: Boolean(churchId && eventId),
     staleTime: 30_000,
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useEventSeriesOccurrences(
+  seriesId: string | null | undefined,
+  options?: { enabled?: boolean },
+) {
+  const { churchId } = useTenant();
+
+  return useQuery({
+    ...eventsKeys.seriesOccurrences(churchId ?? "unknown", seriesId ?? ""),
+    enabled:
+      Boolean(churchId && seriesId) && (options?.enabled ?? true),
+    staleTime: 5 * 60_000,
   });
 }

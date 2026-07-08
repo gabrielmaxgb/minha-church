@@ -5,8 +5,8 @@ import { CalendarDays, List, Plus } from "lucide-react";
 
 import { ActivityCalendar } from "@/components/dashboard/activities/activity-calendar";
 import { ActivityEventCard } from "@/components/dashboard/activities/activity-event-card";
+import { ActivityEventModal } from "@/components/dashboard/activities/activity-event-modal";
 import { CreateActivityModal } from "@/components/dashboard/activities/create-activity-modal";
-import { EditActivityModal } from "@/components/dashboard/activities/edit-activity-modal";
 import { StaggerItem, StaggerList } from "@/components/motion/dashboard-motion";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -34,7 +34,7 @@ export function ActivitiesContent() {
   const [monthIndex, setMonthIndex] = useState(now.getMonth());
   const [modalOpen, setModalOpen] = useState(false);
   const [createStartsAt, setCreateStartsAt] = useState<string | undefined>();
-  const [editingEvent, setEditingEvent] = useState<ChurchEvent | null>(null);
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
 
   const canList = canListMinistries(permissions);
   const { data: ministries } = useMinistries({ enabled: canList });
@@ -251,7 +251,7 @@ export function ActivitiesContent() {
                             event={event}
                             highlighted
                             canManage={canManageEvent(event)}
-                            onEdit={setEditingEvent}
+                            onEdit={(event) => setEditingEventId(event.id)}
                           />
                         </StaggerItem>
                       ))}
@@ -275,7 +275,7 @@ export function ActivitiesContent() {
                             <ActivityEventCard
                               event={event}
                               canManage={canManageEvent(event)}
-                              onEdit={setEditingEvent}
+                              onEdit={(event) => setEditingEventId(event.id)}
                             />
                           </StaggerItem>
                         ),
@@ -297,10 +297,11 @@ export function ActivitiesContent() {
         knownMinistryNames={knownMinistryNames}
       />
 
-      <EditActivityModal
-        event={editingEvent}
-        open={editingEvent !== null}
-        onClose={() => setEditingEvent(null)}
+      <ActivityEventModal
+        eventId={editingEventId}
+        open={editingEventId !== null}
+        initialMode="edit"
+        onClose={() => setEditingEventId(null)}
       />
     </>
   );

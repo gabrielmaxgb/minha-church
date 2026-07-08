@@ -29,23 +29,31 @@ function getApiBaseUrl(): string {
 }
 
 async function parseErrorMessage(response: Response): Promise<string> {
+  let raw = `API error: ${response.status}`;
+
   try {
     const body = (await response.json()) as {
       message?: string | string[];
     };
 
     if (Array.isArray(body.message)) {
-      return body.message.join(", ");
-    }
-
-    if (typeof body.message === "string") {
-      return body.message;
+      raw = body.message.join(", ");
+    } else if (typeof body.message === "string") {
+      raw = body.message;
     }
   } catch {
     // Ignora corpo inválido.
   }
 
-  return `API error: ${response.status}`;
+  if (
+    response.status === 429 ||
+    /throttlerexception/i.test(raw) ||
+    /too many requests/i.test(raw)
+  ) {
+    return "Muitas tentativas em pouco tempo. Aguarde um minuto e tente novamente.";
+  }
+
+  return raw;
 }
 
 export async function apiClient<T>(

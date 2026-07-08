@@ -1,6 +1,7 @@
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
 import { apiClient, buildTenantPath } from "@/lib/api/client";
+import type { MyMinistryNotifications } from "@/types/member-notifications";
 import type {
   CreateMemberPayload,
   UpdateMemberPayload,
@@ -49,6 +50,35 @@ async function fetchMember(
   return apiClient<Member>(buildTenantPath(churchId, `/members/${memberId}`), {
     churchId,
   });
+}
+
+async function fetchMyMember(churchId: string): Promise<Member> {
+  return apiClient<Member>(buildTenantPath(churchId, "/members/me"), {
+    churchId,
+  });
+}
+
+async function fetchMyMinistryNotifications(
+  churchId: string,
+): Promise<MyMinistryNotifications> {
+  return apiClient(
+    buildTenantPath(churchId, "/members/me/ministry-notifications"),
+    { churchId },
+  );
+}
+
+async function ackMinistryCatalogNotifications(
+  churchId: string,
+  ministryIds: string[],
+): Promise<MyMinistryNotifications> {
+  return apiClient(
+    buildTenantPath(churchId, "/members/me/ministry-notifications/ack-catalog"),
+    {
+      churchId,
+      method: "POST",
+      body: JSON.stringify({ ministryIds }),
+    },
+  );
 }
 
 async function createMember(
@@ -131,6 +161,14 @@ export const membersKeys = createQueryKeys("members", {
     queryKey: [churchId, params],
     queryFn: () => fetchMembers(churchId, params),
   }),
+  me: (churchId: string) => ({
+    queryKey: [churchId, "me"],
+    queryFn: () => fetchMyMember(churchId),
+  }),
+  ministryNotifications: (churchId: string) => ({
+    queryKey: [churchId, "me", "ministry-notifications"],
+    queryFn: () => fetchMyMinistryNotifications(churchId),
+  }),
   detail: (churchId: string, memberId: string) => ({
     queryKey: [churchId, memberId],
     queryFn: () => fetchMember(churchId, memberId),
@@ -138,11 +176,14 @@ export const membersKeys = createQueryKeys("members", {
 });
 
 export {
+  ackMinistryCatalogNotifications,
   assignMemberMinistry,
   createMember,
   deleteMember,
   fetchMember,
   fetchMembers,
+  fetchMyMember,
+  fetchMyMinistryNotifications,
   receiveMember,
   removeMemberMinistry,
   updateMember,

@@ -14,6 +14,7 @@ export interface MemberMinistryLink {
   id: string;
   ministryId: string;
   ministryName: string;
+  instruments: string[];
   roles: MemberMinistryRoleSummary[];
   canManageEvents: boolean;
   startedAt: string | null;

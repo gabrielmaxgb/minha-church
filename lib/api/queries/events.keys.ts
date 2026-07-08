@@ -5,6 +5,7 @@ import type {
 	ChurchEvent,
 	ChurchEventDetail,
 	CreateChurchEventPayload,
+	EventSeriesOccurrence,
 	UpdateChurchEventPayload,
 } from "@/types/events";
 import type { EventRosterAssignment } from "@/types/ministries";
@@ -54,6 +55,16 @@ async function fetchChurchEvent(
 	);
 }
 
+async function fetchEventSeriesOccurrences(
+	churchId: string,
+	seriesId: string,
+): Promise<EventSeriesOccurrence[]> {
+	return apiClient<EventSeriesOccurrence[]>(
+		buildTenantPath(churchId, `/events/series/${seriesId}/occurrences`),
+		{ churchId },
+	);
+}
+
 async function createChurchEvent(
 	churchId: string,
 	payload: CreateChurchEventPayload,
@@ -99,7 +110,7 @@ async function deleteChurchEvent(
 async function upsertEventRoster(
 	churchId: string,
 	eventId: string,
-	payload: { memberId: string; rosterSlotId: string },
+	payload: { memberId: string; roleLabel: string; rosterSlotId?: string },
 ): Promise<EventRosterAssignment[]> {
 	return apiClient<EventRosterAssignment[]>(
 		buildTenantPath(churchId, `/events/${eventId}/roster`),
@@ -167,6 +178,10 @@ export const eventsKeys = createQueryKeys("events", {
 		queryKey: [churchId, eventId],
 		queryFn: () => fetchChurchEvent(churchId, eventId),
 	}),
+	seriesOccurrences: (churchId: string, seriesId: string) => ({
+		queryKey: [churchId, "series", seriesId],
+		queryFn: () => fetchEventSeriesOccurrences(churchId, seriesId),
+	}),
 });
 
 export {
@@ -174,6 +189,7 @@ export {
 	deleteChurchEvent,
 	fetchChurchEvent,
 	fetchChurchEvents,
+	fetchEventSeriesOccurrences,
 	removeEventRoster,
 	setEventRosterCollection,
 	updateChurchEvent,

@@ -70,6 +70,8 @@ function MinistryScheduleDetail({
         events={ministry.events ?? []}
         busyEventId={busyEventId}
         respondBusy={respondBusy}
+        needsRosterFunctions={ministry.needsRosterFunctions}
+        ministryName={ministry.ministryName}
         onRespond={onRespond}
       />
 

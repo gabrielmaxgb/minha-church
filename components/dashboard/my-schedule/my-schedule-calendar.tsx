@@ -6,8 +6,6 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { ScheduleEventRosterList } from "@/components/dashboard/my-schedule/schedule-event-roster-list";
 import { EventAvailabilityPanel } from "@/components/dashboard/my-schedule/event-availability-panel";
-import { EventRoleProfileSection } from "@/components/dashboard/my-schedule/event-role-profile-section";
-import { OccurrenceAvailabilityActions } from "@/components/dashboard/my-schedule/occurrence-availability-actions";
 import type { EventAvailabilityPayload } from "@/components/dashboard/my-schedule/event-availability-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,7 +28,6 @@ import {
   scheduleEventStyle,
 } from "@/lib/my-schedule/event-display";
 import { formatRosterRole } from "@/lib/ministries/roster";
-import { isChurchWideScheduleId } from "@/lib/events/church-wide-schedule";
 import { pendingNotificationStyles } from "@/lib/ui/notification-styles";
 import { cn } from "@/lib/utils";
 import type { MyScheduleEvent } from "@/types/ministries";
@@ -56,6 +53,8 @@ interface MyScheduleCalendarProps {
   events: MyScheduleEvent[];
   busyEventId: string | null;
   respondBusy: boolean;
+  needsRosterFunctions?: boolean;
+  ministryName?: string;
   onRespond: (
     ministryId: string,
     eventId: string,
@@ -67,6 +66,8 @@ export function MyScheduleCalendar({
   events,
   busyEventId,
   respondBusy,
+  needsRosterFunctions = false,
+  ministryName,
   onRespond,
 }: MyScheduleCalendarProps) {
   const now = new Date();
@@ -98,10 +99,6 @@ export function MyScheduleCalendar({
     [eventsByDay, selectedDateKey],
   );
   const selectedInMonth = grid.some((day) => toDateKey(day) === selectedDateKey);
-
-  const [profileRolesByKey, setProfileRolesByKey] = useState<
-    Record<string, string[]>
-  >({});
 
   function goToPreviousMonth() {
     if (monthIndex === 0) {
@@ -319,11 +316,6 @@ export function MyScheduleCalendar({
                 const kind = getScheduleEventDisplayKind(event);
                 const canRespond =
                   event.rosterOpen && kind !== "assigned";
-                const isChurchWide = isChurchWideScheduleId(event.ministryId);
-                const groupKey = `${event.ministryId}:${event.profileKey}`;
-                const profileRoles =
-                  profileRolesByKey[groupKey] ?? event.myProfileRoleLabels;
-
                 return (
                   <li
                     key={event.eventId}
@@ -363,76 +355,38 @@ export function MyScheduleCalendar({
                       {event.location ? ` · ${event.location}` : ""}
                     </p>
 
-                    {canRespond && isChurchWide && (
+                    {canRespond && event.ministryId ? (
                       <EventAvailabilityPanel
-                        className="mt-3 border-t border-border/60 pt-3"
-                        rosterRoles={event.rosterRoles}
-                        myRoleLabels={event.myRoleLabels}
+                        className="mt-3"
                         availabilityStatus={event.myAvailabilityStatus}
                         availabilityMessage={event.availabilityMessage}
+                        needsRosterFunctions={needsRosterFunctions}
+                        ministryName={
+                          ministryName ?? event.ministryName ?? "este ministério"
+                        }
                         busy={busy}
                         layout="compact"
                         onRespond={(payload) =>
                           onRespond(event.ministryId!, event.eventId, payload)
                         }
                       />
-                    )}
-
-                    {canRespond && !isChurchWide && event.ministryId && (
-                      <>
-                        {event.availabilityMessage?.trim() ? (
-                          <div className="mt-3 rounded-xl border border-sky-500/20 bg-sky-500/8 px-3 py-2.5 text-sm leading-relaxed text-foreground">
-                            <p className="text-xs font-semibold uppercase tracking-wide text-sky-800 dark:text-sky-300">
-                              Mensagem do líder
-                            </p>
-                            <p className="mt-1 whitespace-pre-wrap">
-                              {event.availabilityMessage.trim()}
-                            </p>
-                          </div>
-                        ) : null}
-
-                        <EventRoleProfileSection
-                          className="mt-3 border-t border-border/60 pt-3"
-                          ministryId={event.ministryId}
-                          profileKey={event.profileKey}
-                          rosterRoles={event.rosterRoles}
-                          myProfileRoleLabels={event.myProfileRoleLabels}
-                          onRolesChange={(roles) =>
-                            setProfileRolesByKey((current) => ({
-                              ...current,
-                              [groupKey]: roles,
-                            }))
-                          }
-                        />
-
-                        <OccurrenceAvailabilityActions
-                          className="mt-3 border-t border-border/60 pt-3"
-                          availabilityStatus={event.myAvailabilityStatus}
-                          hasProfileRoles={profileRoles.length > 0}
-                          busy={busy}
-                          onRespond={(status) =>
-                            onRespond(event.ministryId!, event.eventId, {
-                              status,
-                              roleLabels: profileRoles,
-                            })
-                          }
-                        />
-                      </>
-                    )}
+                    ) : null}
 
                     <ScheduleEventRosterList
                       roster={event.roster}
                       className="mt-3"
                     />
 
-                    {kind === "assigned" && (
-                      <Link
-                        href={activityDetailPath(event.eventId)}
-                        className="mt-3 inline-block text-xs font-medium text-primary hover:underline"
-                      >
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="mt-3 h-8"
+                      asChild
+                    >
+                      <Link href={activityDetailPath(event.eventId)}>
                         Ver evento
                       </Link>
-                    )}
+                    </Button>
                   </li>
                 );
               })}

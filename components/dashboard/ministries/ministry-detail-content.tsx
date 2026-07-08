@@ -17,6 +17,7 @@ import {
 } from "@/components/dashboard/ministries/ministry-dashboard-section";
 import { MinistryOverviewSection } from "@/components/dashboard/ministries/ministry-overview-section";
 import { MinistryRolePermissionsSection } from "@/components/dashboard/ministries/ministry-role-permissions-section";
+import { MinistryServiceFunctionsSection } from "@/components/dashboard/ministries/ministry-service-functions-section";
 import { WorshipAvailabilitySection } from "@/components/dashboard/ministries/worship-availability-section";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -277,6 +278,9 @@ export function MinistryDetailContent({ ministryId }: MinistryDetailContentProps
     if (requested === "availability") {
       setSection("availability");
     }
+    if (requested === "service-functions") {
+      setSection("service-functions");
+    }
   }, [searchParams]);
 
   if (isLoading) {
@@ -321,12 +325,12 @@ export function MinistryDetailContent({ ministryId }: MinistryDetailContentProps
         )}
       </div>
 
-      {!canManage && !canManageTeam && (
+      {/* {!canManage && !canManageTeam && (
         <p className="rounded-xl border border-border bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
           Você está em modo leitura. Pastores e administradores podem editar o ministério;
           secretários podem gerenciar a equipe.
         </p>
-      )}
+      )} */}
 
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
         <SettingsNav
@@ -360,6 +364,12 @@ export function MinistryDetailContent({ ministryId }: MinistryDetailContentProps
           )}
           {section === "members" && (
             <MinistryMembersSection ministry={ministry} canManage={canManageTeam} />
+          )}
+          {section === "service-functions" && (
+            <MinistryServiceFunctionsSection
+              ministry={ministry}
+              canManage={canManageRosters}
+            />
           )}
           {section === "overview" && (
             <MinistryOverviewSection ministry={ministry} canManage={canManage} />

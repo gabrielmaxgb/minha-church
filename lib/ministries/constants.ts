@@ -2,6 +2,7 @@ export type MinistrySettingsSection =
   | "dashboard"
   | "availability"
   | "members"
+  | "service-functions"
   | "overview"
   | "roles"
   | "permissions"
@@ -26,6 +27,11 @@ export const MINISTRY_SETTINGS_SECTIONS: Array<{
     id: "members",
     label: "Membros",
     description: "Equipe e cargos",
+  },
+  {
+    id: "service-functions",
+    label: "Funções",
+    description: "Como a equipe pode servir",
   },
   {
     id: "overview",

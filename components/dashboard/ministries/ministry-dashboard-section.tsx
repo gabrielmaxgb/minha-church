@@ -7,7 +7,7 @@ import { Calendar, MapPin, Music2, Pencil, Plus, Repeat, UserPlus } from "lucide
 import { AddMinistryMemberModal } from "@/components/dashboard/ministries/add-ministry-member-modal";
 import { MinistryMembersList } from "@/components/dashboard/ministries/ministry-members-list";
 import { CreateMinistryEventModal } from "@/components/dashboard/ministries/create-ministry-event-modal";
-import { EditActivityModal } from "@/components/dashboard/activities/edit-activity-modal";
+import { ActivityEventModal } from "@/components/dashboard/activities/activity-event-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -73,7 +73,7 @@ export function MinistryDashboardSection({
   const { data: events, isLoading: eventsLoading } = useMinistryEvents(ministry.id);
   const [eventModalOpen, setEventModalOpen] = useState(false);
   const [memberModalOpen, setMemberModalOpen] = useState(false);
-  const [editingEvent, setEditingEvent] = useState<MinistryEvent | null>(null);
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
 
   const canAddMembers = permissions ? canManageMembers(permissions) : false;
   const canManageEvents =
@@ -228,7 +228,7 @@ export function MinistryDashboardSection({
                           type="button"
                           size="sm"
                           variant="ghost"
-                          onClick={() => setEditingEvent(event)}
+                          onClick={() => setEditingEventId(event.id)}
                         >
                           <Pencil className="size-4" />
                           Editar
@@ -258,10 +258,11 @@ export function MinistryDashboardSection({
         onClose={() => setEventModalOpen(false)}
       />
 
-      <EditActivityModal
-        event={editingEvent}
-        open={editingEvent !== null}
-        onClose={() => setEditingEvent(null)}
+      <ActivityEventModal
+        eventId={editingEventId}
+        open={editingEventId !== null}
+        initialMode="edit"
+        onClose={() => setEditingEventId(null)}
       />
     </>
   );

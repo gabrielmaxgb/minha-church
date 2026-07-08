@@ -28,7 +28,7 @@ export { membersKeys } from "@/lib/api/queries/members.keys";
 export { membershipsKeys } from "@/lib/api/queries/memberships.keys";
 export { ministriesKeys } from "@/lib/api/queries/ministries.keys";
 export { pricingKeys } from "@/lib/api/queries/pricing.keys";
-export { useChurchEvent, useChurchEvents } from "@/lib/api/queries/use-church-events";
+export { useChurchEvent, useChurchEvents, useEventSeriesOccurrences } from "@/lib/api/queries/use-church-events";
 export {
 	useCreateChurchEvent,
 	useDeleteChurchEvent,
@@ -39,7 +39,7 @@ export {
 	useUpsertEventRoster,
 } from "@/lib/api/queries/use-event-mutations";
 export { useDashboardSummary } from "@/lib/api/queries/use-dashboard-summary";
-export { useMember, useMembers, useMembersInfinite, useReceiveMember } from "@/lib/api/queries/use-members";
+export { useAckMinistryCatalogNotifications, useMember, useMembers, useMembersInfinite, useMyMember, useMyMinistryNotifications, useReceiveMember } from "@/lib/api/queries/use-members";
 export {
   useCreateMember,
   useDeleteMember,
@@ -86,6 +86,8 @@ export {
   useUpdateMinistryRole,
   useUpdateRosterProfile,
   useUpdateWorshipProfile,
+  useReplaceMinistryServiceFunctions,
+  useUpdateMemberMinistryInstruments,
 } from "@/lib/api/queries/use-ministry-mutations";
 export { usePricing } from "@/lib/api/queries/use-pricing";
 export { rosterKeys, worshipKeys } from "@/lib/api/queries/roster.keys";

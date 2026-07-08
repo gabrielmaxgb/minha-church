@@ -17,6 +17,7 @@ import { FormProvider, useForm, useWatch } from "react-hook-form";
 
 import { MemberAccountCreatedModal } from "@/components/dashboard/members/member-account-created-modal";
 import { MemberForm } from "@/components/dashboard/members/member-form";
+import { MemberMinistriesFunctionsSection } from "@/components/dashboard/members/member-ministries-functions-section";
 import { MemberMinistriesSection } from "@/components/dashboard/members/member-ministries-section";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,7 @@ import { createMemberFormSchema } from "@/lib/validation/schemas";
 import { cn, formatDate } from "@/lib/utils";
 import type { Member, MemberAccountCredentials } from "@/types/members";
 import { MEMBER_STATUS_LABELS } from "@/types/members";
+import { useAuth } from "@/providers/auth-provider";
 
 interface MemberExpandedPanelProps {
   member: Member;
@@ -192,6 +194,8 @@ export function MemberExpandedPanel({
   canManage,
   onDeleted,
 }: MemberExpandedPanelProps) {
+  const { user } = useAuth();
+  const [viewTab, setViewTab] = useState<"profile" | "ministries">("profile");
   const [confirmName, setConfirmName] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -281,7 +285,48 @@ export function MemberExpandedPanel({
   }
 
   if (!canManage) {
-    return <ReadOnlyDetails member={member} />;
+    const isSelf = user?.id === member.userId;
+
+    return (
+      <div className="space-y-4">
+        <div className="flex gap-2 border-b border-border/60 pb-2">
+          <button
+            type="button"
+            onClick={() => setViewTab("profile")}
+            className={cn(
+              "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+              viewTab === "profile"
+                ? "bg-muted text-foreground"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            Perfil
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewTab("ministries")}
+            className={cn(
+              "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+              viewTab === "ministries"
+                ? "bg-muted text-foreground"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            Ministérios
+          </button>
+        </div>
+
+        {viewTab === "profile" ? (
+          <ReadOnlyDetails member={member} showMinistries={false} />
+        ) : (
+          <MemberMinistriesFunctionsSection
+            memberId={member.id}
+            ministries={member.ministries}
+            editable={isSelf}
+          />
+        )}
+      </div>
+    );
   }
 
   if (!isEditing) {
@@ -314,6 +359,28 @@ export function MemberExpandedPanel({
           )}
 
           <ReadOnlyDetails member={member} showMinistries={false} />
+
+          <div className="space-y-3">
+            <div className="flex gap-2 border-b border-border/60 pb-2">
+              <button
+                type="button"
+                onClick={() => setViewTab("ministries")}
+                className={cn(
+                  "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                  viewTab === "ministries"
+                    ? "bg-muted text-foreground"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                Funções nos ministérios
+              </button>
+            </div>
+            <MemberMinistriesFunctionsSection
+              memberId={member.id}
+              ministries={member.ministries}
+              editable
+            />
+          </div>
 
           <MemberMinistriesSection member={member} />
         </div>

@@ -4,13 +4,6 @@ import { useState } from "react";
 
 import { EventAvailabilityPanel } from "@/components/dashboard/my-schedule/event-availability-panel";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
   useUpdateChurchEventAvailability,
   useUpdateEventAvailability,
 } from "@/lib/api/queries";
@@ -29,7 +22,6 @@ export function ActivityAvailabilitySection({
   );
   const [error, setError] = useState<string | null>(null);
 
-  const rosterRoles = (event.rosterSlots ?? []).map((slot) => slot.label);
   const busy =
     updateChurchAvailability.isPending || updateMinistryAvailability.isPending;
 
@@ -52,7 +44,6 @@ export function ActivityAvailabilitySection({
       await updateMinistryAvailability.mutateAsync({
         eventId: event.id,
         status: payload.status,
-        roleLabels: payload.roleLabels,
       });
     } catch (respondError) {
       setError(
@@ -64,31 +55,24 @@ export function ActivityAvailabilitySection({
   }
 
   return (
-    <Card className="border-emerald-500/20 bg-emerald-500/5">
-      <CardHeader>
-        <CardTitle className="font-display text-base">
-          Você pode ir?
-        </CardTitle>
-        <CardDescription>
-          A coleta está aberta. Informe se pode ajudar e em quais funções.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {error && (
-          <p className="mb-3 rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-            {error}
-          </p>
-        )}
+    <div className="space-y-3">
+      {error ? (
+        <p className="rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+          {error}
+        </p>
+      ) : null}
 
-        <EventAvailabilityPanel
-          rosterRoles={rosterRoles}
-          myRoleLabels={event.myRoleLabels ?? []}
-          availabilityStatus={event.myAvailabilityStatus ?? null}
-          availabilityMessage={event.availabilityMessage}
-          busy={busy}
-          onRespond={(payload) => void handleRespond(payload)}
-        />
-      </CardContent>
-    </Card>
+      <EventAvailabilityPanel
+        showHeader
+        availabilityStatus={event.myAvailabilityStatus ?? null}
+        availabilityMessage={event.availabilityMessage}
+        needsRosterFunctions={
+          !event.isChurchWide && (event.needsRosterFunctions ?? false)
+        }
+        ministryName={event.ministryName ?? "este ministério"}
+        busy={busy}
+        onRespond={(payload) => void handleRespond(payload)}
+      />
+    </div>
   );
 }

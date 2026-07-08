@@ -3,15 +3,21 @@
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Bell, ClipboardList, KeyRound } from "lucide-react";
+import { Bell, ClipboardList, KeyRound, UserCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
   AUTH_ROUTES,
   settingsSectionPath,
 } from "@/constants/routes";
-import { useMySchedules, usePasswordResetRequests } from "@/lib/api/queries";
+import { useMyMinistryNotifications, useMySchedules, usePasswordResetRequests } from "@/lib/api/queries";
 import { canManageChurchMemberships } from "@/lib/church-memberships/constants";
+import {
+  ministryNotificationDescription,
+  ministryNotificationLabel,
+  ministryNotificationsCount,
+  ministryNotificationsSettingsHref,
+} from "@/lib/ministries/ministry-notifications";
 import {
   firstPendingScheduleHref,
   schedulePendingCount,
@@ -29,14 +35,16 @@ function useNotificationCount(): number {
     poll: canManage,
   });
   const { data: schedules } = useMySchedules();
+  const { data: ministryNotifications } = useMyMinistryNotifications();
 
   const passwordResetCount = canManage ? (passwordResetRequests?.length ?? 0) : 0;
   const pendingScheduleCount = schedulePendingCount(
     schedules,
     hasSchedulesAccess,
   );
+  const ministryCount = ministryNotificationsCount(ministryNotifications);
 
-  return passwordResetCount + pendingScheduleCount;
+  return passwordResetCount + pendingScheduleCount + ministryCount;
 }
 
 function NotificationsPanel({
@@ -64,13 +72,19 @@ function NotificationsPanel({
     isLoading: schedulesLoading,
     isError: schedulesError,
   } = useMySchedules();
+  const {
+    data: ministryNotifications,
+    isLoading: ministryNotificationsLoading,
+    isError: ministryNotificationsError,
+  } = useMyMinistryNotifications();
 
   const passwordResetCount = canManage ? (passwordResetRequests?.length ?? 0) : 0;
   const pendingScheduleCount = schedulePendingCount(
     schedules,
     hasSchedulesAccess,
   );
-  const count = passwordResetCount + pendingScheduleCount;
+  const ministryCount = ministryNotificationsCount(ministryNotifications);
+  const count = passwordResetCount + pendingScheduleCount + ministryCount;
 
   const respondHref = schedules
     ? firstPendingScheduleHref(schedules)
@@ -78,10 +92,12 @@ function NotificationsPanel({
 
   const isLoading =
     (canManage && passwordResetLoading) ||
-    (hasSchedulesAccess && schedulesLoading);
+    (hasSchedulesAccess && schedulesLoading) ||
+    ministryNotificationsLoading;
   const isError =
     (canManage && passwordResetError) ||
-    (hasSchedulesAccess && schedulesError);
+    (hasSchedulesAccess && schedulesError) ||
+    ministryNotificationsError;
 
   useEffect(() => {
     if (!open) {
@@ -235,6 +251,48 @@ function NotificationsPanel({
                 </div>
               </div>
             ))}
+
+          {!isLoading &&
+            !isError &&
+            ministryCount > 0 &&
+            ministryNotifications && (
+              <div className="border-b border-border/70 px-4 py-3 last:border-b-0">
+                <div className="flex items-start gap-3">
+                  <div className={pendingNotificationStyles.icon.sm}>
+                    <UserCheck
+                      className={cn("size-3.5", pendingNotificationStyles.iconText)}
+                      aria-hidden
+                    />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className={pendingNotificationStyles.label}>
+                      {ministryNotifications.summary.needsFunctionsCount > 0
+                        ? "Ação necessária"
+                        : "Atualização"}
+                    </p>
+                    <p className="mt-1 text-sm font-medium leading-snug">
+                      {ministryNotificationLabel(ministryNotifications)}
+                    </p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {ministryNotificationDescription(ministryNotifications)}
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-2 h-8 text-xs"
+                      asChild
+                      onClick={onClose}
+                    >
+                      <Link href={ministryNotificationsSettingsHref()}>
+                        {ministryNotifications.summary.needsFunctionsCount > 0
+                          ? "Escolher funções"
+                          : "Ver ministérios"}
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
         </div>
       </div>
     </>,
@@ -252,6 +310,9 @@ export function NotificationsBell() {
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
   const count = useNotificationCount();
   const hasNotifications = count > 0;
+  const { data: ministryNotifications } = useMyMinistryNotifications();
+  const hasMinistryNotifications =
+    ministryNotificationsCount(ministryNotifications) > 0;
 
   useEffect(() => {
     if (!open) {
@@ -274,7 +335,7 @@ export function NotificationsBell() {
     };
   }, [open]);
 
-  if (!canManage && !hasSchedulesAccess) {
+  if (!canManage && !hasSchedulesAccess && !hasMinistryNotifications) {
     return null;
   }
 

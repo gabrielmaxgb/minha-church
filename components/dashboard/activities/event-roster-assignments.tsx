@@ -5,16 +5,8 @@ import { ListChecks, Plus, Trash2, Users } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { SelectField } from "@/components/ui/select-field";
 import { useRemoveEventRoster, useUpsertEventRoster } from "@/lib/api/queries";
-import {
-  countFilledRosterPositions,
-  countRequiredRosterPositions,
-  formatRosterRole,
-  isRosterFullyStaffed,
-  memberCanFillEventRole,
-  slotHasVacancy,
-} from "@/lib/ministries/roster";
+import { formatRosterRole } from "@/lib/ministries/roster";
 import { cn } from "@/lib/utils";
 import type { ChurchEventDetail } from "@/types/events";
 
@@ -22,6 +14,7 @@ interface EventRosterAssignmentsProps {
   event: ChurchEventDetail;
   canManage: boolean;
   embedded?: boolean;
+  compact?: boolean;
 }
 
 function availabilityLabel(status: "available" | "unavailable" | null) {
@@ -40,126 +33,59 @@ export function EventRosterAssignments({
   event,
   canManage,
   embedded = false,
+  compact = false,
 }: EventRosterAssignmentsProps) {
   const upsertRoster = useUpsertEventRoster(event.id);
   const removeRoster = useRemoveEventRoster(event.id);
-  const [memberId, setMemberId] = useState("");
-  const [rosterSlotId, setRosterSlotId] = useState("");
+  const [selectedRoles, setSelectedRoles] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
 
-  const slots = event.rosterSlots ?? [];
-  const vacantSlots = slots.filter((slot) => slotHasVacancy(slot));
-  const filledCount = countFilledRosterPositions(slots);
-  const requiredCount = countRequiredRosterPositions(slots);
-  const rosterComplete = isRosterFullyStaffed(slots);
-
   const assignments = event.roster;
-
-  const availableCandidates = useMemo(
-    () =>
-      event.rosterCandidates.filter(
-        (item) => item.availabilityStatus === "available",
-      ),
-    [event.rosterCandidates],
-  );
+  const isMinistryEvent = Boolean(event.ministryId);
 
   const assignedMemberIds = useMemo(
     () => new Set(assignments.map((item) => item.memberId)),
     [assignments],
   );
 
-  const selectableCandidates = useMemo(() => {
-    const selectedSlot = slots.find((slot) => slot.id === rosterSlotId);
-
-    return availableCandidates.filter((candidate) => {
-      if (assignedMemberIds.has(candidate.memberId)) {
-        return false;
-      }
-
-      if (!selectedSlot) {
-        return true;
-      }
-
-      return memberCanFillEventRole(
-        candidate.roleLabels ?? [],
-        selectedSlot.label,
-      );
-    });
-  }, [availableCandidates, assignedMemberIds, rosterSlotId, slots]);
-
-  const selectedCandidate = useMemo(
-    () => availableCandidates.find((candidate) => candidate.memberId === memberId),
-    [availableCandidates, memberId],
+  const availableCandidates = useMemo(
+    () =>
+      event.rosterCandidates.filter(
+        (candidate) =>
+          candidate.availabilityStatus === "available" &&
+          !assignedMemberIds.has(candidate.memberId) &&
+          candidate.roleLabels.length > 0,
+      ),
+    [assignedMemberIds, event.rosterCandidates],
   );
 
-  const selectableSlots = useMemo(() => {
-    if (!selectedCandidate) {
-      return vacantSlots;
-    }
+  const rosterBusy = upsertRoster.isPending || removeRoster.isPending;
 
-    return vacantSlots.filter((slot) =>
-      memberCanFillEventRole(selectedCandidate.roleLabels ?? [], slot.label),
-    );
-  }, [selectedCandidate, vacantSlots]);
-
-  function handleMemberChange(nextMemberId: string) {
-    setMemberId(nextMemberId);
-
-    if (!nextMemberId) {
-      return;
-    }
-
-    const candidate = availableCandidates.find(
-      (item) => item.memberId === nextMemberId,
-    );
-
-    if (!candidate || !rosterSlotId) {
-      return;
-    }
-
-    const slot = slots.find((item) => item.id === rosterSlotId);
-
-    if (
-      slot &&
-      !memberCanFillEventRole(candidate.roleLabels ?? [], slot.label)
-    ) {
-      setRosterSlotId("");
-    }
+  function selectRole(memberId: string, roleLabel: string) {
+    setSelectedRoles((current) => ({
+      ...current,
+      [memberId]: roleLabel,
+    }));
+    setError(null);
   }
 
-  function handleSlotChange(nextSlotId: string) {
-    setRosterSlotId(nextSlotId);
+  async function handleAdd(memberId: string) {
+    const roleLabel = selectedRoles[memberId];
 
-    if (!nextSlotId || !memberId) {
-      return;
-    }
-
-    const slot = slots.find((item) => item.id === nextSlotId);
-    const candidate = availableCandidates.find(
-      (item) => item.memberId === memberId,
-    );
-
-    if (
-      slot &&
-      candidate &&
-      !memberCanFillEventRole(candidate.roleLabels ?? [], slot.label)
-    ) {
-      setMemberId("");
-    }
-  }
-
-  async function handleAdd() {
-    if (!memberId || !rosterSlotId) {
-      setError("Escolha a função e a pessoa disponível.");
+    if (!roleLabel) {
+      setError("Selecione uma função antes de adicionar.");
       return;
     }
 
     setError(null);
 
     try {
-      await upsertRoster.mutateAsync({ memberId, rosterSlotId });
-      setMemberId("");
-      setRosterSlotId("");
+      await upsertRoster.mutateAsync({ memberId, roleLabel });
+      setSelectedRoles((current) => {
+        const next = { ...current };
+        delete next[memberId];
+        return next;
+      });
     } catch (addError) {
       setError(
         addError instanceof Error
@@ -183,69 +109,40 @@ export function EventRosterAssignments({
     }
   }
 
-  if (slots.length === 0) {
-    return (
-      <div className="rounded-xl border border-dashed border-border bg-muted/15 px-4 py-8 text-center">
-        <ListChecks className="mx-auto size-7 text-muted-foreground" />
-        <p className="mt-3 text-sm font-medium text-foreground">
-          Defina as funções primeiro
-        </p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          No passo 1, informe quais funções e quantidades são necessárias. Depois
-          você escolhe quem vai servir em cada uma.
-        </p>
-      </div>
-    );
-  }
-
   return (
-    <div className={cn("space-y-4", !embedded && "space-y-5")}>
-      {error && (
+    <div
+      className={cn(
+        compact ? "space-y-2.5" : "space-y-4",
+        !embedded && "space-y-5",
+      )}
+    >
+      {error ? (
         <p className="rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive">
           {error}
         </p>
-      )}
+      ) : null}
 
-      {assignments.length > 0 && (
-        <ul className="space-y-2">
-          {assignments.map((assignment) => {
-            const slot = slots.find((item) => item.id === assignment.rosterSlotId);
-
-            return (
+      {assignments.length > 0 ? (
+        <div className="space-y-2">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Escala oficial
+          </p>
+          <ul className="space-y-2">
+            {assignments.map((assignment) => (
               <li
                 key={assignment.id}
-                className="flex items-center justify-between gap-3 rounded-xl border border-border/70 bg-background px-4 py-3"
+                className="flex items-center justify-between gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-3"
               >
-                <div className="min-w-0">
-                  <p className="font-medium text-foreground">
+                <div className="flex min-w-0 items-center gap-2">
+                  <Badge variant="secondary" className="shrink-0">
+                    {formatRosterRole(assignment.roleLabel)}
+                  </Badge>
+                  <span className="truncate font-medium text-foreground">
                     {assignment.memberName}
-                  </p>
-                  <div className="mt-1 flex flex-wrap items-center gap-2">
-                    <Badge variant="secondary">
-                      {formatRosterRole(assignment.roleLabel)}
-                    </Badge>
-                    {slot && slot.requiredCount > 1 && (
-                      <span className="text-xs text-muted-foreground">
-                        {slot.assignedCount}/{slot.requiredCount} na função
-                      </span>
-                    )}
-                    <span
-                      className={cn(
-                        "text-xs",
-                        assignment.availabilityStatus === "available" &&
-                          "text-emerald-700 dark:text-emerald-300",
-                        assignment.availabilityStatus === "unavailable" &&
-                          "text-destructive",
-                        !assignment.availabilityStatus &&
-                          "text-muted-foreground",
-                      )}
-                    >
-                      {availabilityLabel(assignment.availabilityStatus)}
-                    </span>
-                  </div>
+                  </span>
                 </div>
 
-                {canManage && (
+                {canManage ? (
                   <Button
                     type="button"
                     size="sm"
@@ -257,105 +154,88 @@ export function EventRosterAssignments({
                   >
                     <Trash2 className="size-4" />
                   </Button>
-                )}
+                ) : null}
               </li>
-            );
-          })}
-        </ul>
-      )}
-
-      {assignments.length === 0 && !canManage && (
+            ))}
+          </ul>
+        </div>
+      ) : canManage ? null : (
         <div className="rounded-xl border border-dashed border-border bg-muted/15 px-4 py-6 text-center text-sm text-muted-foreground">
           A escala deste dia ainda não foi montada.
         </div>
       )}
 
-      {canManage && vacantSlots.length > 0 && (
-        <div className="space-y-3 rounded-xl border border-border/70 bg-muted/10 p-4">
-          <div>
-            <p className="text-sm font-semibold text-foreground">
-              Preencher vaga
-            </p>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Escolha a pessoa e a função em que ela se disponibilizou.
-            </p>
-          </div>
+      {canManage ? (
+        <div className="space-y-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Disponíveis para escalar
+          </p>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <p className="text-xs font-medium text-muted-foreground">Pessoa</p>
-              <SelectField
-                value={memberId}
-                onChange={(changeEvent) =>
-                  handleMemberChange(changeEvent.target.value)
-                }
-                disabled={upsertRoster.isPending}
-              >
-                <option value="">Selecione</option>
-                {selectableCandidates.map((candidate) => (
-                  <option key={candidate.memberId} value={candidate.memberId}>
-                    {candidate.memberName}
-                  </option>
-                ))}
-              </SelectField>
+          {availableCandidates.length > 0 ? (
+            <ul className="space-y-3">
+              {availableCandidates.map((candidate) => {
+                const selectedRole = selectedRoles[candidate.memberId] ?? "";
+
+                return (
+                  <li
+                    key={candidate.memberId}
+                    className="rounded-xl border border-border/70 bg-background px-4 py-3"
+                  >
+                    <p className="font-medium text-foreground">
+                      {candidate.memberName}
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {candidate.roleLabels.map((role) => {
+                        const active = selectedRole === role;
+
+                        return (
+                          <button
+                            key={`${candidate.memberId}-${role}`}
+                            type="button"
+                            disabled={rosterBusy}
+                            onClick={() => selectRole(candidate.memberId, role)}
+                            className={cn(
+                              "rounded-full border px-3 py-1.5 text-sm transition-colors disabled:opacity-50",
+                              active
+                                ? "border-foreground bg-foreground text-background"
+                                : "border-border bg-muted/20 text-muted-foreground hover:border-foreground/30 hover:text-foreground",
+                            )}
+                          >
+                            {formatRosterRole(role)}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="mt-3 flex justify-end">
+                      <Button
+                        type="button"
+                        size="sm"
+                        disabled={rosterBusy || !selectedRole}
+                        onClick={() => void handleAdd(candidate.memberId)}
+                      >
+                        <Plus className="size-4" />
+                        Adicionar à escala
+                      </Button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <div className="rounded-xl border border-dashed border-border bg-muted/10 px-4 py-6 text-center">
+              <ListChecks className="mx-auto size-7 text-muted-foreground" />
+              <p className="mt-3 text-sm font-medium text-foreground">
+                Ninguém disponível no momento
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {isMinistryEvent
+                  ? "A equipe precisa marcar disponibilidade e configurar funções no perfil."
+                  : "Aguarde respostas de disponibilidade para este evento."}
+              </p>
             </div>
-
-            <div className="space-y-1.5">
-              <p className="text-xs font-medium text-muted-foreground">Função</p>
-              <SelectField
-                value={rosterSlotId}
-                onChange={(changeEvent) =>
-                  handleSlotChange(changeEvent.target.value)
-                }
-                disabled={upsertRoster.isPending || !memberId}
-              >
-                <option value="">
-                  {memberId ? "Selecione" : "Escolha a pessoa primeiro"}
-                </option>
-                {selectableSlots.map((slot) => (
-                  <option key={slot.id} value={slot.id}>
-                    {formatRosterRole(slot.label)}
-                    {slot.requiredCount > 1
-                      ? ` (${slot.assignedCount}/${slot.requiredCount})`
-                      : ""}
-                  </option>
-                ))}
-              </SelectField>
-            </div>
-          </div>
-
-          {memberId && selectableSlots.length === 0 && (
-            <p className="text-xs text-amber-800 dark:text-amber-300">
-              Esta pessoa não marcou funções compatíveis com as vagas abertas.
-            </p>
           )}
-
-          {availableCandidates.length === 0 && (
-            <p className="text-xs text-amber-800 dark:text-amber-300">
-              Ninguém marcou disponibilidade ainda. Abra a coleta no passo 2 ou
-              aguarde as respostas da equipe.
-            </p>
-          )}
-
-          <Button
-            type="button"
-            size="sm"
-            onClick={() => void handleAdd()}
-            disabled={upsertRoster.isPending || !memberId || !rosterSlotId}
-          >
-            <Plus className="size-4" />
-            {upsertRoster.isPending ? "Adicionando..." : "Confirmar na escala"}
-          </Button>
         </div>
-      )}
-
-      {canManage && rosterComplete && (
-        <p className="text-xs text-emerald-800 dark:text-emerald-300">
-          Todas as vagas deste dia estão preenchidas ({filledCount}/
-          {requiredCount}
-          {event.rosterOpen ? "" : " · coleta fechada automaticamente"}).
-        </p>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -365,8 +245,6 @@ export function EventRosterPublicCard({
 }: {
   event: ChurchEventDetail;
 }) {
-  const slots = event.rosterSlots ?? [];
-
   if (!event.usesRoster || event.roster.length === 0) {
     return null;
   }

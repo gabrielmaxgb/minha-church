@@ -1,22 +1,10 @@
 import type { EventRecurrence, EventRecurrenceInput } from "@/lib/events/recurrence";
 import type {
   EventAvailabilityStatus,
-  RosterAvailabilityPeriod,
   RosterSlotPlanItem,
 } from "@/lib/ministries/roster";
 
 export type { RosterSlotPlanItem };
-
-export interface RosterAvailabilityWindow {
-  active: boolean;
-  periodType: RosterAvailabilityPeriod | null;
-  periodStart: string | null;
-  periodEnd: string | null;
-  label: string | null;
-  eventsInPeriod: number;
-  openEventsInPeriod: number;
-  teamPendingCount: number;
-}
 
 export interface MinistryRole {
   id: string;
@@ -29,15 +17,21 @@ export interface MinistryRole {
   updatedAt: string;
 }
 
+export interface MinistryServiceFunction {
+  id: string;
+  ministryId: string;
+  label: string;
+  sortOrder: number;
+}
+
 export interface Ministry {
   id: string;
   churchId: string;
   name: string;
   description: string | null;
-  hasRoster: boolean;
   isActive: boolean;
-  availabilityWindow: RosterAvailabilityWindow | null;
   roles: MinistryRole[];
+  serviceFunctions: MinistryServiceFunction[];
   createdAt: string;
   updatedAt: string;
 }
@@ -144,12 +138,10 @@ export interface RosterSeriesGroup {
 export interface RosterProfile {
   ministryId: string;
   ministryName: string;
-  hasRoster: true;
   memberId: string;
   /** Funções cadastradas pelo membro neste ministério. */
   instruments: string[];
   needsRosterFunctions: boolean;
-  availabilityWindow: RosterAvailabilityWindow;
   series: RosterSeriesGroup[];
   summary: {
     totalOpen: number;
@@ -224,13 +216,6 @@ export interface MySchedulePending {
 export interface MyMinistrySchedule {
   ministryId: string;
   ministryName: string;
-  availabilityWindow: {
-    active: boolean;
-    periodType: RosterAvailabilityPeriod | null;
-    periodStart: string | null;
-    periodEnd: string | null;
-    label: string | null;
-  };
   pendingAvailability: MySchedulePending[];
   upcomingAssignments: MyScheduleAssignment[];
   events: MyScheduleEvent[];
@@ -239,7 +224,6 @@ export interface MyMinistrySchedule {
 }
 
 export interface MySchedules {
-  hasRosterMinistries: boolean;
   hasSchedule: boolean;
   churchWide: MyMinistrySchedule | null;
   summary: {
@@ -250,9 +234,6 @@ export interface MySchedules {
   };
   ministries: MyMinistrySchedule[];
 }
-
-/** @deprecated Use RosterAvailabilityWindow */
-export type WorshipAvailabilityWindow = RosterAvailabilityWindow;
 
 /** @deprecated Use RosterProfile */
 export type WorshipProfile = RosterProfile;

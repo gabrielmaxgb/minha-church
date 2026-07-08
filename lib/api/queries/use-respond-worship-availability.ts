@@ -6,8 +6,9 @@ import {
   ministriesKeys,
   updateEventAvailability,
 } from "@/lib/api/queries/ministries.keys";
-import { updateChurchEventAvailability } from "@/lib/api/queries/events.keys";
+import { eventsKeys, updateChurchEventAvailability } from "@/lib/api/queries/events.keys";
 import { rosterKeys } from "@/lib/api/queries/roster.keys";
+import { queries } from "@/lib/api/queries";
 import { CHURCH_WIDE_SCHEDULE_ID } from "@/lib/events/church-wide-schedule";
 import { useTenant } from "@/providers/auth-provider";
 
@@ -45,18 +46,31 @@ export function useRespondToRosterAvailability() {
       });
     },
     onSuccess: async (profile, variables) => {
-      if (
-        churchId &&
-        profile &&
-        variables.ministryId !== CHURCH_WIDE_SCHEDULE_ID
-      ) {
-        queryClient.setQueryData(
-          ministriesKeys.rosterProfile(
-            churchId,
-            variables.ministryId,
-          ).queryKey,
-          profile,
-        );
+      if (churchId) {
+        if (
+          profile &&
+          variables.ministryId !== CHURCH_WIDE_SCHEDULE_ID
+        ) {
+          queryClient.setQueryData(
+            ministriesKeys.rosterProfile(
+              churchId,
+              variables.ministryId,
+            ).queryKey,
+            profile,
+          );
+          await queryClient.invalidateQueries({
+            queryKey: ministriesKeys.rosterProfile(
+              churchId,
+              variables.ministryId,
+            ).queryKey,
+          });
+        }
+
+        await queryClient.invalidateQueries({
+          queryKey: eventsKeys.detail(churchId, variables.eventId).queryKey,
+        });
+        await queryClient.invalidateQueries({ queryKey: eventsKeys._def });
+        await queryClient.invalidateQueries({ queryKey: queries.dashboard._def });
       }
 
       await queryClient.invalidateQueries({ queryKey: rosterKeys._def });
