@@ -76,6 +76,7 @@ export function EditActivityModal({
   const titleId = useId();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [highlightNote, setHighlightNote] = useState("");
   const [location, setLocation] = useState("");
   const [startsAt, setStartsAt] = useState("");
   const [endsAt, setEndsAt] = useState("");
@@ -102,6 +103,7 @@ export function EditActivityModal({
     return (
       name.trim() !== event.name ||
       (description.trim() || "") !== (event.description ?? "") ||
+      (highlightNote.trim() || "") !== (event.highlightNote ?? "") ||
       (location.trim() || "") !== (event.location ?? "") ||
       startsAt !== toDatetimeLocalValue(event.startsAt) ||
       (endsAt || "") !==
@@ -115,12 +117,13 @@ export function EditActivityModal({
       ) ||
       (availabilityMessage.trim() || "") !== (event.availabilityMessage ?? "")
     );
-  }, [event, name, description, location, startsAt, endsAt, usesRoster, rosterOpen, rosterSlotPlan, availabilityMessage, visibleToChurch]);
+  }, [event, name, description, highlightNote, location, startsAt, endsAt, usesRoster, rosterOpen, rosterSlotPlan, availabilityMessage, visibleToChurch]);
 
   useEffect(() => {
     if (!open || !event) {
       setName("");
       setDescription("");
+      setHighlightNote("");
       setLocation("");
       setStartsAt("");
       setEndsAt("");
@@ -138,6 +141,7 @@ export function EditActivityModal({
 
     setName(event.name);
     setDescription(event.description ?? "");
+    setHighlightNote(event.highlightNote ?? "");
     setLocation(event.location ?? "");
     setStartsAt(toDatetimeLocalValue(event.startsAt));
     setEndsAt(event.endsAt ? toDatetimeLocalValue(event.endsAt) : "");
@@ -196,6 +200,7 @@ export function EditActivityModal({
       await updateEvent.mutateAsync({
         name: name.trim(),
         description: description.trim() || null,
+        highlightNote: highlightNote.trim() || null,
         location: location.trim() || null,
         startsAt: new Date(startsAt).toISOString(),
         endsAt: endsAt ? new Date(endsAt).toISOString() : null,
@@ -343,7 +348,7 @@ export function EditActivityModal({
                 </Field>
 
                 <Field
-                  label="Descrição"
+                  label="Descrição do evento"
                   htmlFor="edit-activity-description"
                   hint="Opcional. Use para orientar a equipe ou os participantes."
                 >
@@ -355,6 +360,22 @@ export function EditActivityModal({
                     rows={4}
                     disabled={isPending}
                     className="min-h-[120px] resize-y rounded-xl border-border/80 bg-background px-4 py-3 text-base leading-relaxed"
+                  />
+                </Field>
+
+                <Field
+                  label="Recado em destaque"
+                  htmlFor="edit-activity-highlight-note"
+                  hint="Opcional. Aparece em destaque na página do evento para quem acessa — ideal para tema da palavra, pastorais ou avisos importantes."
+                >
+                  <Textarea
+                    id="edit-activity-highlight-note"
+                    value={highlightNote}
+                    onChange={(inputEvent) => setHighlightNote(inputEvent.target.value)}
+                    placeholder="Ex.: Tema da mensagem: “A fé que move montanhas” — Pr. João"
+                    rows={3}
+                    disabled={isPending}
+                    className="min-h-[92px] resize-y rounded-xl border-border/80 bg-background px-4 py-3 text-base leading-relaxed"
                   />
                 </Field>
 

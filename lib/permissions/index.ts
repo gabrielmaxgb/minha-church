@@ -21,6 +21,15 @@ export function canManageMembers(permissions: UserPermissions) {
   return permissions.members.manage;
 }
 
+/**
+ * Vincular/desvincular membros a ministérios e ajustar seus cargos na equipe.
+ * Disponível para quem gerencia cadastros (members.manage) e também para quem
+ * gerencia ministérios (ministries.manage), sem exigir CRUD dos cadastros.
+ */
+export function canManageMinistryMembers(permissions: UserPermissions) {
+  return permissions.members.manage || permissions.ministries.manage;
+}
+
 export function canAccessMembers(permissions: UserPermissions | null) {
   return permissions ? canAccessSection(permissions, "members") : false;
 }

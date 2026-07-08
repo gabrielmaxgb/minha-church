@@ -31,7 +31,7 @@ import { formatRecurrenceSummary } from "@/lib/events/recurrence";
 import {
   canCreateMinistryActivity,
   canManageActivity,
-  canManageMembers,
+  canManageMinistryMembers,
 } from "@/lib/permissions";
 import { formatDateTime } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
@@ -75,7 +75,7 @@ export function MinistryDashboardSection({
   const [memberModalOpen, setMemberModalOpen] = useState(false);
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
 
-  const canAddMembers = permissions ? canManageMembers(permissions) : false;
+  const canAddMembers = permissions ? canManageMinistryMembers(permissions) : false;
   const canManageEvents =
     permissions !== null && canCreateMinistryActivity(permissions, ministry.id);
 

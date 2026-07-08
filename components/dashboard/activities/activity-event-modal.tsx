@@ -18,6 +18,7 @@ import {
 
 import { ActivityAvailabilitySection } from "@/components/dashboard/activities/activity-availability-section";
 import { ActivityScheduleFields } from "@/components/dashboard/activities/activity-schedule-fields";
+import { EventHighlightNote } from "@/components/dashboard/activities/event-highlight-note";
 import { EventFormSection } from "@/components/dashboard/activities/event-form-section";
 import { EventMutationScopeDialog } from "@/components/dashboard/activities/event-mutation-scope-dialog";
 import { EventVisibilityFields } from "@/components/dashboard/activities/event-visibility-fields";
@@ -66,6 +67,7 @@ export function ActivityEventModal({
   const [mode, setMode] = useState<"view" | "edit">(initialMode);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [highlightNote, setHighlightNote] = useState("");
   const [location, setLocation] = useState("");
   const [startsAt, setStartsAt] = useState("");
   const [endsAt, setEndsAt] = useState("");
@@ -99,6 +101,7 @@ export function ActivityEventModal({
     return (
       name.trim() !== event.name ||
       (description.trim() || "") !== (event.description ?? "") ||
+      (highlightNote.trim() || "") !== (event.highlightNote ?? "") ||
       (location.trim() || "") !== (event.location ?? "") ||
       startsAt !== toDatetimeLocalValue(event.startsAt) ||
       (endsAt || "") !==
@@ -110,6 +113,7 @@ export function ActivityEventModal({
     mode,
     name,
     description,
+    highlightNote,
     location,
     startsAt,
     endsAt,
@@ -135,6 +139,7 @@ export function ActivityEventModal({
 
     setName(event.name);
     setDescription(event.description ?? "");
+    setHighlightNote(event.highlightNote ?? "");
     setLocation(event.location ?? "");
     setStartsAt(toDatetimeLocalValue(event.startsAt));
     setEndsAt(event.endsAt ? toDatetimeLocalValue(event.endsAt) : "");
@@ -152,6 +157,7 @@ export function ActivityEventModal({
       await updateEvent.mutateAsync({
         name: name.trim(),
         description: description.trim() || null,
+        highlightNote: highlightNote.trim() || null,
         location: location.trim() || null,
         startsAt: new Date(startsAt).toISOString(),
         endsAt: endsAt ? new Date(endsAt).toISOString() : null,
@@ -330,6 +336,10 @@ export function ActivityEventModal({
               </p>
             ) : null}
 
+            {event.highlightNote ? (
+              <EventHighlightNote note={event.highlightNote} />
+            ) : null}
+
             <div className="grid gap-3 sm:grid-cols-2">
               <InfoTile
                 icon={Calendar}
@@ -408,7 +418,9 @@ export function ActivityEventModal({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="event-modal-description">Descrição</Label>
+                  <Label htmlFor="event-modal-description">
+                    Descrição do evento
+                  </Label>
                   <Textarea
                     id="event-modal-description"
                     value={description}
@@ -419,6 +431,26 @@ export function ActivityEventModal({
                     disabled={isPending}
                     className="rounded-xl"
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="event-modal-highlight-note">
+                    Recado em destaque
+                  </Label>
+                  <Textarea
+                    id="event-modal-highlight-note"
+                    value={highlightNote}
+                    onChange={(inputEvent) =>
+                      setHighlightNote(inputEvent.target.value)
+                    }
+                    rows={3}
+                    disabled={isPending}
+                    className="rounded-xl"
+                    placeholder="Ex.: Tema da mensagem: “A fé que move montanhas” — Pr. João"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Aparece em destaque na página do evento. Ideal para tema da
+                    palavra, pastorais ou avisos importantes.
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="event-modal-location">Local</Label>

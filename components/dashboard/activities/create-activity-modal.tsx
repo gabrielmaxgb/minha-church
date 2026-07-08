@@ -70,6 +70,7 @@ export function CreateActivityModal({
   const [name, setName] = useState("");
   const [ministryId, setMinistryId] = useState(defaultMinistryId);
   const [description, setDescription] = useState("");
+  const [highlightNote, setHighlightNote] = useState("");
   const [location, setLocation] = useState("");
   const initialStartsAt = defaultStartsAtValue ?? fallbackStartsAt();
   const [startsAt, setStartsAt] = useState(initialStartsAt);
@@ -122,6 +123,7 @@ export function CreateActivityModal({
         setName("");
         setMinistryId(defaultMinistryId);
         setDescription("");
+        setHighlightNote("");
         setLocation("");
         setStartsAt(fallbackStartsAt());
         setEndsAt("");
@@ -203,6 +205,7 @@ export function CreateActivityModal({
     const payload: CreateChurchEventPayload = {
       name: name.trim(),
       description: description.trim() || undefined,
+      highlightNote: highlightNote.trim() || undefined,
       location: location.trim() || undefined,
       startsAt: new Date(startsAt).toISOString(),
       endsAt: endsAt ? new Date(endsAt).toISOString() : undefined,
@@ -331,7 +334,7 @@ export function CreateActivityModal({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="activity-description">Descrição</Label>
+                  <Label htmlFor="activity-description">Descrição do evento</Label>
                   <Textarea
                     id="activity-description"
                     value={description}
@@ -341,6 +344,25 @@ export function CreateActivityModal({
                     className="min-h-[80px] resize-y rounded-xl"
                     placeholder="Detalhes opcionais para a equipe ou participantes"
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="activity-highlight-note">
+                    Recado em destaque
+                  </Label>
+                  <Textarea
+                    id="activity-highlight-note"
+                    value={highlightNote}
+                    onChange={(event) => setHighlightNote(event.target.value)}
+                    rows={2}
+                    disabled={createEvent.isPending}
+                    className="min-h-[80px] resize-y rounded-xl"
+                    placeholder="Ex.: Tema da mensagem: “A fé que move montanhas” — Pr. João"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Aparece em destaque na página do evento. Ideal para tema da
+                    palavra, pastorais ou avisos importantes.
+                  </p>
                 </div>
 
                 <div className="space-y-2">

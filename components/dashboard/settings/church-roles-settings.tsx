@@ -114,6 +114,7 @@ export function ChurchRolesSettings() {
   const [isCreating, setIsCreating] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [roleToDelete, setRoleToDelete] = useState<ChurchRole | null>(null);
 
   const canManage = permissions ? canManageChurchRoles(permissions) : false;
 
@@ -377,8 +378,19 @@ export function ChurchRolesSettings() {
     }
   }
 
-  async function handleDeleteRole(role: ChurchRole) {
+  function requestDeleteRole(role: ChurchRole) {
     if (role.isSystem) {
+      return;
+    }
+
+    setErrorMessage(null);
+    setRoleToDelete(role);
+  }
+
+  async function confirmDeleteRole() {
+    const role = roleToDelete;
+
+    if (!role) {
       return;
     }
 
@@ -391,12 +403,15 @@ export function ChurchRolesSettings() {
       if (selectedRoleId === role.id) {
         setSelectedRoleId(null);
       }
+
+      setRoleToDelete(null);
     } catch (error) {
       setErrorMessage(
         error instanceof Error
           ? error.message
           : "Não foi possível excluir o cargo.",
       );
+      setRoleToDelete(null);
     }
   }
 
@@ -542,7 +557,7 @@ export function ChurchRolesSettings() {
                     onNameChange={(value) =>
                       setDraftName(selectedRole.id, value)
                     }
-                    onDelete={() => void handleDeleteRole(selectedRole)}
+                    onDelete={() => requestDeleteRole(selectedRole)}
                   />
                 )}
 
@@ -571,6 +586,79 @@ export function ChurchRolesSettings() {
           </SettingsSplitLayout>
         </SettingsPanel>
       )}
+
+      {roleToDelete && (
+        <DeleteRoleConfirmDialog
+          roleName={roleToDelete.name}
+          isDeleting={deleteRole.isPending}
+          onCancel={() => setRoleToDelete(null)}
+          onConfirm={() => void confirmDeleteRole()}
+        />
+      )}
+    </div>
+  );
+}
+
+function DeleteRoleConfirmDialog({
+  roleName,
+  isDeleting,
+  onCancel,
+  onConfirm,
+}: {
+  roleName: string;
+  isDeleting: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/45 backdrop-blur-[2px]"
+        aria-label="Fechar"
+        disabled={isDeleting}
+        onClick={() => {
+          if (!isDeleting) {
+            onCancel();
+          }
+        }}
+      />
+
+      <div
+        role="dialog"
+        aria-modal="true"
+        className="relative z-10 w-full max-w-md rounded-t-2xl border border-border bg-background p-6 shadow-2xl sm:rounded-2xl"
+      >
+        <h2 className="font-display text-lg font-semibold tracking-tight">
+          Excluir cargo &quot;{roleName}&quot;?
+        </h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          O cargo será removido de todos os usuários que o possuem. Eles perdem
+          as permissões concedidas por ele, mas continuam com os outros cargos.
+          Esta ação não pode ser desfeita.
+        </p>
+
+        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={isDeleting}
+            className="w-full sm:w-auto"
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={onConfirm}
+            disabled={isDeleting}
+            className="w-full sm:w-auto"
+          >
+            {isDeleting ? "Excluindo..." : "Excluir cargo"}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

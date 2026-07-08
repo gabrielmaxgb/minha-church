@@ -146,7 +146,7 @@ function IncludedBenefits({
         ))}
       </ul>
       <p className="mt-6 text-center text-xs text-muted-foreground">
-        14 dias grátis · sem fidelidade · cancele quando quiser
+        30 dias grátis · sem fidelidade · cancele quando quiser
       </p>
     </div>
   );
@@ -372,7 +372,7 @@ export function PricingSection() {
       </section>
 
       <CtaBanner
-        title="Teste grátis por 14 dias"
+        title="Teste grátis por 30 dias"
         description="Todas as funcionalidades incluídas. Sem cartão de crédito."
         primaryLabel="Começar grátis"
         primaryHref={PUBLIC_ROUTES.pricing}

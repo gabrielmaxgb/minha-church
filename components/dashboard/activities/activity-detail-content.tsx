@@ -16,6 +16,7 @@ import {
 import { ActivityAvailabilitySection } from "@/components/dashboard/activities/activity-availability-section";
 import { ActivityEventModal } from "@/components/dashboard/activities/activity-event-modal";
 import { ActivityRosterSection } from "@/components/dashboard/activities/activity-roster-section";
+import { EventHighlightNote } from "@/components/dashboard/activities/event-highlight-note";
 import { EventRosterPublicCard } from "@/components/dashboard/activities/event-roster-assignments";
 import { InactiveMinistryBanner } from "@/components/dashboard/ministries/inactive-ministry-banner";
 import { Badge } from "@/components/ui/badge";
@@ -277,6 +278,10 @@ export function ActivityDetailContent({ eventId }: ActivityDetailContentProps) {
             ) : null}
           </CardContent>
         </Card>
+
+        {event.highlightNote ? (
+          <EventHighlightNote note={event.highlightNote} />
+        ) : null}
 
         {canManageRoster ? (
           <ActivityRosterSection event={event} />

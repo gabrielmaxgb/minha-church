@@ -108,8 +108,7 @@ export function PendingUsersSettings() {
             </div>
             <p className="text-sm text-muted-foreground">
               As senhas são armazenadas de forma segura e removidas automaticamente
-              quando o usuário define uma nova senha. Apenas usuários adicionados
-              após esta funcionalidade exibem a senha aqui.
+              quando o usuário define uma nova senha. Aguarde alguns minutos após receber novos membros para ver a senha.
             </p>
           </div>
         </div>

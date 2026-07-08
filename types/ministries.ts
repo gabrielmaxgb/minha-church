@@ -44,6 +44,7 @@ export interface MinistryEvent {
   isChurchWide: boolean;
   name: string;
   description: string | null;
+  highlightNote: string | null;
   availabilityMessage: string | null;
   location: string | null;
   startsAt: string;
@@ -92,6 +93,7 @@ export interface MinistryMember {
 export interface CreateMinistryEventPayload {
   name: string;
   description?: string;
+  highlightNote?: string;
   availabilityMessage?: string;
   location?: string;
   startsAt: string;

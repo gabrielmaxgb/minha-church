@@ -51,6 +51,7 @@ export function CreateMinistryEventModal({
   const titleId = useId();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [highlightNote, setHighlightNote] = useState("");
   const [location, setLocation] = useState("");
   const [startsAt, setStartsAt] = useState(defaultStartsAt);
   const [endsAt, setEndsAt] = useState("");
@@ -65,6 +66,7 @@ export function CreateMinistryEventModal({
     if (!open) {
       setName("");
       setDescription("");
+      setHighlightNote("");
       setLocation("");
       setStartsAt(defaultStartsAt());
       setEndsAt("");
@@ -125,6 +127,7 @@ export function CreateMinistryEventModal({
     const payload: CreateMinistryEventPayload = {
       name: name.trim(),
       description: description.trim() || undefined,
+      highlightNote: highlightNote.trim() || undefined,
       location: location.trim() || undefined,
       startsAt: new Date(startsAt).toISOString(),
       endsAt: endsAt ? new Date(endsAt).toISOString() : undefined,
@@ -230,6 +233,23 @@ export function CreateMinistryEventModal({
                     disabled={createEvent.isPending}
                     className="min-h-[80px] resize-y rounded-xl"
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="event-highlight-note">Recado em destaque</Label>
+                  <Textarea
+                    id="event-highlight-note"
+                    value={highlightNote}
+                    onChange={(event) => setHighlightNote(event.target.value)}
+                    placeholder='Ex.: Tema da mensagem: "A fé que move montanhas" — Pr. João'
+                    rows={2}
+                    disabled={createEvent.isPending}
+                    className="min-h-[80px] resize-y rounded-xl"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Aparece em destaque na página do evento. Ideal para tema da
+                    palavra, pastorais ou avisos importantes.
+                  </p>
                 </div>
 
                 <div className="space-y-2">

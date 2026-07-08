@@ -2,7 +2,7 @@ import type { Pricing } from "@/types";
 
 const sharedBenefits = [
 	"Saiba quem está afastado e cuide no tempo certo",
-	"Organize escalas sem depender de mensagens no WhatsApp",
+	"Organize escalas sem depender de mensagens no WhatsApp, formulários desconectados e planilhas",
 	"Centralize membros, finanças e comunicação em um só lugar",
 	"Tenha histórico pastoral acessível para toda a liderança",
 	"Acompanhe cultos, eventos e voluntários com clareza",

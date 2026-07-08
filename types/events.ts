@@ -18,6 +18,7 @@ export interface ChurchEvent {
   isChurchWide: boolean;
   name: string;
   description: string | null;
+  highlightNote: string | null;
   availabilityMessage: string | null;
   location: string | null;
   startsAt: string;
@@ -57,6 +58,7 @@ export interface CreateChurchEventPayload {
   name: string;
   ministryId?: string;
   description?: string;
+  highlightNote?: string;
   availabilityMessage?: string;
   location?: string;
   startsAt: string;
@@ -78,6 +80,7 @@ export type EventMutationScope = "this" | "this_and_following" | "all";
 export interface UpdateChurchEventPayload {
   name?: string;
   description?: string | null;
+  highlightNote?: string | null;
   availabilityMessage?: string | null;
   location?: string | null;
   startsAt?: string;

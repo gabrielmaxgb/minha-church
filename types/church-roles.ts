@@ -45,20 +45,34 @@ export const CHURCH_PERMISSION_LABELS: Record<ChurchPermissionKey, string> = {
 };
 
 export const CHURCH_PERMISSION_DESCRIPTIONS: Record<ChurchPermissionKey, string> = {
-  dashboard_access: "Vê o resumo e indicadores na página inicial.",
-  members_access: "Acessa a lista e as fichas de membros.",
-  ministries_access: "Navega pelos ministérios e equipes.",
-  activities_access: "Vê eventos e encontros da igreja.",
-  schedules_access: "Acessa escalas e disponibilidade.",
-  finances_access: "Entra na área financeira da igreja.",
-  communication_access: "Acessa avisos e comunicações.",
-  reports_access: "Consulta relatórios e indicadores.",
-  settings_access: "Abre configurações gerais da igreja.",
-  members_manage: "Cria, edita e remove cadastros pastorais.",
-  ministries_manage: "Cria ministérios, cargos e equipes.",
-  events_create_church_wide: "Publica atividades para toda a igreja.",
-  roles_manage: "Edita cargos e suas permissões.",
-  memberships_manage: "Define cargos e proprietários dos usuários.",
+  dashboard_access:
+    "Abre a página inicial com resumo, indicadores e atalhos. Não dá acesso aos dados detalhados de cada área.",
+  members_access:
+    "Ver a lista de membros e abrir cada ficha (contato, ministérios e situação). Somente leitura — cadastrar ou editar exige “Gerenciar membros”.",
+  ministries_access:
+    "Ver os ministérios, suas equipes e cargos. Somente leitura — criar ou editar exige “Gerenciar ministérios”.",
+  activities_access:
+    "Ver a agenda e os detalhes das atividades e eventos da igreja. Criar atividades exige a permissão de ação correspondente.",
+  schedules_access:
+    "Abre “Minhas escalas”, onde a pessoa acompanha as próprias convocações e marca disponibilidade.",
+  finances_access:
+    "Abre a área financeira da igreja (entradas, saídas e relatórios financeiros).",
+  communication_access:
+    "Abre a área de comunicação, com avisos e mensagens da igreja.",
+  reports_access:
+    "Abre os relatórios e indicadores consolidados da igreja.",
+  settings_access:
+    "Abre as configurações gerais da igreja. Abas específicas ainda podem exigir permissões próprias (cargos, usuários).",
+  members_manage:
+    "Cadastrar, editar e excluir membros, receber visitantes como membros e vincular ou desvincular pessoas de ministérios. Já inclui o acesso de leitura de “Membros”.",
+  ministries_manage:
+    "Criar, editar e excluir ministérios, seus cargos e funções, e montar as equipes vinculando ou removendo membros. Também concede controle das escalas e eventos de todos os ministérios da igreja.",
+  events_create_church_wide:
+    "Criar, editar e excluir atividades para toda a igreja e também eventos dentro de qualquer ministério, sem precisar liderá-lo.",
+  roles_manage:
+    "Criar, editar e excluir cargos e definir quais permissões cada um concede (esta tela). Não atribui os cargos às pessoas.",
+  memberships_manage:
+    "Atribuir e remover cargos dos usuários, definir proprietários, aprovar acessos pendentes e redefinir senhas de acesso.",
 };
 
 export const CHURCH_PERMISSION_GROUPS: Array<{
