@@ -7,8 +7,12 @@ export type RosterAvailabilityPeriod =
   | "semiannual"
   | "annual";
 
+/** Função padrão quando a atividade da igreja não define vagas por função. */
+export const CHURCH_WIDE_DEFAULT_ROSTER_ROLE = "voluntario";
+
 /** Presets comuns para funções na escala (louvor, mídia, recepção, etc.). */
 export const ROSTER_ROLE_PRESETS = [
+  { id: CHURCH_WIDE_DEFAULT_ROSTER_ROLE, label: "Voluntário" },
   { id: "reception", label: "Recepção" },
   { id: "media", label: "Mídia" },
   { id: "vocal", label: "Vocal" },
@@ -125,6 +129,21 @@ export function addRosterRole(values: string[], value: string): string[] {
   }
 
   return [...values, normalized];
+}
+
+export function resolveChurchWideCandidateRoleLabels(
+  candidateRoleLabels: string[],
+  eventSlotLabels: string[],
+): string[] {
+  if (candidateRoleLabels.length > 0) {
+    return candidateRoleLabels;
+  }
+
+  if (eventSlotLabels.length > 0) {
+    return eventSlotLabels;
+  }
+
+  return [CHURCH_WIDE_DEFAULT_ROSTER_ROLE];
 }
 
 export function memberCanFillEventRole(

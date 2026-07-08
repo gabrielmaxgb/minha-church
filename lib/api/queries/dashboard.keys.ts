@@ -5,10 +5,10 @@ import { apiClient, buildTenantPath } from "@/lib/api/client";
 import type { ChurchEvent } from "@/types/events";
 
 export interface DashboardSummary {
-  memberCount: number;
-  activeMembers: number;
-  upcomingEvents: number;
-  monthlyBalance: number;
+  memberCount: number | null;
+  activeMembers: number | null;
+  upcomingEvents: number | null;
+  monthlyBalance: number | null;
   featuredEvents: ChurchEvent[];
 }
 

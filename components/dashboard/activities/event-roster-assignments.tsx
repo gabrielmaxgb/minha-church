@@ -5,8 +5,11 @@ import { ListChecks, Plus, Trash2, Users } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useRemoveEventRoster, useUpsertEventRoster } from "@/lib/api/queries";
-import { formatRosterRole } from "@/lib/ministries/roster";
+import {
+  useRemoveEventRoster,
+  useUpsertEventRoster,
+} from "@/lib/api/queries";
+import { formatRosterRole, resolveChurchWideCandidateRoleLabels } from "@/lib/ministries/roster";
 import { cn } from "@/lib/utils";
 import type { ChurchEventDetail } from "@/types/events";
 
@@ -48,18 +51,43 @@ export function EventRosterAssignments({
     [assignments],
   );
 
+  const churchWideSlotLabels = useMemo(
+    () => (event.rosterSlots ?? []).map((slot) => slot.label),
+    [event.rosterSlots],
+  );
+
   const availableCandidates = useMemo(
     () =>
-      event.rosterCandidates.filter(
-        (candidate) =>
-          candidate.availabilityStatus === "available" &&
-          !assignedMemberIds.has(candidate.memberId) &&
-          candidate.roleLabels.length > 0,
-      ),
-    [assignedMemberIds, event.rosterCandidates],
+      event.rosterCandidates
+        .filter(
+          (candidate) =>
+            candidate.availabilityStatus === "available" &&
+            !assignedMemberIds.has(candidate.memberId),
+        )
+        .map((candidate) => ({
+          ...candidate,
+          roleLabels: isMinistryEvent
+            ? candidate.roleLabels
+            : resolveChurchWideCandidateRoleLabels(
+                candidate.roleLabels,
+                churchWideSlotLabels,
+              ),
+        }))
+        .filter((candidate) => candidate.roleLabels.length > 0),
+    [assignedMemberIds, churchWideSlotLabels, event.rosterCandidates, isMinistryEvent],
   );
 
   const rosterBusy = upsertRoster.isPending || removeRoster.isPending;
+
+  function resolveSelectedRole(memberId: string, roleLabels: string[]): string {
+    const fromState = selectedRoles[memberId];
+
+    if (fromState) {
+      return fromState;
+    }
+
+    return roleLabels.length === 1 ? roleLabels[0] : "";
+  }
 
   function selectRole(memberId: string, roleLabel: string) {
     setSelectedRoles((current) => ({
@@ -69,8 +97,8 @@ export function EventRosterAssignments({
     setError(null);
   }
 
-  async function handleAdd(memberId: string) {
-    const roleLabel = selectedRoles[memberId];
+  async function handleAdd(memberId: string, roleLabels: string[]) {
+    const roleLabel = resolveSelectedRole(memberId, roleLabels);
 
     if (!roleLabel) {
       setError("Selecione uma função antes de adicionar.");
@@ -167,14 +195,24 @@ export function EventRosterAssignments({
 
       {canManage ? (
         <div className="space-y-3">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Disponíveis para escalar
-          </p>
+          <div className="space-y-1">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Disponíveis para escalar
+            </p>
+            {availableCandidates.length > 0 ? (
+              <p className="text-xs text-muted-foreground">
+                Selecione a função e depois clique em Adicionar à escala.
+              </p>
+            ) : null}
+          </div>
 
           {availableCandidates.length > 0 ? (
             <ul className="space-y-3">
               {availableCandidates.map((candidate) => {
-                const selectedRole = selectedRoles[candidate.memberId] ?? "";
+                const selectedRole = resolveSelectedRole(
+                  candidate.memberId,
+                  candidate.roleLabels,
+                );
 
                 return (
                   <li
@@ -211,7 +249,9 @@ export function EventRosterAssignments({
                         type="button"
                         size="sm"
                         disabled={rosterBusy || !selectedRole}
-                        onClick={() => void handleAdd(candidate.memberId)}
+                        onClick={() =>
+                          void handleAdd(candidate.memberId, candidate.roleLabels)
+                        }
                       >
                         <Plus className="size-4" />
                         Adicionar à escala
@@ -230,7 +270,7 @@ export function EventRosterAssignments({
               <p className="mt-1 text-xs text-muted-foreground">
                 {isMinistryEvent
                   ? "A equipe precisa marcar disponibilidade e configurar funções no perfil."
-                  : "Aguarde respostas de disponibilidade para este evento."}
+                  : "Ninguém marcou disponibilidade nesta data ainda, ou a coleta está aberta em outra ocorrência da série."}
               </p>
             </div>
           )}

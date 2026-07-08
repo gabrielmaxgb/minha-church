@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   addRosterSlotPlanItem,
+  CHURCH_WIDE_DEFAULT_ROSTER_ROLE,
   formatRosterRole,
   isRosterRoleSelected,
   normalizeRosterSlotPlan,
@@ -23,6 +24,8 @@ interface EventRosterSlotsEditorProps {
   className?: string;
   embedded?: boolean;
   compact?: boolean;
+  /** Atividade da igreja: funções opcionais; equipe só marca disponibilidade. */
+  optional?: boolean;
 }
 
 function RosterSlotTile({
@@ -67,13 +70,16 @@ export function EventRosterSlotsEditor({
   className,
   embedded = false,
   compact = false,
+  optional = false,
 }: EventRosterSlotsEditorProps) {
   const [customValue, setCustomValue] = useState("");
   const dense = compact || embedded;
 
   const selected = normalizeRosterSlotPlan(value);
   const suggestions = ROSTER_ROLE_PRESETS.filter(
-    (preset) => !isRosterRoleSelected(selected.map((item) => item.label), preset.id),
+    (preset) =>
+      (!optional || preset.id !== CHURCH_WIDE_DEFAULT_ROSTER_ROLE) &&
+      !isRosterRoleSelected(selected.map((item) => item.label), preset.id),
   );
 
   function addCustomValue() {
@@ -100,10 +106,23 @@ export function EventRosterSlotsEditor({
       {!embedded ? (
         <div>
           <p className="text-sm font-semibold text-foreground">
-            Funções necessárias neste evento
+            {optional
+              ? "Funções para a escala (opcional)"
+              : "Funções necessárias neste evento"}
           </p>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Defina as funções necessárias nesta data.
+            {optional
+              ? "A equipe marca apenas se pode ir; você escolhe a função ao montar a escala."
+              : "Defina as funções necessárias nesta data."}
+          </p>
+        </div>
+      ) : optional ? (
+        <div>
+          <p className="text-sm font-medium text-foreground">
+            Funções para a escala (opcional)
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Ex.: Recepção, mídia. Sem funções definidas, a escala usa &quot;Voluntário&quot;.
           </p>
         </div>
       ) : null}
@@ -116,11 +135,15 @@ export function EventRosterSlotsEditor({
           )}
         >
           <p className={cn("text-muted-foreground", dense ? "text-xs" : "text-sm")}>
-            Nenhuma função definida ainda.
+            {optional
+              ? "Nenhuma função definida."
+              : "Nenhuma função definida ainda."}
           </p>
           {!dense && (
             <p className="mt-1 text-xs text-muted-foreground">
-              Adicione pelo menos uma função para montar a escala depois.
+              {optional
+                ? "Opcional — ao montar a escala, quem estiver disponível aparece como Voluntário."
+                : "Adicione pelo menos uma função para montar a escala depois."}
             </p>
           )}
         </div>

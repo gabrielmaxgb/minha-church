@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { Calendar, Clock, Eye, FileText, Loader2, MapPin, Repeat, X } from "lucide-react";
+import { Calendar, Clock, ClipboardList, Eye, FileText, Loader2, MapPin, Repeat, X } from "lucide-react";
 
 import { ActivityScheduleFields } from "@/components/dashboard/activities/activity-schedule-fields";
 import { EventFormSection } from "@/components/dashboard/activities/event-form-section";
 import { EventRecurrenceFields } from "@/components/dashboard/activities/event-recurrence-fields";
+import { EventRosterOptionsFields } from "@/components/dashboard/activities/event-roster-options-fields";
 import { EventVisibilityFields } from "@/components/dashboard/activities/event-visibility-fields";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +28,7 @@ import {
   type EventRecurrenceFormState,
 } from "@/lib/events/recurrence";
 import type { CreateChurchEventPayload } from "@/types/events";
+import type { RosterSlotPlanItem } from "@/lib/ministries/roster";
 
 interface CreateActivityModalProps {
   open: boolean;
@@ -76,7 +78,13 @@ export function CreateActivityModal({
   const [recurrence, setRecurrence] = useState<EventRecurrenceFormState>(
     defaultRecurrenceFormState(initialStartsAt),
   );
+  const [usesRoster, setUsesRoster] = useState(true);
+  const [rosterOpen, setRosterOpen] = useState(false);
+  const [rosterSlotPlan, setRosterSlotPlan] = useState<RosterSlotPlanItem[]>([]);
+  const [availabilityMessage, setAvailabilityMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  const isChurchWide = !ministryId;
 
   const creatableMinistries = useMemo(() => {
     if (!permissions) {
@@ -119,6 +127,10 @@ export function CreateActivityModal({
         setEndsAt("");
         setVisibleToChurch(true);
         setRecurrence(defaultRecurrenceFormState(fallbackStartsAt()));
+        setUsesRoster(true);
+        setRosterOpen(false);
+        setRosterSlotPlan([]);
+        setAvailabilityMessage("");
         setError(null);
       }
 
@@ -148,6 +160,12 @@ export function CreateActivityModal({
   useEffect(() => {
     setRecurrence((current) => syncRecurrenceDaysWithStart(current, startsAt));
   }, [startsAt]);
+
+  useEffect(() => {
+    if (ministryId) {
+      setRosterSlotPlan([]);
+    }
+  }, [ministryId]);
 
   useEffect(() => {
     if (!open) {
@@ -193,6 +211,13 @@ export function CreateActivityModal({
       endsAt: endsAt ? new Date(endsAt).toISOString() : undefined,
       ministryId: ministryId || undefined,
       recurrence: recurrencePayload,
+      usesRoster,
+      rosterOpen: usesRoster ? rosterOpen : false,
+      rosterSlotPlan: usesRoster && isChurchWide ? rosterSlotPlan : undefined,
+      availabilityMessage:
+        usesRoster && availabilityMessage.trim()
+          ? availabilityMessage.trim()
+          : undefined,
       ...(ministryId ? { visibleToChurch } : {}),
     };
 
@@ -379,6 +404,30 @@ export function CreateActivityModal({
                 />
               </EventFormSection>
             ) : null}
+
+            <EventFormSection
+              title="Escala da equipe"
+              description={
+                isChurchWide
+                  ? "Coleta de disponibilidade e funções opcionais para montar a escala."
+                  : "Disponibilidade e montagem de escala neste evento."
+              }
+              icon={ClipboardList}
+            >
+              <EventRosterOptionsFields
+                usesRoster={usesRoster}
+                rosterOpen={rosterOpen}
+                rosterSlotPlan={rosterSlotPlan}
+                availabilityMessage={availabilityMessage}
+                onUsesRosterChange={setUsesRoster}
+                onRosterOpenChange={setRosterOpen}
+                onRosterSlotPlanChange={setRosterSlotPlan}
+                onAvailabilityMessageChange={setAvailabilityMessage}
+                disabled={createEvent.isPending}
+                hideSlotPlan={!isChurchWide}
+                optionalSlotPlan={isChurchWide}
+              />
+            </EventFormSection>
           </div>
 
           <Separator />

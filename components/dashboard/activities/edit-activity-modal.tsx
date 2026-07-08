@@ -406,7 +406,11 @@ export function EditActivityModal({
 
             <EventFormSection
               title="Escala da equipe"
-              description="Disponibilidade, funções e montagem de escala neste evento."
+              description={
+                event.isChurchWide
+                  ? "Coleta de disponibilidade e funções opcionais para montar a escala."
+                  : "Disponibilidade, funções e montagem de escala neste evento."
+              }
               icon={ClipboardList}
             >
               <EventRosterOptionsFields
@@ -419,6 +423,8 @@ export function EditActivityModal({
                 onRosterSlotPlanChange={setRosterSlotPlan}
                 onAvailabilityMessageChange={setAvailabilityMessage}
                 disabled={isPending}
+                hideSlotPlan={Boolean(event.ministryId)}
+                optionalSlotPlan={event.isChurchWide}
               />
             </EventFormSection>
 

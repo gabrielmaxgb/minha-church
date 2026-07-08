@@ -13,7 +13,7 @@ import {
 import { AUTH_ROUTES } from "@/constants/routes";
 import { useMySchedules } from "@/lib/api/queries";
 import { pendingNotificationStyles } from "@/lib/ui/notification-styles";
-import { canAccessNavItem } from "@/lib/permissions";
+import { canAccessNavItem, canAccessSchedules } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 
@@ -81,7 +81,10 @@ export function DashboardSidebar({
 }: DashboardSidebarProps) {
   const pathname = usePathname();
   const { permissions } = useAuth();
-  const { data: schedule } = useMySchedules();
+  const canAccessSchedulesData = canAccessSchedules(permissions);
+  const { data: schedule } = useMySchedules({
+    enabled: canAccessSchedulesData,
+  });
 
   const visibleNavItems = useMemo(() => {
     if (!permissions) {
@@ -94,7 +97,7 @@ export function DashboardSidebar({
   }, [permissions]);
 
   const pendingCount =
-    permissions?.schedules.access && schedule
+    canAccessSchedulesData && schedule
       ? schedule.summary.pendingAvailabilityCount
       : 0;
 

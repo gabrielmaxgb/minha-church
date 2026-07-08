@@ -25,6 +25,8 @@ interface EventRosterOptionsFieldsProps {
   hideCollectionToggle?: boolean;
   /** Eventos de ministério usam o catálogo do ministério, não slots por evento. */
   hideSlotPlan?: boolean;
+  /** Atividade da igreja: funções opcionais na montagem da escala. */
+  optionalSlotPlan?: boolean;
   isRecurring?: boolean;
   collectionScope?: CollectionScope;
   onCollectionScopeChange?: (scope: CollectionScope) => void;
@@ -44,6 +46,7 @@ export function EventRosterOptionsFields({
   className,
   hideCollectionToggle = false,
   hideSlotPlan = false,
+  optionalSlotPlan = false,
   isRecurring = false,
   collectionScope = "this",
   onCollectionScopeChange,
@@ -65,7 +68,11 @@ export function EventRosterOptionsFields({
           }
         }}
         title="Montar escalas"
-        description="Defina quem serve em cada função."
+        description={
+          optionalSlotPlan
+            ? "Coleta de disponibilidade e montagem da equipe nesta atividade."
+            : "Defina quem serve em cada função."
+        }
         icon={ClipboardList}
         disabled={fieldsDisabled}
         compact
@@ -79,7 +86,14 @@ export function EventRosterOptionsFields({
               onChange={onRosterSlotPlanChange}
               disabled={fieldsDisabled}
               embedded
+              optional={optionalSlotPlan}
             />
+          ) : null}
+
+          {hideSlotPlan ? (
+            <p className="text-xs text-muted-foreground">
+              As funções vêm do cadastro do ministério (Configurações → Ministérios).
+            </p>
           ) : null}
 
           {onAvailabilityMessageChange ? (

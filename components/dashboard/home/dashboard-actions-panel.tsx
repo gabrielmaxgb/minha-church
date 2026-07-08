@@ -19,6 +19,7 @@ import {
 } from "@/constants/routes";
 import { canManageChurchMemberships } from "@/lib/church-memberships/constants";
 import {
+  canAccessMembers,
   canCreateAnyActivity,
   canManageMembers,
   canManageMinistries,
@@ -48,6 +49,7 @@ export function DashboardActionsPanel({
 }: DashboardActionsPanelProps) {
   const { permissions } = useAuth();
   const canManageMemberships = canManageChurchMemberships(permissions);
+  const canSeeMembers = canAccessMembers(permissions);
 
   const attentionItems = [
     pendingAccessCount > 0 && canManageMemberships
@@ -97,12 +99,24 @@ export function DashboardActionsPanel({
     });
   }
 
-  quickActions.push({
-    label: "Ver membros",
-    description: "Lista completa",
-    href: AUTH_ROUTES.members,
-    icon: Users,
-  });
+  if (canSeeMembers) {
+    quickActions.push({
+      label: "Ver membros",
+      description: "Lista completa",
+      href: AUTH_ROUTES.members,
+      icon: Users,
+    });
+  }
+
+  const showFinancesTeaser = permissions?.finances.access ?? false;
+
+  if (
+    attentionItems.length === 0 &&
+    quickActions.length === 0 &&
+    !showFinancesTeaser
+  ) {
+    return null;
+  }
 
   return (
     <div className="space-y-4">
@@ -147,65 +161,69 @@ export function DashboardActionsPanel({
         </section>
       )}
 
-      <section className="rounded-3xl border border-border/70 bg-card p-5 shadow-soft">
-        <h2 className="font-display text-sm font-semibold tracking-tight">
-          Ações rápidas
-        </h2>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Atalhos para o dia a dia da liderança.
-        </p>
+      {quickActions.length > 0 && (
+        <section className="rounded-3xl border border-border/70 bg-card p-5 shadow-soft">
+          <h2 className="font-display text-sm font-semibold tracking-tight">
+            Ações rápidas
+          </h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Atalhos para o dia a dia da liderança.
+          </p>
 
-        <ul className="mt-4 space-y-1.5">
-          {quickActions.map((action) => {
-            const content = (
-              <>
-                <span
-                  className={cn(
-                    "flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted/80 text-foreground/80",
-                  )}
-                >
-                  <action.icon className="size-4" strokeWidth={1.75} />
-                </span>
-                <span className="min-w-0 text-left">
-                  <span className="block text-sm font-medium text-foreground">
-                    {action.label}
+          <ul className="mt-4 space-y-1.5">
+            {quickActions.map((action) => {
+              const content = (
+                <>
+                  <span
+                    className={cn(
+                      "flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted/80 text-foreground/80",
+                    )}
+                  >
+                    <action.icon className="size-4" strokeWidth={1.75} />
                   </span>
-                  <span className="block text-xs text-muted-foreground">
-                    {action.description}
+                  <span className="min-w-0 text-left">
+                    <span className="block text-sm font-medium text-foreground">
+                      {action.label}
+                    </span>
+                    <span className="block text-xs text-muted-foreground">
+                      {action.description}
+                    </span>
                   </span>
-                </span>
-              </>
-            );
+                </>
+              );
 
-            if (action.href) {
+              if (action.href) {
+                return (
+                  <li key={action.label}>
+                    <Link
+                      href={action.href}
+                      className="flex w-full items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-muted/50"
+                    >
+                      {content}
+                    </Link>
+                  </li>
+                );
+              }
+
               return (
                 <li key={action.label}>
-                  <Link
-                    href={action.href}
+                  <button
+                    type="button"
+                    onClick={action.onClick}
                     className="flex w-full items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-muted/50"
                   >
                     {content}
-                  </Link>
+                  </button>
                 </li>
               );
-            }
+            })}
+          </ul>
+        </section>
+      )}
 
-            return (
-              <li key={action.label}>
-                <button
-                  type="button"
-                  onClick={action.onClick}
-                  className="flex w-full items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-muted/50"
-                >
-                  {content}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-
-        {permissions?.finances.access && (
-          <div className="mt-4 rounded-xl border border-dashed border-border/80 bg-muted/15 px-3 py-3">
+      {showFinancesTeaser && (
+        <section className="rounded-3xl border border-border/70 bg-card p-5 shadow-soft">
+          <div className="rounded-xl border border-dashed border-border/80 bg-muted/15 px-3 py-3">
             <p className="text-xs font-medium text-foreground">Finanças</p>
             <p className="mt-0.5 text-xs text-muted-foreground">
               Módulo em desenvolvimento — em breve você acompanha saldo e
@@ -220,8 +238,8 @@ export function DashboardActionsPanel({
               <Link href={AUTH_ROUTES.finances}>Saiba mais</Link>
             </Button>
           </div>
-        )}
-      </section>
+        </section>
+      )}
     </div>
   );
 }

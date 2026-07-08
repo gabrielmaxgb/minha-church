@@ -20,7 +20,31 @@ interface DashboardHeroProps {
   churchName: string;
   nextEvent: ChurchEvent | null;
   canCreateActivity: boolean;
+  canAccessMembers: boolean;
+  canAccessActivities: boolean;
   onCreateActivity: () => void;
+}
+
+function buildHeroSubtitle(
+  churchName: string,
+  canAccessMembers: boolean,
+  canAccessActivities: boolean,
+): string {
+  const areas: string[] = [];
+
+  if (canAccessMembers) {
+    areas.push("membros");
+  }
+
+  if (canAccessActivities) {
+    areas.push("atividades");
+  }
+
+  if (areas.length === 0) {
+    return `Panorama de hoje na ${churchName}.`;
+  }
+
+  return `Panorama de hoje na ${churchName} — ${areas.join(", ")} e o que vem a seguir.`;
 }
 
 export function DashboardHero({
@@ -28,11 +52,14 @@ export function DashboardHero({
   churchName,
   nextEvent,
   canCreateActivity,
+  canAccessMembers,
+  canAccessActivities,
   onCreateActivity,
 }: DashboardHeroProps) {
   const relativeDay = nextEvent
     ? formatRelativeEventDay(nextEvent.startsAt)
     : null;
+  const showNextEvent = canAccessActivities && nextEvent;
 
   return (
     <section className="relative overflow-hidden rounded-3xl border border-border/70 bg-gradient-to-br from-card via-card to-muted/40 p-6 shadow-soft sm:p-8">
@@ -54,26 +81,28 @@ export function DashboardHero({
             {getTimeGreeting()}, {getFirstName(userName)}
           </h1>
           <p className="text-sm text-muted-foreground sm:text-base">
-            Panorama de hoje na{" "}
-            <span className="font-medium text-foreground">{churchName}</span>
-            {" "}— membros, atividades e o que vem a seguir.
+            {buildHeroSubtitle(churchName, canAccessMembers, canAccessActivities)}
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          {canCreateActivity && (
-            <Button size="sm" className="gap-2" onClick={onCreateActivity}>
-              <Plus className="size-4" />
-              Nova atividade
-            </Button>
-          )}
-          <Button size="sm" variant="outline" asChild>
-            <Link href={AUTH_ROUTES.members}>Ver membros</Link>
-          </Button>
-        </div>
+        {(canCreateActivity || canAccessMembers) && (
+          <div className="flex flex-wrap gap-2">
+            {canCreateActivity && (
+              <Button size="sm" className="gap-2" onClick={onCreateActivity}>
+                <Plus className="size-4" />
+                Nova atividade
+              </Button>
+            )}
+            {canAccessMembers && (
+              <Button size="sm" variant="outline" asChild>
+                <Link href={AUTH_ROUTES.members}>Ver membros</Link>
+              </Button>
+            )}
+          </div>
+        )}
       </div>
 
-      {nextEvent ? (
+      {showNextEvent ? (
         <Link
           href={AUTH_ROUTES.activities}
           className="group relative mt-6 block rounded-2xl border border-border/60 bg-surface-elevated/80 p-4 transition-all duration-200 hover:border-border hover:bg-card hover:shadow-soft sm:p-5"
@@ -139,7 +168,7 @@ export function DashboardHero({
             </span>
           </div>
         </Link>
-      ) : (
+      ) : canAccessActivities ? (
         <div className="mt-6 rounded-2xl border border-dashed border-border/80 bg-muted/20 px-5 py-4">
           <p className="text-sm font-medium text-foreground">
             Nenhuma atividade agendada
@@ -161,7 +190,7 @@ export function DashboardHero({
             </Button>
           )}
         </div>
-      )}
+      ) : null}
     </section>
   );
 }

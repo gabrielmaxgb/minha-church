@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
   ArrowLeft,
-  CalendarCheck,
   Clock,
   MapPin,
   Pencil,
@@ -17,7 +16,6 @@ import { ActivityAvailabilitySection } from "@/components/dashboard/activities/a
 import { ActivityEventModal } from "@/components/dashboard/activities/activity-event-modal";
 import { ActivityRosterSection } from "@/components/dashboard/activities/activity-roster-section";
 import { EventRosterPublicCard } from "@/components/dashboard/activities/event-roster-assignments";
-import { RosterCollectionModal } from "@/components/dashboard/activities/roster-collection-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -55,7 +53,6 @@ export function ActivityDetailContent({ eventId }: ActivityDetailContentProps) {
   const { user, permissions } = useAuth();
   const { data: event, isLoading, isError, error } = useChurchEvent(eventId);
   const [editOpen, setEditOpen] = useState(false);
-  const [collectionOpen, setCollectionOpen] = useState(false);
 
   const canManage =
     event && permissions
@@ -111,24 +108,14 @@ export function ActivityDetailContent({ eventId }: ActivityDetailContentProps) {
           Voltar para atividades
         </Link>
 
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          {canManageRoster ? (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setCollectionOpen(true)}
-            >
-              <CalendarCheck className="size-4" />
-              Coleta de escala
-            </Button>
-          ) : null}
-          {canManage ? (
+        {canManage ? (
+          <div className="flex flex-wrap items-center justify-end gap-2">
             <Button size="sm" onClick={() => setEditOpen(true)}>
               <Pencil className="size-4" />
               Editar
             </Button>
-          ) : null}
-        </div>
+          </div>
+        ) : null}
 
         <Card
           className={cn(
@@ -275,12 +262,6 @@ export function ActivityDetailContent({ eventId }: ActivityDetailContentProps) {
         initialMode="edit"
         onClose={() => setEditOpen(false)}
         onDeleted={() => router.push(AUTH_ROUTES.activities)}
-      />
-
-      <RosterCollectionModal
-        event={event}
-        open={collectionOpen}
-        onClose={() => setCollectionOpen(false)}
       />
     </>
   );

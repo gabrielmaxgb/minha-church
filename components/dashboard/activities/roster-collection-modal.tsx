@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   CalendarCheck,
-  CalendarX,
   ChevronLeft,
   ChevronRight,
   Loader2,
@@ -59,7 +58,6 @@ export function RosterCollectionModal({
   const [year, setYear] = useState(anchorDate.getFullYear());
   const [monthIndex, setMonthIndex] = useState(anchorDate.getMonth());
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [mode, setMode] = useState<"open" | "close">("open");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -71,7 +69,6 @@ export function RosterCollectionModal({
     setYear(anchor.getFullYear());
     setMonthIndex(anchor.getMonth());
     setSelectedIds(new Set());
-    setMode("open");
     setError(null);
   }, [open, event?.id, event?.startsAt]);
 
@@ -188,7 +185,7 @@ export function RosterCollectionModal({
 
     try {
       await setCollection.mutateAsync({
-        rosterOpen: mode === "open",
+        rosterOpen: true,
         eventIds: targetIds,
       });
       onClose();
@@ -196,7 +193,7 @@ export function RosterCollectionModal({
       setError(
         applyError instanceof Error
           ? applyError.message
-          : "Não foi possível atualizar a coleta.",
+          : "Não foi possível abrir a coleta.",
       );
     }
   }
@@ -216,10 +213,10 @@ export function RosterCollectionModal({
       title="Coleta de disponibilidade"
       subtitle={
         isRecurring
-          ? `Selecione as datas de “${event.name}” para ${mode === "open" ? "abrir" : "fechar"} a coleta. Você pode fechar mesmo com vagas em aberto — a equipe deixa de receber o pedido de disponibilidade.`
-          : `Abra ou feche a coleta para esta atividade.`
+          ? `Selecione as datas de “${event.name}” para abrir a coleta. Para fechar, use o botão na página da atividade.`
+          : "Abra a coleta para esta atividade. Para fechar depois, use o botão na página da atividade."
       }
-      icon={mode === "open" ? CalendarCheck : CalendarX}
+      icon={CalendarCheck}
       footer={
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-muted-foreground">
@@ -233,7 +230,7 @@ export function RosterCollectionModal({
             </Button>
             <Button type="button" disabled={busy} onClick={handleApply}>
               {busy ? <Loader2 className="size-4 animate-spin" /> : null}
-              {mode === "open" ? "Abrir coleta" : "Fechar coleta"}
+              Abrir coleta
             </Button>
           </div>
         </div>
@@ -247,27 +244,6 @@ export function RosterCollectionModal({
           {error}
         </div>
       ) : null}
-
-      <div className="mb-5 flex flex-wrap gap-2">
-        <Button
-          type="button"
-          size="sm"
-          variant={mode === "open" ? "default" : "outline"}
-          onClick={() => setMode("open")}
-          disabled={busy}
-        >
-          Abrir coleta
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant={mode === "close" ? "default" : "outline"}
-          onClick={() => setMode("close")}
-          disabled={busy}
-        >
-          Fechar coleta
-        </Button>
-      </div>
 
       {isRecurring ? (
         <>
@@ -444,8 +420,7 @@ export function RosterCollectionModal({
         </>
       ) : (
         <div className="rounded-xl border border-border/70 bg-muted/10 px-4 py-6 text-sm text-muted-foreground">
-          Esta atividade não se repete. Use os botões acima para{" "}
-          {mode === "open" ? "abrir" : "fechar"} a coleta nesta data (
+          Esta atividade não se repete. Abra a coleta nesta data (
           <span className="font-medium text-foreground capitalize">
             {formatOccurrenceShort(event.startsAt)}
           </span>

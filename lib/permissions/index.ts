@@ -21,6 +21,18 @@ export function canManageMembers(permissions: UserPermissions) {
   return permissions.members.manage;
 }
 
+export function canAccessMembers(permissions: UserPermissions | null) {
+  return permissions ? canAccessSection(permissions, "members") : false;
+}
+
+export function canAccessActivities(permissions: UserPermissions | null) {
+  return permissions ? canAccessSection(permissions, "activities") : false;
+}
+
+export function canAccessSchedules(permissions: UserPermissions | null) {
+  return permissions ? canAccessSection(permissions, "schedules") : false;
+}
+
 export function canManageMinistries(permissions: UserPermissions) {
   return permissions.ministries.manage;
 }

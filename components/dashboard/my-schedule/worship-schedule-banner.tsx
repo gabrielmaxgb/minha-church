@@ -8,16 +8,22 @@ import { AUTH_ROUTES, activityDetailPath } from "@/constants/routes";
 import { pendingNotificationStyles } from "@/lib/ui/notification-styles";
 import { useMySchedules } from "@/lib/api/queries";
 import { firstPendingScheduleHref } from "@/lib/my-schedule/schedule-notifications";
+import { canAccessSchedules } from "@/lib/permissions";
 import {
   formatEventTime,
   formatRelativeEventDay,
 } from "@/lib/dashboard/date-utils";
 import { formatRosterRole } from "@/lib/ministries/roster";
+import { useAuth } from "@/providers/auth-provider";
 
 export function ScheduleBanner() {
-  const { data, isLoading } = useMySchedules();
+  const { permissions } = useAuth();
+  const canAccessSchedulesData = canAccessSchedules(permissions);
+  const { data, isLoading } = useMySchedules({
+    enabled: canAccessSchedulesData,
+  });
 
-  if (isLoading || !data?.hasSchedule) {
+  if (!canAccessSchedulesData || isLoading || !data?.hasSchedule) {
     return null;
   }
 

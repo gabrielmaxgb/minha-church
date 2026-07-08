@@ -24,12 +24,14 @@ export function useAssignableRoles() {
   });
 }
 
-export function usePendingAccessUsers() {
+export function usePendingAccessUsers(options?: { enabled?: boolean }) {
   const { churchId } = useTenant();
+  const { permissions } = useAuth();
+  const canManage = canManageChurchMemberships(permissions);
 
   return useQuery({
     ...membershipsKeys.pendingAccess(churchId ?? "unknown"),
-    enabled: Boolean(churchId),
+    enabled: Boolean(churchId) && canManage && (options?.enabled ?? true),
   });
 }
 
