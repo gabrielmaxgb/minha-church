@@ -25,10 +25,12 @@ import type { ChurchRole, UpdateChurchRolePayload } from "@/types/church-roles";
 import {
   SettingsAlert,
   SettingsEmptyState,
-  SettingsExpandableRow,
   SettingsPanel,
   SettingsSaveBar,
   SettingsSectionHeader,
+  SettingsSidebar,
+  SettingsSidebarItem,
+  SettingsSplitLayout,
 } from "./settings-shared";
 import { ChurchRoleNameHeader } from "./church-role-name-header";
 import {
@@ -49,64 +51,51 @@ function permissionsEqual(
   return b.every((item) => set.has(item));
 }
 
-function ChurchRoleOption({
-  label,
-  hint,
-  selected,
-  dirty,
-  onClick,
-}: {
-  label: string;
-  hint: string;
-  selected: boolean;
-  dirty?: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left transition-colors",
-        selected
-          ? "bg-background shadow-sm ring-1 ring-border"
-          : "hover:bg-muted/50",
-      )}
-    >
-      <span className="min-w-0">
-        <span className="flex items-center gap-2">
-          <span className="truncate text-sm font-medium">{label}</span>
-          {dirty && (
-            <span
-              className="size-1.5 shrink-0 rounded-full bg-amber-500"
-              aria-label="Alterações não salvas"
-            />
-          )}
-        </span>
-        <span className="mt-0.5 block text-xs text-muted-foreground">{hint}</span>
-      </span>
-      {selected && (
-        <span className="shrink-0 text-[11px] font-medium text-primary">
-          Ativo
-        </span>
-      )}
-    </button>
-  );
-}
+const CHURCH_ROLE_GROUP_TONES = {
+  system: {
+    label: "text-sky-700 dark:text-sky-300",
+    dot: "bg-sky-500",
+    badge:
+      "bg-sky-500/10 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300",
+  },
+  custom: {
+    label: "text-violet-700 dark:text-violet-300",
+    dot: "bg-violet-500",
+    badge:
+      "bg-violet-500/10 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300",
+  },
+} as const;
 
-function ChurchRoleGroup({
+function ChurchRoleSidebarGroupLabel({
   title,
-  children,
+  count,
+  tone,
 }: {
   title: string;
-  children: React.ReactNode;
+  count: number;
+  tone: keyof typeof CHURCH_ROLE_GROUP_TONES;
 }) {
+  const toneStyle = CHURCH_ROLE_GROUP_TONES[tone];
+
   return (
-    <div className="space-y-1.5">
-      <p className="px-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+    <div className="mt-1 flex items-center gap-2 px-3 pb-1.5 pt-3">
+      <span className={cn("size-1.5 rounded-full", toneStyle.dot)} />
+      <span
+        className={cn(
+          "text-[11px] font-semibold uppercase tracking-wider",
+          toneStyle.label,
+        )}
+      >
         {title}
-      </p>
-      <div className="space-y-1">{children}</div>
+      </span>
+      <span
+        className={cn(
+          "flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-medium",
+          toneStyle.badge,
+        )}
+      >
+        {count}
+      </span>
     </div>
   );
 }
@@ -125,7 +114,6 @@ export function ChurchRolesSettings() {
   const [isCreating, setIsCreating] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [rolesPickerOpen, setRolesPickerOpen] = useState(false);
 
   const canManage = permissions ? canManageChurchRoles(permissions) : false;
 
@@ -380,7 +368,6 @@ export function ChurchRolesSettings() {
       setNewRoleName("");
       setIsCreating(false);
       setSelectedRoleId(created.id);
-      setRolesPickerOpen(false);
     } catch (error) {
       setErrorMessage(
         error instanceof Error
@@ -417,7 +404,6 @@ export function ChurchRolesSettings() {
 
   function selectRole(roleId: string) {
     setSelectedRoleId(roleId);
-    setRolesPickerOpen(false);
   }
 
   return (
@@ -437,45 +423,34 @@ export function ChurchRolesSettings() {
         </p>
       ) : (
         <SettingsPanel>
-          <div className="border-b border-border/70 p-4 sm:p-5">
-            <SettingsExpandableRow
-              title={
-                selectedRole
-                  ? getDraftName(selectedRole)
-                  : "Selecione um cargo"
-              }
-              subtitle={
-                rolesPickerOpen
-                  ? "Escolha o cargo que deseja configurar"
-                  : "Clique para ver todos os cargos"
-              }
-              badge={
-                selectedRole
-                  ? `${getDraftPermissions(selectedRole).length}/${ALL_CHURCH_PERMISSIONS.length} permissões`
-                  : undefined
-              }
-              expanded={rolesPickerOpen}
-              dirty={selectedDirty}
-              onToggle={() => setRolesPickerOpen((open) => !open)}
-            >
-              <div className="space-y-4">
-                <ChurchRoleGroup title="Cargos padrão">
-                  {systemRoles.map((role) => (
-                    <ChurchRoleOption
-                      key={role.id}
-                      label={getDraftName(role)}
-                      hint={`${getDraftPermissions(role).length} permissões ativas`}
-                      selected={role.id === selectedRoleId}
-                      dirty={isRoleDirty(role)}
-                      onClick={() => selectRole(role.id)}
-                    />
-                  ))}
-                </ChurchRoleGroup>
+          <SettingsSplitLayout
+            sidebar={
+              <SettingsSidebar>
+                <ChurchRoleSidebarGroupLabel
+                  title="Cargos padrão"
+                  count={systemRoles.length}
+                  tone="system"
+                />
+                {systemRoles.map((role) => (
+                  <SettingsSidebarItem
+                    key={role.id}
+                    label={getDraftName(role)}
+                    hint={`${getDraftPermissions(role).length} permissões ativas`}
+                    selected={role.id === selectedRoleId}
+                    dirty={isRoleDirty(role)}
+                    onClick={() => selectRole(role.id)}
+                  />
+                ))}
 
                 {customRoles.length > 0 && (
-                  <ChurchRoleGroup title="Cargos personalizados">
+                  <>
+                    <ChurchRoleSidebarGroupLabel
+                      title="Cargos personalizados"
+                      count={customRoles.length}
+                      tone="custom"
+                    />
                     {customRoles.map((role) => (
-                      <ChurchRoleOption
+                      <SettingsSidebarItem
                         key={role.id}
                         label={getDraftName(role)}
                         hint={`${getDraftPermissions(role).length} permissões ativas`}
@@ -484,10 +459,10 @@ export function ChurchRolesSettings() {
                         onClick={() => selectRole(role.id)}
                       />
                     ))}
-                  </ChurchRoleGroup>
+                  </>
                 )}
 
-                <div className="border-t border-border/60 pt-4">
+                <div className="px-1 pt-2">
                   {isCreating ? (
                     <form
                       onSubmit={(event) => void handleCreateRole(event)}
@@ -526,9 +501,9 @@ export function ChurchRolesSettings() {
                   ) : (
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
-                      className="w-full gap-2"
+                      className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
                       onClick={() => setIsCreating(true)}
                     >
                       <Plus className="size-3.5" />
@@ -536,11 +511,9 @@ export function ChurchRolesSettings() {
                     </Button>
                   )}
                 </div>
-              </div>
-            </SettingsExpandableRow>
-          </div>
-
-          <div className="flex flex-col">
+              </SettingsSidebar>
+            }
+          >
             {selectedRole ? (
               <>
                 {selectedRole.isSystem ? (
@@ -595,7 +568,7 @@ export function ChurchRolesSettings() {
             ) : (
               <SettingsEmptyState message="Selecione um cargo ou crie um novo." />
             )}
-          </div>
+          </SettingsSplitLayout>
         </SettingsPanel>
       )}
     </div>
