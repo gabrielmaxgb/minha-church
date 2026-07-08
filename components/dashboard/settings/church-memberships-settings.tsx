@@ -260,7 +260,7 @@ export function ChurchMembershipsSettings() {
     <div>
       <SettingsSectionHeader
         title="Usuários"
-        description="Aqui você define cargos e permissões de acesso."
+        description="Defina os cargos de cada pessoa. Quem tem mais de um cargo recebe a soma das permissões."
       />
 
       {errorMessage && <SettingsAlert message={errorMessage} />}
@@ -359,6 +359,14 @@ export function ChurchMembershipsSettings() {
                           : "Você não pode alterar o acesso deste usuário."}
                       </p>
                     ) : assignableRoles && assignableRoles.length > 0 ? (
+                      <>
+                      {assignableRoles.length > 1 && (
+                        <p className="mb-2 text-xs text-muted-foreground">
+                          Pode marcar mais de um cargo. As permissões se somam:
+                          a pessoa recebe tudo o que qualquer um dos cargos
+                          liberar.
+                        </p>
+                      )}
                       <div className="divide-y divide-border/50 rounded-lg border border-border/60 bg-card px-2">
                         {assignableRoles.map((role) => (
                           <SettingsToggleRow
@@ -372,6 +380,7 @@ export function ChurchMembershipsSettings() {
                           />
                         ))}
                       </div>
+                      </>
                     ) : (
                       <p className="text-sm text-muted-foreground">
                         Nenhum cargo disponível para atribuir.
