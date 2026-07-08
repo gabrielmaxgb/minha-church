@@ -55,18 +55,18 @@ function PendingAccessRow({ user }: { user: PendingAccessUser }) {
         <div className="min-w-0 flex-1">
           <p className="font-medium">{user.name}</p>
           <p className="mt-0.5 text-sm text-muted-foreground">{contact}</p>
-          <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
-            <div>
+          <dl className="mt-3 grid gap-x-4 gap-y-2 text-sm sm:grid-cols-2">
+            <div className="min-w-0">
               <dt className="text-xs text-muted-foreground">Login</dt>
-              <dd className="mt-0.5 font-mono text-sm">{user.login}</dd>
+              <dd className="mt-0.5 break-all font-mono text-sm">{user.login}</dd>
             </div>
             {user.cpf && (
-              <div>
+              <div className="min-w-0">
                 <dt className="text-xs text-muted-foreground">CPF</dt>
-                <dd className="mt-0.5 font-mono text-sm">{user.cpf}</dd>
+                <dd className="mt-0.5 break-all font-mono text-sm">{user.cpf}</dd>
               </div>
             )}
-            <div>
+            <div className="min-w-0">
               <dt className="text-xs text-muted-foreground">Adicionado em</dt>
               <dd className="mt-0.5 text-sm">{formatDateTime(user.createdAt)}</dd>
             </div>
