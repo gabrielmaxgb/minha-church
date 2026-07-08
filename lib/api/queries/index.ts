@@ -1,5 +1,6 @@
 import { mergeQueryKeys } from "@lukemorales/query-key-factory";
 
+import { announcementsKeys } from "@/lib/api/queries/announcements.keys";
 import { auditLogsKeys } from "@/lib/api/queries/audit-logs.keys";
 import { churchRolesKeys } from "@/lib/api/queries/church-roles.keys";
 import { dashboardKeys } from "@/lib/api/queries/dashboard.keys";
@@ -20,6 +21,7 @@ export const queries = mergeQueryKeys(
   rosterKeys,
   churchRolesKeys,
   auditLogsKeys,
+  announcementsKeys,
 );
 
 export { dashboardKeys } from "@/lib/api/queries/dashboard.keys";
@@ -47,6 +49,18 @@ export {
 } from "@/lib/api/queries/use-member-mutations";
 export { auditLogsKeys } from "@/lib/api/queries/audit-logs.keys";
 export { useAuditLogs } from "@/lib/api/queries/use-audit-logs";
+export { announcementsKeys } from "@/lib/api/queries/announcements.keys";
+export {
+  useAnnouncements,
+  useAnnouncementsUnreadCount,
+  useManagedAnnouncements,
+} from "@/lib/api/queries/use-announcements";
+export {
+  useCreateAnnouncement,
+  useDeleteAnnouncement,
+  useMarkAnnouncementRead,
+  useUpdateAnnouncement,
+} from "@/lib/api/queries/use-announcement-mutations";
 export { churchRolesKeys } from "@/lib/api/queries/church-roles.keys";
 export { useChurchRoles } from "@/lib/api/queries/use-church-roles";
 export {

@@ -15,7 +15,7 @@ export interface UserPermissions {
   };
   schedules: { access: boolean };
   finances: { access: boolean };
-  communication: { access: boolean };
+  communication: { access: boolean; manage: boolean };
   reports: { access: boolean };
   settings: { access: boolean };
   roles: { manage: boolean };
@@ -99,6 +99,7 @@ export type ChurchPermissionKey =
   | "events_create_church_wide"
   | "finances_access"
   | "communication_access"
+  | "communication_manage"
   | "reports_access"
   | "settings_access"
   | "roles_manage"

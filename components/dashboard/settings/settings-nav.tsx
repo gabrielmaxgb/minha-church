@@ -97,7 +97,7 @@ const emptyPermissions: UserPermissions = {
   activities: { access: false, createChurchWide: false, ministryIds: [] },
   schedules: { access: false },
   finances: { access: false },
-  communication: { access: false },
+  communication: { access: false, manage: false },
   reports: { access: false },
   settings: { access: false },
   roles: { manage: false },

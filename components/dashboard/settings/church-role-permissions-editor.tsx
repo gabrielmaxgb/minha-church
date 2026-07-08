@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   Layers,
   Mail,
+  Megaphone,
   Navigation,
   Settings,
   Shield,
@@ -39,6 +40,7 @@ const PERMISSION_ICONS: Record<ChurchPermissionKey, LucideIcon> = {
   members_manage: UserCog,
   ministries_manage: Layers,
   events_create_church_wide: CalendarPlus,
+  communication_manage: Megaphone,
   roles_manage: Shield,
   memberships_manage: UserPlus,
 };

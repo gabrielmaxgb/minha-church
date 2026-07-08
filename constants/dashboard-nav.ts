@@ -70,7 +70,7 @@ export const dashboardNavItems: DashboardNavItem[] = [
     label: "Comunicação",
     href: AUTH_ROUTES.communication,
     icon: Mail,
-    description: "E-mails e avisos",
+    description: "Comunicados para a igreja e ministérios",
     permission: "communication",
   },
   {

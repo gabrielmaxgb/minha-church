@@ -75,6 +75,10 @@ export function canManageMemberships(permissions: UserPermissions) {
   return permissions.memberships.manage;
 }
 
+export function canManageCommunication(permissions: UserPermissions | null) {
+  return permissions ? permissions.communication.manage : false;
+}
+
 export function canCreateChurchWideActivity(permissions: UserPermissions) {
   return permissions.activities.createChurchWide;
 }

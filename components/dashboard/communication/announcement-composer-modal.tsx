@@ -1,0 +1,414 @@
+"use client";
+
+import { useEffect, useId, useMemo, useState } from "react";
+import { Loader2, X } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { SelectField } from "@/components/ui/select-field";
+import { Textarea } from "@/components/ui/textarea";
+import { TypeaheadMultiSelect } from "@/components/ui/typeahead-multi-select";
+import {
+  useCreateAnnouncement,
+  useMinistries,
+  useUpdateAnnouncement,
+} from "@/lib/api/queries";
+import { cn } from "@/lib/utils";
+import type {
+  Announcement,
+  AnnouncementAudienceType,
+  AnnouncementPriority,
+  CreateAnnouncementPayload,
+} from "@/types/announcements";
+
+interface AnnouncementComposerModalProps {
+  open: boolean;
+  announcement: Announcement | null;
+  onClose: () => void;
+}
+
+function toDateInputValue(iso: string | null): string {
+  if (!iso) {
+    return "";
+  }
+
+  const date = new Date(iso);
+  const offset = date.getTimezoneOffset();
+  const local = new Date(date.getTime() - offset * 60_000);
+
+  return local.toISOString().slice(0, 10);
+}
+
+function startOfDayIso(dateKey: string): string {
+  return new Date(`${dateKey}T08:00:00`).toISOString();
+}
+
+function endOfDayIso(dateKey: string): string {
+  return new Date(`${dateKey}T23:59:00`).toISOString();
+}
+
+export function AnnouncementComposerModal({
+  open,
+  announcement,
+  onClose,
+}: AnnouncementComposerModalProps) {
+  const titleId = useId();
+  const isEditing = Boolean(announcement);
+
+  const { data: ministries, isLoading: ministriesLoading } = useMinistries();
+  const createMutation = useCreateAnnouncement();
+  const updateMutation = useUpdateAnnouncement(announcement?.id ?? "");
+
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+  const [priority, setPriority] = useState<AnnouncementPriority>("normal");
+  const [audienceType, setAudienceType] =
+    useState<AnnouncementAudienceType>("church_wide");
+  const [ministryIds, setMinistryIds] = useState<string[]>([]);
+  const [pinned, setPinned] = useState(false);
+  const [scheduleEnabled, setScheduleEnabled] = useState(false);
+  const [scheduleDate, setScheduleDate] = useState("");
+  const [expiryEnabled, setExpiryEnabled] = useState(false);
+  const [expiryDate, setExpiryDate] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  const isPending = createMutation.isPending || updateMutation.isPending;
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    setError(null);
+
+    if (announcement) {
+      setTitle(announcement.title);
+      setBody(announcement.body);
+      setPriority(announcement.priority);
+      setAudienceType(announcement.audienceType);
+      setMinistryIds(announcement.ministries.map((ministry) => ministry.id));
+      setPinned(announcement.pinned);
+      const isScheduled = announcement.status === "scheduled";
+      setScheduleEnabled(isScheduled);
+      setScheduleDate(isScheduled ? toDateInputValue(announcement.publishedAt) : "");
+      setExpiryEnabled(Boolean(announcement.expiresAt));
+      setExpiryDate(toDateInputValue(announcement.expiresAt));
+    } else {
+      setTitle("");
+      setBody("");
+      setPriority("normal");
+      setAudienceType("church_wide");
+      setMinistryIds([]);
+      setPinned(false);
+      setScheduleEnabled(false);
+      setScheduleDate("");
+      setExpiryEnabled(false);
+      setExpiryDate("");
+    }
+  }, [open, announcement]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape" && !isPending) {
+        onClose();
+      }
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open, isPending, onClose]);
+
+  const ministryOptions = useMemo(
+    () =>
+      (ministries ?? [])
+        .filter((ministry) => ministry.isActive)
+        .map((ministry) => ({ value: ministry.id, label: ministry.name })),
+    [ministries],
+  );
+
+  if (!open) {
+    return null;
+  }
+
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    setError(null);
+
+    const trimmedTitle = title.trim();
+    const trimmedBody = body.trim();
+
+    if (trimmedTitle.length < 2) {
+      setError("Informe um título com pelo menos 2 caracteres.");
+      return;
+    }
+
+    if (trimmedBody.length < 1) {
+      setError("Escreva a mensagem do comunicado.");
+      return;
+    }
+
+    if (audienceType === "ministries" && ministryIds.length === 0) {
+      setError("Selecione ao menos um ministério para o público.");
+      return;
+    }
+
+    if (scheduleEnabled && !scheduleDate) {
+      setError("Escolha a data de publicação agendada.");
+      return;
+    }
+
+    if (expiryEnabled && !expiryDate) {
+      setError("Escolha a data de expiração.");
+      return;
+    }
+
+    const publishedAt = scheduleEnabled ? startOfDayIso(scheduleDate) : null;
+    const expiresAt = expiryEnabled ? endOfDayIso(expiryDate) : null;
+
+    if (publishedAt && expiresAt && new Date(expiresAt) <= new Date(publishedAt)) {
+      setError("A expiração deve ser depois da publicação.");
+      return;
+    }
+
+    const payload: CreateAnnouncementPayload = {
+      title: trimmedTitle,
+      body: trimmedBody,
+      priority,
+      audienceType,
+      ministryIds: audienceType === "ministries" ? ministryIds : [],
+      pinned,
+      expiresAt,
+    };
+
+    try {
+      if (isEditing && announcement) {
+        await updateMutation.mutateAsync({
+          ...payload,
+          // Agendado: usa a data escolhida. Se estava agendado e o usuário
+          // desmarcou, publica agora. Caso contrário, mantém a publicação atual.
+          publishedAt: scheduleEnabled
+            ? publishedAt
+            : announcement.status === "scheduled"
+              ? new Date().toISOString()
+              : undefined,
+        });
+      } else {
+        await createMutation.mutateAsync({
+          ...payload,
+          publishedAt: publishedAt ?? undefined,
+        });
+      }
+
+      onClose();
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : "Não foi possível salvar o comunicado.",
+      );
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/45 backdrop-blur-[2px]"
+        aria-label="Fechar"
+        onClick={() => !isPending && onClose()}
+      />
+
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="relative z-10 flex max-h-[92dvh] w-full max-w-xl flex-col rounded-t-2xl border border-border bg-background shadow-2xl sm:max-h-[min(92dvh,720px)] sm:rounded-2xl"
+      >
+        <header className="flex items-center justify-between border-b border-border/70 px-6 py-4">
+          <h2 id={titleId} className="font-display text-lg font-semibold tracking-tight">
+            {isEditing ? "Editar comunicado" : "Novo comunicado"}
+          </h2>
+          <button
+            type="button"
+            onClick={() => !isPending && onClose()}
+            className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            aria-label="Fechar"
+          >
+            <X className="size-4" />
+          </button>
+        </header>
+
+        <form
+          onSubmit={handleSubmit}
+          className="flex min-h-0 flex-1 flex-col"
+        >
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5">
+            <div className="space-y-1.5">
+              <Label htmlFor="announcement-title">Título</Label>
+              <Input
+                id="announcement-title"
+                value={title}
+                maxLength={160}
+                onChange={(event) => setTitle(event.target.value)}
+                placeholder="Ex.: Reunião de líderes neste sábado"
+                autoFocus
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="announcement-body">Mensagem</Label>
+              <Textarea
+                id="announcement-body"
+                value={body}
+                maxLength={5000}
+                rows={5}
+                onChange={(event) => setBody(event.target.value)}
+                placeholder="Escreva o recado com os detalhes importantes."
+              />
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="announcement-priority">Prioridade</Label>
+                <SelectField
+                  id="announcement-priority"
+                  value={priority}
+                  onChange={(event) =>
+                    setPriority(event.target.value as AnnouncementPriority)
+                  }
+                >
+                  <option value="normal">Normal</option>
+                  <option value="important">Importante</option>
+                  <option value="urgent">Urgente</option>
+                </SelectField>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="announcement-audience">Público</Label>
+                <SelectField
+                  id="announcement-audience"
+                  value={audienceType}
+                  onChange={(event) =>
+                    setAudienceType(
+                      event.target.value as AnnouncementAudienceType,
+                    )
+                  }
+                >
+                  <option value="church_wide">Igreja inteira</option>
+                  <option value="ministries">Ministérios específicos</option>
+                </SelectField>
+              </div>
+            </div>
+
+            {audienceType === "ministries" && (
+              <div className="space-y-1.5">
+                <Label>Ministérios</Label>
+                <TypeaheadMultiSelect
+                  value={ministryIds}
+                  onChange={setMinistryIds}
+                  options={ministryOptions}
+                  loading={ministriesLoading}
+                  placeholder="Buscar ministérios..."
+                  emptyMessage="Nenhum ministério ativo encontrado."
+                />
+                <p className="text-xs text-muted-foreground">
+                  Só verão o comunicado os membros vinculados a esses
+                  ministérios.
+                </p>
+              </div>
+            )}
+
+            <label className="flex cursor-pointer items-center gap-2.5 rounded-xl border border-border/70 px-3 py-2.5">
+              <input
+                type="checkbox"
+                checked={pinned}
+                onChange={(event) => setPinned(event.target.checked)}
+                className="size-4 rounded border-input accent-primary"
+              />
+              <span className="text-sm">
+                Fixar no topo do mural
+                <span className="ml-1 text-muted-foreground">
+                  (aparece antes dos demais)
+                </span>
+              </span>
+            </label>
+
+            <div className="space-y-2 rounded-xl border border-border/70 p-3">
+              <label className="flex cursor-pointer items-center gap-2.5">
+                <input
+                  type="checkbox"
+                  checked={scheduleEnabled}
+                  onChange={(event) => setScheduleEnabled(event.target.checked)}
+                  className="size-4 rounded border-input accent-primary"
+                />
+                <span className="text-sm">Agendar publicação</span>
+              </label>
+              {scheduleEnabled && (
+                <Input
+                  type="date"
+                  value={scheduleDate}
+                  onChange={(event) => setScheduleDate(event.target.value)}
+                  className="max-w-[200px]"
+                />
+              )}
+
+              <label className="flex cursor-pointer items-center gap-2.5">
+                <input
+                  type="checkbox"
+                  checked={expiryEnabled}
+                  onChange={(event) => setExpiryEnabled(event.target.checked)}
+                  className="size-4 rounded border-input accent-primary"
+                />
+                <span className="text-sm">Definir expiração</span>
+              </label>
+              {expiryEnabled && (
+                <Input
+                  type="date"
+                  value={expiryDate}
+                  onChange={(event) => setExpiryDate(event.target.value)}
+                  className="max-w-[200px]"
+                />
+              )}
+            </div>
+
+            {error && (
+              <p
+                className={cn(
+                  "rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive",
+                )}
+              >
+                {error}
+              </p>
+            )}
+          </div>
+
+          <footer className="flex items-center justify-end gap-2 border-t border-border/70 px-6 py-4">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={onClose}
+              disabled={isPending}
+            >
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={isPending}>
+              {isPending && <Loader2 className="size-4 animate-spin" />}
+              {isEditing ? "Salvar alterações" : "Publicar comunicado"}
+            </Button>
+          </footer>
+        </form>
+      </div>
+    </div>
+  );
+}

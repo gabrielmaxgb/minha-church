@@ -40,6 +40,7 @@ export const CHURCH_PERMISSION_LABELS: Record<ChurchPermissionKey, string> = {
   members_manage: "Gerenciar membros",
   ministries_manage: "Gerenciar ministérios",
   events_create_church_wide: "Criar atividades em toda a igreja",
+  communication_manage: "Enviar comunicados",
   roles_manage: "Gerenciar cargos da igreja",
   memberships_manage: "Atribuir cargos a usuários",
 };
@@ -69,6 +70,8 @@ export const CHURCH_PERMISSION_DESCRIPTIONS: Record<ChurchPermissionKey, string>
     "Criar, editar e excluir ministérios, seus cargos e funções, e montar as equipes vinculando ou removendo membros. Também concede controle das escalas e eventos de todos os ministérios da igreja.",
   events_create_church_wide:
     "Criar, editar e excluir atividades para toda a igreja e também eventos dentro de qualquer ministério, sem precisar liderá-lo.",
+  communication_manage:
+    "Criar, editar e excluir comunicados para a igreja ou ministérios específicos, agendar publicação e ver o histórico de envios.",
   roles_manage:
     "Criar, editar e excluir cargos e definir quais permissões cada um concede (esta tela). Não atribui os cargos às pessoas.",
   memberships_manage:
@@ -106,6 +109,7 @@ export const CHURCH_PERMISSION_GROUPS: Array<{
       "members_manage",
       "ministries_manage",
       "events_create_church_wide",
+      "communication_manage",
       "roles_manage",
       "memberships_manage",
     ],
