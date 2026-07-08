@@ -8,7 +8,7 @@ export default function MinisteriosPage() {
   return (
     <RequirePermission permission="ministries">
       <DashboardPage
-        title="Ministérios"
+        title="Ministérios e Grupos de serviço"
         subtitle="Áreas de serviço, cargos e equipes"
       >
         <MinistriesListContent />

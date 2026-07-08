@@ -141,13 +141,10 @@ export function CreateActivityModal({
     const nextStartsAt = defaultStartsAtValue ?? fallbackStartsAt();
 
     wasOpenRef.current = true;
+    // Sem contexto de ministério, o padrão é "Igreja inteira" (church-wide).
     setMinistryId(defaultMinistryId);
     setStartsAt(nextStartsAt);
     setRecurrence(defaultRecurrenceFormState(nextStartsAt));
-
-    if (!defaultMinistryId && creatableMinistries.length === 1) {
-      setMinistryId(creatableMinistries[0].id);
-    }
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -155,7 +152,7 @@ export function CreateActivityModal({
     return () => {
       document.body.style.overflow = previousOverflow;
     };
-  }, [open, defaultMinistryId, defaultStartsAtValue, creatableMinistries]);
+  }, [open, defaultMinistryId, defaultStartsAtValue]);
 
   useEffect(() => {
     setRecurrence((current) => syncRecurrenceDaysWithStart(current, startsAt));

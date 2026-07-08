@@ -91,32 +91,10 @@ export function ActivityRosterSection({ event }: ActivityRosterSectionProps) {
 
   return (
     <div className="space-y-8">
-      <EventFormSection
-        title="Escala"
-        description="Mensagem opcional para a equipe e montagem da escala oficial."
-        icon={ClipboardList}
-      >
-        <div className="space-y-2">
-          <Label htmlFor="event-availability-message">
-            Mensagem para a equipe (opcional)
-          </Label>
-          <Textarea
-            id="event-availability-message"
-            defaultValue={event.availabilityMessage ?? ""}
-            rows={2}
-            maxLength={1000}
-            disabled={updateEvent.isPending}
-            className="min-h-[72px] resize-y rounded-xl text-sm"
-            placeholder="Ex.: Cheguem 30 min antes para o ensaio."
-            onBlur={(blurEvent) => void handleMessageBlur(blurEvent.target.value)}
-          />
-        </div>
-      </EventFormSection>
-
       {event.isChurchWide ? (
         <EventFormSection
           title="Funções desta atividade"
-          description="Opcional. A equipe só informa se pode ir; você escolhe a função ao montar a escala."
+          description="Adicione as funções que essa atividade precisa, como recepção, mídia ou louvor."
           icon={ClipboardList}
         >
           {slotPlanError ? (
@@ -173,6 +151,29 @@ export function ActivityRosterSection({ event }: ActivityRosterSectionProps) {
             {collectionError}
           </p>
         ) : null}
+
+        {!event.rosterOpen ? (
+          <p className="mb-4 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
+            A coleta está fechada. Ninguém recebe notificação para marcar
+            disponibilidade até você abrir a coleta com o botão "Coleta de disponibilidade" acima.
+          </p>
+        ) : null}
+
+        <div className="mb-6 space-y-2">
+          <Label htmlFor="event-availability-message">
+            Mensagem para a equipe (opcional)
+          </Label>
+          <Textarea
+            id="event-availability-message"
+            defaultValue={event.availabilityMessage ?? ""}
+            rows={2}
+            maxLength={1000}
+            disabled={updateEvent.isPending}
+            className="min-h-[72px] resize-y rounded-xl text-sm"
+            placeholder="Ex.: Cheguem 30 min antes para o ensaio."
+            onBlur={(blurEvent) => void handleMessageBlur(blurEvent.target.value)}
+          />
+        </div>
 
         <EventRosterAssignments event={event} canManage embedded />
       </EventFormSection>

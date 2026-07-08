@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -119,6 +120,7 @@ interface ActivityCalendarProps {
   year: number;
   monthIndex: number;
   events: ChurchEvent[];
+  focusDateKey?: string;
   isLoading: boolean;
   isError: boolean;
   canCreate: boolean;
@@ -130,14 +132,24 @@ export function ActivityCalendar({
   year,
   monthIndex,
   events,
+  focusDateKey,
   isLoading,
   isError,
   canCreate,
   onMonthChange,
   onCreateOnDay,
 }: ActivityCalendarProps) {
+  const shouldReduceMotion = useReducedMotion();
   const todayKey = toDateKey(new Date());
-  const [selectedDateKey, setSelectedDateKey] = useState(todayKey);
+  const [selectedDateKey, setSelectedDateKey] = useState(
+    focusDateKey ?? todayKey,
+  );
+
+  useEffect(() => {
+    if (focusDateKey) {
+      setSelectedDateKey(focusDateKey);
+    }
+  }, [focusDateKey]);
 
   const grid = useMemo(
     () => buildMonthGrid(year, monthIndex),
@@ -345,15 +357,26 @@ export function ActivityCalendar({
 
         <aside className="rounded-2xl border border-border/70 bg-card p-4 shadow-soft">
           <div className="mb-3 flex items-start justify-between gap-2">
-            <div>
+            <div className="min-w-0">
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Agenda do dia
               </p>
-              <h3 className="mt-1 font-display text-base font-semibold tracking-tight capitalize">
-                {selectedInMonth || selectedDateKey
-                  ? formatDayTitle(selectedDateKey)
-                  : "Selecione um dia"}
-              </h3>
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.h3
+                  key={selectedDateKey}
+                  initial={
+                    shouldReduceMotion ? false : { opacity: 0, y: 6 }
+                  }
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={shouldReduceMotion ? undefined : { opacity: 0, y: -6 }}
+                  transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                  className="mt-1 font-display text-xl font-bold tracking-tight capitalize text-foreground"
+                >
+                  {selectedInMonth || selectedDateKey
+                    ? formatDayTitle(selectedDateKey)
+                    : "Selecione um dia"}
+                </motion.h3>
+              </AnimatePresence>
             </div>
             {canCreate && (
               <Button
@@ -373,49 +396,63 @@ export function ActivityCalendar({
               <Skeleton className="h-14 w-full rounded-xl" />
               <Skeleton className="h-14 w-full rounded-xl" />
             </div>
-          ) : selectedEvents.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-border/80 bg-muted/15 px-4 py-8 text-center">
-              <p className="text-sm font-medium text-foreground">
-                Dia disponível
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Nenhum evento neste dia com os filtros atuais.
-              </p>
-              {canCreate && (
-                <Button
-                  type="button"
-                  size="sm"
-                  className="mt-4"
-                  onClick={() => onCreateOnDay(selectedDateKey)}
-                >
-                  <Plus className="size-4" />
-                  Agendar neste dia
-                </Button>
-              )}
-            </div>
           ) : (
-            <div className="space-y-4">
-              {selectedAgendaGroups.map((group) => (
-                <section key={group.key}>
-                  <h4 className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    <span
-                      className={cn(
-                        "size-2 rounded-full",
-                        group.kind === "church" ? "bg-foreground" : "bg-sky-500",
-                      )}
-                    />
-                    {group.label}
-                  </h4>
-                  <ul className="space-y-2">
-                    {group.events.map((event) => (
-                      <li key={event.id}>
-                        <DayAgendaEventItem event={event} />
-                      </li>
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={selectedDateKey}
+                initial={shouldReduceMotion ? false : { opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={shouldReduceMotion ? undefined : { opacity: 0, y: -8 }}
+                transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+              >
+                {selectedEvents.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-border/80 bg-muted/15 px-4 py-8 text-center">
+                    <p className="text-sm font-medium text-foreground">
+                      Dia disponível
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Nenhum evento neste dia com os filtros atuais.
+                    </p>
+                    {canCreate && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="mt-4"
+                        onClick={() => onCreateOnDay(selectedDateKey)}
+                      >
+                        <Plus className="size-4" />
+                        Agendar neste dia
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {selectedAgendaGroups.map((group) => (
+                      <section key={group.key}>
+                        <h4 className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                          <span
+                            className={cn(
+                              "size-2 rounded-full",
+                              group.kind === "church"
+                                ? "bg-foreground"
+                                : "bg-sky-500",
+                            )}
+                          />
+                          {group.label}
+                        </h4>
+                        <ul className="space-y-2">
+                          {group.events.map((event) => (
+                            <li key={event.id}>
+                              <DayAgendaEventItem event={event} />
+                            </li>
+                          ))}
+                        </ul>
+                      </section>
                     ))}
-                  </ul>
-                </section>
-              ))}
-            </div>
+                  </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
           )}
         </aside>
       </div>

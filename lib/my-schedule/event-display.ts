@@ -1,4 +1,5 @@
 import type { MyScheduleEvent } from "@/types/ministries";
+import { formatRosterRole } from "@/lib/ministries/roster";
 
 export type ScheduleEventDisplayKind =
   | "assigned"
@@ -28,7 +29,9 @@ export function scheduleEventCalendarLabel(event: MyScheduleEvent): string {
   const kind = getScheduleEventDisplayKind(event);
 
   if (kind === "assigned") {
-    return event.myRoleLabel ?? event.name;
+    return event.myRoleLabel
+      ? formatRosterRole(event.myRoleLabel)
+      : event.name;
   }
 
   return event.name;

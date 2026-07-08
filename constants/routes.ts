@@ -48,6 +48,11 @@ export function activityDetailPath(eventId: string): string {
   return `${AUTH_ROUTES.activities}/${eventId}`;
 }
 
+/** Abre o calendário de atividades com um dia (`YYYY-MM-DD`) em foco. */
+export function activitiesCalendarPath(dateKey: string): string {
+  return `${AUTH_ROUTES.activities}?view=calendar&date=${dateKey}`;
+}
+
 export function settingsSectionPath(
   section:
     | "password-reset-requests"

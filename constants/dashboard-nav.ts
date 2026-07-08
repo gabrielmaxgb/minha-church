@@ -39,7 +39,7 @@ export const dashboardNavItems: DashboardNavItem[] = [
     permission: "members",
   },
   {
-    label: "Ministérios",
+    label: "Ministérios e Grupos de serviço",
     href: AUTH_ROUTES.ministries,
     icon: Layers,
     description: "Áreas de serviço, cargos e equipes",

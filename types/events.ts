@@ -14,6 +14,7 @@ export interface ChurchEvent {
   churchId: string;
   ministryId: string | null;
   ministryName: string | null;
+  ministryIsActive: boolean;
   isChurchWide: boolean;
   name: string;
   description: string | null;

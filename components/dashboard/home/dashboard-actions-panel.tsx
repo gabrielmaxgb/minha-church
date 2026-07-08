@@ -92,8 +92,8 @@ export function DashboardActionsPanel({
 
   if (permissions && canManageMinistries(permissions)) {
     quickActions.push({
-      label: "Ministérios",
-      description: "Equipes e cargos",
+      label: "Ministérios e grupos",
+      description: "Grupos de serviço, equipes e cargos",
       href: AUTH_ROUTES.ministries,
       icon: Layers,
     });

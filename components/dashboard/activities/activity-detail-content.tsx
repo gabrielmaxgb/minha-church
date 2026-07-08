@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
   ArrowLeft,
+  CalendarDays,
   Clock,
   MapPin,
   Pencil,
@@ -16,6 +17,7 @@ import { ActivityAvailabilitySection } from "@/components/dashboard/activities/a
 import { ActivityEventModal } from "@/components/dashboard/activities/activity-event-modal";
 import { ActivityRosterSection } from "@/components/dashboard/activities/activity-roster-section";
 import { EventRosterPublicCard } from "@/components/dashboard/activities/event-roster-assignments";
+import { InactiveMinistryBanner } from "@/components/dashboard/ministries/inactive-ministry-banner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,10 +28,12 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  activitiesCalendarPath,
   AUTH_ROUTES,
   ministryDetailPath,
 } from "@/constants/routes";
 import { useChurchEvent } from "@/lib/api/queries";
+import { dateKeyFromIso } from "@/lib/events/calendar";
 import {
   formatEventDateChip,
   formatEventTime,
@@ -67,6 +71,9 @@ export function ActivityDetailContent({ eventId }: ActivityDetailContentProps) {
   );
   const eventDateChip = event ? formatEventDateChip(event.startsAt) : null;
   const relativeEventDay = event ? formatRelativeEventDay(event.startsAt) : null;
+  const ministryInactive = Boolean(
+    event?.ministryId && !event.ministryIsActive,
+  );
 
   if (isLoading) {
     return (
@@ -108,15 +115,41 @@ export function ActivityDetailContent({ eventId }: ActivityDetailContentProps) {
           Voltar para atividades
         </Link>
 
-        {canManage ? (
+        {ministryInactive && (
+          <InactiveMinistryBanner
+            ministryName={event.ministryName}
+            ministryHref={
+              event.ministryId
+                ? ministryDetailPath(event.ministryId)
+                : undefined
+            }
+          />
+        )}
+
+        {!ministryInactive ? (
           <div className="flex flex-wrap items-center justify-end gap-2">
-            <Button size="sm" onClick={() => setEditOpen(true)}>
-              <Pencil className="size-4" />
-              Editar
+            <Button size="sm" variant="outline" asChild>
+              <Link href={activitiesCalendarPath(dateKeyFromIso(event.startsAt))}>
+                <CalendarDays className="size-4" />
+                Ver no calendário
+              </Link>
             </Button>
+            {canManage ? (
+              <Button size="sm" onClick={() => setEditOpen(true)}>
+                <Pencil className="size-4" />
+                Editar
+              </Button>
+            ) : null}
           </div>
         ) : null}
 
+        <div
+          className={cn(
+            "space-y-6",
+            ministryInactive && "pointer-events-none select-none opacity-60",
+          )}
+          aria-hidden={ministryInactive || undefined}
+        >
         <Card
           className={cn(
             event.isChurchWide &&
@@ -254,6 +287,7 @@ export function ActivityDetailContent({ eventId }: ActivityDetailContentProps) {
         {showAvailabilityPanel ? (
           <ActivityAvailabilitySection event={event} />
         ) : null}
+        </div>
       </div>
 
       <ActivityEventModal

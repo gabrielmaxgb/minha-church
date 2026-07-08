@@ -3,7 +3,6 @@
 import { useEffect, useId, useMemo, useState } from "react";
 import { Loader2, UserPlus, X } from "lucide-react";
 
-import { MinistryRoleToggles } from "@/components/dashboard/ministries/ministry-role-toggles";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -34,7 +33,6 @@ export function AddMinistryMemberModal({
   const { permissions } = useAuth();
   const canManage = permissions ? canManageMembers(permissions) : false;
   const [memberIds, setMemberIds] = useState<string[]>([]);
-  const [roleIds, setRoleIds] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const { data: membersData, isLoading } = useMembers(
@@ -67,7 +65,6 @@ export function AddMinistryMemberModal({
     [availableMembers],
   );
 
-  const roles = [...ministry.roles].sort((a, b) => a.sortOrder - b.sortOrder);
   const memberCount = memberIds.length;
   const hasRemainingMembers = memberOptions.some(
     (option) => !memberIds.includes(option.value),
@@ -89,7 +86,6 @@ export function AddMinistryMemberModal({
   useEffect(() => {
     if (!open) {
       setMemberIds([]);
-      setRoleIds([]);
       setError(null);
       return;
     }
@@ -135,7 +131,7 @@ export function AddMinistryMemberModal({
       const { succeeded, failed } = await assignMembers.mutateAsync({
         memberIds,
         payload: {
-          ministryRoleIds: roleIds,
+          ministryRoleIds: [],
         },
       });
 
@@ -242,25 +238,8 @@ export function AddMinistryMemberModal({
                 aria-invalid={error === "Selecione ao menos um membro." ? true : undefined}
               />
               <p className="text-xs text-muted-foreground">
-                Busque e selecione várias pessoas. Os cargos abaixo serão aplicados a
-                todos.
+                Busque e selecione várias pessoas para vincular ao ministério.
               </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Cargos no ministério</Label>
-              <MinistryRoleToggles
-                roles={roles}
-                selectedRoleIds={roleIds}
-                disabled={assignMembers.isPending}
-                onToggle={(roleId, checked) => {
-                  setRoleIds((current) =>
-                    checked
-                      ? [...current, roleId]
-                      : current.filter((id) => id !== roleId),
-                  );
-                }}
-              />
             </div>
           </div>
 

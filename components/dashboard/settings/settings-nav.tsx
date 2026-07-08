@@ -31,7 +31,7 @@ const ALL_ITEMS: SettingsNavItem[] = [
   },
   {
     id: "ministries",
-    label: "Ministérios",
+    label: "Ministérios e Grupos de serviço",
     description: "Funções em que você serve",
   },
   {

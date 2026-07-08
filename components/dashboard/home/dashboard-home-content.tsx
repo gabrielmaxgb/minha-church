@@ -159,7 +159,7 @@ export function DashboardHomeContent() {
     if (canListMinistriesData) {
       cards.push({
         key: "active-ministries",
-        label: "Ministérios ativos",
+        label: "Ministérios e grupos ativos",
         value: String(activeMinistries),
         hint:
           activeMinistries > 0

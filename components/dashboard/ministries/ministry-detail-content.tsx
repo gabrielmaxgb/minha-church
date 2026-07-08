@@ -18,6 +18,7 @@ import {
 import { MinistryOverviewSection } from "@/components/dashboard/ministries/ministry-overview-section";
 import { MinistryRolePermissionsSection } from "@/components/dashboard/ministries/ministry-role-permissions-section";
 import { MinistryServiceFunctionsSection } from "@/components/dashboard/ministries/ministry-service-functions-section";
+import { InactiveMinistryBanner } from "@/components/dashboard/ministries/inactive-ministry-banner";
 import { WorshipAvailabilitySection } from "@/components/dashboard/ministries/worship-availability-section";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,7 @@ import {
   useDeleteMinistry,
   useDeleteMinistryRole,
   useMinistry,
+  useUpdateMinistry,
 } from "@/lib/api/queries";
 import {
   MINISTRY_SETTINGS_SECTIONS,
@@ -266,6 +268,7 @@ export function MinistryDetailContent({ ministryId }: MinistryDetailContentProps
   const searchParams = useSearchParams();
   const { data: ministry, isLoading, isError } = useMinistry(ministryId);
   const [section, setSection] = useState<MinistrySettingsSection>("dashboard");
+  const updateMinistry = useUpdateMinistry(ministryId);
   const canManage = permissions ? canManageMinistries(permissions) : false;
   const canManageTeam = permissions ? canManageMembers(permissions) : false;
   const canManageRosters =
@@ -307,6 +310,7 @@ export function MinistryDetailContent({ ministryId }: MinistryDetailContentProps
   }
 
   const activeSection = MINISTRY_SETTINGS_SECTIONS.find((item) => item.id === section);
+  const inactive = !ministry.isActive;
 
   return (
     <div className="space-y-6">
@@ -315,24 +319,35 @@ export function MinistryDetailContent({ ministryId }: MinistryDetailContentProps
         className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
         <ArrowLeft className="size-4" />
-        Ministérios
+        Ministérios e Grupos de serviço
       </Link>
 
       <div className="flex flex-wrap items-center gap-2">
         <h1 className="font-display text-2xl font-semibold">{ministry.name}</h1>
-        {!ministry.isActive && (
+        {inactive && (
           <Badge variant="outline">Inativo</Badge>
         )}
       </div>
 
-      {/* {!canManage && !canManageTeam && (
-        <p className="rounded-xl border border-border bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
-          Você está em modo leitura. Pastores e administradores podem editar o ministério;
-          secretários podem gerenciar a equipe.
-        </p>
-      )} */}
+      {inactive && (
+        <InactiveMinistryBanner
+          ministryName={ministry.name}
+          onActivate={
+            canManage
+              ? () => void updateMinistry.mutateAsync({ isActive: true })
+              : undefined
+          }
+          isActivating={updateMinistry.isPending}
+        />
+      )}
 
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+      <div
+        className={cn(
+          "flex flex-col gap-6 lg:flex-row lg:items-start",
+          inactive && "pointer-events-none select-none opacity-60",
+        )}
+        aria-hidden={inactive || undefined}
+      >
         <SettingsNav
           active={section}
           onChange={setSection}

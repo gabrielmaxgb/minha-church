@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { CalendarDays, List, Plus } from "lucide-react";
 
 import { ActivityCalendar } from "@/components/dashboard/activities/activity-calendar";
@@ -27,11 +28,30 @@ type ActivityView = "calendar" | "list";
 
 export function ActivitiesContent() {
   const { permissions, user } = useAuth();
+  const searchParams = useSearchParams();
   const now = new Date();
-  const [view, setView] = useState<ActivityView>("calendar");
+
+  const initialFocus = useMemo(() => {
+    const raw = searchParams.get("date");
+    if (raw && /^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+      const [year, month] = raw.split("-").map(Number);
+      return { dateKey: raw, year, monthIndex: month - 1 };
+    }
+    return null;
+    // Lido apenas na montagem para posicionar o mês inicial.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const [view, setView] = useState<ActivityView>(
+    searchParams.get("view") === "list" ? "list" : "calendar",
+  );
   const [filter, setFilter] = useState<ActivityFilter>("all");
-  const [monthYear, setMonthYear] = useState(now.getFullYear());
-  const [monthIndex, setMonthIndex] = useState(now.getMonth());
+  const [monthYear, setMonthYear] = useState(
+    initialFocus?.year ?? now.getFullYear(),
+  );
+  const [monthIndex, setMonthIndex] = useState(
+    initialFocus?.monthIndex ?? now.getMonth(),
+  );
   const [modalOpen, setModalOpen] = useState(false);
   const [createStartsAt, setCreateStartsAt] = useState<string | undefined>();
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
@@ -190,6 +210,7 @@ export function ActivitiesContent() {
             year={monthYear}
             monthIndex={monthIndex}
             events={calendarEvents ?? []}
+            focusDateKey={initialFocus?.dateKey}
             isLoading={isLoading}
             isError={isError}
             canCreate={canCreate}
