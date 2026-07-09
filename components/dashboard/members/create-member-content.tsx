@@ -25,6 +25,7 @@ import {
   formValuesToCreatePayload,
   type MemberFormValues,
 } from "@/lib/members/form";
+import { applyMemberFormApiError } from "@/lib/members/form-api-errors";
 import { createMemberFormSchema } from "@/lib/validation/schemas";
 import type { MemberAccountCredentials } from "@/types/members";
 
@@ -59,12 +60,12 @@ export function CreateMemberContent() {
 
       router.push(AUTH_ROUTES.members);
     } catch (submitError) {
-      form.setError("root", {
-        message:
-          submitError instanceof Error
-            ? submitError.message
-            : "Não foi possível cadastrar o membro.",
-      });
+      applyMemberFormApiError(
+        form.setError,
+        form.clearErrors,
+        submitError,
+        "Não foi possível cadastrar o membro.",
+      );
     }
   });
 

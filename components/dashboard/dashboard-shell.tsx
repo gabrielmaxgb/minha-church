@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 import { ChurchSwitchOverlay } from "@/components/dashboard/church-switch-overlay";
+import { EmailVerificationBanner } from "@/components/dashboard/email-verification-banner";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { DashboardContentMotion } from "@/components/motion/dashboard-motion";
@@ -102,6 +103,7 @@ export function DashboardShell({
             isSwitchingChurch && "opacity-60",
           )}
         >
+          <EmailVerificationBanner />
           <DashboardContentMotion>{children}</DashboardContentMotion>
         </main>
       </div>

@@ -39,6 +39,7 @@ export interface User {
   roles: UserRoleSummary[];
   avatarUrl?: string;
   mustChangePassword?: boolean;
+  emailVerified?: boolean;
 }
 
 export interface JwtPayload {
@@ -67,6 +68,14 @@ export interface AuthSession {
 export interface LoginCredentials {
   identifier: string;
   password: string;
+}
+
+export interface RegisterChurchPayload {
+  churchName: string;
+  ownerName: string;
+  ownerEmail: string;
+  password: string;
+  acceptTerms: boolean;
 }
 
 export interface ChangePasswordPayload {

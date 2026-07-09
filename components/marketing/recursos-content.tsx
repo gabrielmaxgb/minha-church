@@ -71,7 +71,7 @@ export function RecursosContent() {
 
           <div className="mt-16 text-center">
             <Button asChild>
-              <Link href={PUBLIC_ROUTES.pricing}>Começar grátis</Link>
+              <Link href={PUBLIC_ROUTES.register}>Começar grátis</Link>
             </Button>
           </div>
         </Container>

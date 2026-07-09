@@ -20,7 +20,7 @@ export function CtaBanner({
   title = "Pronto para organizar sua igreja?",
   description = "Comece grátis hoje — sem cartão de crédito, sem instalação.",
   primaryLabel = "Começar grátis",
-  primaryHref = PUBLIC_ROUTES.pricing,
+  primaryHref = PUBLIC_ROUTES.register,
   secondaryLabel,
   secondaryHref,
   className,

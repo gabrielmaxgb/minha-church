@@ -44,7 +44,7 @@ export function Header() {
               <Link href={PUBLIC_ROUTES.login}>Entrar</Link>
             </Button>
             <Button size="sm" asChild>
-              <Link href={PUBLIC_ROUTES.pricing}>Começar grátis</Link>
+              <Link href={PUBLIC_ROUTES.register}>Começar grátis</Link>
             </Button>
           </div>
 
@@ -82,7 +82,7 @@ export function Header() {
                 </Link>
               </Button>
               <Button size="sm" asChild>
-                <Link href={PUBLIC_ROUTES.pricing} onClick={() => setMobileOpen(false)}>
+                <Link href={PUBLIC_ROUTES.register} onClick={() => setMobileOpen(false)}>
                   Começar grátis
                 </Link>
               </Button>

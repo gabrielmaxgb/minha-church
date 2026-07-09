@@ -16,6 +16,7 @@ import {
   changePasswordRequest,
   getSessionRequest,
   loginRequest,
+  registerChurchRequest,
   logoutRequest,
   refreshSessionDeduped,
   switchChurchRequest,
@@ -32,7 +33,7 @@ import {
 } from "@/lib/auth/cookies";
 import { terminateSession } from "@/lib/auth/session";
 import { isProtectedAreaPath, PUBLIC_ROUTES } from "@/constants/routes";
-import type { AuthResponse, ChangePasswordPayload, Church, LoginCredentials, UpdateProfilePayload, User, UserPermissions } from "@/types/auth";
+import type { AuthResponse, ChangePasswordPayload, Church, LoginCredentials, RegisterChurchPayload, UpdateProfilePayload, User, UserPermissions } from "@/types/auth";
 
 function redirectToLogin() {
   window.location.replace(`${PUBLIC_ROUTES.login}?force=1`);
@@ -72,11 +73,12 @@ interface AuthContextValue {
   isSwitchingChurch: boolean;
   switchingToChurchName: string | null;
   login: (credentials: LoginCredentials) => Promise<AuthResponse>;
+  registerChurch: (payload: RegisterChurchPayload) => Promise<AuthResponse>;
   logout: () => Promise<void>;
   switchChurch: (churchId: string) => Promise<void>;
   changePassword: (payload: ChangePasswordPayload) => Promise<void>;
   updateProfile: (payload: UpdateProfilePayload) => Promise<void>;
-  reloadSession: () => Promise<void>;
+  reloadSession: () => Promise<AuthResponse>;
 }
 
 const CHURCH_SWITCH_MIN_OVERLAY_MS = 400;
@@ -240,6 +242,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [scheduleTokenRefresh, sessionSetters],
   );
 
+  const registerChurch = useCallback(
+    async (payload: RegisterChurchPayload) => {
+      const session = await registerChurchRequest(payload);
+      const next = commitSession(session, undefined, sessionSetters);
+
+      scheduleTokenRefresh(next.expiresIn);
+      setIsLoading(false);
+
+      return session;
+    },
+    [scheduleTokenRefresh, sessionSetters],
+  );
+
   const changePassword = useCallback(
     async (payload: ChangePasswordPayload) => {
       const session = await changePasswordRequest(payload);
@@ -265,6 +280,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const next = commitSession(session, church ?? undefined, sessionSetters);
 
     scheduleTokenRefresh(next.expiresIn);
+
+    return session;
   }, [church, scheduleTokenRefresh, sessionSetters]);
 
   const logout = useCallback(async () => {
@@ -344,6 +361,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isSwitchingChurch,
       switchingToChurchName,
       login,
+      registerChurch,
       logout,
       switchChurch,
       changePassword,
@@ -357,6 +375,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isLoading,
       isSwitchingChurch,
       login,
+      registerChurch,
       logout,
       permissions,
       reloadSession,

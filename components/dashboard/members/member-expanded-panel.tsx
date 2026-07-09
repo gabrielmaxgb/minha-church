@@ -36,6 +36,7 @@ import {
   memberToFormValues,
   type MemberFormValues,
 } from "@/lib/members/form";
+import { applyMemberFormApiError } from "@/lib/members/form-api-errors";
 import { createMemberFormSchema } from "@/lib/validation/schemas";
 import { cn, formatDate } from "@/lib/utils";
 import type { Member, MemberAccountCredentials } from "@/types/members";
@@ -244,12 +245,12 @@ export function MemberExpandedPanel({
         });
       }
     } catch (submitError) {
-      form.setError("root", {
-        message:
-          submitError instanceof Error
-            ? submitError.message
-            : "Não foi possível salvar as alterações.",
-      });
+      applyMemberFormApiError(
+        form.setError,
+        form.clearErrors,
+        submitError,
+        "Não foi possível salvar as alterações.",
+      );
     }
   });
 

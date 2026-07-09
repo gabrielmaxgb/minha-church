@@ -2,10 +2,12 @@ export {
   changePasswordSchema,
   forgotPasswordSchema,
   loginSchema,
+  registerChurchSchema,
   resetPasswordSchema,
   type ChangePasswordFormValues,
   type ForgotPasswordFormValues,
   type LoginFormValues,
+  type RegisterChurchFormValues,
   type ResetPasswordFormValues,
 } from "./auth";
 export { createMemberFormSchema, memberFormSchema } from "./member";
