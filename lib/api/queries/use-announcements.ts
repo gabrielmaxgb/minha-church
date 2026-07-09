@@ -29,6 +29,7 @@ export function useAnnouncementsUnreadCount(options?: { enabled?: boolean }) {
   return useQuery({
     ...announcementsKeys.unreadCount(churchId ?? "unknown"),
     enabled: Boolean(churchId) && (options?.enabled ?? true),
-    staleTime: 60_000,
+    staleTime: 30_000,
+    refetchOnWindowFocus: true,
   });
 }

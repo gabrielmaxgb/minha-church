@@ -7,6 +7,7 @@ import {
   ArrowLeft,
   CalendarDays,
   Clock,
+  Layers,
   MapPin,
   Pencil,
   Repeat,
@@ -15,6 +16,7 @@ import {
 
 import { ActivityAvailabilitySection } from "@/components/dashboard/activities/activity-availability-section";
 import { ActivityEventModal } from "@/components/dashboard/activities/activity-event-modal";
+import { ActivityOccurrenceNav } from "@/components/dashboard/activities/activity-occurrence-nav";
 import { ActivityRosterSection } from "@/components/dashboard/activities/activity-roster-section";
 import { EventHighlightNote } from "@/components/dashboard/activities/event-highlight-note";
 import { EventRosterPublicCard } from "@/components/dashboard/activities/event-roster-assignments";
@@ -129,6 +131,7 @@ export function ActivityDetailContent({ eventId }: ActivityDetailContentProps) {
 
         {!ministryInactive ? (
           <div className="flex flex-wrap items-center justify-end gap-2">
+            <ActivityOccurrenceNav event={event} />
             <Button size="sm" variant="outline" asChild>
               <Link href={activitiesCalendarPath(dateKeyFromIso(event.startsAt))}>
                 <CalendarDays className="size-4" />
@@ -159,6 +162,14 @@ export function ActivityDetailContent({ eventId }: ActivityDetailContentProps) {
         >
           <CardHeader className="pb-4">
             <div className="flex flex-wrap items-center gap-2">
+              {!event.isChurchWide && event.ministryName && event.ministryId && (
+                <Link href={ministryDetailPath(event.ministryId)}>
+                  <Badge className="gap-1.5 border border-primary/25 bg-primary/10 px-2.5 py-1 text-sm font-medium text-primary hover:bg-primary/15">
+                    <Layers className="size-3.5" />
+                    {event.ministryName}
+                  </Badge>
+                </Link>
+              )}
               {event.isChurchWide && (
                 <Badge className="gap-1.5">
                   <Sparkles className="size-3" />
@@ -166,20 +177,13 @@ export function ActivityDetailContent({ eventId }: ActivityDetailContentProps) {
                 </Badge>
               )}
               {event.recurrence && (
-                <Badge variant="secondary" className="gap-1.5">
-                  <Repeat className="size-3" />
-                  Recorrente
-                </Badge>
-              )}
-              <Badge variant="outline">
-                {event.rosterOpen ? "Coleta aberta" : "Coleta fechada"}
-              </Badge>
-              {!event.isChurchWide && event.ministryName && event.ministryId && (
-                <Link href={ministryDetailPath(event.ministryId)}>
-                  <Badge variant="secondary" className="hover:bg-secondary/80">
-                    {event.ministryName}
-                  </Badge>
-                </Link>
+                <span
+                  className="inline-flex size-7 items-center justify-center rounded-lg border border-border/70 bg-muted/40 text-muted-foreground"
+                  title={formatRecurrenceSummary(event.recurrence, event.startsAt)}
+                  aria-label={`Recorrente: ${formatRecurrenceSummary(event.recurrence, event.startsAt)}`}
+                >
+                  <Repeat className="size-3.5" aria-hidden />
+                </span>
               )}
             </div>
 

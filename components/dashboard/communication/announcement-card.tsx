@@ -1,17 +1,17 @@
 "use client";
 
+import { useCallback } from "react";
 import {
   AlertTriangle,
   Clock,
   Globe,
   Layers,
   Pencil,
-  Pin,
   Trash2,
 } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useMarkWhenVisible } from "@/lib/communication/use-mark-when-visible";
 import { cn } from "@/lib/utils";
 import { formatDateTime } from "@/lib/utils";
 import type {
@@ -80,44 +80,47 @@ export function AnnouncementCard({
       : announcement.ministries.map((ministry) => ministry.name).join(", ") ||
         "Ministérios";
 
-  function handleReveal() {
+  const tryMarkRead = useCallback(() => {
     if (unread) {
       onVisible?.(announcement);
     }
+  }, [announcement, onVisible, unread]);
+
+  const visibilityRef = useMarkWhenVisible(unread, tryMarkRead);
+
+  function handleReveal() {
+    tryMarkRead();
   }
 
   return (
     <article
+      ref={visibilityRef}
       onMouseEnter={handleReveal}
       onClick={handleReveal}
       className={cn(
-        "rounded-2xl border bg-card p-4 shadow-soft transition-colors sm:p-5",
-        announcement.priority === "urgent"
-          ? "border-destructive/25"
-          : "border-border/70",
-        unread && "ring-1 ring-primary/20",
+        "relative overflow-hidden rounded-2xl border bg-card p-4 shadow-soft transition-colors sm:p-5",
+        announcement.pinned
+          ? "border-primary/25 border-l-[3px] border-l-primary bg-background/95 shadow-[0_8px_24px_-18px_rgba(0,0,0,0.35)]"
+          : announcement.priority === "urgent"
+            ? "border-destructive/25"
+            : "border-border/70",
+        unread && !announcement.pinned && "ring-1 ring-primary/20",
+        unread && announcement.pinned && "ring-1 ring-primary/30",
       )}
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="flex min-w-0 items-start gap-2.5">
-          {announcement.pinned && (
-            <Pin
-              className="mt-0.5 size-4 shrink-0 text-primary"
-              aria-label="Fixado"
-            />
-          )}
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              {unread && (
-                <span
-                  className="size-2 shrink-0 rounded-full bg-primary"
-                  aria-label="Não lido"
-                />
-              )}
-              <h3 className="font-display text-base font-semibold leading-tight">
-                {announcement.title}
-              </h3>
-            </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            {unread && (
+              <span
+                className="size-2 shrink-0 rounded-full bg-primary"
+                aria-label="Não lido"
+              />
+            )}
+            <h3 className="font-display text-base font-semibold leading-tight">
+              {announcement.title}
+            </h3>
+          </div>
             <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
               <span
                 className={cn(
@@ -161,7 +164,6 @@ export function AnnouncementCard({
                 </span>
               )}
             </div>
-          </div>
         </div>
 
         {manageMode && (
@@ -172,7 +174,10 @@ export function AnnouncementCard({
                 size="sm"
                 variant="ghost"
                 className="text-muted-foreground hover:text-foreground"
-                onClick={() => onEdit(announcement)}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onEdit(announcement);
+                }}
                 aria-label={`Editar ${announcement.title}`}
               >
                 <Pencil className="size-4" />
@@ -184,7 +189,10 @@ export function AnnouncementCard({
                 size="sm"
                 variant="ghost"
                 className="text-muted-foreground hover:text-destructive"
-                onClick={() => onDelete(announcement)}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onDelete(announcement);
+                }}
                 aria-label={`Excluir ${announcement.title}`}
               >
                 <Trash2 className="size-4" />

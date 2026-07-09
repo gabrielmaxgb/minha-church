@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { HelpCircle, Inbox, Megaphone, Plus } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { HelpCircle, Inbox, Megaphone, Pin, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -39,9 +39,25 @@ export function CommunicationContent() {
   });
   const markRead = useMarkAnnouncementRead();
   const deleteMutation = useDeleteAnnouncement();
+  const markedIdsRef = useRef(new Set<string>());
 
   const activeQuery = tab === "manage" ? manageQuery : feedQuery;
   const announcements = activeQuery.data ?? [];
+
+  const { pinnedAnnouncements, regularAnnouncements } = useMemo(() => {
+    const pinned: Announcement[] = [];
+    const regular: Announcement[] = [];
+
+    for (const announcement of announcements) {
+      if (announcement.pinned) {
+        pinned.push(announcement);
+      } else {
+        regular.push(announcement);
+      }
+    }
+
+    return { pinnedAnnouncements: pinned, regularAnnouncements: regular };
+  }, [announcements]);
 
   const emptyState = useMemo(() => {
     if (tab === "manage") {
@@ -71,7 +87,16 @@ export function CommunicationContent() {
   }
 
   function handleVisible(announcement: Announcement) {
-    if (announcement.isRead === false && !markRead.isPending) {
+    if (tab === "manage") {
+      return;
+    }
+
+    if (
+      announcement.isRead === false &&
+      !markRead.isPending &&
+      !markedIdsRef.current.has(announcement.id)
+    ) {
+      markedIdsRef.current.add(announcement.id);
       markRead.mutate(announcement.id);
     }
   }
@@ -109,24 +134,23 @@ export function CommunicationContent() {
           </p>
         )}
 
-        <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => setGuideOpen(true)}
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <HelpCircle className="size-4" />
-            Quando usar?
-          </Button>
-          {canManage && (
+        {canManage && (
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setGuideOpen(true)}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <HelpCircle className="size-4" />
+            </Button>
             <Button type="button" size="sm" onClick={openCompose}>
               <Plus className="size-4" />
               Novo comunicado
             </Button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {activeQuery.isLoading ? (
@@ -158,29 +182,91 @@ export function CommunicationContent() {
           )}
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-6">
           {markRead.isPending && (
             <span className="sr-only" role="status">
               Marcando como lido
             </span>
           )}
-          {announcements.map((announcement) => (
-            <AnnouncementCard
-              key={announcement.id}
-              announcement={announcement}
-              manageMode={tab === "manage"}
-              onVisible={handleVisible}
-              onEdit={openEdit}
-              onDelete={setToDelete}
-            />
-          ))}
+
+          {pinnedAnnouncements.length > 0 ? (
+            <section
+              aria-labelledby="pinned-announcements-heading"
+              className="rounded-2xl border border-primary/20 bg-gradient-to-b from-primary/[0.07] to-primary/[0.02] p-3 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.45)] sm:p-4"
+            >
+              <header className="mb-3 flex items-center gap-2 px-0.5 sm:px-1">
+                <span className="inline-flex size-6 items-center justify-center rounded-md bg-primary/12 text-primary">
+                  <Pin className="size-3.5" aria-hidden />
+                </span>
+                <h2
+                  id="pinned-announcements-heading"
+                  className="text-xs font-semibold uppercase tracking-[0.12em] text-primary"
+                >
+                  Fixados
+                </h2>
+                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium tabular-nums text-primary">
+                  {pinnedAnnouncements.length}
+                </span>
+              </header>
+
+              <div className="space-y-2.5">
+                {pinnedAnnouncements.map((announcement) => (
+                  <AnnouncementCard
+                    key={announcement.id}
+                    announcement={announcement}
+                    manageMode={tab === "manage"}
+                    onVisible={handleVisible}
+                    onEdit={openEdit}
+                    onDelete={setToDelete}
+                  />
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          {regularAnnouncements.length > 0 ? (
+            <section
+              aria-labelledby={
+                pinnedAnnouncements.length > 0
+                  ? "recent-announcements-heading"
+                  : undefined
+              }
+            >
+              {pinnedAnnouncements.length > 0 ? (
+                <header className="mb-3 flex items-center gap-3">
+                  <h2
+                    id="recent-announcements-heading"
+                    className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground"
+                  >
+                    Recentes
+                  </h2>
+                  <div className="h-px flex-1 bg-border/70" aria-hidden />
+                </header>
+              ) : null}
+
+              <div className="space-y-3">
+                {regularAnnouncements.map((announcement) => (
+                  <AnnouncementCard
+                    key={announcement.id}
+                    announcement={announcement}
+                    manageMode={tab === "manage"}
+                    onVisible={handleVisible}
+                    onEdit={openEdit}
+                    onDelete={setToDelete}
+                  />
+                ))}
+              </div>
+            </section>
+          ) : null}
         </div>
       )}
 
-      <AnnouncementDecisionGuide
-        open={guideOpen}
-        onClose={() => setGuideOpen(false)}
-      />
+      {canManage && (
+        <AnnouncementDecisionGuide
+          open={guideOpen}
+          onClose={() => setGuideOpen(false)}
+        />
+      )}
 
       {canManage && (
         <AnnouncementComposerModal

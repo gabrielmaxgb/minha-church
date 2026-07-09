@@ -3,15 +3,21 @@
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Bell, ClipboardList, KeyRound, UserCheck } from "lucide-react";
+import { Bell, ClipboardList, KeyRound, Mail, UserCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
   AUTH_ROUTES,
   settingsSectionPath,
 } from "@/constants/routes";
-import { useMyMinistryNotifications, useMySchedules, usePasswordResetRequests } from "@/lib/api/queries";
+import { useMyMinistryNotifications, useMySchedules, usePasswordResetRequests, useAnnouncementsUnreadCount } from "@/lib/api/queries";
 import { canManageChurchMemberships } from "@/lib/church-memberships/constants";
+import {
+  announcementsNotificationDescription,
+  announcementsNotificationLabel,
+  announcementsNotificationsHref,
+  announcementsUnreadCount,
+} from "@/lib/communication/announcement-notifications";
 import {
   ministryNotificationDescription,
   ministryNotificationLabel,
@@ -30,12 +36,16 @@ function useNotificationCount(): number {
   const { permissions } = useAuth();
   const canManage = canManageChurchMemberships(permissions);
   const hasSchedulesAccess = Boolean(permissions?.schedules.access);
+  const hasCommunicationAccess = Boolean(permissions?.communication.access);
 
   const { data: passwordResetRequests } = usePasswordResetRequests({
     poll: canManage,
   });
   const { data: schedules } = useMySchedules();
   const { data: ministryNotifications } = useMyMinistryNotifications();
+  const { data: unreadAnnouncements } = useAnnouncementsUnreadCount({
+    enabled: hasCommunicationAccess,
+  });
 
   const passwordResetCount = canManage ? (passwordResetRequests?.length ?? 0) : 0;
   const pendingScheduleCount = schedulePendingCount(
@@ -43,8 +53,12 @@ function useNotificationCount(): number {
     hasSchedulesAccess,
   );
   const ministryCount = ministryNotificationsCount(ministryNotifications);
+  const announcementCount = announcementsUnreadCount(
+    unreadAnnouncements,
+    hasCommunicationAccess,
+  );
 
-  return passwordResetCount + pendingScheduleCount + ministryCount;
+  return passwordResetCount + pendingScheduleCount + ministryCount + announcementCount;
 }
 
 function NotificationsPanel({
@@ -61,6 +75,7 @@ function NotificationsPanel({
   const { permissions } = useAuth();
   const canManage = canManageChurchMemberships(permissions);
   const hasSchedulesAccess = Boolean(permissions?.schedules.access);
+  const hasCommunicationAccess = Boolean(permissions?.communication.access);
 
   const {
     data: passwordResetRequests,
@@ -77,6 +92,13 @@ function NotificationsPanel({
     isLoading: ministryNotificationsLoading,
     isError: ministryNotificationsError,
   } = useMyMinistryNotifications();
+  const {
+    data: unreadAnnouncements,
+    isLoading: announcementsLoading,
+    isError: announcementsError,
+  } = useAnnouncementsUnreadCount({
+    enabled: open && hasCommunicationAccess,
+  });
 
   const passwordResetCount = canManage ? (passwordResetRequests?.length ?? 0) : 0;
   const pendingScheduleCount = schedulePendingCount(
@@ -84,7 +106,15 @@ function NotificationsPanel({
     hasSchedulesAccess,
   );
   const ministryCount = ministryNotificationsCount(ministryNotifications);
-  const count = passwordResetCount + pendingScheduleCount + ministryCount;
+  const announcementCount = announcementsUnreadCount(
+    unreadAnnouncements,
+    hasCommunicationAccess,
+  );
+  const count =
+    passwordResetCount +
+    pendingScheduleCount +
+    ministryCount +
+    announcementCount;
 
   const respondHref = schedules
     ? firstPendingScheduleHref(schedules)
@@ -93,11 +123,13 @@ function NotificationsPanel({
   const isLoading =
     (canManage && passwordResetLoading) ||
     (hasSchedulesAccess && schedulesLoading) ||
-    ministryNotificationsLoading;
+    ministryNotificationsLoading ||
+    (hasCommunicationAccess && announcementsLoading);
   const isError =
     (canManage && passwordResetError) ||
     (hasSchedulesAccess && schedulesError) ||
-    ministryNotificationsError;
+    ministryNotificationsError ||
+    (hasCommunicationAccess && announcementsError);
 
   useEffect(() => {
     if (!open) {
@@ -174,6 +206,43 @@ function NotificationsPanel({
               <p className="mt-2 text-sm font-medium">Tudo em dia</p>
             </div>
           )}
+
+          {!isLoading &&
+            !isError &&
+            announcementCount > 0 && (
+              <div className="border-b border-border/70 px-4 py-3 last:border-b-0">
+                <div className="flex items-start gap-3">
+                  <div className={pendingNotificationStyles.icon.sm}>
+                    <Mail
+                      className={cn("size-3.5", pendingNotificationStyles.iconText)}
+                      aria-hidden
+                    />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className={pendingNotificationStyles.label}>
+                      Comunicados
+                    </p>
+                    <p className="mt-1 text-sm font-medium leading-snug">
+                      {announcementsNotificationLabel(announcementCount)}
+                    </p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {announcementsNotificationDescription(announcementCount)}
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-2 h-8 text-xs"
+                      asChild
+                      onClick={onClose}
+                    >
+                      <Link href={announcementsNotificationsHref()}>
+                        Ver comunicados
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
 
           {!isLoading &&
             !isError &&
@@ -306,6 +375,7 @@ export function NotificationsBell() {
   const { permissions } = useAuth();
   const canManage = canManageChurchMemberships(permissions);
   const hasSchedulesAccess = Boolean(permissions?.schedules.access);
+  const hasCommunicationAccess = Boolean(permissions?.communication.access);
   const [open, setOpen] = useState(false);
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
   const count = useNotificationCount();
@@ -335,7 +405,12 @@ export function NotificationsBell() {
     };
   }, [open]);
 
-  if (!canManage && !hasSchedulesAccess && !hasMinistryNotifications) {
+  if (
+    !canManage &&
+    !hasSchedulesAccess &&
+    !hasMinistryNotifications &&
+    !hasCommunicationAccess
+  ) {
     return null;
   }
 

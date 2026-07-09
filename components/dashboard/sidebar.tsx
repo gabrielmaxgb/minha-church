@@ -11,7 +11,8 @@ import {
   dashboardSecondaryNavItems,
 } from "@/constants/dashboard-nav";
 import { AUTH_ROUTES } from "@/constants/routes";
-import { useMySchedules } from "@/lib/api/queries";
+import { useMySchedules, useAnnouncementsUnreadCount } from "@/lib/api/queries";
+import { announcementsUnreadCount } from "@/lib/communication/announcement-notifications";
 import { pendingNotificationStyles } from "@/lib/ui/notification-styles";
 import { canAccessNavItem, canAccessSchedules } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
@@ -82,8 +83,12 @@ export function DashboardSidebar({
   const pathname = usePathname();
   const { permissions } = useAuth();
   const canAccessSchedulesData = canAccessSchedules(permissions);
+  const hasCommunicationAccess = Boolean(permissions?.communication.access);
   const { data: schedule } = useMySchedules({
     enabled: canAccessSchedulesData,
+  });
+  const { data: unreadAnnouncements } = useAnnouncementsUnreadCount({
+    enabled: hasCommunicationAccess,
   });
 
   const visibleNavItems = useMemo(() => {
@@ -100,6 +105,10 @@ export function DashboardSidebar({
     canAccessSchedulesData && schedule
       ? schedule.summary.pendingAvailabilityCount
       : 0;
+  const communicationUnreadCount = announcementsUnreadCount(
+    unreadAnnouncements,
+    hasCommunicationAccess,
+  );
 
   const visibleSecondaryNavItems = useMemo(() => {
     if (!permissions) {
@@ -138,7 +147,11 @@ export function DashboardSidebar({
               icon={item.icon}
               isActive={isActive}
               badge={
-                item.href === AUTH_ROUTES.mySchedules ? pendingCount : undefined
+                item.href === AUTH_ROUTES.mySchedules
+                  ? pendingCount
+                  : item.href === AUTH_ROUTES.communication
+                    ? communicationUnreadCount
+                    : undefined
               }
               onNavigate={onNavigate}
             />
