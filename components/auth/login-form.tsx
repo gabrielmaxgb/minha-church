@@ -258,7 +258,7 @@ function LoginFormContent() {
           <p className="text-center text-sm text-muted-foreground">
             Ainda não tem conta?{" "}
             <Link
-              href={PUBLIC_ROUTES.pricing}
+              href={PUBLIC_ROUTES.register}
               className="font-medium text-foreground underline-offset-4 hover:underline"
             >
               Começar grátis

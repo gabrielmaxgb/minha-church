@@ -5,6 +5,7 @@ import { Calendar, MapPin, Plus, Repeat, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { LockedFeatureHint } from "@/components/dashboard/locked-feature-hint";
 import { AUTH_ROUTES, activityDetailPath } from "@/constants/routes";
 import {
   formatEventDateChip,
@@ -12,6 +13,7 @@ import {
   formatRelativeEventDay,
 } from "@/lib/dashboard/date-utils";
 import { formatRecurrenceSummary } from "@/lib/events/recurrence";
+import { useTrialWriteGuard } from "@/lib/subscription/use-trial-write-guard";
 import { cn } from "@/lib/utils";
 import type { ChurchEvent } from "@/types/events";
 
@@ -29,6 +31,7 @@ export function DashboardEventsPanel({
   onCreateActivity,
 }: DashboardEventsPanelProps) {
   const upcoming = events.slice(0, 6);
+  const { writesBlocked, blockProps } = useTrialWriteGuard();
 
   return (
     <section className="rounded-3xl border border-border/70 bg-card p-6 shadow-soft">
@@ -63,14 +66,20 @@ export function DashboardEventsPanel({
             antecedência.
           </p>
           {canCreateActivity && (
-            <Button
-              size="sm"
-              className="mt-4 gap-2"
-              onClick={onCreateActivity}
-            >
-              <Plus className="size-4" />
-              Criar atividade
-            </Button>
+            <div className="mt-4 flex flex-col items-center gap-1.5">
+              <Button
+                size="sm"
+                className="gap-2"
+                onClick={onCreateActivity}
+                {...blockProps}
+              >
+                <Plus className="size-4" />
+                Criar atividade
+              </Button>
+              {writesBlocked && (
+                <LockedFeatureHint action="criar atividades" />
+              )}
+            </div>
           )}
         </div>
       ) : (

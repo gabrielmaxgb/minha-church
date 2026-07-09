@@ -20,6 +20,8 @@ import {
   canCreateMinistryActivity,
   canListMinistries,
 } from "@/lib/permissions";
+import { TrialExpiredWriteModal } from "@/components/dashboard/trial-expired-write-modal";
+import { useTrialWriteGuard } from "@/lib/subscription/use-trial-write-guard";
 import { useAuth } from "@/providers/auth-provider";
 import {
   buildRecurrencePayload,
@@ -63,6 +65,7 @@ export function CreateActivityModal({
 }: CreateActivityModalProps) {
   const titleId = useId();
   const { permissions } = useAuth();
+  const { writesBlocked } = useTrialWriteGuard();
   const canList = canListMinistries(permissions);
   const { data: ministries } = useMinistries({ enabled: open && canList });
   const createEvent = useCreateChurchEvent();
@@ -184,6 +187,16 @@ export function CreateActivityModal({
 
   if (!open) {
     return null;
+  }
+
+  if (writesBlocked) {
+    return (
+      <TrialExpiredWriteModal
+        open
+        onClose={onClose}
+        action="criar atividades e escalas"
+      />
+    );
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Calendar, ChevronRight, MapPin, Plus, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { useFeatureLock } from "@/lib/subscription/use-feature-lock";
 import { AUTH_ROUTES } from "@/constants/routes";
 import {
   formatEventTime,
@@ -56,6 +57,7 @@ export function DashboardHero({
   canAccessActivities,
   onCreateActivity,
 }: DashboardHeroProps) {
+  const { locked, reason } = useFeatureLock();
   const relativeDay = nextEvent
     ? formatRelativeEventDay(nextEvent.startsAt)
     : null;
@@ -88,7 +90,13 @@ export function DashboardHero({
         {(canCreateActivity || canAccessMembers) && (
           <div className="flex flex-wrap gap-2">
             {canCreateActivity && (
-              <Button size="sm" className="gap-2" onClick={onCreateActivity}>
+              <Button
+                size="sm"
+                className="gap-2"
+                onClick={onCreateActivity}
+                disabled={locked}
+                title={reason ?? undefined}
+              >
                 <Plus className="size-4" />
                 Nova atividade
               </Button>
@@ -184,6 +192,8 @@ export function DashboardHero({
               variant="outline"
               className="mt-3 gap-2"
               onClick={onCreateActivity}
+              disabled={locked}
+              title={reason ?? undefined}
             >
               <Plus className="size-4" />
               Agendar atividade

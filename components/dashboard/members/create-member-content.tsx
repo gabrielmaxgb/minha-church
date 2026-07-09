@@ -21,10 +21,15 @@ import { FormAlert } from "@/components/ui/form-field";
 import { AUTH_ROUTES } from "@/constants/routes";
 import { useCreateMember } from "@/lib/api/queries";
 import {
+  MEMBER_ACCESS_LOCKED_REASON,
+  useFeatureLock,
+} from "@/lib/subscription/use-feature-lock";
+import {
   emptyMemberFormValues,
   formValuesToCreatePayload,
   type MemberFormValues,
 } from "@/lib/members/form";
+import { applyMemberFormApiError } from "@/lib/members/form-api-errors";
 import { createMemberFormSchema } from "@/lib/validation/schemas";
 import type { MemberAccountCredentials } from "@/types/members";
 
@@ -35,6 +40,7 @@ export function CreateMemberContent() {
     account: MemberAccountCredentials;
   } | null>(null);
   const createMember = useCreateMember();
+  const { locked: memberAccessLocked } = useFeatureLock();
 
   const form = useForm<MemberFormValues>({
     resolver: zodResolver(createMemberFormSchema()),
@@ -59,12 +65,12 @@ export function CreateMemberContent() {
 
       router.push(AUTH_ROUTES.members);
     } catch (submitError) {
-      form.setError("root", {
-        message:
-          submitError instanceof Error
-            ? submitError.message
-            : "Não foi possível cadastrar o membro.",
-      });
+      applyMemberFormApiError(
+        form.setError,
+        form.clearErrors,
+        submitError,
+        "Não foi possível cadastrar o membro.",
+      );
     }
   });
 
@@ -107,6 +113,10 @@ export function CreateMemberContent() {
               <form onSubmit={onSubmit} className="space-y-6" noValidate>
                 {form.formState.errors.root?.message && (
                   <FormAlert>{form.formState.errors.root.message}</FormAlert>
+                )}
+
+                {memberAccessLocked && status === "active" && (
+                  <FormAlert>{MEMBER_ACCESS_LOCKED_REASON}</FormAlert>
                 )}
 
                 <MemberForm

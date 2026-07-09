@@ -80,3 +80,41 @@ export const resetPasswordSchema = z
   });
 
 export type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
+
+export const registerChurchSchema = z
+  .object({
+    churchName: z
+      .string()
+      .trim()
+      .min(2, "Informe o nome da igreja.")
+      .max(120, "O nome da igreja deve ter no máximo 120 caracteres."),
+    ownerName: z
+      .string()
+      .trim()
+      .min(2, "Informe seu nome.")
+      .max(120, "O nome deve ter no máximo 120 caracteres."),
+    ownerEmail: z
+      .string()
+      .trim()
+      .min(1, "Informe seu e-mail.")
+      .refine((value) => isValidEmail(value), "E-mail inválido."),
+    password: z
+      .string()
+      .min(8, "A senha deve ter pelo menos 8 caracteres.")
+      .max(128, "A senha deve ter no máximo 128 caracteres."),
+    confirmPassword: z.string().min(1, "Confirme sua senha."),
+    acceptTerms: z.boolean().refine((value) => value, {
+      message: "Você precisa aceitar os termos de uso.",
+    }),
+  })
+  .superRefine((data, ctx) => {
+    if (data.password !== data.confirmPassword) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "A confirmação da senha não confere.",
+        path: ["confirmPassword"],
+      });
+    }
+  });
+
+export type RegisterChurchFormValues = z.infer<typeof registerChurchSchema>;

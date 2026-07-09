@@ -53,6 +53,7 @@ interface MyScheduleCalendarProps {
   events: MyScheduleEvent[];
   busyEventId: string | null;
   respondBusy: boolean;
+  interactionsDisabled?: boolean;
   needsRosterFunctions?: boolean;
   ministryName?: string;
   onRespond: (
@@ -66,6 +67,7 @@ export function MyScheduleCalendar({
   events,
   busyEventId,
   respondBusy,
+  interactionsDisabled = false,
   needsRosterFunctions = false,
   ministryName,
   onRespond,
@@ -365,6 +367,7 @@ export function MyScheduleCalendar({
                           ministryName ?? event.ministryName ?? "este ministério"
                         }
                         busy={busy}
+                        interactionsDisabled={interactionsDisabled}
                         layout="compact"
                         onRespond={(payload) =>
                           onRespond(event.ministryId!, event.eventId, payload)

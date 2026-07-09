@@ -3,6 +3,7 @@
 import { Check, RotateCcw, X } from "lucide-react";
 
 import { RosterFunctionsReminder } from "@/components/dashboard/ministries/roster-functions-reminder";
+import { LockedFeatureHint } from "@/components/dashboard/locked-feature-hint";
 import { Button } from "@/components/ui/button";
 import { getAvailabilityTheme } from "@/lib/my-schedule/availability-theme";
 import type { ScheduleAvailabilityAction } from "@/lib/my-schedule/event-display";
@@ -22,6 +23,7 @@ interface EventAvailabilityPanelProps {
   layout?: "compact" | "default";
   className?: string;
   showHeader?: boolean;
+  interactionsDisabled?: boolean;
   onRespond: (payload: EventAvailabilityPayload) => void;
 }
 
@@ -34,6 +36,7 @@ export function EventAvailabilityPanel({
   layout = "default",
   className,
   showHeader = false,
+  interactionsDisabled = false,
   onRespond,
 }: EventAvailabilityPanelProps) {
   const theme = getAvailabilityTheme(
@@ -41,6 +44,7 @@ export function EventAvailabilityPanel({
   );
   const isAvailable = availabilityStatus === "available";
   const isUnavailable = availabilityStatus === "unavailable";
+  const controlsDisabled = busy || interactionsDisabled;
 
   function submitAvailable() {
     onRespond({ status: "available", roleLabels: [] });
@@ -71,6 +75,10 @@ export function EventAvailabilityPanel({
             A coleta está aberta. Informe se pode servir neste dia.
           </p>
         </div>
+      ) : null}
+
+      {interactionsDisabled ? (
+        <LockedFeatureHint action="marcar disponibilidade em escalas" />
       ) : null}
 
       <div className={cn("space-y-0.5", theme.statusTone)} role="status">
@@ -122,7 +130,7 @@ export function EventAvailabilityPanel({
             type="button"
             size="sm"
             variant={isAvailable ? "default" : "outline"}
-            disabled={busy}
+            disabled={controlsDisabled}
             className={cn(
               isAvailable && theme.primaryButton,
               isUnavailable && !isAvailable && theme.secondaryButton,
@@ -142,7 +150,7 @@ export function EventAvailabilityPanel({
               isAvailable && !isUnavailable && theme.secondaryButton,
             )}
             aria-pressed={isUnavailable}
-            disabled={busy}
+            disabled={controlsDisabled}
             onClick={() =>
               isUnavailable ? submitClear() : submitUnavailable()
             }
@@ -158,7 +166,7 @@ export function EventAvailabilityPanel({
               type="button"
               size="sm"
               variant={isAvailable ? "default" : "outline"}
-              disabled={busy}
+              disabled={controlsDisabled}
               className={cn(
                 "h-9",
                 isAvailable && theme.primaryButton,
@@ -174,7 +182,7 @@ export function EventAvailabilityPanel({
               type="button"
               size="sm"
               variant={isUnavailable ? "destructive" : "outline"}
-              disabled={busy}
+              disabled={controlsDisabled}
               className={cn(
                 "h-9",
                 isUnavailable && theme.primaryButton,
@@ -194,7 +202,7 @@ export function EventAvailabilityPanel({
               type="button"
               size="sm"
               variant="ghost"
-              disabled={busy}
+              disabled={controlsDisabled}
               className="w-full text-muted-foreground"
               onClick={submitClear}
             >

@@ -2,6 +2,7 @@ import type {
   AuthResponse,
   ChangePasswordPayload,
   LoginCredentials,
+  RegisterChurchPayload,
   UpdateProfilePayload,
 } from "@/types/auth";
 import { apiClient } from "@/lib/api/client";
@@ -13,6 +14,31 @@ export async function loginRequest(
     method: "POST",
     body: JSON.stringify(credentials),
     skipAuth: true,
+  });
+}
+
+export async function registerChurchRequest(
+  payload: RegisterChurchPayload,
+): Promise<AuthResponse> {
+  return apiClient<AuthResponse>("/auth/register-church", {
+    method: "POST",
+    body: JSON.stringify(payload),
+    skipAuth: true,
+  });
+}
+
+export async function verifyEmailRequest(
+  token: string,
+): Promise<{ message: string }> {
+  return apiClient<{ message: string }>(
+    `/auth/verify-email?token=${encodeURIComponent(token)}`,
+    { skipAuth: true },
+  );
+}
+
+export async function resendVerificationEmailRequest(): Promise<{ message: string }> {
+  return apiClient<{ message: string }>("/auth/resend-verification", {
+    method: "POST",
   });
 }
 

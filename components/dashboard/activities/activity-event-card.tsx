@@ -15,6 +15,8 @@ interface ActivityEventCardProps {
   event: ChurchEvent;
   highlighted?: boolean;
   canManage?: boolean;
+  manageActionsBlocked?: boolean;
+  manageBlockTitle?: string;
   onEdit?: (event: ChurchEvent) => void;
 }
 
@@ -22,6 +24,8 @@ export function ActivityEventCard({
   event,
   highlighted = event.isChurchWide,
   canManage = false,
+  manageActionsBlocked = false,
+  manageBlockTitle,
   onEdit,
 }: ActivityEventCardProps) {
   return (
@@ -76,6 +80,8 @@ export function ActivityEventCard({
                 size="sm"
                 variant="outline"
                 className="shrink-0"
+                disabled={manageActionsBlocked}
+                title={manageActionsBlocked ? manageBlockTitle : undefined}
                 onClick={(clickEvent) => {
                   clickEvent.preventDefault();
                   clickEvent.stopPropagation();

@@ -8,6 +8,7 @@ import { ActivityCalendar } from "@/components/dashboard/activities/activity-cal
 import { ActivityEventCard } from "@/components/dashboard/activities/activity-event-card";
 import { ActivityEventModal } from "@/components/dashboard/activities/activity-event-modal";
 import { CreateActivityModal } from "@/components/dashboard/activities/create-activity-modal";
+import { LockedFeatureHint } from "@/components/dashboard/locked-feature-hint";
 import { StaggerItem, StaggerList } from "@/components/motion/dashboard-motion";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,6 +20,7 @@ import {
   canListMinistries,
   canManageActivity,
 } from "@/lib/permissions";
+import { useTrialWriteGuard } from "@/lib/subscription/use-trial-write-guard";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 import type { ChurchEvent } from "@/types/events";
@@ -110,6 +112,7 @@ export function ActivitiesContent() {
   }, [calendarEvents, listEvents]);
 
   const canCreate = permissions ? canCreateAnyActivity(permissions) : false;
+  const { writesBlocked, blockProps } = useTrialWriteGuard();
 
   const sortedEvents = useMemo(
     () => collapseRecurringEventsForList(listEvents ?? []),
@@ -147,10 +150,19 @@ export function ActivitiesContent() {
           </p>
 
           {canCreate && (
-            <Button size="sm" onClick={() => openCreateModal()}>
-              <Plus className="size-4" />
-              Nova atividade
-            </Button>
+            <div className="flex flex-col items-start gap-1.5 sm:items-end">
+              <Button
+                size="sm"
+                onClick={() => openCreateModal()}
+                {...blockProps}
+              >
+                <Plus className="size-4" />
+                Nova atividade
+              </Button>
+              {writesBlocked && (
+                <LockedFeatureHint action="criar ou editar atividades" />
+              )}
+            </div>
           )}
         </div>
 
@@ -214,6 +226,7 @@ export function ActivitiesContent() {
             isLoading={isLoading}
             isError={isError}
             canCreate={canCreate}
+            createBlockProps={blockProps}
             onMonthChange={(nextYear, nextMonthIndex) => {
               setMonthYear(nextYear);
               setMonthIndex(nextMonthIndex);
@@ -250,6 +263,7 @@ export function ActivitiesContent() {
                     className="mt-4"
                     size="sm"
                     onClick={() => openCreateModal()}
+                    {...blockProps}
                   >
                     <Plus className="size-4" />
                     Criar atividade
@@ -272,6 +286,8 @@ export function ActivitiesContent() {
                             event={event}
                             highlighted
                             canManage={canManageEvent(event)}
+                            manageActionsBlocked={writesBlocked}
+                            manageBlockTitle={blockProps.title}
                             onEdit={(event) => setEditingEventId(event.id)}
                           />
                         </StaggerItem>
@@ -296,6 +312,8 @@ export function ActivitiesContent() {
                             <ActivityEventCard
                               event={event}
                               canManage={canManageEvent(event)}
+                              manageActionsBlocked={writesBlocked}
+                              manageBlockTitle={blockProps.title}
                               onEdit={(event) => setEditingEventId(event.id)}
                             />
                           </StaggerItem>

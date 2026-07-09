@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { ArrowLeft, Layers } from "lucide-react";
 
 import { MyScheduleCalendar } from "@/components/dashboard/my-schedule/my-schedule-calendar";
+import { LockedFeatureHint } from "@/components/dashboard/locked-feature-hint";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AUTH_ROUTES, ministryAvailabilityPath } from "@/constants/routes";
@@ -13,6 +14,7 @@ import { useMySchedules } from "@/lib/api/queries";
 import { useRespondToRosterAvailability } from "@/lib/api/queries/use-respond-worship-availability";
 import type { EventAvailabilityPayload } from "@/components/dashboard/my-schedule/event-availability-panel";
 import { canListMinistries } from "@/lib/permissions";
+import { useTrialWriteGuard } from "@/lib/subscription/use-trial-write-guard";
 import { useAuth } from "@/providers/auth-provider";
 import type { MyMinistrySchedule } from "@/types/ministries";
 
@@ -24,12 +26,14 @@ function MinistryScheduleDetail({
   ministry,
   busyEventId,
   respondBusy,
+  interactionsDisabled,
   onRespond,
   showMinistryLink,
 }: {
   ministry: MyMinistrySchedule;
   busyEventId: string | null;
   respondBusy: boolean;
+  interactionsDisabled: boolean;
   onRespond: (
     ministryId: string,
     eventId: string,
@@ -55,6 +59,10 @@ function MinistryScheduleDetail({
         </div>
       )}
 
+      {interactionsDisabled && (
+        <LockedFeatureHint action="marcar disponibilidade em escalas" />
+      )}
+
       {hasOpenCollection && (
         <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
           <p className="text-xs font-semibold uppercase tracking-wider text-primary">
@@ -70,6 +78,7 @@ function MinistryScheduleDetail({
         events={ministry.events ?? []}
         busyEventId={busyEventId}
         respondBusy={respondBusy}
+        interactionsDisabled={interactionsDisabled}
         needsRosterFunctions={ministry.needsRosterFunctions}
         ministryName={ministry.ministryName}
         onRespond={onRespond}
@@ -91,6 +100,7 @@ export function MyScheduleMinistryContent({
   const { permissions } = useAuth();
   const { data, isLoading, isError } = useMySchedules();
   const respond = useRespondToRosterAvailability();
+  const { writesBlocked } = useTrialWriteGuard();
   const [busyEventId, setBusyEventId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -107,6 +117,10 @@ export function MyScheduleMinistryContent({
     eventId: string,
     payload: EventAvailabilityPayload,
   ) {
+    if (writesBlocked) {
+      return;
+    }
+
     setActionError(null);
     setBusyEventId(eventId);
 
@@ -188,6 +202,7 @@ export function MyScheduleMinistryContent({
         ministry={ministry}
         busyEventId={busyEventId}
         respondBusy={respond.isPending}
+        interactionsDisabled={writesBlocked}
         onRespond={(targetMinistryId, eventId, payload) =>
           void handleRespond(targetMinistryId, eventId, payload)
         }

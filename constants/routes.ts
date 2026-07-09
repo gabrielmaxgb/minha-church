@@ -6,8 +6,10 @@ export const PUBLIC_ROUTES = {
   faq: "/faq",
   security: "/seguranca",
   login: "/login",
+  register: "/cadastro",
   forgotPassword: "/recuperar-senha",
   resetPassword: "/redefinir-senha",
+  verifyEmail: "/verificar-email",
 } as const;
 
 export const AUTH_ROUTES = {

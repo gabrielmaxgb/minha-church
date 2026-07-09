@@ -331,8 +331,9 @@ export function PricingSection() {
                               "bg-background text-foreground hover:bg-background/90",
                           )}
                           variant={tier.highlighted ? "secondary" : "outline"}
+                          asChild
                         >
-                          {pricing.cta}
+                          <Link href={PUBLIC_ROUTES.register}>{pricing.cta}</Link>
                         </Button>
                       </CardFooter>
                     </Card>
@@ -375,7 +376,7 @@ export function PricingSection() {
         title="Teste grátis por 30 dias"
         description="Todas as funcionalidades incluídas. Sem cartão de crédito."
         primaryLabel="Começar grátis"
-        primaryHref={PUBLIC_ROUTES.pricing}
+        primaryHref={PUBLIC_ROUTES.register}
         secondaryLabel="Ver recursos"
         secondaryHref={PUBLIC_ROUTES.resources}
       />

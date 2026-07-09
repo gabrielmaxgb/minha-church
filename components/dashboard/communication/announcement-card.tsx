@@ -56,6 +56,7 @@ interface AnnouncementCardProps {
   announcement: Announcement;
   /** Exibe ações de edição e exclusão. */
   showManageActions?: boolean;
+  manageActionsBlocked?: boolean;
   onEdit?: (announcement: Announcement) => void;
   onDelete?: (announcement: Announcement) => void;
 }
@@ -63,6 +64,7 @@ interface AnnouncementCardProps {
 export function AnnouncementCard({
   announcement,
   showManageActions = false,
+  manageActionsBlocked = false,
   onEdit,
   onDelete,
 }: AnnouncementCardProps) {
@@ -155,6 +157,7 @@ export function AnnouncementCard({
                   variant="ghost"
                   className="text-muted-foreground hover:text-foreground"
                   onClick={() => onEdit(announcement)}
+                  disabled={manageActionsBlocked}
                   aria-label={`Editar ${announcement.title}`}
                 >
                   <Pencil className="size-4" />
@@ -167,6 +170,7 @@ export function AnnouncementCard({
                   variant="ghost"
                   className="text-muted-foreground hover:text-destructive"
                   onClick={() => onDelete(announcement)}
+                  disabled={manageActionsBlocked}
                   aria-label={`Excluir ${announcement.title}`}
                 >
                   <Trash2 className="size-4" />

@@ -25,6 +25,7 @@ import {
   canManageMinistries,
 } from "@/lib/permissions";
 import { pendingNotificationStyles } from "@/lib/ui/notification-styles";
+import { useTrialWriteGuard } from "@/lib/subscription/use-trial-write-guard";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 
@@ -48,11 +49,12 @@ export function DashboardActionsPanel({
   onCreateActivity,
 }: DashboardActionsPanelProps) {
   const { permissions } = useAuth();
+  const { writesBlocked } = useTrialWriteGuard();
   const canManageMemberships = canManageChurchMemberships(permissions);
   const canSeeMembers = canAccessMembers(permissions);
 
   const attentionItems = [
-    pendingAccessCount > 0 && canManageMemberships
+    !writesBlocked && pendingAccessCount > 0 && canManageMemberships
       ? {
           label: `${pendingAccessCount} acesso${pendingAccessCount > 1 ? "s" : ""} pendente${pendingAccessCount > 1 ? "s" : ""}`,
           description: "Usuários aguardando aprovação na igreja",
@@ -60,7 +62,7 @@ export function DashboardActionsPanel({
           icon: Users,
         }
       : null,
-    passwordResetCount > 0 && canManageMemberships
+    !writesBlocked && passwordResetCount > 0 && canManageMemberships
       ? {
           label: `${passwordResetCount} pedido${passwordResetCount > 1 ? "s" : ""} de senha`,
           description: "Membros solicitaram redefinição de senha",
@@ -81,7 +83,7 @@ export function DashboardActionsPanel({
     });
   }
 
-  if (permissions && canCreateAnyActivity(permissions)) {
+  if (permissions && canCreateAnyActivity(permissions) && !writesBlocked) {
     quickActions.push({
       label: "Nova atividade",
       description: "Evento ou encontro",
@@ -90,7 +92,7 @@ export function DashboardActionsPanel({
     });
   }
 
-  if (permissions && canManageMinistries(permissions)) {
+  if (permissions && canManageMinistries(permissions) && !writesBlocked) {
     quickActions.push({
       label: "Ministérios e grupos",
       description: "Grupos de serviço, equipes e cargos",

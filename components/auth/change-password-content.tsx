@@ -85,12 +85,13 @@ export function ChangePasswordContent({
   variant = "required",
 }: ChangePasswordContentProps) {
   const router = useRouter();
-  const { changePassword } = useAuth();
+  const { changePassword, logout } = useAuth();
   const { user, isLoading } = useRequireAuth();
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const isRequired = variant === "required";
 
@@ -135,6 +136,16 @@ export function ChangePasswordContent({
       setIsSubmitting(false);
     }
   });
+
+  async function handleBackToLogin() {
+    setIsLoggingOut(true);
+
+    try {
+      await logout();
+    } catch {
+      setIsLoggingOut(false);
+    }
+  }
 
   if (isLoading || !user) {
     if (isRequired) {
@@ -225,7 +236,7 @@ export function ChangePasswordContent({
         <div
           className={cn(
             "flex flex-col-reverse gap-2 border-t border-border/70 bg-muted/25 px-5 py-4 sm:flex-row",
-            isRequired ? "sm:justify-stretch" : "sm:justify-end",
+            isRequired ? "sm:flex-col sm:items-stretch" : "sm:justify-end",
           )}
         >
           {!isRequired && (
@@ -244,7 +255,7 @@ export function ChangePasswordContent({
           )}
           <Button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || isLoggingOut}
             className={isRequired ? "w-full sm:ml-0" : undefined}
           >
             {isSubmitting ? (
@@ -256,6 +267,27 @@ export function ChangePasswordContent({
               "Salvar nova senha"
             )}
           </Button>
+          {isRequired && (
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full text-muted-foreground"
+              disabled={isSubmitting || isLoggingOut}
+              onClick={() => void handleBackToLogin()}
+            >
+              {isLoggingOut ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Saindo...
+                </>
+              ) : (
+                <>
+                  <ArrowLeft className="size-4" />
+                  Voltar ao login
+                </>
+              )}
+            </Button>
+          )}
         </div>
       </form>
     </SettingsPanel>

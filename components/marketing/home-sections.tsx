@@ -48,7 +48,7 @@ export function HeroSection() {
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Button size="lg" asChild>
-              <Link href={PUBLIC_ROUTES.pricing}>Começar grátis</Link>
+              <Link href={PUBLIC_ROUTES.register}>Começar grátis</Link>
             </Button>
             <Button size="lg" variant="outline" asChild>
               <Link href={PUBLIC_ROUTES.resources}>Ver recursos</Link>
@@ -204,7 +204,7 @@ export function CtaSection() {
               className="bg-background text-foreground hover:bg-background/90"
               asChild
             >
-                <Link href={PUBLIC_ROUTES.pricing}>Começar grátis</Link>
+                <Link href={PUBLIC_ROUTES.register}>Começar grátis</Link>
             </Button>
             <Button
               size="lg"

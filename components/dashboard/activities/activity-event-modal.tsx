@@ -23,6 +23,7 @@ import { EventFormSection } from "@/components/dashboard/activities/event-form-s
 import { EventMutationScopeDialog } from "@/components/dashboard/activities/event-mutation-scope-dialog";
 import { EventVisibilityFields } from "@/components/dashboard/activities/event-visibility-fields";
 import { LargeModalShell } from "@/components/dashboard/activities/large-modal-shell";
+import { TrialExpiredWriteModal } from "@/components/dashboard/trial-expired-write-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,6 +42,7 @@ import {
   canManageActivity,
   canManageEventRoster,
 } from "@/lib/permissions";
+import { useTrialWriteGuard } from "@/lib/subscription/use-trial-write-guard";
 import { cn, formatDateTime } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 import type { EventMutationScope } from "@/types/events";
@@ -62,6 +64,8 @@ export function ActivityEventModal({
 }: ActivityEventModalProps) {
   const titleId = useId();
   const { user, permissions } = useAuth();
+  const { writesBlocked, guardWrite, paywallAction, closePaywall } =
+    useTrialWriteGuard();
   const { data: event, isLoading, isError } = useChurchEvent(eventId ?? "");
 
   const [mode, setMode] = useState<"view" | "edit">(initialMode);
@@ -221,6 +225,16 @@ export function ActivityEventModal({
     return null;
   }
 
+  if (writesBlocked && initialMode === "edit") {
+    return (
+      <TrialExpiredWriteModal
+        open
+        onClose={onClose}
+        action="editar atividades"
+      />
+    );
+  }
+
   const shellTitle =
     mode === "edit"
       ? "Editar atividade"
@@ -259,7 +273,12 @@ export function ActivityEventModal({
                   Fechar
                 </Button>
                 {canManage ? (
-                  <Button type="button" onClick={() => setMode("edit")}>
+                  <Button
+                    type="button"
+                    onClick={() =>
+                      guardWrite("editar atividades", () => setMode("edit"))
+                    }
+                  >
                     <Pencil className="size-4" />
                     Editar
                   </Button>
@@ -374,7 +393,10 @@ export function ActivityEventModal({
             </div>
 
             {showAvailabilityPanel ? (
-              <ActivityAvailabilitySection event={event} />
+              <ActivityAvailabilitySection
+                event={event}
+                interactionsDisabled={writesBlocked}
+              />
             ) : null}
 
             {event.usesRoster && canManageRoster ? (
@@ -562,6 +584,12 @@ export function ActivityEventModal({
 
           void performSave(scope);
         }}
+      />
+
+      <TrialExpiredWriteModal
+        open={paywallAction !== null}
+        onClose={closePaywall}
+        action={paywallAction ?? undefined}
       />
     </>
   );

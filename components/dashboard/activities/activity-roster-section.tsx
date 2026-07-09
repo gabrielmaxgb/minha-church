@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { CalendarCheck, ClipboardList, Loader2 } from "lucide-react";
 
+import { LockedFeatureHint } from "@/components/dashboard/locked-feature-hint";
 import { EventFormSection } from "@/components/dashboard/activities/event-form-section";
 import { EventRosterAssignments } from "@/components/dashboard/activities/event-roster-assignments";
 import { EventRosterSlotsEditor } from "@/components/dashboard/activities/event-roster-slots-editor";
@@ -20,9 +21,13 @@ import type { ChurchEventDetail } from "@/types/events";
 
 interface ActivityRosterSectionProps {
   event: ChurchEventDetail;
+  readOnly?: boolean;
 }
 
-export function ActivityRosterSection({ event }: ActivityRosterSectionProps) {
+export function ActivityRosterSection({
+  event,
+  readOnly = false,
+}: ActivityRosterSectionProps) {
   const updateEvent = useUpdateChurchEvent(event.id);
   const setCollection = useSetEventRosterCollection(event.id);
   const [rosterSlotPlan, setRosterSlotPlan] = useState<RosterSlotPlanItem[]>([]);
@@ -91,7 +96,11 @@ export function ActivityRosterSection({ event }: ActivityRosterSectionProps) {
 
   return (
     <div className="space-y-8">
-      {event.isChurchWide ? (
+      {readOnly && (
+        <LockedFeatureHint action="gerenciar escalas e coletas de disponibilidade" />
+      )}
+
+      {event.isChurchWide && !readOnly ? (
         <EventFormSection
           title="Funções desta atividade"
           description="Adicione as funções que essa atividade precisa, como recepção, mídia ou louvor."
@@ -112,16 +121,32 @@ export function ActivityRosterSection({ event }: ActivityRosterSectionProps) {
         </EventFormSection>
       ) : null}
 
+      {event.isChurchWide && readOnly && (event.rosterSlots?.length ?? 0) > 0 ? (
+        <EventFormSection
+          title="Funções desta atividade"
+          description="Consulta das funções configuradas para esta atividade."
+          icon={ClipboardList}
+        >
+          <ul className="space-y-1 text-sm text-muted-foreground">
+            {(event.rosterSlots ?? []).map((slot) => (
+              <li key={slot.id}>{slot.label}</li>
+            ))}
+          </ul>
+        </EventFormSection>
+      ) : null}
+
       <EventFormSection
         title="Montar equipe"
         description={
-          event.isChurchWide
-            ? "Quem marcou disponibilidade aparece abaixo. Escolha a função (ou Voluntário) e adicione à escala."
-            : "Quem marcou disponibilidade aparece abaixo. Escolha a função e adicione à escala oficial."
+          readOnly
+            ? "Visualização da escala montada para esta atividade."
+            : event.isChurchWide
+              ? "Quem marcou disponibilidade aparece abaixo. Escolha a função (ou Voluntário) e adicione à escala."
+              : "Quem marcou disponibilidade aparece abaixo. Escolha a função e adicione à escala oficial."
         }
         icon={ClipboardList}
         action={
-          event.rosterOpen ? (
+          readOnly ? undefined : event.rosterOpen ? (
             <Button
               type="button"
               size="sm"
@@ -152,37 +177,54 @@ export function ActivityRosterSection({ event }: ActivityRosterSectionProps) {
           </p>
         ) : null}
 
-        {!event.rosterOpen ? (
+        {!readOnly && !event.rosterOpen ? (
           <p className="mb-4 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
             A coleta está fechada. Ninguém receberá notificação para marcar sua
-            disponibilidade até você abrir a coleta com o botão "Coleta de disponibilidade" acima.
+            disponibilidade até você abrir a coleta com o botão «Coleta de disponibilidade» acima.
           </p>
         ) : null}
 
-        <div className="mb-6 space-y-2">
-          <Label htmlFor="event-availability-message">
-            Mensagem para a equipe (opcional)
-          </Label>
-          <Textarea
-            id="event-availability-message"
-            defaultValue={event.availabilityMessage ?? ""}
-            rows={2}
-            maxLength={1000}
-            disabled={updateEvent.isPending}
-            className="min-h-[72px] resize-y rounded-xl text-sm"
-            placeholder="Ex.: Cheguem 30 min antes para o ensaio."
-            onBlur={(blurEvent) => void handleMessageBlur(blurEvent.target.value)}
-          />
-        </div>
+        {!readOnly ? (
+          <div className="mb-6 space-y-2">
+            <Label htmlFor="event-availability-message">
+              Mensagem para a equipe (opcional)
+            </Label>
+            <Textarea
+              id="event-availability-message"
+              defaultValue={event.availabilityMessage ?? ""}
+              rows={2}
+              maxLength={1000}
+              disabled={updateEvent.isPending}
+              className="min-h-[72px] resize-y rounded-xl text-sm"
+              placeholder="Ex.: Cheguem 30 min antes para o ensaio."
+              onBlur={(blurEvent) => void handleMessageBlur(blurEvent.target.value)}
+            />
+          </div>
+        ) : event.availabilityMessage ? (
+          <div className="mb-6 rounded-xl border border-border/70 bg-muted/10 px-4 py-3.5">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Mensagem para a equipe
+            </p>
+            <p className="mt-1 whitespace-pre-wrap text-sm text-foreground">
+              {event.availabilityMessage}
+            </p>
+          </div>
+        ) : null}
 
-        <EventRosterAssignments event={event} canManage embedded />
+        <EventRosterAssignments
+          event={event}
+          canManage={!readOnly}
+          embedded
+        />
       </EventFormSection>
 
-      <RosterCollectionModal
-        event={event}
-        open={collectionOpen}
-        onClose={() => setCollectionOpen(false)}
-      />
+      {!readOnly ? (
+        <RosterCollectionModal
+          event={event}
+          open={collectionOpen}
+          onClose={() => setCollectionOpen(false)}
+        />
+      ) : null}
     </div>
   );
 }
