@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { EventAvailabilityPanel } from "@/components/dashboard/my-schedule/event-availability-panel";
+import { LockedFeatureHint } from "@/components/dashboard/locked-feature-hint";
 import {
   useUpdateChurchEventAvailability,
   useUpdateEventAvailability,
@@ -11,10 +12,12 @@ import type { ChurchEventDetail } from "@/types/events";
 
 interface ActivityAvailabilitySectionProps {
   event: ChurchEventDetail;
+  interactionsDisabled?: boolean;
 }
 
 export function ActivityAvailabilitySection({
   event,
+  interactionsDisabled = false,
 }: ActivityAvailabilitySectionProps) {
   const updateChurchAvailability = useUpdateChurchEventAvailability(event.id);
   const updateMinistryAvailability = useUpdateEventAvailability(
@@ -56,6 +59,10 @@ export function ActivityAvailabilitySection({
 
   return (
     <div className="space-y-3">
+      {interactionsDisabled ? (
+        <LockedFeatureHint action="marcar disponibilidade em escalas" />
+      ) : null}
+
       {error ? (
         <p className="rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive">
           {error}
@@ -71,6 +78,7 @@ export function ActivityAvailabilitySection({
         }
         ministryName={event.ministryName ?? "este ministério"}
         busy={busy}
+        interactionsDisabled={interactionsDisabled}
         onRespond={(payload) => void handleRespond(payload)}
       />
     </div>

@@ -37,6 +37,7 @@ import {
   type MemberFormValues,
 } from "@/lib/members/form";
 import { applyMemberFormApiError } from "@/lib/members/form-api-errors";
+import { useTrialWriteGuard } from "@/lib/subscription/use-trial-write-guard";
 import { createMemberFormSchema } from "@/lib/validation/schemas";
 import { cn, formatDate } from "@/lib/utils";
 import type { Member, MemberAccountCredentials } from "@/types/members";
@@ -199,6 +200,7 @@ export function MemberExpandedPanel({
   onDeleted,
 }: MemberExpandedPanelProps) {
   const { user } = useAuth();
+  const { writesBlocked, reason } = useTrialWriteGuard();
   const [viewTab, setViewTab] = useState<"profile" | "ministries">("profile");
   const [confirmName, setConfirmName] = useState("");
   const [isEditing, setIsEditing] = useState(false);
@@ -326,7 +328,7 @@ export function MemberExpandedPanel({
           <MemberMinistriesFunctionsSection
             memberId={member.id}
             ministries={member.ministries}
-            editable={isSelf}
+            editable={isSelf && !writesBlocked}
           />
         )}
       </div>
@@ -347,7 +349,12 @@ export function MemberExpandedPanel({
               <Button
                 type="button"
                 variant="outline"
-                disabled={receiveMember.isPending || !canReceiveAsMember}
+                disabled={
+                  writesBlocked ||
+                  receiveMember.isPending ||
+                  !canReceiveAsMember
+                }
+                title={writesBlocked ? reason ?? undefined : undefined}
                 onClick={() => void handleReceiveMember()}
               >
                 {receiveMember.isPending ? "Recebendo..." : "Receber como membro"}
@@ -382,11 +389,11 @@ export function MemberExpandedPanel({
             <MemberMinistriesFunctionsSection
               memberId={member.id}
               ministries={member.ministries}
-              editable
+              editable={!writesBlocked}
             />
           </div>
 
-          <MemberMinistriesSection member={member} />
+          <MemberMinistriesSection member={member} disabled={writesBlocked} />
         </div>
 
         {createdAccount && (
@@ -441,7 +448,7 @@ export function MemberExpandedPanel({
           <div className="p-5 sm:p-6">
             <MemberMinistriesSection
               member={member}
-              disabled={isPending}
+              disabled={isPending || writesBlocked}
               hideTitle
             />
           </div>
@@ -494,8 +501,12 @@ export function MemberExpandedPanel({
               variant="outline"
               className="mt-3"
               disabled={
-                receiveMember.isPending || isPending || !canReceiveAsMember
+                writesBlocked ||
+                receiveMember.isPending ||
+                isPending ||
+                !canReceiveAsMember
               }
+              title={writesBlocked ? reason ?? undefined : undefined}
               onClick={() => void handleReceiveMember()}
             >
               {receiveMember.isPending ? "Recebendo..." : "Receber como membro"}
@@ -505,6 +516,7 @@ export function MemberExpandedPanel({
 
         {deleteError && <FormAlert>{deleteError}</FormAlert>}
 
+        {!writesBlocked && (
         <section className="rounded-2xl border border-destructive/20 bg-destructive/5 p-5 sm:p-6">
           <div className="flex items-start gap-3">
             <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-destructive/10 text-destructive">
@@ -541,6 +553,7 @@ export function MemberExpandedPanel({
             </div>
           </div>
         </section>
+        )}
       </form>
     </FormProvider>
 

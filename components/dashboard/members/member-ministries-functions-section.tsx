@@ -15,6 +15,7 @@ import {
   useMinistry,
   useUpdateMemberMinistryInstruments,
 } from "@/lib/api/queries";
+import { useFeatureLock } from "@/lib/subscription/use-feature-lock";
 import {
   addRosterRole,
   ensureMinistryServiceFunctionLabels,
@@ -38,6 +39,7 @@ function MemberMinistryFunctionsCard({
   link,
   editable,
 }: MemberMinistryFunctionsCardProps) {
+  const { locked } = useFeatureLock();
   const { data: ministry, isLoading } = useMinistry(link.ministryId);
   const updateInstruments = useUpdateMemberMinistryInstruments(link.ministryId);
   const [selected, setSelected] = useState<string[]>(
@@ -99,12 +101,14 @@ function MemberMinistryFunctionsCard({
             )}
           </div>
         </div>
-        <Link
-          href={`${ministryDetailPath(link.ministryId)}?section=service-functions`}
-          className="text-xs font-medium text-primary hover:underline"
-        >
-          Ver ministério
-        </Link>
+        {!locked ? (
+          <Link
+            href={`${ministryDetailPath(link.ministryId)}?section=service-functions`}
+            className="text-xs font-medium text-primary hover:underline"
+          >
+            Ver ministério
+          </Link>
+        ) : null}
       </div>
 
       <div className="mt-4">

@@ -1,18 +1,51 @@
 "use client";
 
 import Link from "next/link";
-import { Clock, Lock } from "lucide-react";
+import { Clock, Lock, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { PUBLIC_ROUTES } from "@/constants/routes";
 import { useFeatureLock } from "@/lib/subscription/use-feature-lock";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 
-const COUNTDOWN_THRESHOLD_DAYS = 7;
+const URGENT_THRESHOLD_DAYS = 7;
+
+function formatTrialEndDate(isoDate: string): string {
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(new Date(isoDate));
+}
+
+function buildTrialCountdownMessage(
+  trialDaysRemaining: number,
+  trialEndsAt: string | null,
+): string {
+  const dayLabel = trialDaysRemaining === 1 ? "dia" : "dias";
+  const endDateHint =
+    trialEndsAt !== null ? ` (até ${formatTrialEndDate(trialEndsAt)})` : "";
+
+  if (trialDaysRemaining === 0) {
+    return `Seu teste gratuito termina hoje${endDateHint}.`;
+  }
+
+  if (trialDaysRemaining === 1) {
+    return `Falta 1 dia de teste gratuito${endDateHint}.`;
+  }
+
+  return `Faltam ${trialDaysRemaining} ${dayLabel} de teste gratuito${endDateHint}.`;
+}
 
 export function TrialStatusBanner() {
   const { user } = useAuth();
-  const { locked, subscriptionStatus, trialDaysRemaining } = useFeatureLock();
+  const {
+    locked,
+    subscriptionStatus,
+    trialDaysRemaining,
+    trialEndsAt,
+  } = useFeatureLock();
 
   // Só o proprietário decide sobre plano — evita "barulho" para os demais.
   if (!user?.isOwner) {
@@ -32,9 +65,9 @@ export function TrialStatusBanner() {
                 Seu período de teste terminou
               </p>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Você continua com acesso total ao que já criou e pode seguir
-                cadastrando membros. Para criar novos ministérios, atividades e
-                escalas, escolha um plano.
+                Você ainda pode consultar o painel, ver o que já criou e
+                cadastrar novos membros. Para editar ministérios, atividades,
+                comunicados e configurações da igreja, escolha um plano.
               </p>
             </div>
           </div>
@@ -48,45 +81,67 @@ export function TrialStatusBanner() {
     );
   }
 
-  const showCountdown =
-    subscriptionStatus === "trialing" &&
-    trialDaysRemaining !== null &&
-    trialDaysRemaining <= COUNTDOWN_THRESHOLD_DAYS;
+  const isTrialing =
+    subscriptionStatus === "trialing" && trialDaysRemaining !== null;
 
-  if (!showCountdown || trialDaysRemaining === null) {
+  if (!isTrialing) {
     return null;
   }
 
-  const dayLabel = trialDaysRemaining === 1 ? "dia" : "dias";
+  const isUrgent = trialDaysRemaining <= URGENT_THRESHOLD_DAYS;
+  const countdownMessage = buildTrialCountdownMessage(
+    trialDaysRemaining,
+    trialEndsAt,
+  );
 
   return (
-    <div className="mb-6 rounded-2xl border border-amber-500/25 bg-amber-500/10 px-4 py-3.5 sm:px-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-amber-700 dark:text-amber-300">
-            <Clock className="size-4" aria-hidden />
-          </div>
-          <p className="text-sm text-foreground">
-            {trialDaysRemaining === 0 ? (
-              <>Seu período de teste termina hoje.</>
+    <div
+      className={cn(
+        "mb-6 rounded-2xl border px-4 py-4 sm:px-5",
+        isUrgent
+          ? "border-amber-500/30 bg-amber-500/10"
+          : "border-sky-500/25 bg-sky-500/8",
+      )}
+    >
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex gap-3">
+          <div
+            className={cn(
+              "mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl",
+              isUrgent
+                ? "bg-amber-500/15 text-amber-700 dark:text-amber-300"
+                : "bg-sky-500/15 text-sky-700 dark:text-sky-300",
+            )}
+          >
+            {isUrgent ? (
+              <Clock className="size-4" aria-hidden />
             ) : (
-              <>
-                Faltam{" "}
-                <span className="font-semibold">
-                  {trialDaysRemaining} {dayLabel}
-                </span>{" "}
-                de teste gratuito.
-              </>
-            )}{" "}
-            Assine para não perder os recursos de gestão.
-          </p>
+              <Sparkles className="size-4" aria-hidden />
+            )}
+          </div>
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-foreground">
+              Você está no período de teste gratuito
+            </p>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              {countdownMessage}{" "}
+              {isUrgent
+                ? "Assine um plano para não perder os recursos de gestão quando o teste acabar."
+                : "Explore o painel com calma — quando quiser, veja os planos e continue sem interrupções."}
+            </p>
+          </div>
         </div>
         <div className="sm:shrink-0">
           <Button
             asChild
             size="sm"
             variant="outline"
-            className="w-full border-amber-500/30 bg-background/80 sm:w-auto"
+            className={cn(
+              "w-full bg-background/80 sm:w-auto",
+              isUrgent
+                ? "border-amber-500/30"
+                : "border-sky-500/25",
+            )}
           >
             <Link href={PUBLIC_ROUTES.pricing}>Ver planos</Link>
           </Button>

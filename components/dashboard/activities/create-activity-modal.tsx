@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import Link from "next/link";
-import { Calendar, Clock, ClipboardList, Eye, FileText, Loader2, Lock, MapPin, Repeat, X } from "lucide-react";
+import { Calendar, Clock, ClipboardList, Eye, FileText, Loader2, MapPin, Repeat, X } from "lucide-react";
 
 import { ActivityScheduleFields } from "@/components/dashboard/activities/activity-schedule-fields";
 import { EventFormSection } from "@/components/dashboard/activities/event-form-section";
@@ -21,8 +20,8 @@ import {
   canCreateMinistryActivity,
   canListMinistries,
 } from "@/lib/permissions";
-import { PUBLIC_ROUTES } from "@/constants/routes";
-import { useFeatureLock } from "@/lib/subscription/use-feature-lock";
+import { TrialExpiredWriteModal } from "@/components/dashboard/trial-expired-write-modal";
+import { useTrialWriteGuard } from "@/lib/subscription/use-trial-write-guard";
 import { useAuth } from "@/providers/auth-provider";
 import {
   buildRecurrencePayload,
@@ -66,7 +65,7 @@ export function CreateActivityModal({
 }: CreateActivityModalProps) {
   const titleId = useId();
   const { permissions } = useAuth();
-  const { locked } = useFeatureLock();
+  const { writesBlocked } = useTrialWriteGuard();
   const canList = canListMinistries(permissions);
   const { data: ministries } = useMinistries({ enabled: open && canList });
   const createEvent = useCreateChurchEvent();
@@ -190,45 +189,13 @@ export function CreateActivityModal({
     return null;
   }
 
-  if (locked) {
+  if (writesBlocked) {
     return (
-      <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
-        <button
-          type="button"
-          className="absolute inset-0 bg-black/45 backdrop-blur-[2px]"
-          aria-label="Fechar"
-          onClick={onClose}
-        />
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby={titleId}
-          className="relative z-10 w-full max-w-md rounded-t-2xl border border-border bg-background p-6 shadow-2xl sm:rounded-2xl"
-        >
-          <div className="flex size-11 items-center justify-center rounded-xl bg-destructive/12 text-destructive">
-            <Lock className="size-5" aria-hidden />
-          </div>
-          <h2
-            id={titleId}
-            className="mt-4 font-display text-xl font-semibold tracking-tight"
-          >
-            Período de teste encerrado
-          </h2>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-            A criação de novas atividades e escalas faz parte dos recursos de
-            gestão. Escolha um plano para continuar criando — o que você já
-            criou segue disponível e o cadastro de membros continua liberado.
-          </p>
-          <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Agora não
-            </Button>
-            <Button asChild>
-              <Link href={PUBLIC_ROUTES.pricing}>Ver planos</Link>
-            </Button>
-          </div>
-        </div>
-      </div>
+      <TrialExpiredWriteModal
+        open
+        onClose={onClose}
+        action="criar atividades e escalas"
+      />
     );
   }
 

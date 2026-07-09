@@ -124,6 +124,10 @@ interface ActivityCalendarProps {
   isLoading: boolean;
   isError: boolean;
   canCreate: boolean;
+  createBlockProps?: {
+    disabled?: boolean;
+    title?: string;
+  };
   onMonthChange: (year: number, monthIndex: number) => void;
   onCreateOnDay: (dateKey: string) => void;
 }
@@ -136,6 +140,7 @@ export function ActivityCalendar({
   isLoading,
   isError,
   canCreate,
+  createBlockProps,
   onMonthChange,
   onCreateOnDay,
 }: ActivityCalendarProps) {
@@ -384,6 +389,7 @@ export function ActivityCalendar({
                 size="sm"
                 variant="outline"
                 onClick={() => onCreateOnDay(selectedDateKey)}
+                {...createBlockProps}
               >
                 <Plus className="size-4" />
                 Nova
@@ -419,6 +425,7 @@ export function ActivityCalendar({
                         size="sm"
                         className="mt-4"
                         onClick={() => onCreateOnDay(selectedDateKey)}
+                        {...createBlockProps}
                       >
                         <Plus className="size-4" />
                         Agendar neste dia

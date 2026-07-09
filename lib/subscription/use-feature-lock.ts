@@ -4,7 +4,10 @@ import { useAuth } from "@/providers/auth-provider";
 import type { SubscriptionStatus } from "@/types/auth";
 
 export const FEATURE_LOCKED_REASON =
-  "Seu período de teste terminou. Assine um plano para criar novos ministérios, atividades e escalas. O cadastro de membros continua liberado.";
+  "Seu período de teste terminou. Você pode consultar o painel e cadastrar membros, mas alterações em ministérios, atividades, comunicados e configurações exigem um plano ativo.";
+
+export const MEMBER_ACCESS_LOCKED_REASON =
+  "Seu período de teste terminou. Você pode cadastrar e editar membros, mas liberar acesso ao sistema exige um plano ativo.";
 
 export interface FeatureLockState {
   locked: boolean;

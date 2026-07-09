@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateMinistry } from "@/lib/api/queries";
+import { TrialExpiredWriteModal } from "@/components/dashboard/trial-expired-write-modal";
+import { useTrialWriteGuard } from "@/lib/subscription/use-trial-write-guard";
 import {
   createMinistrySchema,
   type CreateMinistryFormValues,
@@ -29,6 +31,7 @@ export function CreateMinistryModal({ open, onClose }: CreateMinistryModalProps)
   const descriptionId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
   const createMinistry = useCreateMinistry();
+  const { writesBlocked } = useTrialWriteGuard();
 
   const form = useForm<CreateMinistryFormValues>({
     resolver: zodResolver(createMinistrySchema),
@@ -80,6 +83,16 @@ export function CreateMinistryModal({ open, onClose }: CreateMinistryModalProps)
 
   if (!open) {
     return null;
+  }
+
+  if (writesBlocked) {
+    return (
+      <TrialExpiredWriteModal
+        open
+        onClose={onClose}
+        action="criar ministérios"
+      />
+    );
   }
 
   const onSubmit = handleSubmit(async (values) => {

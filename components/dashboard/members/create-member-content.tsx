@@ -21,6 +21,10 @@ import { FormAlert } from "@/components/ui/form-field";
 import { AUTH_ROUTES } from "@/constants/routes";
 import { useCreateMember } from "@/lib/api/queries";
 import {
+  MEMBER_ACCESS_LOCKED_REASON,
+  useFeatureLock,
+} from "@/lib/subscription/use-feature-lock";
+import {
   emptyMemberFormValues,
   formValuesToCreatePayload,
   type MemberFormValues,
@@ -36,6 +40,7 @@ export function CreateMemberContent() {
     account: MemberAccountCredentials;
   } | null>(null);
   const createMember = useCreateMember();
+  const { locked: memberAccessLocked } = useFeatureLock();
 
   const form = useForm<MemberFormValues>({
     resolver: zodResolver(createMemberFormSchema()),
@@ -108,6 +113,10 @@ export function CreateMemberContent() {
               <form onSubmit={onSubmit} className="space-y-6" noValidate>
                 {form.formState.errors.root?.message && (
                   <FormAlert>{form.formState.errors.root.message}</FormAlert>
+                )}
+
+                {memberAccessLocked && status === "active" && (
+                  <FormAlert>{MEMBER_ACCESS_LOCKED_REASON}</FormAlert>
                 )}
 
                 <MemberForm

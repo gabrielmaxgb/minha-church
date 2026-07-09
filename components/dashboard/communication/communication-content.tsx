@@ -19,6 +19,8 @@ import {
   type AnnouncementFiltersState,
 } from "@/lib/communication/announcement-filters";
 import { canManageCommunication } from "@/lib/permissions";
+import { useTrialWriteGuard } from "@/lib/subscription/use-trial-write-guard";
+import { LockedFeatureHint } from "@/components/dashboard/locked-feature-hint";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 import type { Announcement } from "@/types/announcements";
@@ -32,6 +34,7 @@ import { ConfirmDeleteAnnouncementDialog } from "./confirm-delete-announcement-d
 export function CommunicationContent() {
   const { permissions, user } = useAuth();
   const canManage = canManageCommunication(permissions, user?.isOwner);
+  const { writesBlocked, blockProps } = useTrialWriteGuard();
 
   const [filters, setFilters] = useState<AnnouncementFiltersState>(
     DEFAULT_ANNOUNCEMENT_FILTERS,
@@ -162,20 +165,30 @@ export function CommunicationContent() {
         )}
 
         {canManage && (
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => setGuideOpen(true)}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <HelpCircle className="size-4" />
-            </Button>
-            <Button type="button" size="sm" onClick={openCompose}>
-              <Plus className="size-4" />
-              Novo comunicado
-            </Button>
+          <div className="flex flex-col items-end gap-1.5">
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setGuideOpen(true)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <HelpCircle className="size-4" />
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                onClick={openCompose}
+                {...blockProps}
+              >
+                <Plus className="size-4" />
+                Novo comunicado
+              </Button>
+            </div>
+            {writesBlocked && (
+              <LockedFeatureHint action="criar ou editar comunicados" />
+            )}
           </div>
         )}
       </div>
@@ -202,7 +215,13 @@ export function CommunicationContent() {
             </p>
           </div>
           {canManage && (
-            <Button type="button" size="sm" variant="outline" onClick={openCompose}>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={openCompose}
+              {...blockProps}
+            >
               <Plus className="size-4" />
               Criar comunicado
             </Button>
@@ -276,6 +295,7 @@ export function CommunicationContent() {
                         key={announcement.id}
                         announcement={announcement}
                         showManageActions={canManage}
+                        manageActionsBlocked={writesBlocked}
                         onEdit={canManage ? openEdit : undefined}
                         onDelete={canManage ? setToDelete : undefined}
                       />
@@ -310,6 +330,7 @@ export function CommunicationContent() {
                         key={announcement.id}
                         announcement={announcement}
                         showManageActions={canManage}
+                        manageActionsBlocked={writesBlocked}
                         onEdit={canManage ? openEdit : undefined}
                         onDelete={canManage ? setToDelete : undefined}
                       />

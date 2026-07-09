@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { canManageChurchMemberships } from "@/lib/church-memberships/constants";
 import { canManageChurchRoles } from "@/lib/permissions";
+import { useAuth } from "@/providers/auth-provider";
 import type { UserPermissions } from "@/types/auth";
 
 export type SettingsSection =
@@ -67,8 +68,15 @@ const ALL_ITEMS: SettingsNavItem[] = [
 ];
 
 export function useSettingsNav(permissions: UserPermissions | null) {
+  const { church } = useAuth();
+  const writesBlocked = Boolean(church?.featuresLocked);
+
   return useMemo(() => {
     return ALL_ITEMS.filter((item) => {
+      if (writesBlocked) {
+        return item.id === "profile";
+      }
+
       if (item.id === "profile" || item.id === "ministries") {
         return true;
       }
@@ -87,7 +95,7 @@ export function useSettingsNav(permissions: UserPermissions | null) {
 
       return false;
     });
-  }, [permissions]);
+  }, [permissions, writesBlocked]);
 }
 
 const emptyPermissions: UserPermissions = {

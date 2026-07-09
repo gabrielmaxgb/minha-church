@@ -21,6 +21,7 @@ import { ActivityRosterSection } from "@/components/dashboard/activities/activit
 import { EventHighlightNote } from "@/components/dashboard/activities/event-highlight-note";
 import { EventRosterPublicCard } from "@/components/dashboard/activities/event-roster-assignments";
 import { InactiveMinistryBanner } from "@/components/dashboard/ministries/inactive-ministry-banner";
+import { TrialExpiredWriteModal } from "@/components/dashboard/trial-expired-write-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -48,6 +49,7 @@ import {
   canManageActivity,
   canManageEventRoster,
 } from "@/lib/permissions";
+import { useTrialWriteGuard } from "@/lib/subscription/use-trial-write-guard";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 
@@ -60,6 +62,8 @@ export function ActivityDetailContent({ eventId }: ActivityDetailContentProps) {
   const { user, permissions } = useAuth();
   const { data: event, isLoading, isError, error } = useChurchEvent(eventId);
   const [editOpen, setEditOpen] = useState(false);
+  const { writesBlocked, guardWrite, paywallAction, closePaywall } =
+    useTrialWriteGuard();
 
   const canManage =
     event && permissions
@@ -139,7 +143,12 @@ export function ActivityDetailContent({ eventId }: ActivityDetailContentProps) {
               </Link>
             </Button>
             {canManage ? (
-              <Button size="sm" onClick={() => setEditOpen(true)}>
+              <Button
+                size="sm"
+                onClick={() =>
+                  guardWrite("editar atividades", () => setEditOpen(true))
+                }
+              >
                 <Pencil className="size-4" />
                 Editar
               </Button>
@@ -163,12 +172,19 @@ export function ActivityDetailContent({ eventId }: ActivityDetailContentProps) {
           <CardHeader className="pb-4">
             <div className="flex flex-wrap items-center gap-2">
               {!event.isChurchWide && event.ministryName && event.ministryId && (
-                <Link href={ministryDetailPath(event.ministryId)}>
-                  <Badge className="gap-1.5 border border-primary/25 bg-primary/10 px-2.5 py-1 text-sm font-medium text-primary hover:bg-primary/15">
+                writesBlocked ? (
+                  <Badge className="gap-1.5 border border-primary/25 bg-primary/10 px-2.5 py-1 text-sm font-medium text-primary">
                     <Layers className="size-3.5" />
                     {event.ministryName}
                   </Badge>
-                </Link>
+                ) : (
+                  <Link href={ministryDetailPath(event.ministryId)}>
+                    <Badge className="gap-1.5 border border-primary/25 bg-primary/10 px-2.5 py-1 text-sm font-medium text-primary hover:bg-primary/15">
+                      <Layers className="size-3.5" />
+                      {event.ministryName}
+                    </Badge>
+                  </Link>
+                )
               )}
               {event.isChurchWide && (
                 <Badge className="gap-1.5">
@@ -288,13 +304,16 @@ export function ActivityDetailContent({ eventId }: ActivityDetailContentProps) {
         ) : null}
 
         {canManageRoster ? (
-          <ActivityRosterSection event={event} />
+          <ActivityRosterSection event={event} readOnly={writesBlocked} />
         ) : event.usesRoster ? (
           <EventRosterPublicCard event={event} />
         ) : null}
 
         {showAvailabilityPanel ? (
-          <ActivityAvailabilitySection event={event} />
+          <ActivityAvailabilitySection
+            event={event}
+            interactionsDisabled={writesBlocked}
+          />
         ) : null}
         </div>
       </div>
@@ -305,6 +324,12 @@ export function ActivityDetailContent({ eventId }: ActivityDetailContentProps) {
         initialMode="edit"
         onClose={() => setEditOpen(false)}
         onDeleted={() => router.push(AUTH_ROUTES.activities)}
+      />
+
+      <TrialExpiredWriteModal
+        open={paywallAction !== null}
+        onClose={closePaywall}
+        action={paywallAction ?? undefined}
       />
     </>
   );

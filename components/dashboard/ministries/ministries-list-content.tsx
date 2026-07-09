@@ -31,9 +31,11 @@ export function MinistriesListContent() {
       <div className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-muted-foreground">
-            {canManage
-              ? "Gerencie todas as áreas de serviço — cargos, permissões e eventos."
-              : "Ministérios em que você serve na igreja."}
+            {locked
+              ? "Visualize os ministérios cadastrados. Assine um plano para acessar configurações e gerenciar equipes."
+              : canManage
+                ? "Gerencie todas as áreas de serviço — cargos, permissões e eventos."
+                : "Ministérios em que você serve na igreja."}
           </p>
 
           {canManage && (
@@ -92,29 +94,50 @@ export function MinistriesListContent() {
 
         {!isLoading && !isError && sortedMinistries.length > 0 && (
           <div className="overflow-hidden rounded-xl border border-border bg-background">
-            {sortedMinistries.map((ministry) => (
-              <Link
-                key={ministry.id}
-                href={ministryDetailPath(ministry.id)}
-                className="flex items-center gap-3 border-b border-border px-4 py-3 transition-colors last:border-b-0 hover:bg-muted/40"
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="truncate font-medium">{ministry.name}</span>
-                    {!ministry.isActive && (
-                      <Badge variant="outline" className="text-[11px]">
-                        Inativo
-                      </Badge>
-                    )}
+            {sortedMinistries.map((ministry) => {
+              const rowContent = (
+                <>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="truncate font-medium">{ministry.name}</span>
+                      {!ministry.isActive && (
+                        <Badge variant="outline" className="text-[11px]">
+                          Inativo
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="mt-0.5 truncate text-sm text-muted-foreground">
+                      {ministry.description ||
+                        `${ministry.roles.length} ${ministry.roles.length === 1 ? "cargo" : "cargos"}`}
+                    </p>
                   </div>
-                  <p className="mt-0.5 truncate text-sm text-muted-foreground">
-                    {ministry.description ||
-                      `${ministry.roles.length} ${ministry.roles.length === 1 ? "cargo" : "cargos"}`}
-                  </p>
-                </div>
-                <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-              </Link>
-            ))}
+                  {!locked && (
+                    <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                  )}
+                </>
+              );
+
+              if (locked) {
+                return (
+                  <div
+                    key={ministry.id}
+                    className="flex items-center gap-3 border-b border-border px-4 py-3 last:border-b-0"
+                  >
+                    {rowContent}
+                  </div>
+                );
+              }
+
+              return (
+                <Link
+                  key={ministry.id}
+                  href={ministryDetailPath(ministry.id)}
+                  className="flex items-center gap-3 border-b border-border px-4 py-3 transition-colors last:border-b-0 hover:bg-muted/40"
+                >
+                  {rowContent}
+                </Link>
+              );
+            })}
           </div>
         )}
       </div>
