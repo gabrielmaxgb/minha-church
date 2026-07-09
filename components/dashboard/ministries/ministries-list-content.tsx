@@ -5,12 +5,14 @@ import Link from "next/link";
 import { ChevronRight, Plus } from "lucide-react";
 
 import { CreateMinistryModal } from "@/components/dashboard/ministries/create-ministry-modal";
+import { LockedFeatureHint } from "@/components/dashboard/locked-feature-hint";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ministryDetailPath } from "@/constants/routes";
 import { useMinistries } from "@/lib/api/queries";
 import { canManageMinistries } from "@/lib/permissions";
+import { useFeatureLock } from "@/lib/subscription/use-feature-lock";
 import { useAuth } from "@/providers/auth-provider";
 
 export function MinistriesListContent() {
@@ -18,6 +20,7 @@ export function MinistriesListContent() {
   const { data: ministries, isLoading, isError } = useMinistries();
   const [modalOpen, setModalOpen] = useState(false);
   const canManage = permissions ? canManageMinistries(permissions) : false;
+  const { locked, reason } = useFeatureLock();
 
   const sortedMinistries = [...(ministries ?? [])].sort((a, b) =>
     a.name.localeCompare(b.name, "pt-BR"),
@@ -34,10 +37,18 @@ export function MinistriesListContent() {
           </p>
 
           {canManage && (
-            <Button size="sm" onClick={() => setModalOpen(true)}>
-              <Plus className="size-4" />
-              Novo ministério
-            </Button>
+            <div className="flex flex-col items-start gap-1.5 sm:items-end">
+              <Button
+                size="sm"
+                onClick={() => setModalOpen(true)}
+                disabled={locked}
+                title={reason ?? undefined}
+              >
+                <Plus className="size-4" />
+                Novo ministério
+              </Button>
+              {locked && <LockedFeatureHint action="criar ministérios" />}
+            </div>
           )}
         </div>
 
@@ -63,10 +74,18 @@ export function MinistriesListContent() {
                 : "Você ainda não faz parte de nenhum ministério."}
             </p>
             {canManage && (
-              <Button className="mt-4" size="sm" onClick={() => setModalOpen(true)}>
-                <Plus className="size-4" />
-                Criar primeiro ministério
-              </Button>
+              <div className="mt-4 flex flex-col items-center gap-2">
+                <Button
+                  size="sm"
+                  onClick={() => setModalOpen(true)}
+                  disabled={locked}
+                  title={reason ?? undefined}
+                >
+                  <Plus className="size-4" />
+                  Criar primeiro ministério
+                </Button>
+                {locked && <LockedFeatureHint action="criar ministérios" />}
+              </div>
             )}
           </div>
         )}

@@ -22,11 +22,24 @@ export interface UserPermissions {
   memberships: { manage: boolean };
 }
 
+export type SubscriptionStatus =
+  | "trialing"
+  | "active"
+  | "past_due"
+  | "canceled";
+
 export interface Church {
   id: string;
   name: string;
   slug: string;
   memberCount?: number;
+  subscriptionStatus?: SubscriptionStatus;
+  /** ISO date em que o trial termina (null quando não há trial). */
+  trialEndsAt?: string | null;
+  /** Dias restantes do trial (null fora de trial). */
+  trialDaysRemaining?: number | null;
+  /** true quando o trial expirou e recursos de gestão estão bloqueados. */
+  featuresLocked?: boolean;
 }
 
 export interface User {
