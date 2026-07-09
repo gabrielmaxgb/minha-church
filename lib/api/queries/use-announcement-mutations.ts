@@ -6,6 +6,7 @@ import {
   announcementsKeys,
   createAnnouncement,
   deleteAnnouncement,
+  markAllAnnouncementsRead,
   markAnnouncementRead,
   updateAnnouncement,
 } from "@/lib/api/queries/announcements.keys";
@@ -68,6 +69,24 @@ export function useDeleteAnnouncement() {
       return deleteAnnouncement(churchId, announcementId);
     },
     onSuccess: invalidate,
+  });
+}
+
+export function useMarkAllAnnouncementsRead() {
+  const { churchId } = useTenant();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => {
+      if (!churchId) {
+        throw new Error("Igreja não selecionada.");
+      }
+
+      return markAllAnnouncementsRead(churchId);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: announcementsKeys._def });
+    },
   });
 }
 

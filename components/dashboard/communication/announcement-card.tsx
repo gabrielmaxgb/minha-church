@@ -1,6 +1,5 @@
 "use client";
 
-import { useCallback } from "react";
 import {
   AlertTriangle,
   Clock,
@@ -11,7 +10,6 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { useMarkWhenVisible } from "@/lib/communication/use-mark-when-visible";
 import { cn } from "@/lib/utils";
 import { formatDateTime } from "@/lib/utils";
 import type {
@@ -60,7 +58,6 @@ interface AnnouncementCardProps {
   showManageActions?: boolean;
   onEdit?: (announcement: Announcement) => void;
   onDelete?: (announcement: Announcement) => void;
-  onVisible?: (announcement: Announcement) => void;
 }
 
 export function AnnouncementCard({
@@ -68,11 +65,9 @@ export function AnnouncementCard({
   showManageActions = false,
   onEdit,
   onDelete,
-  onVisible,
 }: AnnouncementCardProps) {
   const priority = PRIORITY_META[announcement.priority];
   const status = STATUS_META[announcement.status];
-  const unread = announcement.isRead === false;
 
   const audienceLabel =
     announcement.audienceType === "church_wide"
@@ -80,23 +75,8 @@ export function AnnouncementCard({
       : announcement.ministries.map((ministry) => ministry.name).join(", ") ||
         "Ministérios";
 
-  const tryMarkRead = useCallback(() => {
-    if (unread) {
-      onVisible?.(announcement);
-    }
-  }, [announcement, onVisible, unread]);
-
-  const visibilityRef = useMarkWhenVisible(unread, tryMarkRead);
-
-  function handleReveal() {
-    tryMarkRead();
-  }
-
   return (
     <article
-      ref={visibilityRef}
-      onMouseEnter={handleReveal}
-      onClick={handleReveal}
       className={cn(
         "relative overflow-hidden rounded-2xl border bg-card p-4 shadow-soft transition-colors sm:p-5",
         announcement.pinned
@@ -104,23 +84,13 @@ export function AnnouncementCard({
           : announcement.priority === "urgent"
             ? "border-destructive/25"
             : "border-border/70",
-        unread && !announcement.pinned && "ring-1 ring-primary/20",
-        unread && announcement.pinned && "ring-1 ring-primary/30",
       )}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            {unread && (
-              <span
-                className="size-2 shrink-0 rounded-full bg-primary"
-                aria-label="Não lido"
-              />
-            )}
-            <h3 className="font-display text-base font-semibold leading-tight">
-              {announcement.title}
-            </h3>
-          </div>
+          <h3 className="font-display text-base font-semibold leading-tight">
+            {announcement.title}
+          </h3>
 
           <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
             <span className="text-[11px] font-medium text-muted-foreground">
@@ -184,10 +154,7 @@ export function AnnouncementCard({
                   size="sm"
                   variant="ghost"
                   className="text-muted-foreground hover:text-foreground"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onEdit(announcement);
-                  }}
+                  onClick={() => onEdit(announcement)}
                   aria-label={`Editar ${announcement.title}`}
                 >
                   <Pencil className="size-4" />
@@ -199,10 +166,7 @@ export function AnnouncementCard({
                   size="sm"
                   variant="ghost"
                   className="text-muted-foreground hover:text-destructive"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onDelete(announcement);
-                  }}
+                  onClick={() => onDelete(announcement)}
                   aria-label={`Excluir ${announcement.title}`}
                 >
                   <Trash2 className="size-4" />

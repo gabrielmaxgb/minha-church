@@ -87,6 +87,13 @@ async function markAnnouncementRead(
   );
 }
 
+async function markAllAnnouncementsRead(churchId: string): Promise<void> {
+  await apiClient<void>(buildTenantPath(churchId, "/announcements/read-all"), {
+    churchId,
+    method: "POST",
+  });
+}
+
 export const announcementsKeys = createQueryKeys("announcements", {
   feed: (churchId: string) => ({
     queryKey: [churchId, "feed"],
@@ -105,6 +112,7 @@ export const announcementsKeys = createQueryKeys("announcements", {
 export {
   createAnnouncement,
   deleteAnnouncement,
+  markAllAnnouncementsRead,
   markAnnouncementRead,
   updateAnnouncement,
 };

@@ -58,6 +58,7 @@ export {
 export {
   useCreateAnnouncement,
   useDeleteAnnouncement,
+  useMarkAllAnnouncementsRead,
   useMarkAnnouncementRead,
   useUpdateAnnouncement,
 } from "@/lib/api/queries/use-announcement-mutations";

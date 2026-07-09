@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { HelpCircle, Inbox, Megaphone, Pin, Plus, SearchX } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import {
   useAnnouncements,
   useDeleteAnnouncement,
   useManagedAnnouncements,
-  useMarkAnnouncementRead,
+  useMarkAllAnnouncementsRead,
   useMyMember,
 } from "@/lib/api/queries";
 import {
@@ -45,13 +45,8 @@ export function CommunicationContent() {
   const manageQuery = useManagedAnnouncements({ enabled: canManage });
   const activeQuery = canManage ? manageQuery : feedQuery;
   const { data: myMember } = useMyMember({ enabled: !canManage });
-  const markRead = useMarkAnnouncementRead();
+  const markAllRead = useMarkAllAnnouncementsRead();
   const deleteMutation = useDeleteAnnouncement();
-  const markedIdsRef = useRef(new Set<string>());
-  const [unreadSessionIds, setUnreadSessionIds] = useState<Set<string> | null>(
-    null,
-  );
-  const prevReadFilterRef = useRef(filters.read);
 
   const announcements = activeQuery.data ?? [];
 
@@ -82,42 +77,17 @@ export function CommunicationContent() {
   }, [filters.audience, canManage, viewerMinistryIds]);
 
   useEffect(() => {
-    if (canManage || filters.read !== "unread") {
-      setUnreadSessionIds(null);
-      prevReadFilterRef.current = filters.read;
-      return;
-    }
-
-    const enteredUnread = prevReadFilterRef.current !== "unread";
-    prevReadFilterRef.current = filters.read;
-
-    const unreadIds = announcements
-      .filter((announcement) => announcement.isRead === false)
-      .map((announcement) => announcement.id);
-
-    setUnreadSessionIds((current) => {
-      if (enteredUnread || current === null) {
-        return new Set(unreadIds);
-      }
-
-      if (current.size === 0 && unreadIds.length > 0) {
-        return new Set(unreadIds);
-      }
-
-      return current;
-    });
-  }, [announcements, filters.read, canManage]);
-
-  const activeUnreadSessionIds =
-    !canManage && filters.read === "unread" ? unreadSessionIds : null;
+    markAllRead.mutate();
+    // Marca tudo como lido ao abrir a página de comunicados.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const filteredAnnouncements = useMemo(
     () =>
       filterAnnouncements(announcements, filters, {
         canManage,
-        unreadSessionIds: activeUnreadSessionIds,
       }),
-    [announcements, filters, canManage, activeUnreadSessionIds],
+    [announcements, filters, canManage],
   );
 
   const activeFilterCount = countActiveAnnouncementFilters(filters, {
@@ -164,21 +134,6 @@ export function CommunicationContent() {
   function openEdit(announcement: Announcement) {
     setEditing(announcement);
     setComposerOpen(true);
-  }
-
-  function handleVisible(announcement: Announcement) {
-    if (canManage) {
-      return;
-    }
-
-    if (
-      announcement.isRead === false &&
-      !markRead.isPending &&
-      !markedIdsRef.current.has(announcement.id)
-    ) {
-      markedIdsRef.current.add(announcement.id);
-      markRead.mutate(announcement.id);
-    }
   }
 
   async function handleConfirmDelete() {
@@ -295,12 +250,6 @@ export function CommunicationContent() {
             </div>
           ) : (
             <div className="space-y-6">
-              {markRead.isPending && (
-                <span className="sr-only" role="status">
-                  Marcando como lido
-                </span>
-              )}
-
               {pinnedAnnouncements.length > 0 ? (
                 <section
                   aria-labelledby="pinned-announcements-heading"
@@ -327,7 +276,6 @@ export function CommunicationContent() {
                         key={announcement.id}
                         announcement={announcement}
                         showManageActions={canManage}
-                        onVisible={handleVisible}
                         onEdit={canManage ? openEdit : undefined}
                         onDelete={canManage ? setToDelete : undefined}
                       />
@@ -362,7 +310,6 @@ export function CommunicationContent() {
                         key={announcement.id}
                         announcement={announcement}
                         showManageActions={canManage}
-                        onVisible={handleVisible}
                         onEdit={canManage ? openEdit : undefined}
                         onDelete={canManage ? setToDelete : undefined}
                       />

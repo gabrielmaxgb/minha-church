@@ -87,8 +87,6 @@ export function filterAnnouncements(
   filters: AnnouncementFiltersState,
   options?: {
     canManage?: boolean;
-    /** Congela os não lidos ao ativar o filtro até sair dele. */
-    unreadSessionIds?: ReadonlySet<string> | null;
   },
 ) {
   const query = normalizeSearch(filters.search);
@@ -103,11 +101,7 @@ export function filterAnnouncements(
     }
 
     if (!options?.canManage && filters.read === "unread") {
-      if (options?.unreadSessionIds) {
-        if (!options.unreadSessionIds.has(announcement.id)) {
-          return false;
-        }
-      } else if (announcement.isRead !== false) {
+      if (announcement.isRead !== false) {
         return false;
       }
     }
