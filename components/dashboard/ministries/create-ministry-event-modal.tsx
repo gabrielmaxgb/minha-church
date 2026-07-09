@@ -26,6 +26,7 @@ interface CreateMinistryEventModalProps {
   ministryName: string;
   open: boolean;
   onClose: () => void;
+  defaultStartsAtValue?: string;
 }
 
 function defaultStartsAt(): string {
@@ -47,17 +48,18 @@ export function CreateMinistryEventModal({
   ministryName,
   open,
   onClose,
+  defaultStartsAtValue,
 }: CreateMinistryEventModalProps) {
   const titleId = useId();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [highlightNote, setHighlightNote] = useState("");
   const [location, setLocation] = useState("");
-  const [startsAt, setStartsAt] = useState(defaultStartsAt);
+  const [startsAt, setStartsAt] = useState(defaultStartsAtValue ?? defaultStartsAt);
   const [endsAt, setEndsAt] = useState("");
   const [visibleToChurch, setVisibleToChurch] = useState(true);
   const [recurrence, setRecurrence] = useState<EventRecurrenceFormState>(
-    defaultRecurrenceFormState(defaultStartsAt()),
+    defaultRecurrenceFormState(defaultStartsAtValue ?? defaultStartsAt()),
   );
   const [error, setError] = useState<string | null>(null);
   const createEvent = useCreateMinistryEvent(ministryId);
@@ -68,13 +70,19 @@ export function CreateMinistryEventModal({
       setDescription("");
       setHighlightNote("");
       setLocation("");
-      setStartsAt(defaultStartsAt());
+      setStartsAt(defaultStartsAtValue ?? defaultStartsAt());
       setEndsAt("");
       setVisibleToChurch(true);
-      setRecurrence(defaultRecurrenceFormState(defaultStartsAt()));
+      setRecurrence(
+        defaultRecurrenceFormState(defaultStartsAtValue ?? defaultStartsAt()),
+      );
       setError(null);
       return;
     }
+
+    const nextStartsAt = defaultStartsAtValue ?? defaultStartsAt();
+    setStartsAt(nextStartsAt);
+    setRecurrence(defaultRecurrenceFormState(nextStartsAt));
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -82,7 +90,7 @@ export function CreateMinistryEventModal({
     return () => {
       document.body.style.overflow = previousOverflow;
     };
-  }, [open]);
+  }, [open, defaultStartsAtValue]);
 
   useEffect(() => {
     setRecurrence((current) => syncRecurrenceDaysWithStart(current, startsAt));

@@ -1,6 +1,7 @@
 export type MinistrySettingsSection =
   | "dashboard"
   | "availability"
+  | "events"
   | "members"
   | "service-functions"
   | "overview"
@@ -22,6 +23,11 @@ export const MINISTRY_SETTINGS_SECTIONS: Array<{
     id: "availability",
     label: "Escalas",
     description: "Disponibilidade e funções na equipe",
+  },
+  {
+    id: "events",
+    label: "Eventos e atividades",
+    description: "Cultos, ensaios e agendas",
   },
   {
     id: "members",

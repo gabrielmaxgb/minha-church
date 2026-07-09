@@ -25,7 +25,7 @@ import {
   usePendingAccessUsers,
 } from "@/lib/api/queries";
 import { canManageChurchMemberships } from "@/lib/church-memberships/constants";
-import { collapseRecurringEventsForList } from "@/lib/events/list";
+import { collapseRecurringEventsForList, isUpcomingInCurrentMonth } from "@/lib/events/list";
 import { formatRelativeEventDay } from "@/lib/dashboard/date-utils";
 import {
   canAccessActivities,
@@ -77,7 +77,16 @@ export function DashboardHomeContent() {
     [events],
   );
 
+  const upcomingEventsThisMonth = useMemo(
+    () =>
+      upcomingEvents.filter((event) => isUpcomingInCurrentMonth(event.startsAt)),
+    [upcomingEvents],
+  );
+
   const nextEvent = canAccessActivitiesData ? (upcomingEvents[0] ?? null) : null;
+  const nextEventThisMonth = canAccessActivitiesData
+    ? (upcomingEventsThisMonth[0] ?? null)
+    : null;
   const activeMinistries =
     ministries?.filter((ministry) => ministry.isActive).length ?? 0;
 
@@ -93,8 +102,8 @@ export function DashboardHomeContent() {
       ? Math.round((summary.activeMembers / summary.memberCount) * 100)
       : 0;
 
-  const nextEventHint = nextEvent
-    ? formatRelativeEventDay(nextEvent.startsAt) ?? nextEvent.name
+  const nextEventHint = nextEventThisMonth
+    ? formatRelativeEventDay(nextEventThisMonth.startsAt) ?? nextEventThisMonth.name
     : "Nenhuma agendada";
 
   const knownMinistryNames = useMemo(() => {
@@ -147,8 +156,8 @@ export function DashboardHomeContent() {
     if (canAccessActivitiesData) {
       cards.push({
         key: "upcoming-events",
-        label: "Próximas atividades",
-        value: String(summary?.upcomingEvents ?? upcomingEvents.length),
+        label: "Próximas atividades do mês",
+        value: String(upcomingEventsThisMonth.length),
         hint: nextEventHint,
         href: AUTH_ROUTES.activities,
         icon: CalendarDays,
@@ -181,8 +190,7 @@ export function DashboardHomeContent() {
     nextEventHint,
     summary?.activeMembers,
     summary?.memberCount,
-    summary?.upcomingEvents,
-    upcomingEvents.length,
+    upcomingEventsThisMonth.length,
     visitorCount,
   ]);
 

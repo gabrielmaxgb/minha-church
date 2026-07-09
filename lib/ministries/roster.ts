@@ -10,6 +10,21 @@ export type RosterAvailabilityPeriod =
 /** Função padrão quando a atividade da igreja não define vagas por função. */
 export const CHURCH_WIDE_DEFAULT_ROSTER_ROLE = "voluntario";
 
+/** Função obrigatória no catálogo de cada ministério. */
+export const DEFAULT_MINISTRY_SERVICE_FUNCTION = CHURCH_WIDE_DEFAULT_ROSTER_ROLE;
+
+export function isProtectedMinistryServiceFunction(label: string): boolean {
+  return normalizeRosterRoleValue(label) === DEFAULT_MINISTRY_SERVICE_FUNCTION;
+}
+
+export function ensureMinistryServiceFunctionLabels(labels: string[]): string[] {
+  const normalized = normalizeRosterRoleList(labels).filter(
+    (label) => label !== DEFAULT_MINISTRY_SERVICE_FUNCTION,
+  );
+
+  return [DEFAULT_MINISTRY_SERVICE_FUNCTION, ...normalized];
+}
+
 /** Presets comuns para funções na escala (louvor, mídia, recepção, etc.). */
 export const ROSTER_ROLE_PRESETS = [
   { id: CHURCH_WIDE_DEFAULT_ROSTER_ROLE, label: "Voluntário" },
@@ -164,6 +179,10 @@ export function needsRosterFunctions(values: string[]): boolean {
 export function removeRosterRole(values: string[], value: string): string[] {
   const target = normalizeRosterRoleValue(value);
 
+  if (isProtectedMinistryServiceFunction(target)) {
+    return values;
+  }
+
   return values.filter(
     (item) => normalizeRosterRoleValue(item) !== target,
   );
@@ -274,8 +293,17 @@ export function addRosterSlotPlanItem(
 export function removeRosterSlotPlanItem(
   plan: RosterSlotPlanItem[],
   label: string,
+  options?: { lockedLabels?: string[] },
 ): RosterSlotPlanItem[] {
   const target = normalizeRosterRoleValue(label);
+
+  if (
+    options?.lockedLabels?.some(
+      (locked) => normalizeRosterRoleValue(locked) === target,
+    )
+  ) {
+    return plan;
+  }
 
   return plan.filter((item) => normalizeRosterRoleValue(item.label) !== target);
 }

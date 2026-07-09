@@ -10,6 +10,7 @@ import {
   CHURCH_WIDE_DEFAULT_ROSTER_ROLE,
   formatRosterRole,
   isRosterRoleSelected,
+  normalizeRosterRoleValue,
   normalizeRosterSlotPlan,
   removeRosterSlotPlanItem,
   ROSTER_ROLE_PRESETS,
@@ -26,39 +27,60 @@ interface EventRosterSlotsEditorProps {
   compact?: boolean;
   /** Atividade da igreja: funções opcionais; equipe só marca disponibilidade. */
   optional?: boolean;
+  /** Funções que não podem ser removidas (ex.: Voluntário no ministério). */
+  lockedLabels?: string[];
 }
 
 function RosterSlotTile({
   item,
   value,
   disabled,
+  lockedLabels,
   onChange,
 }: {
   item: RosterSlotPlanItem;
   value: RosterSlotPlanItem[];
   disabled: boolean;
+  lockedLabels?: string[];
   onChange: (next: RosterSlotPlanItem[]) => void;
 }) {
   const label = formatRosterRole(item.label);
+  const locked = lockedLabels?.some(
+    (lockedLabel) =>
+      normalizeRosterRoleValue(lockedLabel) ===
+      normalizeRosterRoleValue(item.label),
+  );
 
   return (
     <li className="group relative rounded-lg border border-border/70 bg-background px-2.5 py-2 shadow-sm transition-colors hover:border-border">
       <p
-        className="min-w-0 pr-5 text-sm font-medium leading-tight text-foreground"
+        className={cn(
+          "min-w-0 text-sm font-medium leading-tight text-foreground",
+          !locked && "pr-5",
+        )}
         title={label}
       >
         {label}
+        {locked ? (
+          <span className="ml-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+            Padrão
+          </span>
+        ) : null}
       </p>
 
-      <button
-        type="button"
-        disabled={disabled}
-        aria-label={`Remover ${label}`}
-        onClick={() => onChange(removeRosterSlotPlanItem(value, item.label))}
-        className="absolute right-1.5 top-1.5 rounded-md p-0.5 text-muted-foreground/70 transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
-      >
-        <X className="size-3.5" aria-hidden />
-      </button>
+      {!locked ? (
+        <button
+          type="button"
+          disabled={disabled}
+          aria-label={`Remover ${label}`}
+          onClick={() =>
+            onChange(removeRosterSlotPlanItem(value, item.label, { lockedLabels }))
+          }
+          className="absolute right-1.5 top-1.5 rounded-md p-0.5 text-muted-foreground/70 transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+        >
+          <X className="size-3.5" aria-hidden />
+        </button>
+      ) : null}
     </li>
   );
 }
@@ -71,6 +93,7 @@ export function EventRosterSlotsEditor({
   embedded = false,
   compact = false,
   optional = false,
+  lockedLabels,
 }: EventRosterSlotsEditorProps) {
   const [customValue, setCustomValue] = useState("");
   const dense = compact || embedded;
@@ -79,6 +102,9 @@ export function EventRosterSlotsEditor({
   const suggestions = ROSTER_ROLE_PRESETS.filter(
     (preset) =>
       (!optional || preset.id !== CHURCH_WIDE_DEFAULT_ROSTER_ROLE) &&
+      !lockedLabels?.some(
+        (locked) => normalizeRosterRoleValue(locked) === preset.id,
+      ) &&
       !isRosterRoleSelected(selected.map((item) => item.label), preset.id),
   );
 
@@ -155,6 +181,7 @@ export function EventRosterSlotsEditor({
               item={item}
               value={value}
               disabled={disabled}
+              lockedLabels={lockedLabels}
               onChange={onChange}
             />
           ))}

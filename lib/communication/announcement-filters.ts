@@ -34,7 +34,7 @@ function normalizeSearch(value: string) {
 
 export function countActiveAnnouncementFilters(
   filters: AnnouncementFiltersState,
-  options?: { manageMode?: boolean },
+  options?: { canManage?: boolean },
 ) {
   let count = 0;
 
@@ -54,7 +54,7 @@ export function countActiveAnnouncementFilters(
     count += 1;
   }
 
-  if (options?.manageMode && filters.status !== "all") {
+  if (options?.canManage && filters.status !== "all") {
     count += 1;
   }
 
@@ -86,7 +86,7 @@ export function filterAnnouncements(
   announcements: Announcement[],
   filters: AnnouncementFiltersState,
   options?: {
-    manageMode?: boolean;
+    canManage?: boolean;
     /** Congela os não lidos ao ativar o filtro até sair dele. */
     unreadSessionIds?: ReadonlySet<string> | null;
   },
@@ -102,7 +102,7 @@ export function filterAnnouncements(
       }
     }
 
-    if (!options?.manageMode && filters.read === "unread") {
+    if (!options?.canManage && filters.read === "unread") {
       if (options?.unreadSessionIds) {
         if (!options.unreadSessionIds.has(announcement.id)) {
           return false;
@@ -112,7 +112,7 @@ export function filterAnnouncements(
       }
     }
 
-    if (!options?.manageMode && filters.read === "read") {
+    if (!options?.canManage && filters.read === "read") {
       if (announcement.isRead === false) {
         return false;
       }
@@ -135,7 +135,7 @@ export function filterAnnouncements(
       }
     }
 
-    if (options?.manageMode && filters.status !== "all") {
+    if (options?.canManage && filters.status !== "all") {
       if (announcement.status !== filters.status) {
         return false;
       }

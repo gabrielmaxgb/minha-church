@@ -68,9 +68,11 @@ export function RosterCollectionModal({
     const anchor = new Date(event.startsAt);
     setYear(anchor.getFullYear());
     setMonthIndex(anchor.getMonth());
-    setSelectedIds(new Set());
     setError(null);
-  }, [open, event?.id, event?.startsAt]);
+
+    const isSingleOccurrence = !event.recurrenceSeriesId || !event.recurrence;
+    setSelectedIds(isSingleOccurrence ? new Set([event.id]) : new Set());
+  }, [open, event?.id, event?.startsAt, event?.recurrence, event?.recurrenceSeriesId]);
 
   const selectableOccurrences = useMemo(() => {
     const items: EventSeriesOccurrence[] =
@@ -220,9 +222,11 @@ export function RosterCollectionModal({
       footer={
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-muted-foreground">
-            {selectedOccurrences.length > 0
-              ? `${selectedOccurrences.length} data(s) selecionada(s)`
-              : "Nenhuma data selecionada"}
+            {isRecurring
+              ? selectedOccurrences.length > 0
+                ? `${selectedOccurrences.length} data(s) selecionada(s)`
+                : "Nenhuma data selecionada"
+              : "Coleta será aberta para a data abaixo"}
           </p>
           <div className="flex flex-wrap justify-end gap-2">
             <Button type="button" variant="outline" disabled={busy} onClick={onClose}>
@@ -419,22 +423,16 @@ export function RosterCollectionModal({
           ) : null}
         </>
       ) : (
-        <div className="rounded-xl border border-border/70 bg-muted/10 px-4 py-6 text-sm text-muted-foreground">
-          Esta atividade não se repete. Abra a coleta nesta data (
-          <span className="font-medium text-foreground capitalize">
+        <div className="rounded-2xl border border-border/70 bg-muted/10 px-5 py-8 text-center">
+          <p className="text-sm text-muted-foreground">
+            Ao confirmar, a coleta de disponibilidade será aberta para:
+          </p>
+          <p className="mt-3 font-display text-2xl font-semibold capitalize tracking-tight text-foreground">
             {formatOccurrenceShort(event.startsAt)}
-          </span>
-          ).
-          <div className="mt-4">
-            <Button
-              type="button"
-              size="sm"
-              onClick={() => setSelectedIds(new Set([event.id]))}
-              disabled={busy}
-            >
-              Selecionar esta data
-            </Button>
-          </div>
+          </p>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Esta atividade não se repete.
+          </p>
         </div>
       )}
     </LargeModalShell>

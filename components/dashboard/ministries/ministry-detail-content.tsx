@@ -15,6 +15,7 @@ import {
   MinistryDashboardSection,
   MinistryMembersSection,
 } from "@/components/dashboard/ministries/ministry-dashboard-section";
+import { MinistryEventsSection } from "@/components/dashboard/ministries/ministry-events-section";
 import { MinistryOverviewSection } from "@/components/dashboard/ministries/ministry-overview-section";
 import { MinistryRolePermissionsSection } from "@/components/dashboard/ministries/ministry-role-permissions-section";
 import { MinistryServiceFunctionsSection } from "@/components/dashboard/ministries/ministry-service-functions-section";
@@ -281,6 +282,9 @@ export function MinistryDetailContent({ ministryId }: MinistryDetailContentProps
     if (requested === "availability") {
       setSection("availability");
     }
+    if (requested === "events") {
+      setSection("events");
+    }
     if (requested === "service-functions") {
       setSection("service-functions");
     }
@@ -369,6 +373,7 @@ export function MinistryDetailContent({ ministryId }: MinistryDetailContentProps
               ministry={ministry}
               onGoToMembers={() => setSection("members")}
               onGoToAvailability={() => setSection("availability")}
+              onGoToEvents={() => setSection("events")}
             />
           )}
           {section === "availability" && (
@@ -377,6 +382,7 @@ export function MinistryDetailContent({ ministryId }: MinistryDetailContentProps
               canManageRosters={canManageRosters}
             />
           )}
+          {section === "events" && <MinistryEventsSection ministry={ministry} />}
           {section === "members" && (
             <MinistryMembersSection ministry={ministry} canManage={canManageTeam} />
           )}

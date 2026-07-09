@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Loader2, Trash2 } from "lucide-react";
 
 import { MinistryRoleToggles } from "@/components/dashboard/ministries/ministry-role-toggles";
+import { MinistryTagSection } from "@/components/dashboard/ministries/ministry-member-tags";
 import { Button } from "@/components/ui/button";
 import { FormAlert } from "@/components/ui/form-field";
 import { Label } from "@/components/ui/label";
@@ -46,11 +47,6 @@ function MinistryRoleRow({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm font-medium">{link.ministryName}</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            {selectedRoleIds.length === 0
-              ? "Nenhum cargo atribuído"
-              : `${selectedRoleIds.length} cargo${selectedRoleIds.length === 1 ? "" : "s"} atribuído${selectedRoleIds.length === 1 ? "" : "s"}`}
-          </p>
         </div>
 
         <Button
@@ -70,19 +66,24 @@ function MinistryRoleRow({
         </Button>
       </div>
 
-      <MinistryRoleToggles
-        roles={roles}
-        selectedRoleIds={selectedRoleIds}
-        disabled={disabled}
-        isUpdating={isUpdating}
-        onToggle={(roleId, checked) => {
-          const next = checked
-            ? [...selectedRoleIds, roleId]
-            : selectedRoleIds.filter((id) => id !== roleId);
+      <MinistryTagSection
+        title="Cargos"
+        titleClassName="text-[10px] font-semibold uppercase tracking-[0.12em] text-sky-700/85 dark:text-sky-400/90"
+      >
+        <MinistryRoleToggles
+          roles={roles}
+          selectedRoleIds={selectedRoleIds}
+          disabled={disabled}
+          isUpdating={isUpdating}
+          onToggle={(roleId, checked) => {
+            const next = checked
+              ? [...selectedRoleIds, roleId]
+              : selectedRoleIds.filter((id) => id !== roleId);
 
-          onRolesChange(next);
-        }}
-      />
+            onRolesChange(next);
+          }}
+        />
+      </MinistryTagSection>
     </div>
   );
 }

@@ -4,7 +4,11 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 
 import { SettingsSaveBar } from "@/components/dashboard/settings/settings-shared";
-import { Badge } from "@/components/ui/badge";
+import {
+  MinistryCargoBadge,
+  MinistryFunctionBadge,
+  MinistryTagSection,
+} from "@/components/dashboard/ministries/ministry-member-tags";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ministryDetailPath } from "@/constants/routes";
 import {
@@ -13,7 +17,9 @@ import {
 } from "@/lib/api/queries";
 import {
   addRosterRole,
+  ensureMinistryServiceFunctionLabels,
   formatRosterRole,
+  isProtectedMinistryServiceFunction,
   isRosterRoleSelected,
   normalizeRosterRoleList,
   removeRosterRole,
@@ -34,15 +40,21 @@ function MemberMinistryFunctionsCard({
 }: MemberMinistryFunctionsCardProps) {
   const { data: ministry, isLoading } = useMinistry(link.ministryId);
   const updateInstruments = useUpdateMemberMinistryInstruments(link.ministryId);
-  const [selected, setSelected] = useState<string[]>(link.instruments ?? []);
+  const [selected, setSelected] = useState<string[]>(
+    ensureMinistryServiceFunctionLabels(link.instruments ?? []),
+  );
 
   useEffect(() => {
-    setSelected(link.instruments ?? []);
+    setSelected(ensureMinistryServiceFunctionLabels(link.instruments ?? []));
   }, [link.instruments]);
 
   const catalog = ministry?.serviceFunctions ?? [];
-  const saved = normalizeRosterRoleList(link.instruments ?? []);
-  const current = normalizeRosterRoleList(selected);
+  const saved = normalizeRosterRoleList(
+    ensureMinistryServiceFunctionLabels(link.instruments ?? []),
+  );
+  const current = normalizeRosterRoleList(
+    ensureMinistryServiceFunctionLabels(selected),
+  );
   const dirty = saved.join("|") !== current.join("|");
 
   async function handleSave() {
@@ -53,6 +65,13 @@ function MemberMinistryFunctionsCard({
   }
 
   function toggleRole(role: string) {
+    if (
+      isRosterRoleSelected(selected, role) &&
+      isProtectedMinistryServiceFunction(role)
+    ) {
+      return;
+    }
+
     setSelected((value) =>
       isRosterRoleSelected(value, role)
         ? removeRosterRole(value, role)
@@ -65,11 +84,20 @@ function MemberMinistryFunctionsCard({
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <h3 className="font-medium text-foreground">{link.ministryName}</h3>
-          {link.roles.length > 0 ? (
-            <p className="mt-1 text-xs text-muted-foreground">
-              Cargos: {link.roles.map((role) => role.name).join(", ")}
-            </p>
-          ) : null}
+          <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-sky-700/85 dark:text-sky-400/90">
+              Cargos
+            </span>
+            {link.roles.length > 0 ? (
+              link.roles.map((role) => (
+                <MinistryCargoBadge key={role.id} size="sm">
+                  {role.name}
+                </MinistryCargoBadge>
+              ))
+            ) : (
+              <MinistryCargoBadge empty size="sm" />
+            )}
+          </div>
         </div>
         <Link
           href={`${ministryDetailPath(link.ministryId)}?section=service-functions`}
@@ -79,11 +107,12 @@ function MemberMinistryFunctionsCard({
         </Link>
       </div>
 
-      <div className="mt-4 space-y-3">
-        <p className="text-sm text-muted-foreground">
-          Marque as funções em que você pode servir neste ministério.
-        </p>
-
+      <div className="mt-4">
+      <MinistryTagSection
+        title="Funções de serviço"
+        titleClassName="text-[10px] font-semibold uppercase tracking-[0.12em] text-violet-700/85 dark:text-violet-400/90"
+        hint="Marque as funções em que você pode servir neste ministério."
+      >
         {isLoading ? (
           <Skeleton className="h-20 w-full rounded-xl" />
         ) : catalog.length === 0 ? (
@@ -94,21 +123,30 @@ function MemberMinistryFunctionsCard({
           <div className="flex flex-wrap gap-2">
             {catalog.map((item) => {
               const active = isRosterRoleSelected(current, item.label);
+              const locked = isProtectedMinistryServiceFunction(item.label);
 
               return (
                 <button
                   key={item.id}
                   type="button"
-                  disabled={updateInstruments.isPending}
+                  disabled={updateInstruments.isPending || (locked && active)}
                   onClick={() => toggleRole(item.label)}
                   className={cn(
                     "rounded-full border px-3 py-1.5 text-sm transition-colors disabled:opacity-50",
                     active
-                      ? "border-foreground bg-foreground text-background"
-                      : "border-border bg-background text-muted-foreground hover:border-foreground/30 hover:text-foreground",
+                      ? locked
+                        ? "cursor-default border-violet-500/25 bg-violet-500/12 text-violet-800 dark:text-violet-300"
+                        : "border-violet-500/25 bg-violet-600 text-white"
+                      : "border-border bg-background text-muted-foreground hover:border-violet-500/25 hover:text-foreground",
+                    locked && active && "cursor-default",
                   )}
                 >
                   {formatRosterRole(item.label)}
+                  {locked && active ? (
+                    <span className="ml-1.5 text-[10px] font-medium uppercase tracking-wide opacity-80">
+                      Padrão
+                    </span>
+                  ) : null}
                 </button>
               );
             })}
@@ -116,9 +154,7 @@ function MemberMinistryFunctionsCard({
         ) : current.length > 0 ? (
           <div className="flex flex-wrap gap-2">
             {current.map((item) => (
-              <Badge key={item} variant="secondary">
-                {formatRosterRole(item)}
-              </Badge>
+              <MinistryFunctionBadge key={item} label={item} size="md" />
             ))}
           </div>
         ) : (
@@ -131,10 +167,13 @@ function MemberMinistryFunctionsCard({
           <SettingsSaveBar
             visible={dirty}
             saving={updateInstruments.isPending}
-            onDiscard={() => setSelected(link.instruments ?? [])}
+            onDiscard={() =>
+              setSelected(ensureMinistryServiceFunctionLabels(link.instruments ?? []))
+            }
             onSave={() => void handleSave()}
           />
         ) : null}
+      </MinistryTagSection>
       </div>
     </article>
   );

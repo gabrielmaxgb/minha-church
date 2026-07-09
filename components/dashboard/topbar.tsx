@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronDown, LogOut, Menu, User } from "lucide-react";
+import { ChevronDown, Church, LogOut, Menu, User } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -74,17 +74,27 @@ export function DashboardTopbar({
           <NotificationsBell />
 
           {church && (
-            <div className="relative hidden h-10 sm:block">
+            <div className="relative hidden h-10 min-w-0 sm:block">
               <button
                 type="button"
                 onClick={() => setChurchMenuOpen((prev) => !prev)}
                 disabled={isSwitchingChurch}
-                className="inline-flex h-10 max-w-[220px] items-center gap-2 rounded-xl border border-border/80 bg-background/60 px-3 text-left text-sm shadow-soft transition-all duration-200 hover:bg-background hover:shadow-elevated disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex h-10 max-w-[15rem] items-center gap-2.5 rounded-xl border border-primary/20 bg-primary/[0.07] px-2.5 text-left shadow-soft transition-all duration-200 hover:border-primary/30 hover:bg-primary/[0.11] hover:shadow-elevated disabled:cursor-not-allowed disabled:opacity-60 lg:max-w-[17rem] lg:px-3"
                 aria-expanded={churchMenuOpen}
+                aria-label={
+                  churches.length > 1
+                    ? `Igreja ativa: ${church.name}. Trocar igreja`
+                    : `Igreja ativa: ${church.name}`
+                }
               >
-                <span className="truncate font-medium leading-none">{church.name}</span>
+                <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary/12 text-primary">
+                  <Church className="size-3.5" aria-hidden />
+                </span>
+                <span className="min-w-0 flex-1 truncate font-display text-sm font-semibold leading-tight tracking-tight text-foreground">
+                  {church.name}
+                </span>
                 {churches.length > 1 && (
-                  <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
+                  <ChevronDown className="size-4 shrink-0 text-primary/70" />
                 )}
               </button>
 

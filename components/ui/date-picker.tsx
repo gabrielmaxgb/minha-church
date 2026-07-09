@@ -17,6 +17,7 @@ import {
 import { cn } from "@/lib/utils";
 
 import {
+  clampDropdownHorizontal,
   dropdownPositionToStyle,
   getDropdownPosition,
   type DropdownPosition,
@@ -80,9 +81,11 @@ export function DatePicker({
       }
 
       const position = getDropdownPosition(triggerRef.current, 360);
+      const width = Math.max(position.width, 288);
       setDropdownPosition({
         ...position,
-        width: Math.max(position.width, 288),
+        width,
+        left: clampDropdownHorizontal(position.left, width),
       });
     }
 
@@ -169,7 +172,7 @@ export function DatePicker({
         role="dialog"
         aria-label="Selecionar data"
         style={dropdownStyle}
-        className="rounded-2xl border border-border bg-background p-3 shadow-lg"
+        className="overflow-y-auto overscroll-contain rounded-2xl border border-border bg-background p-3 shadow-lg"
       >
         <div className="mb-3 flex items-center justify-between gap-2">
           <button

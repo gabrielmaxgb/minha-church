@@ -29,13 +29,10 @@ import { AnnouncementDecisionGuide } from "./announcement-decision-guide";
 import { AnnouncementFiltersBar } from "./announcement-filters";
 import { ConfirmDeleteAnnouncementDialog } from "./confirm-delete-announcement-dialog";
 
-type CommunicationTab = "feed" | "manage";
-
 export function CommunicationContent() {
   const { permissions, user } = useAuth();
   const canManage = canManageCommunication(permissions, user?.isOwner);
 
-  const [tab, setTab] = useState<CommunicationTab>("feed");
   const [filters, setFilters] = useState<AnnouncementFiltersState>(
     DEFAULT_ANNOUNCEMENT_FILTERS,
   );
@@ -44,11 +41,10 @@ export function CommunicationContent() {
   const [editing, setEditing] = useState<Announcement | null>(null);
   const [toDelete, setToDelete] = useState<Announcement | null>(null);
 
-  const feedQuery = useAnnouncements({ enabled: tab === "feed" });
-  const manageQuery = useManagedAnnouncements({
-    enabled: canManage && tab === "manage",
-  });
-  const { data: myMember } = useMyMember({ enabled: tab === "feed" });
+  const feedQuery = useAnnouncements({ enabled: !canManage });
+  const manageQuery = useManagedAnnouncements({ enabled: canManage });
+  const activeQuery = canManage ? manageQuery : feedQuery;
+  const { data: myMember } = useMyMember({ enabled: !canManage });
   const markRead = useMarkAnnouncementRead();
   const deleteMutation = useDeleteAnnouncement();
   const markedIdsRef = useRef(new Set<string>());
@@ -57,12 +53,10 @@ export function CommunicationContent() {
   );
   const prevReadFilterRef = useRef(filters.read);
 
-  const activeQuery = tab === "manage" ? manageQuery : feedQuery;
   const announcements = activeQuery.data ?? [];
-  const manageMode = tab === "manage";
 
   const viewerMinistryIds = useMemo(() => {
-    if (manageMode || !myMember) {
+    if (canManage || !myMember) {
       return new Set<string>();
     }
 
@@ -71,15 +65,11 @@ export function CommunicationContent() {
         .filter((link) => !link.endedAt)
         .map((link) => link.ministryId),
     );
-  }, [manageMode, myMember]);
-
-  useEffect(() => {
-    setFilters(DEFAULT_ANNOUNCEMENT_FILTERS);
-  }, [tab]);
+  }, [canManage, myMember]);
 
   useEffect(() => {
     if (
-      manageMode ||
+      canManage ||
       filters.audience === "all" ||
       filters.audience === "church_wide"
     ) {
@@ -89,10 +79,10 @@ export function CommunicationContent() {
     if (!viewerMinistryIds.has(filters.audience)) {
       setFilters((current) => ({ ...current, audience: "all" }));
     }
-  }, [filters.audience, manageMode, viewerMinistryIds]);
+  }, [filters.audience, canManage, viewerMinistryIds]);
 
   useEffect(() => {
-    if (manageMode || filters.read !== "unread") {
+    if (canManage || filters.read !== "unread") {
       setUnreadSessionIds(null);
       prevReadFilterRef.current = filters.read;
       return;
@@ -116,22 +106,22 @@ export function CommunicationContent() {
 
       return current;
     });
-  }, [announcements, filters.read, manageMode]);
+  }, [announcements, filters.read, canManage]);
 
   const activeUnreadSessionIds =
-    !manageMode && filters.read === "unread" ? unreadSessionIds : null;
+    !canManage && filters.read === "unread" ? unreadSessionIds : null;
 
   const filteredAnnouncements = useMemo(
     () =>
       filterAnnouncements(announcements, filters, {
-        manageMode,
+        canManage,
         unreadSessionIds: activeUnreadSessionIds,
       }),
-    [announcements, filters, manageMode, activeUnreadSessionIds],
+    [announcements, filters, canManage, activeUnreadSessionIds],
   );
 
   const activeFilterCount = countActiveAnnouncementFilters(filters, {
-    manageMode,
+    canManage,
   });
 
   const { pinnedAnnouncements, regularAnnouncements } = useMemo(() => {
@@ -149,22 +139,22 @@ export function CommunicationContent() {
     return { pinnedAnnouncements: pinned, regularAnnouncements: regular };
   }, [filteredAnnouncements]);
 
-  const emptyState = useMemo(() => {
-    if (tab === "manage") {
-      return {
-        icon: Megaphone,
-        title: "Nenhum comunicado ainda",
-        description:
-          "Crie o primeiro comunicado para avisar a igreja ou ministérios específicos.",
-      };
-    }
-
-    return {
-      icon: Inbox,
-      title: "Sem comunicados por enquanto",
-      description: "Novos avisos da liderança aparecerão aqui.",
-    };
-  }, [tab]);
+  const emptyState = useMemo(
+    () =>
+      canManage
+        ? {
+            icon: Megaphone,
+            title: "Nenhum comunicado ainda",
+            description:
+              "Crie o primeiro comunicado para avisar a igreja ou ministérios específicos.",
+          }
+        : {
+            icon: Inbox,
+            title: "Sem comunicados por enquanto",
+            description: "Novos avisos da liderança aparecerão aqui.",
+          },
+    [canManage],
+  );
 
   function openCompose() {
     setEditing(null);
@@ -177,7 +167,7 @@ export function CommunicationContent() {
   }
 
   function handleVisible(announcement: Announcement) {
-    if (tab === "manage") {
+    if (canManage) {
       return;
     }
 
@@ -204,21 +194,13 @@ export function CommunicationContent() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        {canManage ? (
-          <div className="inline-flex rounded-xl bg-muted/60 p-1">
-            <TabButton
-              active={tab === "feed"}
-              onClick={() => setTab("feed")}
-              label="Recebidos"
-            />
-            <TabButton
-              active={tab === "manage"}
-              onClick={() => setTab("manage")}
-              label="Gerenciar"
-            />
-          </div>
-        ) : (
+      <div
+        className={cn(
+          "flex flex-wrap items-center gap-3",
+          canManage ? "justify-end" : "justify-between",
+        )}
+      >
+        {!canManage && (
           <p className="text-sm text-muted-foreground">
             Avisos da liderança para você.
           </p>
@@ -264,7 +246,7 @@ export function CommunicationContent() {
               {emptyState.description}
             </p>
           </div>
-          {canManage && tab !== "manage" && (
+          {canManage && (
             <Button type="button" size="sm" variant="outline" onClick={openCompose}>
               <Plus className="size-4" />
               Criar comunicado
@@ -276,7 +258,7 @@ export function CommunicationContent() {
           <AnnouncementFiltersBar
             announcements={announcements}
             filters={filters}
-            manageMode={manageMode}
+            canManage={canManage}
             allowedMinistryIds={viewerMinistryIds}
             onChange={setFilters}
           />
@@ -312,83 +294,83 @@ export function CommunicationContent() {
               </Button>
             </div>
           ) : (
-        <div className="space-y-6">
-          {markRead.isPending && (
-            <span className="sr-only" role="status">
-              Marcando como lido
-            </span>
-          )}
-
-          {pinnedAnnouncements.length > 0 ? (
-            <section
-              aria-labelledby="pinned-announcements-heading"
-              className="rounded-2xl border border-primary/20 bg-gradient-to-b from-primary/[0.07] to-primary/[0.02] p-3 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.45)] sm:p-4"
-            >
-              <header className="mb-3 flex items-center gap-2 px-0.5 sm:px-1">
-                <span className="inline-flex size-6 items-center justify-center rounded-md bg-primary/12 text-primary">
-                  <Pin className="size-3.5" aria-hidden />
+            <div className="space-y-6">
+              {markRead.isPending && (
+                <span className="sr-only" role="status">
+                  Marcando como lido
                 </span>
-                <h2
-                  id="pinned-announcements-heading"
-                  className="text-xs font-semibold uppercase tracking-[0.12em] text-primary"
-                >
-                  Fixados
-                </h2>
-                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium tabular-nums text-primary">
-                  {pinnedAnnouncements.length}
-                </span>
-              </header>
+              )}
 
-              <div className="space-y-2.5">
-                {pinnedAnnouncements.map((announcement) => (
-                  <AnnouncementCard
-                    key={announcement.id}
-                    announcement={announcement}
-                    manageMode={tab === "manage"}
-                    onVisible={handleVisible}
-                    onEdit={openEdit}
-                    onDelete={setToDelete}
-                  />
-                ))}
-              </div>
-            </section>
-          ) : null}
-
-          {regularAnnouncements.length > 0 ? (
-            <section
-              aria-labelledby={
-                pinnedAnnouncements.length > 0
-                  ? "recent-announcements-heading"
-                  : undefined
-              }
-            >
               {pinnedAnnouncements.length > 0 ? (
-                <header className="mb-3 flex items-center gap-3">
-                  <h2
-                    id="recent-announcements-heading"
-                    className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground"
-                  >
-                    Recentes
-                  </h2>
-                  <div className="h-px flex-1 bg-border/70" aria-hidden />
-                </header>
+                <section
+                  aria-labelledby="pinned-announcements-heading"
+                  className="rounded-2xl border border-primary/20 bg-gradient-to-b from-primary/[0.07] to-primary/[0.02] p-3 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.45)] sm:p-4"
+                >
+                  <header className="mb-3 flex items-center gap-2 px-0.5 sm:px-1">
+                    <span className="inline-flex size-6 items-center justify-center rounded-md bg-primary/12 text-primary">
+                      <Pin className="size-3.5" aria-hidden />
+                    </span>
+                    <h2
+                      id="pinned-announcements-heading"
+                      className="text-xs font-semibold uppercase tracking-[0.12em] text-primary"
+                    >
+                      Fixados
+                    </h2>
+                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium tabular-nums text-primary">
+                      {pinnedAnnouncements.length}
+                    </span>
+                  </header>
+
+                  <div className="space-y-2.5">
+                    {pinnedAnnouncements.map((announcement) => (
+                      <AnnouncementCard
+                        key={announcement.id}
+                        announcement={announcement}
+                        showManageActions={canManage}
+                        onVisible={handleVisible}
+                        onEdit={canManage ? openEdit : undefined}
+                        onDelete={canManage ? setToDelete : undefined}
+                      />
+                    ))}
+                  </div>
+                </section>
               ) : null}
 
-              <div className="space-y-3">
-                {regularAnnouncements.map((announcement) => (
-                  <AnnouncementCard
-                    key={announcement.id}
-                    announcement={announcement}
-                    manageMode={tab === "manage"}
-                    onVisible={handleVisible}
-                    onEdit={openEdit}
-                    onDelete={setToDelete}
-                  />
-                ))}
-              </div>
-            </section>
-          ) : null}
-        </div>
+              {regularAnnouncements.length > 0 ? (
+                <section
+                  aria-labelledby={
+                    pinnedAnnouncements.length > 0
+                      ? "recent-announcements-heading"
+                      : undefined
+                  }
+                >
+                  {pinnedAnnouncements.length > 0 ? (
+                    <header className="mb-3 flex items-center gap-3">
+                      <h2
+                        id="recent-announcements-heading"
+                        className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground"
+                      >
+                        Recentes
+                      </h2>
+                      <div className="h-px flex-1 bg-border/70" aria-hidden />
+                    </header>
+                  ) : null}
+
+                  <div className="space-y-3">
+                    {regularAnnouncements.map((announcement) => (
+                      <AnnouncementCard
+                        key={announcement.id}
+                        announcement={announcement}
+                        showManageActions={canManage}
+                        onVisible={handleVisible}
+                        onEdit={canManage ? openEdit : undefined}
+                        onDelete={canManage ? setToDelete : undefined}
+                      />
+                    ))}
+                  </div>
+                </section>
+              ) : null}
+            </div>
           )}
         </div>
       )}
@@ -415,30 +397,5 @@ export function CommunicationContent() {
         onConfirm={handleConfirmDelete}
       />
     </div>
-  );
-}
-
-function TabButton({
-  active,
-  onClick,
-  label,
-}: {
-  active: boolean;
-  onClick: () => void;
-  label: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "rounded-lg px-3.5 py-1.5 text-sm font-medium transition-colors",
-        active
-          ? "bg-background text-foreground shadow-sm"
-          : "text-muted-foreground hover:text-foreground",
-      )}
-    >
-      {label}
-    </button>
   );
 }

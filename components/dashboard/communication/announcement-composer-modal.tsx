@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import { Loader2, X } from "lucide-react";
+import { Info, Loader2, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SelectField } from "@/components/ui/select-field";
@@ -471,11 +472,10 @@ export function AnnouncementComposerModal({
                 <span className="text-sm">Agendar publicação</span>
               </label>
               {scheduleEnabled && (
-                <Input
-                  type="date"
+                <DatePicker
                   value={scheduleDate}
-                  onChange={(event) => setScheduleDate(event.target.value)}
-                  className="max-w-[200px]"
+                  onChange={setScheduleDate}
+                  className="max-w-[220px]"
                 />
               )}
 
@@ -495,12 +495,20 @@ export function AnnouncementComposerModal({
                 <span className="text-sm">Definir expiração</span>
               </label>
               {expiryEnabled && (
-                <Input
-                  type="date"
+                <DatePicker
                   value={expiryDate}
-                  onChange={(event) => setExpiryDate(event.target.value)}
-                  className="max-w-[200px]"
+                  onChange={setExpiryDate}
+                  className="max-w-[220px]"
                 />
+              )}
+              {!expiryEnabled && (
+                <p className="flex gap-2 rounded-lg border border-amber-500/25 bg-amber-500/10 px-3 py-2.5 text-xs leading-relaxed text-amber-900 dark:text-amber-200">
+                  <Info className="mt-0.5 size-3.5 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden />
+                  <span>
+                    Sem data de expiração, o comunicado permanece no mural até você
+                    removê-lo manualmente.
+                  </span>
+                </p>
               )}
             </div>
           </div>

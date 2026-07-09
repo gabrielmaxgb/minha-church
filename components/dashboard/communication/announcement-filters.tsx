@@ -18,7 +18,7 @@ import type { Announcement } from "@/types/announcements";
 interface AnnouncementFiltersProps {
   announcements: Announcement[];
   filters: AnnouncementFiltersState;
-  manageMode?: boolean;
+  canManage?: boolean;
   /** Quando definido, limita os chips de ministério aos IDs permitidos. */
   allowedMinistryIds?: ReadonlySet<string> | null;
   onChange: (filters: AnnouncementFiltersState) => void;
@@ -27,15 +27,15 @@ interface AnnouncementFiltersProps {
 export function AnnouncementFiltersBar({
   announcements,
   filters,
-  manageMode = false,
+  canManage = false,
   allowedMinistryIds = null,
   onChange,
 }: AnnouncementFiltersProps) {
   const ministries = extractAnnouncementMinistries(
     announcements,
-    manageMode ? null : allowedMinistryIds,
+    canManage ? null : allowedMinistryIds,
   );
-  const activeCount = countActiveAnnouncementFilters(filters, { manageMode });
+  const activeCount = countActiveAnnouncementFilters(filters, { canManage });
   const hasChurchWide = announcements.some(
     (announcement) => announcement.audienceType === "church_wide",
   );
@@ -106,31 +106,29 @@ export function AnnouncementFiltersBar({
       </div>
 
       <div className="space-y-3 px-3 py-3 sm:px-4 sm:py-3.5">
-        {!manageMode && (
-          <FilterRow label="Leitura">
-            <FilterPill
-              active={filters.read === "all"}
-              onClick={() => patch({ read: "all" })}
-            >
-              Todos
-            </FilterPill>
-            <FilterPill
-              active={filters.read === "unread"}
-              onClick={() => patch({ read: "unread" })}
-              accent="primary"
-            >
-              Não lidos
-            </FilterPill>
-            <FilterPill
-              active={filters.read === "read"}
-              onClick={() => patch({ read: "read" })}
-            >
-              Lidos
-            </FilterPill>
-          </FilterRow>
-        )}
+        <FilterRow label="Leitura">
+          <FilterPill
+            active={filters.read === "all"}
+            onClick={() => patch({ read: "all" })}
+          >
+            Todos
+          </FilterPill>
+          <FilterPill
+            active={filters.read === "unread"}
+            onClick={() => patch({ read: "unread" })}
+            accent="primary"
+          >
+            Não lidos
+          </FilterPill>
+          <FilterPill
+            active={filters.read === "read"}
+            onClick={() => patch({ read: "read" })}
+          >
+            Lidos
+          </FilterPill>
+        </FilterRow>
 
-        {manageMode && (
+        {canManage && (
           <FilterRow label="Status">
             <StatusPill
               active={filters.status === "all"}

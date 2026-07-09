@@ -6,7 +6,11 @@ import { Loader2, Music2 } from "lucide-react";
 import { EventRosterSlotsEditor } from "@/components/dashboard/activities/event-roster-slots-editor";
 import { SettingsSaveBar } from "@/components/dashboard/settings/settings-shared";
 import { useReplaceMinistryServiceFunctions } from "@/lib/api/queries";
-import { formatRosterRole } from "@/lib/ministries/roster";
+import {
+  DEFAULT_MINISTRY_SERVICE_FUNCTION,
+  ensureMinistryServiceFunctionLabels,
+  formatRosterRole,
+} from "@/lib/ministries/roster";
 import type { Ministry } from "@/types/ministries";
 
 interface MinistryServiceFunctionsSectionProps {
@@ -39,21 +43,28 @@ export function MinistryServiceFunctionsSection({
     .map((item) => item.label)
     .join("\u0001");
   const savedLabels = useMemo(
-    () => serviceFunctionLabels(ministry.serviceFunctions),
+    () => ensureMinistryServiceFunctionLabels(serviceFunctionLabels(ministry.serviceFunctions)),
     [savedLabelsSignature],
   );
   const [labels, setLabels] = useState(savedLabels);
 
   useEffect(() => {
     setLabels((current) =>
-      labelsEqual(current, savedLabels) ? current : savedLabels,
+      labelsEqual(current, savedLabels)
+        ? current
+        : ensureMinistryServiceFunctionLabels(savedLabels),
     );
   }, [savedLabels]);
 
-  const dirty = !labelsEqual(labels, savedLabels);
+  const dirty = !labelsEqual(
+    ensureMinistryServiceFunctionLabels(labels),
+    savedLabels,
+  );
 
   async function handleSave() {
-    await replaceFunctions.mutateAsync(labels);
+    await replaceFunctions.mutateAsync(
+      ensureMinistryServiceFunctionLabels(labels),
+    );
   }
 
   return (
@@ -78,10 +89,17 @@ export function MinistryServiceFunctionsSection({
           <>
             <EventRosterSlotsEditor
               value={labelsToPlan(labels)}
-              onChange={(next) => setLabels(next.map((item) => item.label))}
+              onChange={(next) =>
+                setLabels(
+                  ensureMinistryServiceFunctionLabels(
+                    next.map((item) => item.label),
+                  ),
+                )
+              }
               disabled={replaceFunctions.isPending}
               embedded
               compact
+              lockedLabels={[DEFAULT_MINISTRY_SERVICE_FUNCTION]}
             />
             <SettingsSaveBar
               visible={dirty}

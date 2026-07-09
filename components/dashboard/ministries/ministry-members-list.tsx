@@ -4,12 +4,16 @@ import { useMemo, useState } from "react";
 import { ChevronDown, Search, Trash2 } from "lucide-react";
 
 import { MinistryRoleToggles } from "@/components/dashboard/ministries/ministry-role-toggles";
-import { Badge } from "@/components/ui/badge";
+import {
+  MemberMinistryTagsSummary,
+  MinistryCargoBadge,
+  MinistryFunctionBadge,
+  MinistryTagSection,
+} from "@/components/dashboard/ministries/ministry-member-tags";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { cn } from "@/lib/utils";
-import { formatRosterRole } from "@/lib/ministries/roster";
 import type { MinistryMember, MinistryRole } from "@/types/ministries";
 
 type RoleFilter = "all" | "none" | string;
@@ -186,35 +190,11 @@ export function MinistryMembersList({
                           "Sem contato"}
                       </span>
                       {!isExpanded && (
-                        <span className="mt-2 flex flex-wrap gap-1.5">
-                          {member.roles.length > 0 ? (
-                            member.roles.map((role) => (
-                              <Badge
-                                key={role.id}
-                                variant="secondary"
-                                className="text-[11px] font-normal"
-                              >
-                                {role.name}
-                              </Badge>
-                            ))
-                          ) : (
-                            <Badge
-                              variant="outline"
-                              className="text-[11px] font-normal"
-                            >
-                              Sem cargo
-                            </Badge>
-                          )}
-                          {(member.instruments ?? []).map((rosterFunction) => (
-                            <Badge
-                              key={rosterFunction}
-                              variant="outline"
-                              className="text-[11px] font-normal"
-                            >
-                              {formatRosterRole(rosterFunction)}
-                            </Badge>
-                          ))}
-                        </span>
+                        <MemberMinistryTagsSummary
+                          className="mt-2"
+                          roles={member.roles}
+                          instruments={member.instruments}
+                        />
                       )}
                     </span>
                   </button>
@@ -235,35 +215,60 @@ export function MinistryMembersList({
                 </div>
 
                 {isExpanded && (
-                  <div className="border-t border-border/60 px-3 pb-3 pt-2">
-                    {canManage ? (
-                      <MinistryRoleToggles
-                        roles={roles}
-                        selectedRoleIds={member.roles.map((role) => role.id)}
-                        isUpdating={isUpdatingRoles}
-                        onToggle={(roleId, checked) => {
-                          const currentIds = member.roles.map((role) => role.id);
-                          const next = checked
-                            ? [...currentIds, roleId]
-                            : currentIds.filter((id) => id !== roleId);
+                  <div className="space-y-4 border-t border-border/60 px-3 pb-3 pt-3">
+                    <MinistryTagSection
+                      title="Cargos"
+                      titleClassName="text-[10px] font-semibold uppercase tracking-[0.12em] text-sky-700/85 dark:text-sky-400/90"
+                    >
+                      {canManage ? (
+                        <MinistryRoleToggles
+                          roles={roles}
+                          selectedRoleIds={member.roles.map((role) => role.id)}
+                          isUpdating={isUpdatingRoles}
+                          onToggle={(roleId, checked) => {
+                            const currentIds = member.roles.map((role) => role.id);
+                            const next = checked
+                              ? [...currentIds, roleId]
+                              : currentIds.filter((id) => id !== roleId);
 
-                          onToggleRoles(member.memberId, next);
-                        }}
-                      />
-                    ) : (
-                      <div className="flex flex-wrap gap-1.5">
-                        {member.roles.length > 0 ? (
-                          member.roles.map((role) => (
-                            <Badge key={role.id} variant="secondary">
+                            onToggleRoles(member.memberId, next);
+                          }}
+                        />
+                      ) : member.roles.length > 0 ? (
+                        <div className="flex flex-wrap gap-1.5">
+                          {member.roles.map((role) => (
+                            <MinistryCargoBadge key={role.id} size="md">
                               {role.name}
-                            </Badge>
-                          ))
-                        ) : (
-                          <span className="text-sm text-muted-foreground">
-                            Sem cargo neste ministério
-                          </span>
-                        )}
-                      </div>
+                            </MinistryCargoBadge>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">
+                          Sem cargo neste ministério
+                        </p>
+                      )}
+                    </MinistryTagSection>
+
+                    {(member.instruments?.length ?? 0) > 0 && (
+                      <MinistryTagSection
+                        title="Funções de serviço"
+                        titleClassName="text-[10px] font-semibold uppercase tracking-[0.12em] text-violet-700/85 dark:text-violet-400/90"
+                        hint={
+                          canManage
+                            ? "O membro define as funções no perfil, em Ministérios e Grupos de serviço."
+                            : undefined
+                        }
+                      >
+                        <div className="flex flex-wrap gap-1.5">
+                          {member.instruments.map((instrument) => (
+                            <MinistryFunctionBadge
+                              key={instrument}
+                              label={instrument}
+                              size="md"
+                            />
+                          ))}
+                        </div>
+                      </MinistryTagSection>
                     )}
                   </div>
                 )}

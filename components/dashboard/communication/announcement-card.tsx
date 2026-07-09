@@ -56,8 +56,8 @@ const STATUS_META: Record<
 
 interface AnnouncementCardProps {
   announcement: Announcement;
-  /** Modo gestão exibe status/estatísticas e ações de edição. */
-  manageMode?: boolean;
+  /** Exibe ações de edição e exclusão. */
+  showManageActions?: boolean;
   onEdit?: (announcement: Announcement) => void;
   onDelete?: (announcement: Announcement) => void;
   onVisible?: (announcement: Announcement) => void;
@@ -65,14 +65,14 @@ interface AnnouncementCardProps {
 
 export function AnnouncementCard({
   announcement,
-  manageMode = false,
+  showManageActions = false,
   onEdit,
   onDelete,
   onVisible,
 }: AnnouncementCardProps) {
   const priority = PRIORITY_META[announcement.priority];
   const status = STATUS_META[announcement.status];
-  const unread = !manageMode && announcement.isRead === false;
+  const unread = announcement.isRead === false;
 
   const audienceLabel =
     announcement.audienceType === "church_wide"
@@ -176,7 +176,7 @@ export function AnnouncementCard({
             </div>
           )}
 
-          {manageMode && (
+          {showManageActions && (onEdit || onDelete) && (
             <div className="flex items-center gap-1">
               {onEdit && (
                 <Button
@@ -229,7 +229,7 @@ export function AnnouncementCard({
         {announcement.expiresAt && (
           <span>· expira em {formatDateTime(announcement.expiresAt)}</span>
         )}
-        {manageMode && typeof announcement.readCount === "number" && (
+        {showManageActions && typeof announcement.readCount === "number" && (
           <span>· {announcement.readCount} leram</span>
         )}
       </div>

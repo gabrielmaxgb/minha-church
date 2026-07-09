@@ -19,6 +19,7 @@ import { MemberAccountCreatedModal } from "@/components/dashboard/members/member
 import { MemberForm } from "@/components/dashboard/members/member-form";
 import { MemberMinistriesFunctionsSection } from "@/components/dashboard/members/member-ministries-functions-section";
 import { MemberMinistriesSection } from "@/components/dashboard/members/member-ministries-section";
+import { MemberMinistryTagsSummary } from "@/components/dashboard/ministries/ministry-member-tags";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FormAlert } from "@/components/ui/form-field";
@@ -169,16 +170,18 @@ function ReadOnlyDetails({
       {showMinistries && member.ministries.length > 0 && (
         <DetailSection icon={UserCheck} title="Ministérios">
           <div className="sm:col-span-2">
-            <ul className="flex flex-wrap gap-2">
+            <ul className="space-y-2">
               {member.ministries.map((link) => (
                 <li
                   key={link.id}
-                  className="rounded-lg border border-border bg-muted/30 px-3 py-1.5 text-sm"
+                  className="rounded-lg border border-border bg-muted/30 px-3 py-2.5"
                 >
-                  <span className="font-medium">{link.ministryName}</span>
-                  {link.roles.length > 0
-                    ? ` · ${link.roles.map((role) => role.name).join(", ")}`
-                    : ""}
+                  <span className="text-sm font-medium">{link.ministryName}</span>
+                  <MemberMinistryTagsSummary
+                    className="mt-2"
+                    roles={link.roles}
+                    instruments={link.instruments}
+                  />
                 </li>
               ))}
             </ul>

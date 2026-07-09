@@ -4,6 +4,23 @@ export type ListableEvent = {
   recurrenceSeriesId: string | null;
 };
 
+/** Evento futuro com data de início ainda neste mês civil. */
+export function isUpcomingInCurrentMonth(
+  startsAt: string,
+  referenceTime = Date.now(),
+): boolean {
+  const date = new Date(startsAt);
+  const now = new Date(referenceTime);
+
+  if (date.getTime() < referenceTime) {
+    return false;
+  }
+
+  return (
+    date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth()
+  );
+}
+
 /** Agrupa ocorrências da mesma série e mantém só a próxima data futura na lista. */
 export function collapseRecurringEventsForList<T extends ListableEvent>(
   events: Iterable<T>,

@@ -41,6 +41,7 @@ interface MinistryDashboardSectionProps {
   ministry: Ministry;
   onGoToMembers: () => void;
   onGoToAvailability?: () => void;
+  onGoToEvents?: () => void;
 }
 
 function StatCard({
@@ -67,6 +68,7 @@ export function MinistryDashboardSection({
   ministry,
   onGoToMembers,
   onGoToAvailability,
+  onGoToEvents,
 }: MinistryDashboardSectionProps) {
   const { permissions, user } = useAuth();
   const { data: members, isLoading: membersLoading } = useMinistryMembers(ministry.id);
@@ -155,11 +157,18 @@ export function MinistryDashboardSection({
         </div>
 
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Próximos eventos</CardTitle>
-            <CardDescription>
-              Cultos, ensaios e outras atividades deste ministério.
-            </CardDescription>
+          <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <CardTitle className="text-base">Próximos eventos</CardTitle>
+              <CardDescription>
+                Cultos, ensaios e outras atividades deste ministério.
+              </CardDescription>
+            </div>
+            {onGoToEvents && (
+              <Button size="sm" variant="outline" onClick={onGoToEvents}>
+                Ver todos
+              </Button>
+            )}
           </CardHeader>
           <CardContent className="space-y-3">
             {eventsLoading && (
