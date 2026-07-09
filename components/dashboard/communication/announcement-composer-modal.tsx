@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useMemo, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { Loader2, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,8 @@ import {
   useMinistries,
   useUpdateAnnouncement,
 } from "@/lib/api/queries";
-import { cn } from "@/lib/utils";
+import { canListMinistries, canManageCommunication } from "@/lib/permissions";
+import { useAuth } from "@/providers/auth-provider";
 import type {
   Announcement,
   AnnouncementAudienceType,
@@ -48,6 +49,65 @@ function endOfDayIso(dateKey: string): string {
   return new Date(`${dateKey}T23:59:00`).toISOString();
 }
 
+interface ComposerFormState {
+  title: string;
+  body: string;
+  priority: AnnouncementPriority;
+  audienceType: AnnouncementAudienceType;
+  ministryIds: string[];
+  pinned: boolean;
+  scheduleEnabled: boolean;
+  scheduleDate: string;
+  expiryEnabled: boolean;
+  expiryDate: string;
+}
+
+function validateComposerForm(
+  form: ComposerFormState,
+  options?: { ministriesLoading?: boolean },
+): string | null {
+  const trimmedTitle = form.title.trim();
+  const trimmedBody = form.body.trim();
+
+  if (trimmedTitle.length < 2) {
+    return "Informe um título com pelo menos 2 caracteres.";
+  }
+
+  if (trimmedBody.length < 1) {
+    return "Escreva a mensagem do comunicado.";
+  }
+
+  if (form.audienceType === "ministries") {
+    if (options?.ministriesLoading) {
+      return "Aguarde o carregamento dos ministérios.";
+    }
+
+    if (form.ministryIds.length === 0) {
+      return "Selecione ao menos um ministério para o público.";
+    }
+  }
+
+  if (form.scheduleEnabled && !form.scheduleDate) {
+    return "Escolha a data de publicação agendada.";
+  }
+
+  if (form.expiryEnabled && !form.expiryDate) {
+    return "Escolha a data de expiração.";
+  }
+
+  const publishedAt = form.scheduleEnabled
+    ? startOfDayIso(form.scheduleDate)
+    : null;
+  const expiresAt = form.expiryEnabled ? endOfDayIso(form.expiryDate) : null;
+  const publishAt = publishedAt ? new Date(publishedAt) : new Date();
+
+  if (expiresAt && new Date(expiresAt) <= publishAt) {
+    return "A expiração deve ser depois da publicação.";
+  }
+
+  return null;
+}
+
 export function AnnouncementComposerModal({
   open,
   announcement,
@@ -55,8 +115,14 @@ export function AnnouncementComposerModal({
 }: AnnouncementComposerModalProps) {
   const titleId = useId();
   const isEditing = Boolean(announcement);
+  const { permissions, user } = useAuth();
+  const canList = canListMinistries(permissions);
+  const canManage = canManageCommunication(permissions, user?.isOwner);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-  const { data: ministries, isLoading: ministriesLoading } = useMinistries();
+  const { data: ministries, isLoading: ministriesLoading } = useMinistries({
+    enabled: open && (canList || canManage),
+  });
   const createMutation = useCreateAnnouncement();
   const updateMutation = useUpdateAnnouncement(announcement?.id ?? "");
 
@@ -137,87 +203,122 @@ export function AnnouncementComposerModal({
     [ministries],
   );
 
-  if (!open) {
-    return null;
-  }
-
-  async function handleSubmit(event: React.FormEvent) {
-    event.preventDefault();
-    setError(null);
-
-    const trimmedTitle = title.trim();
-    const trimmedBody = body.trim();
-
-    if (trimmedTitle.length < 2) {
-      setError("Informe um título com pelo menos 2 caracteres.");
-      return;
-    }
-
-    if (trimmedBody.length < 1) {
-      setError("Escreva a mensagem do comunicado.");
-      return;
-    }
-
-    if (audienceType === "ministries" && ministryIds.length === 0) {
-      setError("Selecione ao menos um ministério para o público.");
-      return;
-    }
-
-    if (scheduleEnabled && !scheduleDate) {
-      setError("Escolha a data de publicação agendada.");
-      return;
-    }
-
-    if (expiryEnabled && !expiryDate) {
-      setError("Escolha a data de expiração.");
-      return;
-    }
-
-    const publishedAt = scheduleEnabled ? startOfDayIso(scheduleDate) : null;
-    const expiresAt = expiryEnabled ? endOfDayIso(expiryDate) : null;
-
-    if (publishedAt && expiresAt && new Date(expiresAt) <= new Date(publishedAt)) {
-      setError("A expiração deve ser depois da publicação.");
-      return;
-    }
-
-    const payload: CreateAnnouncementPayload = {
-      title: trimmedTitle,
-      body: trimmedBody,
+  const formState = useMemo<ComposerFormState>(
+    () => ({
+      title,
+      body,
       priority,
       audienceType,
-      ministryIds: audienceType === "ministries" ? ministryIds : [],
+      ministryIds,
       pinned,
-      expiresAt,
-    };
+      scheduleEnabled,
+      scheduleDate,
+      expiryEnabled,
+      expiryDate,
+    }),
+    [
+      audienceType,
+      body,
+      expiryDate,
+      expiryEnabled,
+      ministryIds,
+      pinned,
+      priority,
+      scheduleDate,
+      scheduleEnabled,
+      title,
+    ],
+  );
 
-    try {
-      if (isEditing && announcement) {
-        await updateMutation.mutateAsync({
-          ...payload,
-          // Agendado: usa a data escolhida. Se estava agendado e o usuário
-          // desmarcou, publica agora. Caso contrário, mantém a publicação atual.
-          publishedAt: scheduleEnabled
-            ? publishedAt
-            : announcement.status === "scheduled"
-              ? new Date().toISOString()
-              : undefined,
-        });
-      } else {
-        await createMutation.mutateAsync({
-          ...payload,
-          publishedAt: publishedAt ?? undefined,
-        });
+  const submitDisabled =
+    isPending ||
+    ministriesLoading ||
+    (audienceType === "ministries" && ministryOptions.length === 0);
+
+  const showSubmitError = useCallback((message: string) => {
+    setError(message);
+    scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  const handleSubmit = useCallback(
+    async (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      setError(null);
+
+      const validationError = validateComposerForm(formState, {
+        ministriesLoading,
+      });
+
+      if (validationError) {
+        showSubmitError(validationError);
+        return;
       }
 
-      onClose();
-    } catch (submitError) {
-      setError(
-        submitError instanceof Error
-          ? submitError.message
-          : "Não foi possível salvar o comunicado.",
-      );
-    }
+      const trimmedTitle = title.trim();
+      const trimmedBody = body.trim();
+      const publishedAt = scheduleEnabled ? startOfDayIso(scheduleDate) : null;
+      const expiresAt = expiryEnabled ? endOfDayIso(expiryDate) : null;
+
+      const payload: CreateAnnouncementPayload = {
+        title: trimmedTitle,
+        body: trimmedBody,
+        priority,
+        audienceType,
+        ministryIds: audienceType === "ministries" ? ministryIds : [],
+        pinned,
+        expiresAt,
+      };
+
+      try {
+        if (isEditing && announcement) {
+          await updateMutation.mutateAsync({
+            ...payload,
+            publishedAt: scheduleEnabled
+              ? publishedAt
+              : announcement.status === "scheduled"
+                ? new Date().toISOString()
+                : undefined,
+          });
+        } else {
+          await createMutation.mutateAsync({
+            ...payload,
+            publishedAt: publishedAt ?? undefined,
+          });
+        }
+
+        onClose();
+      } catch (submitError) {
+        showSubmitError(
+          submitError instanceof Error
+            ? submitError.message
+            : "Não foi possível salvar o comunicado.",
+        );
+      }
+    },
+    [
+      announcement,
+      audienceType,
+      body,
+      createMutation,
+      expiryDate,
+      expiryEnabled,
+      formState,
+      isEditing,
+      ministriesLoading,
+      ministryIds,
+      onClose,
+      pinned,
+      priority,
+      scheduleDate,
+      scheduleEnabled,
+      showSubmitError,
+      title,
+      updateMutation,
+    ],
+  );
+
+  if (!open) {
+    return null;
   }
 
   return (
@@ -251,9 +352,13 @@ export function AnnouncementComposerModal({
 
         <form
           onSubmit={handleSubmit}
+          noValidate
           className="flex min-h-0 flex-1 flex-col"
         >
-          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5">
+          <div
+            ref={scrollRef}
+            className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5"
+          >
             <div className="space-y-1.5">
               <Label htmlFor="announcement-title">Título</Label>
               <Input
@@ -320,7 +425,12 @@ export function AnnouncementComposerModal({
                   options={ministryOptions}
                   loading={ministriesLoading}
                   placeholder="Buscar ministérios..."
-                  emptyMessage="Nenhum ministério ativo encontrado."
+                  emptyMessage={
+                    canList || canManage
+                      ? "Nenhum ministério ativo encontrado."
+                      : "Você não tem permissão para listar ministérios."
+                  }
+                  aria-invalid={Boolean(error) && ministryIds.length === 0}
                 />
                 <p className="text-xs text-muted-foreground">
                   Só verão o comunicado os membros vinculados a esses
@@ -349,7 +459,13 @@ export function AnnouncementComposerModal({
                 <input
                   type="checkbox"
                   checked={scheduleEnabled}
-                  onChange={(event) => setScheduleEnabled(event.target.checked)}
+                  onChange={(event) => {
+                    const enabled = event.target.checked;
+                    setScheduleEnabled(enabled);
+                    if (!enabled) {
+                      setScheduleDate("");
+                    }
+                  }}
                   className="size-4 rounded border-input accent-primary"
                 />
                 <span className="text-sm">Agendar publicação</span>
@@ -367,7 +483,13 @@ export function AnnouncementComposerModal({
                 <input
                   type="checkbox"
                   checked={expiryEnabled}
-                  onChange={(event) => setExpiryEnabled(event.target.checked)}
+                  onChange={(event) => {
+                    const enabled = event.target.checked;
+                    setExpiryEnabled(enabled);
+                    if (!enabled) {
+                      setExpiryDate("");
+                    }
+                  }}
                   className="size-4 rounded border-input accent-primary"
                 />
                 <span className="text-sm">Definir expiração</span>
@@ -381,19 +503,19 @@ export function AnnouncementComposerModal({
                 />
               )}
             </div>
+          </div>
 
+          <footer className="space-y-3 border-t border-border/70 px-6 py-4">
             {error && (
               <p
-                className={cn(
-                  "rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive",
-                )}
+                role="alert"
+                className="rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive"
               >
                 {error}
               </p>
             )}
-          </div>
 
-          <footer className="flex items-center justify-end gap-2 border-t border-border/70 px-6 py-4">
+            <div className="flex items-center justify-end gap-2">
             <Button
               type="button"
               variant="ghost"
@@ -402,10 +524,11 @@ export function AnnouncementComposerModal({
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={isPending}>
+            <Button type="submit" disabled={submitDisabled}>
               {isPending && <Loader2 className="size-4 animate-spin" />}
               {isEditing ? "Salvar alterações" : "Publicar comunicado"}
             </Button>
+            </div>
           </footer>
         </form>
       </div>

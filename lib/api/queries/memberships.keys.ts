@@ -61,6 +61,19 @@ async function fetchPasswordResetRequests(
   );
 }
 
+async function transferChurchOwnership(
+  churchId: string,
+  userId: string,
+): Promise<ChurchMembership> {
+  return apiClient<ChurchMembership>(
+    buildTenantPath(churchId, `/memberships/${userId}/transfer-ownership`),
+    {
+      churchId,
+      method: "POST",
+    },
+  );
+}
+
 async function resetMemberPassword(
   churchId: string,
   userId: string,
@@ -99,5 +112,6 @@ export {
   fetchPasswordResetRequests,
   fetchPendingAccessUsers,
   resetMemberPassword,
+  transferChurchOwnership,
   updateChurchMembership,
 };

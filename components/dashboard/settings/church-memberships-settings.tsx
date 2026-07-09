@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import {
   useAssignableRoles,
   useChurchMemberships,
+  useTransferChurchOwnership,
   useUpdateChurchMembership,
 } from "@/lib/api/queries";
 import { canManageChurchMemberships } from "@/lib/church-memberships/constants";
@@ -25,6 +26,7 @@ import {
   SettingsSidebarToolbar,
   SettingsToggleRow,
 } from "./settings-shared";
+import { TransferOwnershipDialog } from "./transfer-ownership-dialog";
 
 type RoleFilter = "all" | "owner" | "none" | string;
 
@@ -89,10 +91,14 @@ export function ChurchMembershipsSettings() {
   const { data: memberships, isLoading, isError } = useChurchMemberships();
   const { data: assignableRoles } = useAssignableRoles();
   const updateMembership = useUpdateChurchMembership();
+  const transferOwnership = useTransferChurchOwnership();
 
   const [drafts, setDrafts] = useState<Record<string, string[]>>({});
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [savingUserId, setSavingUserId] = useState<string | null>(null);
+  const [transferTarget, setTransferTarget] = useState<ChurchMembership | null>(
+    null,
+  );
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
   const [expandedUserIds, setExpandedUserIds] = useState<Set<string>>(
@@ -256,11 +262,30 @@ export function ChurchMembershipsSettings() {
     }
   }
 
+  async function handleConfirmTransfer() {
+    if (!transferTarget) {
+      return;
+    }
+
+    setErrorMessage(null);
+
+    try {
+      await transferOwnership.mutateAsync(transferTarget.userId);
+      setTransferTarget(null);
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível transferir a propriedade.",
+      );
+    }
+  }
+
   return (
     <div>
       <SettingsSectionHeader
         title="Usuários"
-        description="Defina os cargos de cada pessoa. Quem tem mais de um cargo recebe a soma das permissões."
+        description="Defina os cargos de cada pessoa. O proprietário pode transferir a propriedade da igreja para outro usuário."
       />
 
       {errorMessage && <SettingsAlert message={errorMessage} />}
@@ -346,18 +371,27 @@ export function ChurchMembershipsSettings() {
                       </p>
                     )}
 
-                    {membership.isOwner && (
+                    {membership.userId === user?.id && user?.isOwner && (
+                      <p className="mb-3 rounded-lg border border-amber-500/20 bg-amber-500/8 px-3 py-2 text-xs text-muted-foreground">
+                        Você é o proprietário desta igreja. Para transferir a
+                        propriedade, escolha outra pessoa na lista abaixo.
+                      </p>
+                    )}
+
+                    {membership.isOwner && membership.userId !== user?.id && (
                       <p className="mb-3 rounded-lg bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
                         Proprietário da igreja — cargos adicionais são opcionais.
                       </p>
                     )}
 
                     {!canEdit ? (
-                      <p className="text-sm text-muted-foreground">
-                        {membership.userId === user?.id
-                          ? "Você não pode alterar o próprio acesso."
-                          : "Você não pode alterar o acesso deste usuário."}
-                      </p>
+                      membership.userId === user?.id && user?.isOwner ? null : (
+                        <p className="text-sm text-muted-foreground">
+                          {membership.userId === user?.id
+                            ? "Você não pode alterar o próprio acesso."
+                            : "Você não pode alterar o acesso deste usuário."}
+                        </p>
+                      )
                     ) : assignableRoles && assignableRoles.length > 0 ? (
                       <>
                       {assignableRoles.length > 1 && (
@@ -408,6 +442,26 @@ export function ChurchMembershipsSettings() {
                         </Button>
                       </div>
                     )}
+
+                    {user?.isOwner &&
+                      !membership.isOwner &&
+                      membership.userId !== user.id && (
+                        <div className="mt-4 border-t border-border/60 pt-4">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={
+                              transferOwnership.isPending ||
+                              isSaving ||
+                              Boolean(savingUserId)
+                            }
+                            onClick={() => setTransferTarget(membership)}
+                          >
+                            Transferir propriedade
+                          </Button>
+                        </div>
+                      )}
                   </SettingsExpandableRow>
                 );
               })
@@ -415,6 +469,13 @@ export function ChurchMembershipsSettings() {
           </div>
         </SettingsPanel>
       )}
+
+      <TransferOwnershipDialog
+        membership={transferTarget}
+        pending={transferOwnership.isPending}
+        onCancel={() => setTransferTarget(null)}
+        onConfirm={() => void handleConfirmTransfer()}
+      />
     </div>
   );
 }

@@ -76,6 +76,7 @@ interface AuthContextValue {
   switchChurch: (churchId: string) => Promise<void>;
   changePassword: (payload: ChangePasswordPayload) => Promise<void>;
   updateProfile: (payload: UpdateProfilePayload) => Promise<void>;
+  reloadSession: () => Promise<void>;
 }
 
 const CHURCH_SWITCH_MIN_OVERLAY_MS = 400;
@@ -259,6 +260,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [scheduleTokenRefresh, sessionSetters],
   );
 
+  const reloadSession = useCallback(async () => {
+    const session = await loadSession();
+    const next = commitSession(session, church ?? undefined, sessionSetters);
+
+    scheduleTokenRefresh(next.expiresIn);
+  }, [church, scheduleTokenRefresh, sessionSetters]);
+
   const logout = useCallback(async () => {
     if (refreshTimerRef.current) {
       clearTimeout(refreshTimerRef.current);
@@ -340,6 +348,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       switchChurch,
       changePassword,
       updateProfile,
+      reloadSession,
     }),
     [
       changePassword,
@@ -350,6 +359,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       login,
       logout,
       permissions,
+      reloadSession,
       switchChurch,
       switchingToChurchName,
       updateProfile,

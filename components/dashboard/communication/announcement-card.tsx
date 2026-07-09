@@ -121,22 +121,32 @@ export function AnnouncementCard({
               {announcement.title}
             </h3>
           </div>
-            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-              <span
-                className={cn(
-                  "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
-                  announcement.audienceType === "church_wide"
-                    ? "bg-primary/10 text-primary"
-                    : "bg-violet-500/10 text-violet-700 dark:text-violet-300",
-                )}
-              >
-                {announcement.audienceType === "church_wide" ? (
-                  <Globe className="size-3" aria-hidden />
-                ) : (
-                  <Layers className="size-3" aria-hidden />
-                )}
-                {audienceLabel}
-              </span>
+
+          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+            <span className="text-[11px] font-medium text-muted-foreground">
+              Para:
+            </span>
+            <span
+              className={cn(
+                "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
+                announcement.audienceType === "church_wide"
+                  ? "bg-primary/10 text-primary"
+                  : "bg-violet-500/10 text-violet-700 dark:text-violet-300",
+              )}
+            >
+              {announcement.audienceType === "church_wide" ? (
+                <Globe className="size-3" aria-hidden />
+              ) : (
+                <Layers className="size-3" aria-hidden />
+              )}
+              {audienceLabel}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex shrink-0 flex-col items-end gap-1.5">
+          {(announcement.priority !== "normal" || status) && (
+            <div className="flex flex-wrap items-center justify-end gap-1.5">
               {announcement.priority !== "normal" && (
                 <span
                   className={cn(
@@ -164,42 +174,43 @@ export function AnnouncementCard({
                 </span>
               )}
             </div>
-        </div>
+          )}
 
-        {manageMode && (
-          <div className="flex shrink-0 items-center gap-1">
-            {onEdit && (
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                className="text-muted-foreground hover:text-foreground"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onEdit(announcement);
-                }}
-                aria-label={`Editar ${announcement.title}`}
-              >
-                <Pencil className="size-4" />
-              </Button>
-            )}
-            {onDelete && (
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                className="text-muted-foreground hover:text-destructive"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onDelete(announcement);
-                }}
-                aria-label={`Excluir ${announcement.title}`}
-              >
-                <Trash2 className="size-4" />
-              </Button>
-            )}
-          </div>
-        )}
+          {manageMode && (
+            <div className="flex items-center gap-1">
+              {onEdit && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="text-muted-foreground hover:text-foreground"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onEdit(announcement);
+                  }}
+                  aria-label={`Editar ${announcement.title}`}
+                >
+                  <Pencil className="size-4" />
+                </Button>
+              )}
+              {onDelete && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="text-muted-foreground hover:text-destructive"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onDelete(announcement);
+                  }}
+                  aria-label={`Excluir ${announcement.title}`}
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-foreground/90">

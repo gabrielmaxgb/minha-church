@@ -60,55 +60,68 @@ function SeriesCard({
 
   return (
     <article className="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-soft">
-      <button
-        type="button"
-        onClick={() => setOpen((current) => !current)}
-        className="flex w-full items-start gap-3 px-4 py-4 text-left transition-colors hover:bg-muted/30 sm:px-5"
-      >
-        <span
-          className={cn(
-            "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-muted/40 text-muted-foreground transition-transform",
-            open && "rotate-180",
-          )}
+      <div className="flex items-start gap-3 px-4 py-4 sm:px-5">
+        <button
+          type="button"
+          onClick={() => setOpen((current) => !current)}
+          className="flex min-w-0 flex-1 items-start gap-3 text-left transition-colors hover:bg-muted/30 -mx-1 rounded-xl px-1 py-0.5"
         >
-          <ChevronDown className="size-4" />
-        </span>
-
-        <span className="min-w-0 flex-1">
-          <span className="flex flex-wrap items-center gap-2">
-            <span className="font-display text-base font-semibold tracking-tight">
-              {group.name}
-            </span>
-            {group.isRecurring && (
-              <Badge variant="secondary" className="gap-1">
-                <Repeat className="size-3" />
-                Recorrente
-              </Badge>
+          <span
+            className={cn(
+              "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-muted/40 text-muted-foreground transition-transform",
+              open && "rotate-180",
             )}
+          >
+            <ChevronDown className="size-4" />
           </span>
 
-          <span className="mt-1 block text-sm text-muted-foreground">
-            {group.occurrences.length} data
-            {group.occurrences.length === 1 ? "" : "s"} aberta
-            {group.occurrences.length === 1 ? "" : "s"}
-            {timeLabel ? ` · ${timeLabel}` : ""}
-          </span>
-
-          <span className="mt-2 flex flex-wrap gap-2 text-xs">
-            <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 font-medium text-emerald-800 dark:text-emerald-300">
-              {group.myAvailableCount} posso ir
-            </span>
-            <span className="rounded-full bg-destructive/10 px-2 py-0.5 font-medium text-destructive">
-              {group.myUnavailableCount} não posso
-            </span>
-            {group.myPendingCount > 0 && (
-              <span className="rounded-full bg-attention-subtle px-2 py-0.5 font-medium text-attention-foreground">
-                {group.myPendingCount} sem resposta
+          <span className="min-w-0 flex-1">
+            <span className="flex flex-wrap items-center gap-2">
+              <span className="font-display text-base font-semibold tracking-tight">
+                {group.name}
               </span>
-            )}
+              {group.isRecurring && (
+                <Badge variant="secondary" className="gap-1">
+                  <Repeat className="size-3" />
+                  Recorrente
+                </Badge>
+              )}
+            </span>
+
+            <span className="mt-1 block text-sm text-muted-foreground">
+              {group.occurrences.length} data
+              {group.occurrences.length === 1 ? "" : "s"} aberta
+              {group.occurrences.length === 1 ? "" : "s"}
+              {timeLabel ? ` · ${timeLabel}` : ""}
+            </span>
+
+            <span className="mt-2 flex flex-wrap gap-2 text-xs">
+              <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 font-medium text-emerald-800 dark:text-emerald-300">
+                {group.myAvailableCount} posso ir
+              </span>
+              <span className="rounded-full bg-destructive/10 px-2 py-0.5 font-medium text-destructive">
+                {group.myUnavailableCount} não posso
+              </span>
+              {group.myPendingCount > 0 && (
+                <span className="rounded-full bg-attention-subtle px-2 py-0.5 font-medium text-attention-foreground">
+                  {group.myPendingCount} sem resposta
+                </span>
+              )}
+            </span>
           </span>
-        </span>
-      </button>
+        </button>
+
+        {firstOpen ? (
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 shrink-0"
+            asChild
+          >
+            <Link href={activityDetailPath(firstOpen.id)}>Ver evento</Link>
+          </Button>
+        ) : null}
+      </div>
 
       {open && (
         <div className="space-y-4 border-t border-border/60 bg-muted/10 px-4 py-4 sm:px-5">

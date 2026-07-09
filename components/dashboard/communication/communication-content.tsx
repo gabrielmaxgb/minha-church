@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
-import { HelpCircle, Inbox, Megaphone, Pin, Plus } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { HelpCircle, Inbox, Megaphone, Pin, Plus, SearchX } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,7 +10,14 @@ import {
   useDeleteAnnouncement,
   useManagedAnnouncements,
   useMarkAnnouncementRead,
+  useMyMember,
 } from "@/lib/api/queries";
+import {
+  countActiveAnnouncementFilters,
+  DEFAULT_ANNOUNCEMENT_FILTERS,
+  filterAnnouncements,
+  type AnnouncementFiltersState,
+} from "@/lib/communication/announcement-filters";
 import { canManageCommunication } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
@@ -19,6 +26,7 @@ import type { Announcement } from "@/types/announcements";
 import { AnnouncementCard } from "./announcement-card";
 import { AnnouncementComposerModal } from "./announcement-composer-modal";
 import { AnnouncementDecisionGuide } from "./announcement-decision-guide";
+import { AnnouncementFiltersBar } from "./announcement-filters";
 import { ConfirmDeleteAnnouncementDialog } from "./confirm-delete-announcement-dialog";
 
 type CommunicationTab = "feed" | "manage";
@@ -28,6 +36,9 @@ export function CommunicationContent() {
   const canManage = canManageCommunication(permissions, user?.isOwner);
 
   const [tab, setTab] = useState<CommunicationTab>("feed");
+  const [filters, setFilters] = useState<AnnouncementFiltersState>(
+    DEFAULT_ANNOUNCEMENT_FILTERS,
+  );
   const [guideOpen, setGuideOpen] = useState(false);
   const [composerOpen, setComposerOpen] = useState(false);
   const [editing, setEditing] = useState<Announcement | null>(null);
@@ -37,18 +48,97 @@ export function CommunicationContent() {
   const manageQuery = useManagedAnnouncements({
     enabled: canManage && tab === "manage",
   });
+  const { data: myMember } = useMyMember({ enabled: tab === "feed" });
   const markRead = useMarkAnnouncementRead();
   const deleteMutation = useDeleteAnnouncement();
   const markedIdsRef = useRef(new Set<string>());
+  const [unreadSessionIds, setUnreadSessionIds] = useState<Set<string> | null>(
+    null,
+  );
+  const prevReadFilterRef = useRef(filters.read);
 
   const activeQuery = tab === "manage" ? manageQuery : feedQuery;
   const announcements = activeQuery.data ?? [];
+  const manageMode = tab === "manage";
+
+  const viewerMinistryIds = useMemo(() => {
+    if (manageMode || !myMember) {
+      return new Set<string>();
+    }
+
+    return new Set(
+      myMember.ministries
+        .filter((link) => !link.endedAt)
+        .map((link) => link.ministryId),
+    );
+  }, [manageMode, myMember]);
+
+  useEffect(() => {
+    setFilters(DEFAULT_ANNOUNCEMENT_FILTERS);
+  }, [tab]);
+
+  useEffect(() => {
+    if (
+      manageMode ||
+      filters.audience === "all" ||
+      filters.audience === "church_wide"
+    ) {
+      return;
+    }
+
+    if (!viewerMinistryIds.has(filters.audience)) {
+      setFilters((current) => ({ ...current, audience: "all" }));
+    }
+  }, [filters.audience, manageMode, viewerMinistryIds]);
+
+  useEffect(() => {
+    if (manageMode || filters.read !== "unread") {
+      setUnreadSessionIds(null);
+      prevReadFilterRef.current = filters.read;
+      return;
+    }
+
+    const enteredUnread = prevReadFilterRef.current !== "unread";
+    prevReadFilterRef.current = filters.read;
+
+    const unreadIds = announcements
+      .filter((announcement) => announcement.isRead === false)
+      .map((announcement) => announcement.id);
+
+    setUnreadSessionIds((current) => {
+      if (enteredUnread || current === null) {
+        return new Set(unreadIds);
+      }
+
+      if (current.size === 0 && unreadIds.length > 0) {
+        return new Set(unreadIds);
+      }
+
+      return current;
+    });
+  }, [announcements, filters.read, manageMode]);
+
+  const activeUnreadSessionIds =
+    !manageMode && filters.read === "unread" ? unreadSessionIds : null;
+
+  const filteredAnnouncements = useMemo(
+    () =>
+      filterAnnouncements(announcements, filters, {
+        manageMode,
+        unreadSessionIds: activeUnreadSessionIds,
+      }),
+    [announcements, filters, manageMode, activeUnreadSessionIds],
+  );
+
+  const activeFilterCount = countActiveAnnouncementFilters(filters, {
+    manageMode,
+  });
 
   const { pinnedAnnouncements, regularAnnouncements } = useMemo(() => {
     const pinned: Announcement[] = [];
     const regular: Announcement[] = [];
 
-    for (const announcement of announcements) {
+    for (const announcement of filteredAnnouncements) {
       if (announcement.pinned) {
         pinned.push(announcement);
       } else {
@@ -57,7 +147,7 @@ export function CommunicationContent() {
     }
 
     return { pinnedAnnouncements: pinned, regularAnnouncements: regular };
-  }, [announcements]);
+  }, [filteredAnnouncements]);
 
   const emptyState = useMemo(() => {
     if (tab === "manage") {
@@ -182,6 +272,46 @@ export function CommunicationContent() {
           )}
         </div>
       ) : (
+        <div className="space-y-4">
+          <AnnouncementFiltersBar
+            announcements={announcements}
+            filters={filters}
+            manageMode={manageMode}
+            allowedMinistryIds={viewerMinistryIds}
+            onChange={setFilters}
+          />
+
+          {activeFilterCount > 0 && (
+            <p className="px-0.5 text-xs text-muted-foreground">
+              {filteredAnnouncements.length === announcements.length
+                ? `${announcements.length} comunicado${announcements.length === 1 ? "" : "s"}`
+                : `${filteredAnnouncements.length} de ${announcements.length} comunicado${announcements.length === 1 ? "" : "s"}`}
+              {pinnedAnnouncements.length > 0 &&
+                ` · ${pinnedAnnouncements.length} fixado${pinnedAnnouncements.length === 1 ? "" : "s"}`}
+            </p>
+          )}
+
+          {filteredAnnouncements.length === 0 ? (
+            <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border/70 bg-muted/10 px-6 py-12 text-center">
+              <div className="flex size-11 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
+                <SearchX className="size-5" aria-hidden />
+              </div>
+              <div>
+                <p className="font-medium">Nenhum comunicado encontrado</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Ajuste os filtros ou limpe a busca para ver mais resultados.
+                </p>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => setFilters(DEFAULT_ANNOUNCEMENT_FILTERS)}
+              >
+                Limpar filtros
+              </Button>
+            </div>
+          ) : (
         <div className="space-y-6">
           {markRead.isPending && (
             <span className="sr-only" role="status">
@@ -258,6 +388,8 @@ export function CommunicationContent() {
               </div>
             </section>
           ) : null}
+        </div>
+          )}
         </div>
       )}
 
