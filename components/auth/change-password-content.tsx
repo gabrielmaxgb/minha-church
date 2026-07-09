@@ -4,20 +4,25 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff, KeyRound, Loader2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Eye,
+  EyeOff,
+  KeyRound,
+  Loader2,
+  ShieldCheck,
+} from "lucide-react";
 import { useForm } from "react-hook-form";
 
-import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  SettingsDetailHeader,
+  SettingsPanel,
+} from "@/components/dashboard/settings/settings-shared";
+import { Button } from "@/components/ui/button";
 import { FormAlert, FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { AUTH_ROUTES } from "@/constants/routes";
+import { cn } from "@/lib/utils";
 import {
   changePasswordSchema,
   type ChangePasswordFormValues,
@@ -30,6 +35,52 @@ interface ChangePasswordContentProps {
   variant?: ChangePasswordVariant;
 }
 
+const SECURITY_TIPS = [
+  "Evite reutilizar a mesma senha de outros serviços.",
+  "Prefira combinações difíceis de adivinhar.",
+  "Troque a senha se suspeitar de acesso indevido.",
+] as const;
+
+function PasswordInput({
+  id,
+  show,
+  onToggle,
+  disabled,
+  invalid,
+  autoComplete,
+  ...inputProps
+}: {
+  id: string;
+  show: boolean;
+  onToggle: () => void;
+  disabled?: boolean;
+  invalid?: boolean;
+  autoComplete?: string;
+} & React.ComponentProps<"input">) {
+  return (
+    <div className="relative">
+      <Input
+        id={id}
+        type={show ? "text" : "password"}
+        autoComplete={autoComplete}
+        disabled={disabled}
+        className="h-11 rounded-xl border-input/80 bg-surface-elevated pr-11"
+        aria-invalid={invalid || undefined}
+        {...inputProps}
+      />
+      <button
+        type="button"
+        onClick={onToggle}
+        className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-0.5 text-muted-foreground transition-colors hover:text-foreground"
+        aria-label={show ? "Ocultar senha" : "Exibir senha"}
+        tabIndex={-1}
+      >
+        {show ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+      </button>
+    </div>
+  );
+}
+
 export function ChangePasswordContent({
   variant = "required",
 }: ChangePasswordContentProps) {
@@ -38,6 +89,7 @@ export function ChangePasswordContent({
   const { user, isLoading } = useRequireAuth();
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isRequired = variant === "required";
@@ -87,137 +139,113 @@ export function ChangePasswordContent({
   if (isLoading || !user) {
     if (isRequired) {
       return (
-        <div className="flex min-h-screen items-center justify-center bg-background">
-          <p className="text-sm text-muted-foreground">Carregando...</p>
+        <div className="flex min-h-screen items-center justify-center bg-surface">
+          <p className="animate-pulse text-sm text-muted-foreground">
+            Carregando...
+          </p>
         </div>
       );
     }
 
-    return (
-      <p className="text-sm text-muted-foreground">Carregando...</p>
-    );
+    return <p className="text-sm text-muted-foreground">Carregando...</p>;
   }
 
-  const formCard = (
-    <Card
-      className={
-        isRequired
-          ? "w-full max-w-md border-border shadow-none"
-          : "max-w-lg border-border shadow-none"
-      }
-    >
-      <CardHeader className={isRequired ? "text-center" : undefined}>
-        {isRequired && (
-          <div className="mx-auto mb-3 flex size-11 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <KeyRound className="size-5" aria-hidden />
-          </div>
-        )}
-        <CardTitle className={isRequired ? "font-display text-2xl" : "text-lg"}>
-          {isRequired ? "Defina sua senha" : "Alterar senha"}
-        </CardTitle>
-        <CardDescription>
-          {isRequired
-            ? "Por segurança, troque a senha temporária antes de continuar."
-            : "Informe sua senha atual e escolha uma nova senha de acesso."}
-        </CardDescription>
-      </CardHeader>
+  const currentLabel = isRequired ? "Senha temporária atual" : "Senha atual";
+  const heroTitle = isRequired ? "Defina sua senha" : "Segurança da conta";
+  const heroDescription = isRequired
+    ? "Por segurança, troque a senha temporária antes de acessar o painel."
+    : "Mantenha sua conta protegida com uma senha forte e exclusiva.";
+
+  const formPanel = (
+    <SettingsPanel className="shadow-soft">
+      <SettingsDetailHeader
+        title={isRequired ? "Nova senha de acesso" : "Alterar senha"}
+        description="Informe a senha atual e defina a nova credencial."
+      />
 
       <form onSubmit={onSubmit} noValidate>
-        <CardContent className="space-y-4">
+        <div className="space-y-4 px-5 py-5">
           {errors.root?.message && <FormAlert>{errors.root.message}</FormAlert>}
 
           <FormField
-            label={isRequired ? "Senha temporária atual" : "Senha atual"}
+            label={currentLabel}
             htmlFor="current-password"
             error={errors.currentPassword?.message}
             required
           >
-            <div className="relative">
-              <Input
-                id="current-password"
-                type={showCurrentPassword ? "text" : "password"}
-                autoComplete="current-password"
-                disabled={isSubmitting}
-                className="pr-10"
-                aria-invalid={errors.currentPassword ? true : undefined}
-                {...register("currentPassword")}
-              />
-              <button
-                type="button"
-                onClick={() => setShowCurrentPassword((prev) => !prev)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                aria-label={showCurrentPassword ? "Ocultar senha" : "Exibir senha"}
-                tabIndex={-1}
-              >
-                {showCurrentPassword ? (
-                  <EyeOff className="size-4" />
-                ) : (
-                  <Eye className="size-4" />
-                )}
-              </button>
-            </div>
-          </FormField>
-
-          <FormField
-            label="Nova senha"
-            htmlFor="new-password"
-            error={errors.newPassword?.message}
-            hint="Mínimo de 6 caracteres."
-            required
-          >
-            <div className="relative">
-              <Input
-                id="new-password"
-                type={showNewPassword ? "text" : "password"}
-                autoComplete="new-password"
-                disabled={isSubmitting}
-                className="pr-10"
-                aria-invalid={errors.newPassword ? true : undefined}
-                {...register("newPassword")}
-              />
-              <button
-                type="button"
-                onClick={() => setShowNewPassword((prev) => !prev)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                aria-label={showNewPassword ? "Ocultar senha" : "Exibir senha"}
-                tabIndex={-1}
-              >
-                {showNewPassword ? (
-                  <EyeOff className="size-4" />
-                ) : (
-                  <Eye className="size-4" />
-                )}
-              </button>
-            </div>
-          </FormField>
-
-          <FormField
-            label="Confirmar nova senha"
-            htmlFor="confirm-password"
-            error={errors.confirmPassword?.message}
-            required
-          >
-            <Input
-              id="confirm-password"
-              type="password"
-              autoComplete="new-password"
+            <PasswordInput
+              id="current-password"
+              show={showCurrentPassword}
+              onToggle={() => setShowCurrentPassword((prev) => !prev)}
               disabled={isSubmitting}
-              aria-invalid={errors.confirmPassword ? true : undefined}
-              {...register("confirmPassword")}
+              invalid={Boolean(errors.currentPassword)}
+              autoComplete="current-password"
+              {...register("currentPassword")}
             />
           </FormField>
-        </CardContent>
 
-        <div className="flex flex-col-reverse gap-2 px-6 pb-6 sm:flex-row sm:justify-end">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <FormField
+              label="Nova senha"
+              htmlFor="new-password"
+              error={errors.newPassword?.message}
+              hint="Mínimo de 6 caracteres."
+              required
+            >
+              <PasswordInput
+                id="new-password"
+                show={showNewPassword}
+                onToggle={() => setShowNewPassword((prev) => !prev)}
+                disabled={isSubmitting}
+                invalid={Boolean(errors.newPassword)}
+                autoComplete="new-password"
+                {...register("newPassword")}
+              />
+            </FormField>
+
+            <FormField
+              label="Confirmar nova senha"
+              htmlFor="confirm-password"
+              error={errors.confirmPassword?.message}
+              required
+            >
+              <PasswordInput
+                id="confirm-password"
+                show={showConfirmPassword}
+                onToggle={() => setShowConfirmPassword((prev) => !prev)}
+                disabled={isSubmitting}
+                invalid={Boolean(errors.confirmPassword)}
+                autoComplete="new-password"
+                {...register("confirmPassword")}
+              />
+            </FormField>
+          </div>
+        </div>
+
+        <div
+          className={cn(
+            "flex flex-col-reverse gap-2 border-t border-border/70 bg-muted/25 px-5 py-4 sm:flex-row",
+            isRequired ? "sm:justify-stretch" : "sm:justify-end",
+          )}
+        >
           {!isRequired && (
-            <Button type="button" variant="outline" asChild disabled={isSubmitting}>
-              <Link href={AUTH_ROUTES.settings}>Cancelar</Link>
+            <Button
+              type="button"
+              variant="ghost"
+              asChild
+              disabled={isSubmitting}
+              className="sm:mr-auto"
+            >
+              <Link href={AUTH_ROUTES.settings}>
+                <ArrowLeft className="size-4" />
+                Voltar às configurações
+              </Link>
             </Button>
           )}
           <Button
             type="submit"
-            className={isRequired ? "w-full" : undefined}
             disabled={isSubmitting}
+            className={isRequired ? "w-full sm:ml-0" : undefined}
           >
             {isSubmitting ? (
               <>
@@ -230,16 +258,71 @@ export function ChangePasswordContent({
           </Button>
         </div>
       </form>
-    </Card>
+    </SettingsPanel>
+  );
+
+  const tipsPanel = (
+    <aside className="rounded-2xl border border-border/70 bg-gradient-to-b from-muted/35 to-background p-5 shadow-soft">
+      <div className="flex items-center gap-2 text-foreground">
+        <ShieldCheck className="size-4 text-primary" aria-hidden />
+        <h3 className="text-sm font-semibold tracking-tight">Boas práticas</h3>
+      </div>
+      <ul className="mt-4 space-y-3">
+        {SECURITY_TIPS.map((tip) => (
+          <li
+            key={tip}
+            className="flex gap-2.5 text-sm leading-relaxed text-muted-foreground"
+          >
+            <span
+              className="mt-2 size-1.5 shrink-0 rounded-full bg-primary/70"
+              aria-hidden
+            />
+            {tip}
+          </li>
+        ))}
+      </ul>
+    </aside>
+  );
+
+  const hero = (
+    <div className="overflow-hidden rounded-2xl border border-border/70 bg-gradient-to-br from-muted/45 via-background to-primary/[0.05] p-5 shadow-soft sm:p-6">
+      <div className="flex items-start gap-4">
+        <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-soft">
+          <KeyRound className="size-5" aria-hidden />
+        </div>
+        <div className="min-w-0">
+          <h2 className="font-display text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+            {heroTitle}
+          </h2>
+          <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+            {heroDescription}
+          </p>
+        </div>
+      </div>
+    </div>
   );
 
   if (isRequired) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-surface px-4 py-10">
-        {formCard}
+      <div className="flex min-h-screen flex-col bg-surface">
+        <div className="flex flex-1 items-center justify-center px-4 py-10 sm:px-6">
+          <div className="w-full max-w-lg space-y-6">
+            {hero}
+            {formPanel}
+            {tipsPanel}
+          </div>
+        </div>
       </div>
     );
   }
 
-  return formCard;
+  return (
+    <div className="space-y-6">
+      {hero}
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_16.5rem] lg:items-start">
+        {formPanel}
+        {tipsPanel}
+      </div>
+    </div>
+  );
 }

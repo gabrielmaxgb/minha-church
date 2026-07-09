@@ -75,20 +75,13 @@ export function DashboardShell({
       </div>
 
       {sidebarOpen && (
-        <>
-          <button
-            type="button"
-            className="fixed inset-0 z-30 bg-[#141413]/40 backdrop-blur-sm lg:hidden"
-            aria-label="Fechar menu"
-            onClick={() => setSidebarOpen(false)}
+        <div className="fixed inset-0 z-40 h-full w-full lg:hidden">
+          <DashboardSidebar
+            onNavigate={() => setSidebarOpen(false)}
+            onClose={() => setSidebarOpen(false)}
+            className="h-full w-full border-r-0"
           />
-          <div className="fixed inset-y-0 left-0 z-40 h-full w-64 shadow-elevated lg:hidden">
-            <DashboardSidebar
-              onNavigate={() => setSidebarOpen(false)}
-              className="h-full"
-            />
-          </div>
-        </>
+        </div>
       )}
 
       <div

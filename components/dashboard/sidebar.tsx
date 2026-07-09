@@ -4,8 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
 import { motion, useReducedMotion } from "motion/react";
+import { X } from "lucide-react";
 
-import { Logo } from "@/components/layout/logo";
+import { SidebarChurchBrand } from "@/components/dashboard/sidebar-church-brand";
 import {
   dashboardNavItems,
   dashboardSecondaryNavItems,
@@ -20,6 +21,7 @@ import { useAuth } from "@/providers/auth-provider";
 
 interface DashboardSidebarProps {
   onNavigate?: () => void;
+  onClose?: () => void;
   className?: string;
 }
 
@@ -78,6 +80,7 @@ function NavLink({
 
 export function DashboardSidebar({
   onNavigate,
+  onClose,
   className,
 }: DashboardSidebarProps) {
   const pathname = usePathname();
@@ -123,12 +126,26 @@ export function DashboardSidebar({
   return (
     <aside
       className={cn(
-        "flex h-full w-64 shrink-0 flex-col border-r border-border/80 bg-surface",
+        "flex h-full w-full shrink-0 flex-col border-r border-border/80 bg-surface lg:w-64",
         className,
       )}
     >
-      <div className="border-b border-border/60 px-5 py-5">
-        <Logo href={AUTH_ROUTES.dashboard} size="md" />
+      <div className="border-b border-border/60 px-4 py-4">
+        <div className="flex items-start gap-2">
+          <div className="min-w-0 flex-1">
+            <SidebarChurchBrand />
+          </div>
+          {onClose ? (
+            <button
+              type="button"
+              onClick={onClose}
+              className="shrink-0 rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground lg:hidden"
+              aria-label="Fechar menu"
+            >
+              <X className="size-5" />
+            </button>
+          ) : null}
+        </div>
       </div>
 
       <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-5">
