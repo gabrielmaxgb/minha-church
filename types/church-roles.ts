@@ -40,7 +40,7 @@ export const CHURCH_PERMISSION_LABELS: Record<ChurchPermissionKey, string> = {
   members_manage: "Gerenciar membros",
   ministries_manage: "Gerenciar ministérios",
   events_create_church_wide: "Criar atividades em toda a igreja",
-  communication_manage: "Enviar comunicados",
+  communication_manage: "Gerenciar comunicados",
   roles_manage: "Gerenciar cargos da igreja",
   memberships_manage: "Atribuir cargos a usuários",
 };

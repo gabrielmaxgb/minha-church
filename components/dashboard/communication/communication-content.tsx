@@ -24,8 +24,8 @@ import { ConfirmDeleteAnnouncementDialog } from "./confirm-delete-announcement-d
 type CommunicationTab = "feed" | "manage";
 
 export function CommunicationContent() {
-  const { permissions } = useAuth();
-  const canManage = canManageCommunication(permissions);
+  const { permissions, user } = useAuth();
+  const canManage = canManageCommunication(permissions, user?.isOwner);
 
   const [tab, setTab] = useState<CommunicationTab>("feed");
   const [guideOpen, setGuideOpen] = useState(false);
