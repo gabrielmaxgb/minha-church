@@ -324,7 +324,7 @@ export function RosterCollectionModal({
           {isLoading ? (
             <p className="text-sm text-muted-foreground">Carregando datas...</p>
           ) : (
-            <div className="overflow-hidden rounded-2xl border border-border/70">
+            <div className="overflow-hidden rounded-xl border border-border/70">
               <div className="grid grid-cols-7 border-b border-border/60 bg-muted/30">
                 {getWeekdayLabels().map((label) => (
                   <div
@@ -380,7 +380,7 @@ export function RosterCollectionModal({
                               className={cn(
                                 "block truncate rounded px-1 py-0.5 text-[10px] font-medium",
                                 occurrence.rosterOpen
-                                  ? "bg-emerald-500/15 text-emerald-800 dark:text-emerald-200"
+                                  ? "bg-success-subtle text-success-foreground"
                                   : "bg-muted text-muted-foreground",
                               )}
                             >
@@ -423,11 +423,11 @@ export function RosterCollectionModal({
           ) : null}
         </>
       ) : (
-        <div className="rounded-2xl border border-border/70 bg-muted/10 px-5 py-8 text-center">
+        <div className="rounded-xl border border-border/70 bg-muted/10 px-5 py-8 text-center">
           <p className="text-sm text-muted-foreground">
             Ao confirmar, a coleta de disponibilidade será aberta para:
           </p>
-          <p className="mt-3 font-display text-2xl font-semibold capitalize tracking-tight text-foreground">
+          <p className="mt-3 text-2xl font-semibold capitalize tracking-tight text-foreground">
             {formatOccurrenceShort(event.startsAt)}
           </p>
           <p className="mt-3 text-xs text-muted-foreground">

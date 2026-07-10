@@ -24,9 +24,7 @@ import {
   canManageMembers,
   canManageMinistries,
 } from "@/lib/permissions";
-import { pendingNotificationStyles } from "@/lib/ui/notification-styles";
 import { useTrialWriteGuard } from "@/lib/subscription/use-trial-write-guard";
-import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 
 interface DashboardActionsPanelProps {
@@ -57,7 +55,7 @@ export function DashboardActionsPanel({
     !writesBlocked && pendingAccessCount > 0 && canManageMemberships
       ? {
           label: `${pendingAccessCount} acesso${pendingAccessCount > 1 ? "s" : ""} pendente${pendingAccessCount > 1 ? "s" : ""}`,
-          description: "Usuários aguardando aprovação na igreja",
+          description: "Usuários aguardando aprovação",
           href: settingsSectionPath("pending-users"),
           icon: Users,
         }
@@ -65,7 +63,7 @@ export function DashboardActionsPanel({
     !writesBlocked && passwordResetCount > 0 && canManageMemberships
       ? {
           label: `${passwordResetCount} pedido${passwordResetCount > 1 ? "s" : ""} de senha`,
-          description: "Membros solicitaram redefinição de senha",
+          description: "Redefinição solicitada",
           href: settingsSectionPath("password-reset-requests"),
           icon: KeyRound,
         }
@@ -94,8 +92,8 @@ export function DashboardActionsPanel({
 
   if (permissions && canManageMinistries(permissions) && !writesBlocked) {
     quickActions.push({
-      label: "Ministérios e grupos",
-      description: "Grupos de serviço, equipes e cargos",
+      label: "Ministérios",
+      description: "Equipes e cargos",
       href: AUTH_ROUTES.ministries,
       icon: Layers,
     });
@@ -123,31 +121,19 @@ export function DashboardActionsPanel({
   return (
     <div className="space-y-4">
       {attentionItems.length > 0 && (
-        <section className={pendingNotificationStyles.banner.section}>
-          <div className="mb-3 flex items-center gap-2">
-            <AlertCircle
-              className={cn("size-4", pendingNotificationStyles.icon.section)}
-              aria-hidden
-            />
-            <h2 className="font-display text-sm font-semibold tracking-tight">
-              Requer atenção
-            </h2>
+        <section className="rounded-lg border border-attention-border bg-attention-subtle">
+          <div className="flex items-center gap-2 border-b border-attention-border/60 px-4 py-3">
+            <AlertCircle className="size-4 text-attention-foreground" aria-hidden />
+            <h2 className="text-sm font-medium text-foreground">Pendências</h2>
           </div>
-          <ul className="space-y-2">
+          <ul className="p-1.5">
             {attentionItems.map((item) => (
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className={pendingNotificationStyles.banner.item}
+                  className="flex items-center gap-3 rounded-md px-2.5 py-2.5 transition-colors hover:bg-card/60"
                 >
-                  <span
-                    className={cn(
-                      "flex size-8 shrink-0 items-center justify-center rounded-lg",
-                      pendingNotificationStyles.icon.sm,
-                    )}
-                  >
-                    <item.icon className="size-4" />
-                  </span>
+                  <item.icon className="size-4 shrink-0 text-attention-foreground" />
                   <span className="min-w-0">
                     <span className="block text-sm font-medium text-foreground">
                       {item.label}
@@ -164,25 +150,15 @@ export function DashboardActionsPanel({
       )}
 
       {quickActions.length > 0 && (
-        <section className="rounded-3xl border border-border/70 bg-card p-5 shadow-soft">
-          <h2 className="font-display text-sm font-semibold tracking-tight">
-            Ações rápidas
-          </h2>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Atalhos para o dia a dia da liderança.
-          </p>
-
-          <ul className="mt-4 space-y-1.5">
+        <section className="rounded-lg border border-border bg-card">
+          <div className="border-b border-border px-4 py-3">
+            <h2 className="text-sm font-medium text-foreground">Ações</h2>
+          </div>
+          <ul className="p-1.5">
             {quickActions.map((action) => {
               const content = (
                 <>
-                  <span
-                    className={cn(
-                      "flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted/80 text-foreground/80",
-                    )}
-                  >
-                    <action.icon className="size-4" strokeWidth={1.75} />
-                  </span>
+                  <action.icon className="size-4 shrink-0 text-muted-foreground" />
                   <span className="min-w-0 text-left">
                     <span className="block text-sm font-medium text-foreground">
                       {action.label}
@@ -199,7 +175,7 @@ export function DashboardActionsPanel({
                   <li key={action.label}>
                     <Link
                       href={action.href}
-                      className="flex w-full items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-muted/50"
+                      className="flex w-full items-center gap-3 rounded-md px-2.5 py-2.5 transition-colors hover:bg-muted/60"
                     >
                       {content}
                     </Link>
@@ -212,7 +188,7 @@ export function DashboardActionsPanel({
                   <button
                     type="button"
                     onClick={action.onClick}
-                    className="flex w-full items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-muted/50"
+                    className="flex w-full items-center gap-3 rounded-md px-2.5 py-2.5 transition-colors hover:bg-muted/60"
                   >
                     {content}
                   </button>
@@ -224,22 +200,19 @@ export function DashboardActionsPanel({
       )}
 
       {showFinancesTeaser && (
-        <section className="rounded-3xl border border-border/70 bg-card p-5 shadow-soft">
-          <div className="rounded-xl border border-dashed border-border/80 bg-muted/15 px-3 py-3">
-            <p className="text-xs font-medium text-foreground">Finanças</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Módulo em desenvolvimento — em breve você acompanha saldo e
-              movimentações aqui.
-            </p>
-            <Button
-              variant="link"
-              size="sm"
-              className="mt-1 h-auto p-0 text-xs"
-              asChild
-            >
-              <Link href={AUTH_ROUTES.finances}>Saiba mais</Link>
-            </Button>
-          </div>
+        <section className="rounded-lg border border-border bg-card px-4 py-3.5">
+          <p className="text-sm font-medium text-foreground">Finanças</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Módulo em desenvolvimento.
+          </p>
+          <Button
+            variant="link"
+            size="sm"
+            className="mt-1 h-auto p-0 text-xs"
+            asChild
+          >
+            <Link href={AUTH_ROUTES.finances}>Saiba mais</Link>
+          </Button>
         </section>
       )}
     </div>

@@ -51,7 +51,7 @@ export function AnnouncementFiltersBar({
   return (
     <section
       aria-label="Filtros de comunicados"
-      className="overflow-hidden rounded-2xl border border-border/70 bg-gradient-to-b from-muted/35 to-muted/10 shadow-soft"
+      className="overflow-hidden rounded-lg border border-border/70 bg-muted/20"
     >
       <div className="flex flex-col gap-3 border-b border-border/60 px-3 py-3 sm:flex-row sm:items-center sm:px-4">
         <div className="relative min-w-0 flex-1">
@@ -193,7 +193,7 @@ export function AnnouncementFiltersBar({
                 key={ministry.id}
                 active={filters.audience === ministry.id}
                 onClick={() => patch({ audience: ministry.id })}
-                accent="violet"
+                accent="muted"
               >
                 {ministry.name}
               </FilterPill>
@@ -230,7 +230,7 @@ function FilterPill({
 }: {
   active: boolean;
   onClick: () => void;
-  accent?: "primary" | "violet";
+  accent?: "primary" | "muted";
   children: React.ReactNode;
 }) {
   return (
@@ -240,9 +240,9 @@ function FilterPill({
       className={cn(
         "rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-200",
         active
-          ? accent === "violet"
-            ? "border-violet-500/25 bg-violet-500/12 text-violet-700 shadow-sm dark:text-violet-300"
-            : "border-primary/25 bg-primary text-primary-foreground shadow-sm"
+          ? accent === "muted"
+            ? "border-border bg-muted text-foreground"
+            : "border-primary/25 bg-primary text-primary-foreground"
           : "border-border/70 bg-background/70 text-muted-foreground hover:border-border hover:bg-background hover:text-foreground",
       )}
     >
@@ -305,10 +305,10 @@ function PriorityPill({
         "rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-200",
         active
           ? urgent
-            ? "border-destructive/25 bg-destructive/10 text-destructive shadow-sm"
+            ? "border-destructive/25 bg-destructive/10 text-destructive"
             : important
-              ? "border-amber-500/25 bg-amber-500/12 text-amber-800 shadow-sm dark:text-amber-300"
-              : "border-primary/25 bg-primary text-primary-foreground shadow-sm"
+              ? "border-attention-border bg-attention-subtle text-attention-foreground"
+              : "border-primary/25 bg-primary text-primary-foreground"
           : "border-border/70 bg-background/70 text-muted-foreground hover:border-border hover:bg-background hover:text-foreground",
       )}
     >

@@ -33,7 +33,7 @@ export function MinistryRoleToggles({
   return (
     <div className="relative divide-y divide-border/50 rounded-lg border border-border/60 bg-card px-2">
       {isUpdating && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/60 backdrop-blur-[1px]">
+        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/80">
           <Loader2 className="size-4 animate-spin text-muted-foreground" />
         </div>
       )}

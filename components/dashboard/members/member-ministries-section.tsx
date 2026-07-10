@@ -66,10 +66,7 @@ function MinistryRoleRow({
         </Button>
       </div>
 
-      <MinistryTagSection
-        title="Cargos"
-        titleClassName="text-[10px] font-semibold uppercase tracking-[0.12em] text-sky-700/85 dark:text-sky-400/90"
-      >
+      <MinistryTagSection title="Cargos">
         <MinistryRoleToggles
           roles={roles}
           selectedRoleIds={selectedRoleIds}

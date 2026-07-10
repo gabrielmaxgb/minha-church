@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
+import { AlertTriangle, RefreshCw } from "lucide-react";
 import { AUTH_ROUTES } from "@/constants/routes";
 import {
   useAssignableRoles,
@@ -115,6 +115,7 @@ export function ChurchMembershipsSettings() {
   const [transferTarget, setTransferTarget] = useState<ChurchMembership | null>(
     null,
   );
+  const [transferError, setTransferError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
   const [expandedUserIds, setExpandedUserIds] = useState<Set<string>>(
@@ -314,19 +315,23 @@ export function ChurchMembershipsSettings() {
     }
   }
 
-  async function handleConfirmTransfer() {
+  async function handleConfirmTransfer(password: string) {
     if (!transferTarget) {
       return;
     }
 
+    setTransferError(null);
     setErrorMessage(null);
 
     try {
-      await transferOwnership.mutateAsync(transferTarget.userId);
+      await transferOwnership.mutateAsync({
+        userId: transferTarget.userId,
+        password,
+      });
       setTransferTarget(null);
       router.replace(`${AUTH_ROUTES.settings}?section=profile`);
     } catch (error) {
-      setErrorMessage(
+      setTransferError(
         error instanceof Error
           ? error.message
           : "Não foi possível transferir a propriedade.",
@@ -473,7 +478,7 @@ export function ChurchMembershipsSettings() {
                     )}
 
                     {membership.userId === user?.id && user?.isOwner && (
-                      <p className="mb-3 rounded-lg border border-amber-500/20 bg-amber-500/8 px-3 py-2 text-xs text-muted-foreground">
+                      <p className="mb-3 rounded-lg border border-attention-border bg-attention-subtle px-3 py-2 text-xs text-muted-foreground">
                         Você é o proprietário desta igreja. Para transferir a
                         propriedade, escolha outra pessoa na lista abaixo.
                       </p>
@@ -484,6 +489,48 @@ export function ChurchMembershipsSettings() {
                         Proprietário da igreja — cargos adicionais são opcionais.
                       </p>
                     )}
+
+                    {user?.isOwner &&
+                      !membership.isOwner &&
+                      membership.userId !== user.id && (
+                        <div className="mb-4 rounded-lg border border-attention-border bg-attention-subtle p-3">
+                          {membership.canReceiveOwnership ? (
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                              <div className="min-w-0">
+                                <p className="text-xs font-medium text-attention-foreground">
+                                  Transferir propriedade
+                                </p>
+                                <p className="mt-0.5 text-xs text-muted-foreground">
+                                  Você deixa de ser o dono desta igreja. Ação
+                                  irreversível sem nova transferência.
+                                </p>
+                              </div>
+                              <Button
+                                type="button"
+                                size="sm"
+                                disabled={
+                                  transferOwnership.isPending ||
+                                  isSaving ||
+                                  Boolean(savingUserId)
+                                }
+                                onClick={() => {
+                                setTransferError(null);
+                                setTransferTarget(membership);
+                              }}
+                                className="shrink-0 border border-attention-border bg-attention-mark text-attention-foreground hover:bg-attention-emphasis/40"
+                              >
+                                <AlertTriangle className="size-3.5" />
+                                Transferir propriedade
+                              </Button>
+                            </div>
+                          ) : (
+                            <p className="text-sm text-muted-foreground">
+                              Para receber a propriedade, cadastre um e-mail no
+                              perfil do membro vinculado a este acesso.
+                            </p>
+                          )}
+                        </div>
+                      )}
 
                     {!canEdit ? (
                       membership.userId === user?.id && user?.isOwner ? null : (
@@ -553,32 +600,6 @@ export function ChurchMembershipsSettings() {
                       </div>
                     )}
 
-                    {user?.isOwner &&
-                      !membership.isOwner &&
-                      membership.userId !== user.id && (
-                        <div className="mt-4 border-t border-border/60 pt-4">
-                          {membership.canReceiveOwnership ? (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              disabled={
-                                transferOwnership.isPending ||
-                                isSaving ||
-                                Boolean(savingUserId)
-                              }
-                              onClick={() => setTransferTarget(membership)}
-                            >
-                              Transferir propriedade
-                            </Button>
-                          ) : (
-                            <p className="text-sm text-muted-foreground">
-                              Para receber a propriedade, cadastre um e-mail no
-                              perfil do membro vinculado a este acesso.
-                            </p>
-                          )}
-                        </div>
-                      )}
                   </SettingsExpandableRow>
                 );
               })
@@ -590,8 +611,12 @@ export function ChurchMembershipsSettings() {
       <TransferOwnershipDialog
         membership={transferTarget}
         pending={transferOwnership.isPending}
-        onCancel={() => setTransferTarget(null)}
-        onConfirm={() => void handleConfirmTransfer()}
+        error={transferError}
+        onCancel={() => {
+          setTransferTarget(null);
+          setTransferError(null);
+        }}
+        onConfirm={(password) => void handleConfirmTransfer(password)}
       />
     </div>
   );

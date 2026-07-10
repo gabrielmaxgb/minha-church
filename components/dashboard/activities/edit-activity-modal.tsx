@@ -243,7 +243,7 @@ export function EditActivityModal({
     <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-6">
       <button
         type="button"
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/45"
         aria-label="Fechar modal"
         disabled={isPending}
         onClick={() => {
@@ -257,7 +257,7 @@ export function EditActivityModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative z-10 flex max-h-[min(94dvh,860px)] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl border border-border/80 bg-background shadow-2xl sm:rounded-3xl"
+        className="relative z-10 flex max-h-[min(94dvh,860px)] w-full max-w-2xl flex-col overflow-hidden rounded-t-xl border border-border/80 bg-background shadow-popover sm:rounded-xl"
       >
         <header className="relative border-b border-border/80 bg-muted/20 px-6 pb-6 pt-7 sm:px-8 sm:pt-8">
           <button
@@ -271,7 +271,7 @@ export function EditActivityModal({
           </button>
 
           <div className="flex flex-col gap-5 pr-12 sm:flex-row sm:items-start sm:gap-6">
-            <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-foreground text-background shadow-sm">
+            <div className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-foreground text-background">
               <Calendar className="size-6" aria-hidden />
             </div>
 
@@ -291,7 +291,7 @@ export function EditActivityModal({
                   <Badge variant="secondary">Recorrente</Badge>
                 )}
                 {hasChanges && (
-                  <Badge variant="outline" className="border-amber-500/40 text-amber-700 dark:text-amber-300">
+                  <Badge variant="outline" className="border-attention-border text-attention-foreground">
                     Alterações não salvas
                   </Badge>
                 )}
@@ -300,7 +300,7 @@ export function EditActivityModal({
               <div className="space-y-1.5">
                 <h2
                   id={titleId}
-                  className="font-display text-2xl font-semibold tracking-tight sm:text-[1.75rem]"
+                  className="text-2xl font-semibold tracking-tight sm:text-[1.75rem]"
                 >
                   Editar atividade
                 </h2>
@@ -323,7 +323,7 @@ export function EditActivityModal({
             {error && (
               <div
                 role="alert"
-                className="rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3.5 text-sm text-destructive"
+                className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3.5 text-sm text-destructive"
               >
                 {error}
               </div>

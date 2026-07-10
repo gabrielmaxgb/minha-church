@@ -59,7 +59,7 @@ function SeriesCard({
   const timeLabel = firstOpen ? formatEventTime(firstOpen.startsAt) : "";
 
   return (
-    <article className="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-soft">
+    <article className="overflow-hidden rounded-xl border border-border/80 bg-card">
       <div className="flex items-start gap-3 px-4 py-4 sm:px-5">
         <button
           type="button"
@@ -77,7 +77,7 @@ function SeriesCard({
 
           <span className="min-w-0 flex-1">
             <span className="flex flex-wrap items-center gap-2">
-              <span className="font-display text-base font-semibold tracking-tight">
+              <span className="text-base font-semibold tracking-tight">
                 {group.name}
               </span>
               {group.isRecurring && (
@@ -96,7 +96,7 @@ function SeriesCard({
             </span>
 
             <span className="mt-2 flex flex-wrap gap-2 text-xs">
-              <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 font-medium text-emerald-800 dark:text-emerald-300">
+              <span className="rounded-full bg-success-subtle px-2 py-0.5 font-medium text-success-foreground">
                 {group.myAvailableCount} posso ir
               </span>
               <span className="rounded-full bg-destructive/10 px-2 py-0.5 font-medium text-destructive">
@@ -168,7 +168,7 @@ function OccurrenceRow({
       className={cn(
         "flex flex-col gap-3 rounded-xl border px-3 py-3",
         event.myStatus === "available" &&
-          "border-emerald-500/25 bg-emerald-500/5",
+          "border-success/30 bg-success-subtle",
         event.myStatus === "unavailable" &&
           "border-destructive/20 bg-destructive/4",
         !event.myStatus && "border-border/70 bg-background",
@@ -184,7 +184,7 @@ function OccurrenceRow({
             {event.location ? ` · ${event.location}` : ""}
           </p>
           {event.availabilityMessage?.trim() ? (
-            <p className="mt-2 rounded-lg border border-sky-500/20 bg-sky-500/8 px-2.5 py-2 text-xs leading-relaxed text-foreground whitespace-pre-wrap">
+            <p className="mt-2 rounded-lg border border-border/70 bg-muted/20 px-2.5 py-2 text-xs leading-relaxed text-foreground whitespace-pre-wrap">
               {event.availabilityMessage.trim()}
             </p>
           ) : null}
@@ -244,15 +244,15 @@ export function WorshipAvailabilitySection({
   if (isLoading) {
     return (
       <div className="space-y-3">
-        <Skeleton className="h-28 rounded-2xl" />
-        <Skeleton className="h-24 rounded-2xl" />
+        <Skeleton className="h-28 rounded-xl" />
+        <Skeleton className="h-24 rounded-xl" />
       </div>
     );
   }
 
   if (isError || !data) {
     return (
-      <div className="rounded-2xl border border-border bg-muted/20 px-4 py-5 text-sm text-muted-foreground">
+      <div className="rounded-xl border border-border bg-muted/20 px-4 py-5 text-sm text-muted-foreground">
         {error instanceof Error
           ? error.message
           : "Disponibilidade disponível apenas para quem faz parte deste ministério."}
@@ -277,8 +277,8 @@ export function WorshipAvailabilitySection({
 
       {data.summary.totalOpen > 0 && (
         <div className="grid gap-2 sm:grid-cols-3">
-          <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/8 px-3 py-2.5">
-            <p className="text-xs font-medium text-emerald-800 dark:text-emerald-300">
+          <div className="rounded-xl border border-success/30 bg-success-subtle px-3 py-2.5">
+            <p className="text-xs font-medium text-success-foreground">
               Posso ir
             </p>
             <p className="mt-0.5 text-lg font-semibold tabular-nums">
@@ -291,8 +291,8 @@ export function WorshipAvailabilitySection({
               {data.summary.unavailable}
             </p>
           </div>
-          <div className="rounded-xl border border-amber-500/20 bg-amber-500/8 px-3 py-2.5">
-            <p className="text-xs font-medium text-amber-800 dark:text-amber-300">
+          <div className="rounded-xl border border-attention-border bg-attention-subtle px-3 py-2.5">
+            <p className="text-xs font-medium text-attention-foreground">
               Sem resposta
             </p>
             <p className="mt-0.5 text-lg font-semibold tabular-nums">
@@ -314,7 +314,7 @@ export function WorshipAvailabilitySection({
         </div>
 
         {!data.series.length ? (
-          <div className="rounded-2xl border border-dashed border-border bg-muted/15 px-5 py-10 text-center">
+          <div className="rounded-xl border border-dashed border-border bg-muted/15 px-5 py-10 text-center">
             <CalendarDays className="mx-auto size-8 text-muted-foreground" />
             <p className="mt-3 font-medium text-foreground">
               Nenhum evento aberto no momento

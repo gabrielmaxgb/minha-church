@@ -64,7 +64,7 @@ function PasswordInput({
         type={show ? "text" : "password"}
         autoComplete={autoComplete}
         disabled={disabled}
-        className="h-11 rounded-xl border-input/80 bg-surface-elevated pr-11"
+        className="h-11 rounded-lg border-input/80 bg-surface-elevated pr-11"
         aria-invalid={invalid || undefined}
         {...inputProps}
       />
@@ -168,7 +168,7 @@ export function ChangePasswordContent({
     : "Mantenha sua conta protegida com uma senha forte e exclusiva.";
 
   const formPanel = (
-    <SettingsPanel className="shadow-soft">
+    <SettingsPanel>
       <SettingsDetailHeader
         title={isRequired ? "Nova senha de acesso" : "Alterar senha"}
         description="Informe a senha atual e defina a nova credencial."
@@ -294,7 +294,7 @@ export function ChangePasswordContent({
   );
 
   const tipsPanel = (
-    <aside className="rounded-2xl border border-border/70 bg-gradient-to-b from-muted/35 to-background p-5 shadow-soft">
+    <aside className="rounded-lg border border-border bg-muted/20 p-5">
       <div className="flex items-center gap-2 text-foreground">
         <ShieldCheck className="size-4 text-primary" aria-hidden />
         <h3 className="text-sm font-semibold tracking-tight">Boas práticas</h3>
@@ -317,13 +317,13 @@ export function ChangePasswordContent({
   );
 
   const hero = (
-    <div className="overflow-hidden rounded-2xl border border-border/70 bg-gradient-to-br from-muted/45 via-background to-primary/[0.05] p-5 shadow-soft sm:p-6">
+    <div className="overflow-hidden rounded-lg border border-border bg-muted/20 p-5 sm:p-6">
       <div className="flex items-start gap-4">
-        <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-soft">
+        <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
           <KeyRound className="size-5" aria-hidden />
         </div>
         <div className="min-w-0">
-          <h2 className="font-display text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+          <h2 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
             {heroTitle}
           </h2>
           <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-muted-foreground">

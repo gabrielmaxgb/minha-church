@@ -151,7 +151,7 @@ function LoginFormContent() {
   return (
     <Card className="w-full max-w-md border-border shadow-none">
       <CardHeader className="text-center">
-        <CardTitle className="font-display text-2xl">Entrar</CardTitle>
+        <CardTitle className="text-2xl font-semibold tracking-tight">Entrar</CardTitle>
         <CardDescription>Acesse o painel da sua igreja</CardDescription>
       </CardHeader>
 
@@ -164,7 +164,7 @@ function LoginFormContent() {
           )}
 
           {(verificationSent || loginVerificationEmail) && (
-            <div className="space-y-3 rounded-xl border border-amber-500/25 bg-amber-500/10 px-4 py-3">
+            <div className="space-y-3 rounded-lg border border-attention-border bg-attention-subtle px-4 py-3">
               <p className="text-sm leading-relaxed text-foreground">
                 {verificationSent ? "Enviamos um link de confirmação" : "Confirme seu e-mail"}
                 {pendingVerificationEmail ? (
@@ -184,7 +184,7 @@ function LoginFormContent() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="border-amber-500/30 bg-background/80"
+                  className="border-attention-border bg-background"
                   disabled={isResendingVerification}
                   onClick={() => void handleResendVerification()}
                 >

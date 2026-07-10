@@ -56,10 +56,10 @@ export function TrialStatusBanner() {
 
   if (subscriptionStatus === "past_due") {
     return (
-      <div className="mb-6 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-4 sm:px-5">
+      <div className="mb-6 rounded-xl border border-attention-border bg-attention-subtle px-4 py-4 sm:px-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex gap-3">
-            <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-amber-700 dark:text-amber-300">
+            <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-attention-mark text-attention-foreground">
               <AlertTriangle className="size-4" aria-hidden />
             </div>
             <div className="space-y-1">
@@ -99,10 +99,10 @@ export function TrialStatusBanner() {
     const isCanceled = subscriptionStatus === "canceled";
 
     return (
-      <div className="mb-6 rounded-2xl border border-destructive/25 bg-destructive/8 px-4 py-4 sm:px-5">
+      <div className="mb-6 rounded-xl border border-destructive/25 bg-destructive/8 px-4 py-4 sm:px-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex gap-3">
-            <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-destructive/12 text-destructive">
+            <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-destructive/12 text-destructive">
               <Lock className="size-4" aria-hidden />
             </div>
             <div className="space-y-1">
@@ -144,20 +144,20 @@ export function TrialStatusBanner() {
   return (
     <div
       className={cn(
-        "mb-6 rounded-2xl border px-4 py-4 sm:px-5",
+        "mb-6 rounded-xl border px-4 py-4 sm:px-5",
         isUrgent
-          ? "border-amber-500/30 bg-amber-500/10"
-          : "border-sky-500/25 bg-sky-500/8",
+          ? "border-attention-border bg-attention-subtle"
+          : "border-border bg-muted/40",
       )}
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex gap-3">
           <div
             className={cn(
-              "mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl",
+              "mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg",
               isUrgent
-                ? "bg-amber-500/15 text-amber-700 dark:text-amber-300"
-                : "bg-sky-500/15 text-sky-700 dark:text-sky-300",
+                ? "bg-attention-mark text-attention-foreground"
+                : "bg-muted text-muted-foreground",
             )}
           >
             {isUrgent ? (

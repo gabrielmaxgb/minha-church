@@ -20,6 +20,9 @@
   --accent: #deded9;
   --accent-foreground: #1a1a18;
   --destructive: #8f4444;
+  --success: #3d6b4f;
+  --success-foreground: #1e3a28;
+  --success-subtle: color-mix(in srgb, var(--success) 10%, var(--card));
   --attention: #c4a574;
   --attention-foreground: #6a5735;
   --attention-subtle: color-mix(in srgb, var(--attention) 11%, var(--card));
@@ -29,9 +32,12 @@
   --border: #d8d8d3;
   --input: #d0d0cb;
   --ring: #5c5c58;
-  --radius: 0.625rem;
-  --shadow-soft: 0 1px 2px rgb(20 20 19 / 0.04), 0 4px 16px rgb(20 20 19 / 0.06);
-  --shadow-elevated: 0 2px 4px rgb(20 20 19 / 0.05), 0 12px 32px rgb(20 20 19 / 0.08);
+  --radius: 0.5rem;
+  --shadow-xs: 0 1px 0 rgb(20 20 19 / 0.04);
+  --shadow-popover: 0 0 0 1px rgb(20 20 19 / 0.06), 0 8px 24px rgb(20 20 19 / 0.1);
+  /* Legacy aliases — prefer shadow-xs / shadow-popover */
+  --shadow-soft: var(--shadow-xs);
+  --shadow-elevated: var(--shadow-popover);
 }
 
 .dark {
@@ -52,6 +58,9 @@
   --accent: #32322f;
   --accent-foreground: #f0f0ec;
   --destructive: #d48484;
+  --success: #7aab8c;
+  --success-foreground: #c5e0cf;
+  --success-subtle: color-mix(in srgb, var(--success) 14%, var(--card));
   --attention: #b89968;
   --attention-foreground: #dcc9a8;
   --attention-subtle: color-mix(in srgb, var(--attention) 14%, var(--card));
@@ -61,8 +70,10 @@
   --border: #2e2e2b;
   --input: #353532;
   --ring: #8a8a84;
-  --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.2), 0 4px 16px rgb(0 0 0 / 0.25);
-  --shadow-elevated: 0 2px 4px rgb(0 0 0 / 0.25), 0 12px 32px rgb(0 0 0 / 0.35);
+  --shadow-xs: 0 1px 0 rgb(0 0 0 / 0.35);
+  --shadow-popover: 0 0 0 1px rgb(0 0 0 / 0.4), 0 12px 32px rgb(0 0 0 / 0.45);
+  --shadow-soft: var(--shadow-xs);
+  --shadow-elevated: var(--shadow-popover);
 }
 
 @theme inline {
@@ -81,6 +92,9 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-subtle: var(--success-subtle);
   --color-attention: var(--attention);
   --color-attention-foreground: var(--attention-foreground);
   --color-attention-subtle: var(--attention-subtle);
@@ -92,41 +106,51 @@
   --color-ring: var(--ring);
   --color-surface: var(--surface);
   --color-surface-elevated: var(--surface-elevated);
+  --shadow-xs: var(--shadow-xs);
+  --shadow-popover: var(--shadow-popover);
   --shadow-soft: var(--shadow-soft);
   --shadow-elevated: var(--shadow-elevated);
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) + 2px);
-  --radius-xl: calc(var(--radius) + 6px);
+  --radius-xl: calc(var(--radius) + 4px);
   --font-sans: var(--font-dm-sans);
   --font-mono: var(--font-geist-mono);
   --font-display: var(--font-syne);
 }
 
 @layer utilities {
+  /* Syne: only page titles and marketing hero — not chrome/metrics */
   .font-display {
     font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
   }
 
+  .page-title {
+    font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  .shadow-xs {
+    box-shadow: var(--shadow-xs);
+  }
+
+  .shadow-popover {
+    box-shadow: var(--shadow-popover);
+  }
+
   .shadow-soft {
-    box-shadow: var(--shadow-soft);
+    box-shadow: var(--shadow-xs);
   }
 
   .shadow-elevated {
-    box-shadow: var(--shadow-elevated);
+    box-shadow: var(--shadow-popover);
   }
 
   .dashboard-canvas {
     background-color: var(--background);
-    background-image:
-      radial-gradient(ellipse 80% 50% at 50% -20%, rgb(255 255 255 / 0.7), transparent),
-      radial-gradient(ellipse 60% 40% at 100% 0%, rgb(230 230 226 / 0.5), transparent);
-  }
-
-  .dark .dashboard-canvas {
-    background-image:
-      radial-gradient(ellipse 80% 50% at 50% -20%, rgb(40 40 38 / 0.5), transparent),
-      radial-gradient(ellipse 60% 40% at 100% 0%, rgb(30 30 28 / 0.4), transparent);
   }
 }
 

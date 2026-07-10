@@ -4,7 +4,6 @@ import {
   CtaSection,
   FeaturesSection,
   HeroSection,
-  SocialProofSection,
 } from "@/components/marketing/home-sections";
 import { siteConfig } from "@/constants/navigation";
 
@@ -18,7 +17,6 @@ export default function HomePage() {
     <>
       <HeroSection />
       <FeaturesSection />
-      <SocialProofSection />
       <CtaSection />
     </>
   );

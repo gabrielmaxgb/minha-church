@@ -99,7 +99,7 @@ export function ActivityVisibilitySection({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 font-display text-base">
+        <CardTitle className="flex items-center gap-2 text-base font-semibold">
           <Eye className="size-4" />
           Visibilidade na agenda
         </CardTitle>

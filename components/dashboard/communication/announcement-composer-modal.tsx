@@ -326,7 +326,7 @@ export function AnnouncementComposerModal({
     <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
       <button
         type="button"
-        className="absolute inset-0 bg-black/45 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-black/45"
         aria-label="Fechar"
         onClick={() => !isPending && onClose()}
       />
@@ -335,10 +335,10 @@ export function AnnouncementComposerModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative z-10 flex max-h-[92dvh] w-full max-w-xl flex-col rounded-t-2xl border border-border bg-background shadow-2xl sm:max-h-[min(92dvh,720px)] sm:rounded-2xl"
+        className="relative z-10 flex max-h-[92dvh] w-full max-w-xl flex-col rounded-t-xl border border-border bg-background shadow-popover sm:max-h-[min(92dvh,720px)] sm:rounded-xl"
       >
         <header className="flex items-center justify-between border-b border-border/70 px-6 py-4">
-          <h2 id={titleId} className="font-display text-lg font-semibold tracking-tight">
+          <h2 id={titleId} className="text-lg font-semibold tracking-tight">
             {isEditing ? "Editar comunicado" : "Novo comunicado"}
           </h2>
           <button
@@ -502,8 +502,8 @@ export function AnnouncementComposerModal({
                 />
               )}
               {!expiryEnabled && (
-                <p className="flex gap-2 rounded-lg border border-amber-500/25 bg-amber-500/10 px-3 py-2.5 text-xs leading-relaxed text-amber-900 dark:text-amber-200">
-                  <Info className="mt-0.5 size-3.5 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden />
+                <p className="flex gap-2 rounded-lg border border-attention-border bg-attention-subtle px-3 py-2.5 text-xs leading-relaxed text-attention-foreground">
+                  <Info className="mt-0.5 size-3.5 shrink-0 text-attention-foreground" aria-hidden />
                   <span>
                     Sem data de expiração, o comunicado permanece no mural até você
                     removê-lo manualmente.

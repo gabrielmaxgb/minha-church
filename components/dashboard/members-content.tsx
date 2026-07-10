@@ -11,6 +11,7 @@ import { memberDetailPath, MEMBER_CREATE_ROUTE } from "@/constants/routes";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useMembersInfinite } from "@/lib/api/queries";
 import { canManageMembers } from "@/lib/permissions";
+import { memberStatusBadgeClass } from "@/lib/members/status-badge";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 import {
@@ -25,17 +26,6 @@ const STATUS_FILTERS: Array<{ value: MemberStatus | "all"; label: string }> = [
   { value: "visitor", label: "Visitantes" },
   { value: "inactive", label: "Inativos" },
 ];
-
-function statusBadgeClass(status: MemberStatus) {
-  switch (status) {
-    case "active":
-      return "border-emerald-200 bg-emerald-50 text-emerald-800";
-    case "visitor":
-      return "border-amber-200 bg-amber-50 text-amber-800";
-    case "inactive":
-      return "border-border bg-muted text-muted-foreground";
-  }
-}
 
 function memberSubtitle(member: Member): string | null {
   if (member.email) {
@@ -67,7 +57,7 @@ function MemberListItem({ member }: { member: Member }) {
           <span
             className={cn(
               "inline-flex shrink-0 rounded-md border px-2 py-0.5 text-[11px] font-medium",
-              statusBadgeClass(member.status),
+              memberStatusBadgeClass(member.status),
             )}
           >
             {MEMBER_STATUS_LABELS[member.status]}

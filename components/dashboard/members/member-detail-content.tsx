@@ -16,23 +16,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AUTH_ROUTES } from "@/constants/routes";
 import { useMember } from "@/lib/api/queries";
 import { canManageMembers } from "@/lib/permissions";
+import { memberStatusBadgeClass } from "@/lib/members/status-badge";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 import { MEMBER_STATUS_LABELS } from "@/types/members";
 
 interface MemberDetailContentProps {
   memberId: string;
-}
-
-function statusBadgeClass(status: keyof typeof MEMBER_STATUS_LABELS) {
-  switch (status) {
-    case "active":
-      return "border-emerald-200 bg-emerald-50 text-emerald-800";
-    case "visitor":
-      return "border-amber-200 bg-amber-50 text-amber-800";
-    case "inactive":
-      return "border-border bg-muted text-muted-foreground";
-  }
 }
 
 export function MemberDetailContent({ memberId }: MemberDetailContentProps) {
@@ -84,7 +74,9 @@ export function MemberDetailContent({ memberId }: MemberDetailContentProps) {
         <CardHeader className="pb-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <CardTitle className="font-display text-xl">{member.name}</CardTitle>
+              <CardTitle className="text-xl font-semibold tracking-tight">
+                {member.name}
+              </CardTitle>
               <CardDescription className="mt-1">
                 Ficha pastoral e vínculos na igreja
               </CardDescription>
@@ -93,7 +85,7 @@ export function MemberDetailContent({ memberId }: MemberDetailContentProps) {
             <span
               className={cn(
                 "inline-flex shrink-0 rounded-md border px-2.5 py-1 text-xs font-medium",
-                statusBadgeClass(member.status),
+                memberStatusBadgeClass(member.status),
               )}
             >
               {MEMBER_STATUS_LABELS[member.status]}

@@ -250,7 +250,7 @@ export function CreateActivityModal({
     <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
       <button
         type="button"
-        className="absolute inset-0 bg-black/45 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-black/45"
         aria-label="Fechar modal"
         disabled={createEvent.isPending}
         onClick={() => {
@@ -264,14 +264,14 @@ export function CreateActivityModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative z-10 flex max-h-[min(96dvh,920px)] w-full max-w-5xl flex-col rounded-t-2xl border border-border bg-background shadow-2xl sm:rounded-2xl"
+        className="relative z-10 flex max-h-[min(96dvh,920px)] w-full max-w-5xl flex-col rounded-t-xl border border-border bg-background shadow-popover sm:rounded-xl"
       >
         <header className="flex items-start gap-4 px-6 pb-4 pt-6">
           <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             <Calendar className="size-5" aria-hidden />
           </div>
           <div className="min-w-0 flex-1 pt-0.5">
-            <h2 id={titleId} className="font-display text-xl font-semibold tracking-tight">
+            <h2 id={titleId} className="text-xl font-semibold tracking-tight">
               Nova atividade
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">

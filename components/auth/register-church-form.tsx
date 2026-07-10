@@ -100,12 +100,12 @@ export function RegisterChurchForm() {
   return (
     <Card className="w-full max-w-lg border-border shadow-none">
       <CardHeader className="space-y-4 text-center">
-        <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+        <div className="mx-auto flex size-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
           <Building2 className="size-6" aria-hidden />
         </div>
 
         <div className="space-y-2">
-          <CardTitle className="font-display text-2xl">
+          <CardTitle className="text-2xl font-semibold tracking-tight">
             Criar conta da igreja
           </CardTitle>
           <CardDescription className="text-balance">
@@ -262,7 +262,7 @@ export function RegisterChurchForm() {
               <div className="space-y-2">
                 <label
                   className={cn(
-                    "flex cursor-pointer items-start gap-3 rounded-xl border px-3 py-3 transition-colors",
+                    "flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-3 transition-colors",
                     errors.acceptTerms
                       ? "border-destructive/50 bg-destructive/5"
                       : "border-border/70 bg-muted/10 hover:bg-muted/20",

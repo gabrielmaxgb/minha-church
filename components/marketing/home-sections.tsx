@@ -1,9 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { AnimatePresence, motion } from "motion/react";
-import { Check, Eye, EyeOff } from "lucide-react";
-import { useState } from "react";
+import { ArrowRight } from "lucide-react";
 
 import { homeFeatures } from "@/constants/features";
 import { PUBLIC_ROUTES } from "@/constants/routes";
@@ -11,174 +9,102 @@ import { Container } from "@/components/layout/container";
 import { MotionDiv, MotionSection } from "@/components/motion/motion-section";
 import { ProductShowcase } from "@/components/marketing/product-showcase";
 import { Button } from "@/components/ui/button";
-import { Heading, SectionHeader, SectionLabel } from "@/components/ui/heading";
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { fadeInUp, staggerContainer, staggerItem } from "@/lib/motion";
-import { cn } from "@/lib/utils";
-
-const audienceHighlights = [
-  "Pastores e líderes",
-  "Secretários e tesoureiros",
-  "Igrejas pequenas e em crescimento",
-  "Comunidades com células",
-];
+import { Heading } from "@/components/ui/heading";
+import { fadeInUp } from "@/lib/motion";
 
 export function HeroSection() {
-  const [showDashboard, setShowDashboard] = useState(true);
-
   return (
     <section className="border-b border-border">
-      <Container className="py-20 sm:py-28 lg:pt-32 lg:pb-16">
-        <MotionDiv
-          className="mx-auto max-w-3xl text-center"
-          variants={fadeInUp}
-        >
-          <SectionLabel>Feito para igrejas</SectionLabel>
-          <Heading as="h1" className="mt-3">
-            Membros, cultos, finanças e comunicação em um único sistema
-          </Heading>
-          <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
-            A plataforma que ajuda pastores e líderes a administrar sua igreja
-            sem planilhas e grupos espalhados.
-          </p>
-          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Button size="lg" asChild>
-              <Link href={PUBLIC_ROUTES.register}>Começar grátis</Link>
-            </Button>
-            <Button size="lg" variant="outline" asChild>
-              <Link href={PUBLIC_ROUTES.resources}>Ver recursos</Link>
-            </Button>
-          </div>
-          <p className="mt-4 text-sm text-muted-foreground">
-            30 dias grátis com tudo liberado · Sem cartão · Faixas a partir de
-            R$ 119/mês
-          </p>
-        </MotionDiv>
-      </Container>
+      <Container className="py-16 sm:py-20 lg:py-24">
+        <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:gap-16">
+          <MotionDiv variants={fadeInUp} className="max-w-xl">
+            <p className="font-display text-2xl tracking-tight text-foreground sm:text-3xl">
+              Minha Church
+            </p>
+            <Heading as="h1" className="mt-4 text-balance">
+              A operação da igreja, em um só lugar
+            </Heading>
+            <p className="mt-5 text-base leading-relaxed text-muted-foreground sm:text-lg">
+              Membros, escalas, finanças e comunicação — sem planilhas e sem
+              grupos espalhados.
+            </p>
+            <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-3">
+              <Button size="lg" asChild>
+                <Link href={PUBLIC_ROUTES.register}>Começar grátis</Link>
+              </Button>
+              <Link
+                href={PUBLIC_ROUTES.resources}
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Ver recursos
+                <ArrowRight className="size-3.5" aria-hidden />
+              </Link>
+            </div>
+            <p className="mt-4 text-sm text-muted-foreground">
+              30 dias grátis · Sem cartão · A partir de R$ 119/mês
+            </p>
+          </MotionDiv>
 
-      <div className="border-t border-border bg-muted/30">
-        <div className="flex justify-start items-center px-4 py-4 sm:px-6 lg:px-8">
-          <button
-            type="button"
-            onClick={() => setShowDashboard((prev) => !prev)}
-            className={cn(
-              "inline-flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm font-medium transition-colors",
-              "hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-            )}
-            aria-expanded={showDashboard}
-            aria-controls="hero-dashboard"
+          <MotionDiv
+            variants={fadeInUp}
+            className="min-w-0 lg:justify-self-end"
           >
-            {showDashboard ? (
-              <>
-                <EyeOff className="size-4" aria-hidden />
-                Ocultar demonstração
-              </>
-            ) : (
-              <>
-                <Eye className="size-4" aria-hidden />
-                Exibir demonstração
-              </>
-            )}
-          </button>
+            <ProductShowcase className="w-full" />
+          </MotionDiv>
         </div>
-
-        <AnimatePresence initial={false}>
-          {showDashboard && (
-            <motion.div
-              id="hero-dashboard"
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3, ease: [0.25, 0.4, 0.25, 1] }}
-              className="overflow-hidden"
-            >
-              <div className="px-4 pb-8 pt-4 sm:px-6 lg:px-8">
-                <ProductShowcase className="w-full" />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+      </Container>
     </section>
   );
 }
 
 export function FeaturesSection() {
-  return (
-    <section className="py-24 sm:py-32">
-      <Container>
-        <SectionHeader
-          label="Recursos"
-          title="Tudo que sua igreja precisa, de forma organizada"
-          description="Ferramentas específicas para a rotina de pastores, secretários e tesoureiros."
-        />
+  const highlights = homeFeatures.slice(0, 3);
 
-        <MotionSection
-          className="mt-16 grid gap-6 sm:grid-cols-2"
-          variants={staggerContainer}
-        >
-          {homeFeatures.map((feature) => (
-            <MotionDiv key={feature.title} variants={staggerItem}>
-              <Card className="h-full border-border/80 shadow-none">
-                <CardHeader>
-                  <div className="mb-3 flex size-9 items-center justify-center rounded-md border border-border bg-muted">
-                    <feature.icon className="size-4 text-foreground" />
-                  </div>
-                  <CardTitle>{feature.title}</CardTitle>
-                  <CardDescription className="leading-relaxed">
-                    {feature.description}
-                  </CardDescription>
-                  <ul className="mt-4 space-y-2">
-                    {feature.items.map((item) => (
-                      <li
-                        key={item}
-                        className="flex items-center gap-2 text-sm text-muted-foreground"
-                      >
-                        <Check className="size-3.5 shrink-0 text-foreground" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </CardHeader>
-              </Card>
+  return (
+    <section className="border-b border-border py-20 sm:py-28">
+      <Container>
+        <MotionSection variants={fadeInUp} className="max-w-2xl">
+          <Heading as="h2">O essencial da rotina pastoral</Heading>
+          <p className="mt-3 text-muted-foreground">
+            Três frentes que substituem planilhas, grupos e ferramentas
+            desconectadas.
+          </p>
+        </MotionSection>
+
+        <div className="mt-14 divide-y divide-border border-y border-border">
+          {highlights.map((feature, index) => (
+            <MotionDiv
+              key={feature.title}
+              variants={fadeInUp}
+              className="grid gap-4 py-8 sm:grid-cols-[4rem_1fr] sm:gap-8"
+            >
+              <span className="font-mono text-sm text-muted-foreground">
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              <div>
+                <h3 className="text-base font-medium text-foreground">
+                  {feature.title}
+                </h3>
+                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+                  {feature.description}
+                </p>
+                <p className="mt-3 text-sm text-foreground/80">
+                  {feature.items.join(" · ")}
+                </p>
+              </div>
             </MotionDiv>
           ))}
-        </MotionSection>
-
-        <div className="mt-10 text-center">
-          <Button variant="outline" asChild>
-            <Link href={PUBLIC_ROUTES.resources}>Ver todos os recursos</Link>
-          </Button>
         </div>
-      </Container>
-    </section>
-  );
-}
 
-export function SocialProofSection() {
-  return (
-    <section className="border-y border-border bg-muted/40 py-14">
-      <Container>
-        <MotionSection variants={fadeInUp}>
-          <p className="text-center text-sm text-muted-foreground">
-            Pensado para quem administra a igreja no dia a dia
-          </p>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
-            {audienceHighlights.map((item) => (
-              <span
-                key={item}
-                className="text-sm font-medium text-foreground/70"
-              >
-                {item}
-              </span>
-            ))}
-          </div>
-        </MotionSection>
+        <div className="mt-10">
+          <Link
+            href={PUBLIC_ROUTES.resources}
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground transition-colors hover:text-foreground/70"
+          >
+            Ver todos os recursos
+            <ArrowRight className="size-3.5" aria-hidden />
+          </Link>
+        </div>
       </Container>
     </section>
   );
@@ -186,34 +112,26 @@ export function SocialProofSection() {
 
 export function CtaSection() {
   return (
-    <section className="py-24 sm:py-32">
+    <section className="py-20 sm:py-28">
       <Container>
         <MotionSection
-          className="rounded-xl bg-foreground px-8 py-16 text-center text-background sm:px-16"
+          className="border border-border bg-foreground px-8 py-14 text-center text-background sm:px-16"
           variants={fadeInUp}
         >
           <Heading as="h2" className="text-background">
-            Sua igreja merece mais do que planilhas
+            Comece a organizar sua igreja
           </Heading>
           <p className="mx-auto mt-4 max-w-md text-background/70">
-            Teste 30 dias sem cartão. Organize membros, escalas e comunicados —
-            e pague só pela faixa do tamanho da sua igreja quando continuar.
+            30 dias com tudo liberado. Sem cartão. Depois, pague só pela faixa
+            do tamanho da sua comunidade.
           </p>
-          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <div className="mt-8">
             <Button
               size="lg"
               className="bg-background text-foreground hover:bg-background/90"
               asChild
             >
-                <Link href={PUBLIC_ROUTES.register}>Começar grátis</Link>
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-background/30 bg-transparent text-background hover:bg-background/10"
-              asChild
-            >
-              <Link href={PUBLIC_ROUTES.resources}>Ver recursos</Link>
+              <Link href={PUBLIC_ROUTES.register}>Começar grátis</Link>
             </Button>
           </div>
         </MotionSection>

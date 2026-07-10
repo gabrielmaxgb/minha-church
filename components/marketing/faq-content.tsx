@@ -1,50 +1,47 @@
 import { Container } from "@/components/layout/container";
 import { CtaBanner } from "@/components/marketing/cta-banner";
 import { FaqList } from "@/components/marketing/faq-list";
-import { Heading, SectionHeader, SectionLabel } from "@/components/ui/heading";
+import { Heading } from "@/components/ui/heading";
 import { billingFaq, generalFaq } from "@/constants/faq";
 
 export function FaqContent() {
   return (
     <>
       <section className="border-b border-border">
-        <Container className="py-24 sm:py-32">
-          <div className="mx-auto max-w-3xl text-center">
-            <SectionLabel>FAQ</SectionLabel>
-            <Heading as="h1" className="mt-3">
+        <Container className="py-16 sm:py-20 lg:py-24">
+          <div className="max-w-2xl">
+            <p className="font-display text-2xl tracking-tight text-foreground sm:text-3xl">
+              Minha Church
+            </p>
+            <Heading as="h1" className="mt-4 text-balance">
               Perguntas frequentes
             </Heading>
-            <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
-              Respostas para as dúvidas mais comuns sobre o Minha Church.
+            <p className="mt-5 text-base leading-relaxed text-muted-foreground sm:text-lg">
+              Respostas para as dúvidas mais comuns sobre o produto e a
+              cobrança.
             </p>
           </div>
         </Container>
       </section>
 
-      <section className="py-24 sm:py-32">
+      <section className="border-b border-border py-16 sm:py-24">
         <Container>
-          <SectionHeader
-            label="Geral"
-            title="Sobre o produto"
-            align="left"
-            className="max-w-2xl"
-          />
-          <div className="mt-8 max-w-2xl">
-            <FaqList items={generalFaq} />
+          <div className="max-w-2xl">
+            <Heading as="h2">Produto</Heading>
+            <div className="mt-8">
+              <FaqList items={generalFaq} />
+            </div>
           </div>
         </Container>
       </section>
 
-      <section className="border-t border-border bg-muted/40 py-24 sm:py-32">
+      <section className="border-b border-border py-16 sm:py-24">
         <Container>
-          <SectionHeader
-            label="Cobrança"
-            title="Preço e pagamento"
-            align="left"
-            className="max-w-2xl"
-          />
-          <div className="mt-8 max-w-2xl">
-            <FaqList items={billingFaq} />
+          <div className="max-w-2xl">
+            <Heading as="h2">Preço e pagamento</Heading>
+            <div className="mt-8">
+              <FaqList items={billingFaq} />
+            </div>
           </div>
         </Container>
       </section>

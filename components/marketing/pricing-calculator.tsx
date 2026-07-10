@@ -41,16 +41,16 @@ export function PricingCalculator({ period, className }: PricingCalculatorProps)
   return (
     <div
       className={cn(
-        "mx-auto max-w-3xl rounded-2xl border border-primary/20 bg-gradient-to-b from-primary/5 to-background p-6 sm:p-8",
+        "mx-auto max-w-3xl rounded-xl border border-border bg-card p-6 sm:p-8",
         className,
       )}
     >
       <div className="flex items-start gap-3">
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground">
           <Users className="size-5" aria-hidden />
         </div>
         <div>
-          <p className="font-display text-lg font-semibold tracking-tight">
+          <p className="text-lg font-semibold tracking-tight">
             Descubra a faixa da sua igreja
           </p>
           <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
@@ -103,7 +103,7 @@ export function PricingCalculator({ period, className }: PricingCalculatorProps)
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Faixa sugerida
           </p>
-          <p className="mt-1 font-display text-xl font-semibold tracking-tight">
+          <p className="mt-1 text-xl font-semibold tracking-tight">
             {suggestedTier.name}
           </p>
           <p className="mt-0.5 text-sm text-muted-foreground">
@@ -112,7 +112,7 @@ export function PricingCalculator({ period, className }: PricingCalculatorProps)
 
           <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="font-display text-3xl font-bold tracking-tight">
+              <p className="text-3xl font-bold tracking-tight tabular-nums">
                 {formatCurrency(monthlyPrice)}
                 <span className="text-base font-normal text-muted-foreground">
                   /mês

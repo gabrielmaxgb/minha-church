@@ -47,18 +47,16 @@ function FormSection({
   return (
     <section
       className={cn(
-        "overflow-hidden rounded-2xl border border-border/80 bg-card shadow-soft",
+        "overflow-hidden rounded-lg border border-border bg-card",
         className,
       )}
     >
-      <header className="flex items-start gap-3 border-b border-border/60 bg-muted/25 px-5 py-4 sm:px-6">
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-foreground text-background">
+      <header className="flex items-start gap-3 border-b border-border bg-muted/25 px-5 py-4 sm:px-6">
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-foreground text-background">
           <Icon className="size-4" aria-hidden />
         </div>
         <div className="min-w-0 pt-0.5">
-          <h3 className="font-display text-base font-semibold tracking-tight">
-            {title}
-          </h3>
+          <h3 className="text-sm font-medium tracking-tight">{title}</h3>
           {description && (
             <p className="mt-0.5 text-sm leading-relaxed text-muted-foreground">
               {description}

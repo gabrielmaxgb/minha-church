@@ -36,7 +36,7 @@ export function EventFormSection({
             </div>
           ) : null}
           <div className="min-w-0 pt-0.5">
-            <h3 className="font-display text-sm font-semibold tracking-tight text-foreground">
+            <h3 className="text-sm font-semibold tracking-tight text-foreground">
               {title}
             </h3>
             {description ? (
@@ -55,7 +55,7 @@ export function EventFormSection({
       ) : (
         <div
           className={cn(
-            "rounded-2xl border border-border/70 bg-muted/10 p-4 sm:p-5",
+            "rounded-xl border border-border/70 bg-muted/10 p-4 sm:p-5",
             contentClassName,
           )}
         >

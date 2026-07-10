@@ -47,7 +47,7 @@ function CopyField({
           aria-label={`Copiar ${label.toLowerCase()}`}
         >
           {copied ? (
-            <Check className="size-4 text-emerald-600" />
+            <Check className="size-4 text-success" />
           ) : (
             <Copy className="size-4" />
           )}
@@ -104,7 +104,7 @@ export function MemberAccountCreatedModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <button
         type="button"
-        className="absolute inset-0 bg-foreground/20 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-foreground/30"
         aria-label="Fechar"
         onClick={onClose}
       />
@@ -115,12 +115,12 @@ export function MemberAccountCreatedModal({
         aria-modal="true"
         aria-labelledby={titleId}
         className={cn(
-          "relative z-10 w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl",
+          "relative z-10 w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-popover",
         )}
       >
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               {isLinked ? (
                 <Link2 className="size-5" aria-hidden />
               ) : (
@@ -128,7 +128,7 @@ export function MemberAccountCreatedModal({
               )}
             </div>
             <div>
-              <h2 id={titleId} className="font-display text-lg font-semibold">
+              <h2 id={titleId} className="text-lg font-semibold tracking-tight">
                 {isLinked ? "Conta existente vinculada" : "Login criado"}
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">

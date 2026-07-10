@@ -86,7 +86,7 @@ function resolveStatusBadgeClass(data: {
   canceledAt?: string | null;
 }): string | undefined {
   if (isCancelScheduled(data) && data.subscriptionStatus === "active") {
-    return "border-amber-500/40 bg-amber-500/15 text-amber-900 dark:text-amber-100";
+    return "border-attention-border bg-attention-subtle text-attention-foreground";
   }
 
   if (data.subscriptionStatus === "past_due") {
@@ -181,7 +181,7 @@ export function SubscriptionSettings() {
       {data && (
         <div className="space-y-4">
           {isCancelScheduled(data) && data.subscriptionStatus === "active" && (
-            <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm">
+            <div className="rounded-xl border border-attention-border bg-attention-subtle px-4 py-3 text-sm">
               <p className="font-medium text-foreground">
                 Cancelamento solicitado
               </p>
@@ -201,7 +201,7 @@ export function SubscriptionSettings() {
           )}
 
           {data.subscriptionStatus === "past_due" && (
-            <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm">
+            <div className="rounded-xl border border-attention-border bg-attention-subtle px-4 py-3 text-sm">
               <p className="font-medium text-foreground">
                 Não conseguimos processar o último pagamento
               </p>

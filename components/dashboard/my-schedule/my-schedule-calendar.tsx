@@ -151,7 +151,7 @@ export function MyScheduleCalendar({
           >
             <ChevronRight className="size-4" />
           </Button>
-          <h2 className="ml-1 font-display text-lg font-semibold tracking-tight">
+          <h2 className="ml-1 text-base font-semibold tracking-tight">
             {formatMonthTitle(year, monthIndex)}
           </h2>
         </div>
@@ -163,7 +163,7 @@ export function MyScheduleCalendar({
 
       <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
         <span className="inline-flex items-center gap-1.5">
-          <span className="size-2.5 rounded-full bg-emerald-500" />
+          <span className="size-2.5 rounded-full bg-success" />
           Escalado
         </span>
         <span className="inline-flex items-center gap-1.5">
@@ -171,7 +171,7 @@ export function MyScheduleCalendar({
           Aguardando resposta
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span className="size-2.5 rounded-full bg-sky-500" />
+          <span className="size-2.5 rounded-full bg-foreground" />
           Disponível
         </span>
         <span className="inline-flex items-center gap-1.5">
@@ -181,7 +181,7 @@ export function MyScheduleCalendar({
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
-        <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-soft">
+        <div className="overflow-hidden rounded-lg border border-border/70 bg-card">
           <div className="grid grid-cols-7 border-b border-border/60 bg-muted/30">
             {getWeekdayLabels().map((label) => (
               <div
@@ -231,13 +231,13 @@ export function MyScheduleCalendar({
                     {dayEvents.length > 0 && (
                       <span className="hidden items-center gap-0.5 sm:inline-flex">
                         {dotKinds.has("assigned") && (
-                          <span className="size-1.5 rounded-full bg-emerald-500" />
+                          <span className="size-1.5 rounded-full bg-success" />
                         )}
                         {dotKinds.has("pending") && (
                           <span className={cn("size-1.5 rounded-full", pendingNotificationStyles.schedule.dot)} />
                         )}
                         {dotKinds.has("available") && (
-                          <span className="size-1.5 rounded-full bg-sky-500" />
+                          <span className="size-1.5 rounded-full bg-foreground" />
                         )}
                         {dotKinds.has("unavailable") && (
                           <span className="size-1.5 rounded-full bg-muted-foreground/50" />
@@ -272,13 +272,13 @@ export function MyScheduleCalendar({
 
                   <div className="mt-1 flex flex-wrap gap-0.5 sm:hidden">
                     {dotKinds.has("assigned") && (
-                      <span className="size-1.5 rounded-full bg-emerald-500" />
+                      <span className="size-1.5 rounded-full bg-success" />
                     )}
                     {dotKinds.has("pending") && (
                       <span className={cn("size-1.5 rounded-full", pendingNotificationStyles.schedule.dot)} />
                     )}
                     {dotKinds.has("available") && (
-                      <span className="size-1.5 rounded-full bg-sky-500" />
+                      <span className="size-1.5 rounded-full bg-foreground" />
                     )}
                     {dotKinds.has("unavailable") && (
                       <span className="size-1.5 rounded-full bg-muted-foreground/50" />
@@ -290,12 +290,12 @@ export function MyScheduleCalendar({
           </div>
         </div>
 
-        <aside className="rounded-2xl border border-border/70 bg-card p-4 shadow-soft">
+        <aside className="rounded-lg border border-border/70 bg-card p-4">
           <div className="mb-3">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Seu dia
             </p>
-            <h3 className="mt-1 font-display text-base font-semibold tracking-tight capitalize">
+            <h3 className="mt-1 text-sm font-semibold tracking-tight capitalize">
               {selectedInMonth || selectedDateKey
                 ? formatDayTitle(selectedDateKey)
                 : "Selecione um dia"}
@@ -333,7 +333,7 @@ export function MyScheduleCalendar({
                       {kind === "assigned" && event.myRoleLabel && (
                         <Badge
                           variant="secondary"
-                          className="bg-emerald-500/15 text-emerald-800 dark:text-emerald-200"
+                          className="bg-success-subtle text-success-foreground"
                         >
                           {formatRosterRole(event.myRoleLabel)}
                         </Badge>
@@ -344,7 +344,7 @@ export function MyScheduleCalendar({
                         </Badge>
                       )}
                       {kind === "available" && (
-                        <Badge className="bg-sky-500 text-sky-950 hover:bg-sky-500">
+                        <Badge className="bg-muted text-foreground hover:bg-muted">
                           Disponível
                         </Badge>
                       )}

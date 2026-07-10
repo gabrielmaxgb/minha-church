@@ -195,17 +195,17 @@ export function CommunicationContent() {
 
       {activeQuery.isLoading ? (
         <div className="space-y-3">
-          <Skeleton className="h-28 w-full rounded-2xl" />
-          <Skeleton className="h-28 w-full rounded-2xl" />
-          <Skeleton className="h-28 w-full rounded-2xl" />
+          <Skeleton className="h-28 w-full rounded-lg" />
+          <Skeleton className="h-28 w-full rounded-lg" />
+          <Skeleton className="h-28 w-full rounded-lg" />
         </div>
       ) : activeQuery.isError ? (
-        <div className="rounded-2xl border border-destructive/25 bg-destructive/5 p-6 text-center text-sm text-destructive">
+        <div className="rounded-lg border border-destructive/25 bg-destructive/5 p-6 text-center text-sm text-destructive">
           Não foi possível carregar os comunicados. Tente novamente.
         </div>
       ) : announcements.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border/70 bg-muted/10 px-6 py-14 text-center">
-          <div className="flex size-12 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
+        <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-border/70 bg-muted/10 px-6 py-14 text-center">
+          <div className="flex size-12 items-center justify-center rounded-lg bg-muted text-muted-foreground">
             <EmptyIcon className="size-6" aria-hidden />
           </div>
           <div>
@@ -248,8 +248,8 @@ export function CommunicationContent() {
           )}
 
           {filteredAnnouncements.length === 0 ? (
-            <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border/70 bg-muted/10 px-6 py-12 text-center">
-              <div className="flex size-11 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
+            <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-border/70 bg-muted/10 px-6 py-12 text-center">
+              <div className="flex size-11 items-center justify-center rounded-lg bg-muted text-muted-foreground">
                 <SearchX className="size-5" aria-hidden />
               </div>
               <div>
@@ -272,7 +272,7 @@ export function CommunicationContent() {
               {pinnedAnnouncements.length > 0 ? (
                 <section
                   aria-labelledby="pinned-announcements-heading"
-                  className="rounded-2xl border border-primary/20 bg-gradient-to-b from-primary/[0.07] to-primary/[0.02] p-3 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.45)] sm:p-4"
+                  className="rounded-lg border border-primary/20 bg-primary/[0.04] p-3 sm:p-4"
                 >
                   <header className="mb-3 flex items-center gap-2 px-0.5 sm:px-1">
                     <span className="inline-flex size-6 items-center justify-center rounded-md bg-primary/12 text-primary">

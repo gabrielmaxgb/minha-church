@@ -106,7 +106,7 @@ export function CreateMemberContent() {
                 <UserPlus className="size-5" aria-hidden />
               </div>
               <div>
-                <CardTitle className="font-display text-xl">
+                <CardTitle className="text-xl font-semibold tracking-tight">
                   Novo cadastro
                 </CardTitle>
                 <CardDescription className="mt-1">

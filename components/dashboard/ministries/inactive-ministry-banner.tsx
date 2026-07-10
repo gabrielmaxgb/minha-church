@@ -24,19 +24,19 @@ export function InactiveMinistryBanner({
   return (
     <div
       className={cn(
-        "flex flex-col gap-3 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between",
+        "flex flex-col gap-3 rounded-lg border border-attention-border bg-attention-subtle px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between",
         className,
       )}
     >
       <div className="flex items-start gap-3">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 text-amber-700 dark:text-amber-300">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-md border border-attention-border bg-attention-mark text-attention-foreground">
           <PowerOff className="size-4" aria-hidden />
         </span>
         <div className="min-w-0">
-          <p className="text-sm font-medium text-amber-900 dark:text-amber-200">
+          <p className="text-sm font-medium text-attention-foreground">
             {ministryName ? `${ministryName} está inativo` : "Ministério inativo"}
           </p>
-          <p className="mt-0.5 text-xs text-amber-800/80 dark:text-amber-200/70">
+          <p className="mt-0.5 text-xs text-muted-foreground">
             As informações estão em modo leitura. Reative o ministério para voltar a
             gerenciar cargos, equipe, atividades e escalas.
           </p>
@@ -48,7 +48,7 @@ export function InactiveMinistryBanner({
           type="button"
           size="sm"
           variant="outline"
-          className="shrink-0 border-amber-500/50 bg-background/60 hover:bg-background"
+          className="shrink-0 border-attention-border bg-card hover:bg-attention-mark/40"
           disabled={isActivating}
           onClick={onActivate}
         >
@@ -64,7 +64,7 @@ export function InactiveMinistryBanner({
           asChild
           size="sm"
           variant="outline"
-          className="shrink-0 border-amber-500/50 bg-background/60 hover:bg-background"
+          className="shrink-0 border-attention-border bg-card hover:bg-attention-mark/40"
         >
           <Link href={ministryHref}>Abrir ministério</Link>
         </Button>

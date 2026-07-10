@@ -79,7 +79,7 @@ export function RosterFunctionsReminder({
             <p className={pendingNotificationStyles.label}>
               Perfil da escala incompleto
             </p>
-            <p className="mt-1 font-display text-lg font-bold tracking-tight text-foreground sm:text-xl">
+            <p className="mt-1 text-lg font-bold tracking-tight text-foreground sm:text-xl">
               Adicione pelo menos uma função
             </p>
             <p className="mt-1 text-sm text-muted-foreground">

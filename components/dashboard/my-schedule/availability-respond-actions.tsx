@@ -75,7 +75,7 @@ export function AvailabilityRespondActions({
             type="button"
             size="lg"
             disabled={busy}
-            className="h-12 bg-emerald-600 text-base hover:bg-emerald-600/90"
+            className="h-12 bg-success text-base text-white hover:bg-success/90"
             onClick={() => onRespond("available")}
           >
             <Check className="size-5" />
@@ -106,7 +106,7 @@ export function AvailabilityRespondActions({
           variant={isAvailable ? "default" : "outline"}
           disabled={busy}
           className={cn(
-            isAvailable && "bg-emerald-600 hover:bg-emerald-600/90",
+            isAvailable && "bg-success text-white hover:bg-success/90",
           )}
           onClick={() => onRespond(isAvailable ? "clear" : "available")}
         >
@@ -134,7 +134,7 @@ export function AvailabilityRespondActions({
           type="button"
           size="sm"
           disabled={busy || isAvailable}
-          className="h-9 bg-emerald-600 hover:bg-emerald-600/90"
+          className="h-9 bg-success text-white hover:bg-success/90"
           onClick={() => onRespond("available")}
         >
           <Check className="size-3.5" />

@@ -51,7 +51,7 @@ export function ScheduleBanner() {
               <p className={pendingNotificationStyles.label}>
                 Escalas aguardando resposta
               </p>
-              <p className="mt-1 font-display text-lg font-bold tracking-tight text-foreground sm:text-xl">
+              <p className="mt-1 text-lg font-semibold tracking-tight text-foreground sm:text-xl">
                 Precisamos da sua disponibilidade
               </p>
               <p className="mt-1 text-sm text-muted-foreground">
@@ -77,18 +77,18 @@ export function ScheduleBanner() {
     return (
       <Link
         href={activityDetailPath(next.eventId)}
-        className="group block overflow-hidden rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 to-card p-5 shadow-soft transition-all hover:border-emerald-500/50 sm:p-6"
+        className="group block overflow-hidden rounded-xl border border-border bg-card p-5 transition-colors hover:bg-muted/40 sm:p-6"
       >
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 items-start gap-4">
-            <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-foreground text-background">
+            <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-foreground text-background">
               <CalendarDays className="size-5" aria-hidden />
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+              <p className="text-xs font-medium text-muted-foreground">
                 Próxima escala · {next.ministryName}
               </p>
-              <p className="mt-1 font-display text-lg font-bold tracking-tight text-foreground">
+              <p className="mt-1 text-lg font-semibold tracking-tight text-foreground">
                 {formatRosterRole(next.roleLabel)} · {next.name}
               </p>
               <p className="mt-1 text-sm text-muted-foreground">

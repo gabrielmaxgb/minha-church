@@ -44,12 +44,18 @@ export function useTransferChurchOwnership() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (userId: string) => {
+    mutationFn: ({
+      userId,
+      password,
+    }: {
+      userId: string;
+      password: string;
+    }) => {
       if (!churchId) {
         throw new Error("Igreja não selecionada.");
       }
 
-      return transferChurchOwnership(churchId, userId);
+      return transferChurchOwnership(churchId, userId, password);
     },
     onSuccess: async () => {
       await queryClient.cancelQueries({ queryKey: membershipsKeys._def });

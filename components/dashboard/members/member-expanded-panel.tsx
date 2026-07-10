@@ -65,12 +65,12 @@ function DetailSection({
   children: React.ReactNode;
 }) {
   return (
-    <section className="overflow-hidden rounded-2xl border border-border/70 bg-card">
-      <header className="flex items-center gap-2.5 border-b border-border/50 bg-muted/20 px-4 py-3">
-        <div className="flex size-8 items-center justify-center rounded-lg bg-muted text-foreground">
+    <section className="overflow-hidden rounded-lg border border-border bg-card">
+      <header className="flex items-center gap-2.5 border-b border-border bg-muted/20 px-4 py-3">
+        <div className="flex size-8 items-center justify-center rounded-md bg-muted text-foreground">
           <Icon className="size-3.5" aria-hidden />
         </div>
-        <h3 className="text-sm font-semibold tracking-tight">{title}</h3>
+        <h3 className="text-sm font-medium tracking-tight">{title}</h3>
       </header>
       <dl className="grid gap-4 p-4 sm:grid-cols-2">{children}</dl>
     </section>
@@ -458,7 +458,7 @@ export function MemberExpandedPanel({
     <>
     <FormProvider {...form}>
       <form onSubmit={onSubmit} className="space-y-6" noValidate>
-        <div className="rounded-2xl border border-primary/15 bg-primary/5 px-4 py-3 sm:px-5">
+        <div className="rounded-lg border border-border bg-muted/30 px-4 py-3 sm:px-5">
           <p className="text-sm font-medium text-foreground">
             Editando cadastro
           </p>
@@ -477,15 +477,13 @@ export function MemberExpandedPanel({
           requireLogin={editStatus === "active" && !member.userId}
         />
 
-        <section className="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-soft">
-          <header className="flex items-center gap-3 border-b border-border/60 bg-muted/25 px-5 py-4 sm:px-6">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-foreground text-background">
+        <section className="overflow-hidden rounded-lg border border-border bg-card">
+          <header className="flex items-center gap-3 border-b border-border bg-muted/25 px-5 py-4 sm:px-6">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-foreground text-background">
               <UserCheck className="size-4" aria-hidden />
             </div>
             <div>
-              <h3 className="font-display text-base font-semibold tracking-tight">
-                Ministérios
-              </h3>
+              <h3 className="text-sm font-medium tracking-tight">Ministérios</h3>
               <p className="mt-0.5 text-sm text-muted-foreground">
                 Vínculos e cargos desta pessoa nos ministérios da igreja.
               </p>
@@ -502,7 +500,7 @@ export function MemberExpandedPanel({
 
         <div
           className={cn(
-            "sticky bottom-0 z-10 -mx-1 flex flex-col-reverse gap-2 rounded-2xl border border-border/80 bg-background/95 p-4 shadow-elevated backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:flex-row sm:items-center sm:justify-between",
+            "sticky bottom-0 z-10 -mx-1 flex flex-col-reverse gap-2 rounded-lg border border-border bg-background p-4 sm:flex-row sm:items-center sm:justify-between",
           )}
         >
           <p className="text-center text-xs text-muted-foreground sm:text-left">
@@ -535,7 +533,7 @@ export function MemberExpandedPanel({
         </div>
 
         {member.status === "visitor" && (
-          <div className="rounded-2xl border border-border/70 bg-muted/15 px-5 py-4">
+          <div className="rounded-lg border border-border bg-muted/15 px-5 py-4">
             <p className="text-sm font-medium">Receber como membro</p>
             <p className="mt-1 text-sm text-muted-foreground">
               Promove para membro ativo e cria o acesso ao painel com senha
@@ -563,7 +561,7 @@ export function MemberExpandedPanel({
         {deleteError && <FormAlert>{deleteError}</FormAlert>}
 
         {!writesBlocked && (
-        <section className="rounded-2xl border border-destructive/20 bg-destructive/5 p-5 sm:p-6">
+        <section className="rounded-lg border border-destructive/20 bg-destructive/5 p-5 sm:p-6">
           <div className="flex items-start gap-3">
             <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-destructive/10 text-destructive">
               <Trash2 className="size-4" aria-hidden />

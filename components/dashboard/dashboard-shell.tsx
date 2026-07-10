@@ -66,7 +66,7 @@ export function DashboardShell({
 
   return (
     <OnboardingChecklistProvider>
-      <div className="relative flex h-screen overflow-hidden bg-surface">
+      <div className="relative flex h-screen overflow-hidden bg-background">
       {isSwitchingChurch && switchingToChurchName && (
         <ChurchSwitchOverlay churchName={switchingToChurchName} />
       )}

@@ -1,29 +1,38 @@
 "use client";
 
-import { useEffect, useId } from "react";
-import { Crown, Loader2 } from "lucide-react";
+import { useEffect, useId, useState } from "react";
+import { AlertTriangle, Eye, EyeOff, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import type { ChurchMembership } from "@/types/church-memberships";
 
 interface TransferOwnershipDialogProps {
   membership: ChurchMembership | null;
   pending: boolean;
+  error?: string | null;
   onCancel: () => void;
-  onConfirm: () => void;
+  onConfirm: (password: string) => void;
 }
 
 export function TransferOwnershipDialog({
   membership,
   pending,
+  error,
   onCancel,
   onConfirm,
 }: TransferOwnershipDialogProps) {
   const titleId = useId();
+  const passwordId = useId();
   const open = Boolean(membership);
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (!open) {
+      setPassword("");
+      setShowPassword(false);
       return;
     }
 
@@ -47,11 +56,13 @@ export function TransferOwnershipDialog({
     return null;
   }
 
+  const canConfirm = password.trim().length > 0 && !pending;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <button
         type="button"
-        className="absolute inset-0 bg-black/45 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-black/45"
         aria-label="Fechar"
         onClick={() => !pending && onCancel()}
       />
@@ -60,16 +71,16 @@ export function TransferOwnershipDialog({
         role="alertdialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative z-10 w-full max-w-md rounded-2xl border border-border bg-background p-6 shadow-2xl"
+        className="relative z-10 w-full max-w-md rounded-xl border border-border bg-background p-6 shadow-popover"
       >
         <div className="flex items-start gap-3">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/12 text-amber-700 dark:text-amber-300">
-            <Crown className="size-5" aria-hidden />
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-attention-border bg-attention-subtle text-attention-foreground">
+            <AlertTriangle className="size-5" aria-hidden />
           </div>
           <div className="min-w-0">
             <h2
               id={titleId}
-              className="font-display text-lg font-semibold tracking-tight"
+              className="text-lg font-semibold tracking-tight"
             >
               Transferir propriedade
             </h2>
@@ -91,6 +102,46 @@ export function TransferOwnershipDialog({
           </div>
         </div>
 
+        <div className="mt-5 space-y-2">
+          <Label htmlFor={passwordId}>Confirme com sua senha</Label>
+          <div className="relative">
+            <Input
+              id={passwordId}
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              autoFocus
+              value={password}
+              disabled={pending}
+              placeholder="Digite sua senha"
+              onChange={(event) => setPassword(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && canConfirm) {
+                  onConfirm(password);
+                }
+              }}
+              aria-invalid={Boolean(error)}
+            />
+            <button
+              type="button"
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-muted-foreground hover:text-foreground"
+              aria-label={showPassword ? "Ocultar senha" : "Exibir senha"}
+              onClick={() => setShowPassword((prev) => !prev)}
+              disabled={pending}
+            >
+              {showPassword ? (
+                <EyeOff className="size-4" aria-hidden />
+              ) : (
+                <Eye className="size-4" aria-hidden />
+              )}
+            </button>
+          </div>
+          {error && (
+            <p className="text-sm text-destructive" role="alert">
+              {error}
+            </p>
+          )}
+        </div>
+
         <div className="mt-5 flex items-center justify-end gap-2">
           <Button
             type="button"
@@ -100,7 +151,12 @@ export function TransferOwnershipDialog({
           >
             Cancelar
           </Button>
-          <Button type="button" onClick={onConfirm} disabled={pending}>
+          <Button
+            type="button"
+            disabled={!canConfirm}
+            onClick={() => onConfirm(password)}
+            className="border border-attention-border bg-attention-mark text-attention-foreground hover:bg-attention-emphasis/40 disabled:opacity-50"
+          >
             {pending && <Loader2 className="size-4 animate-spin" />}
             Confirmar transferência
           </Button>

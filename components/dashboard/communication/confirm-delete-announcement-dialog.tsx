@@ -51,7 +51,7 @@ export function ConfirmDeleteAnnouncementDialog({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <button
         type="button"
-        className="absolute inset-0 bg-black/45 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-black/45"
         aria-label="Fechar"
         onClick={() => !pending && onCancel()}
       />
@@ -60,14 +60,14 @@ export function ConfirmDeleteAnnouncementDialog({
         role="alertdialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative z-10 w-full max-w-md rounded-2xl border border-border bg-background p-6 shadow-2xl"
+        className="relative z-10 w-full max-w-md rounded-xl border border-border bg-background p-6 shadow-popover"
       >
         <div className="flex items-start gap-3">
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-destructive/10 text-destructive">
             <Trash2 className="size-5" aria-hidden />
           </div>
           <div className="min-w-0">
-            <h2 id={titleId} className="font-display text-lg font-semibold tracking-tight">
+            <h2 id={titleId} className="text-lg font-semibold tracking-tight">
               Excluir comunicado
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">

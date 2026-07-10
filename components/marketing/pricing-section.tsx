@@ -19,7 +19,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Heading, SectionHeader, SectionLabel } from "@/components/ui/heading";
+import { Heading, SectionHeader } from "@/components/ui/heading";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PricingCalculator } from "@/components/marketing/pricing-calculator";
 import { usePricing } from "@/lib/api/queries/use-pricing";
@@ -60,7 +60,7 @@ function TierPriceComparison({
     return (
       <div className="space-y-2">
         <div>
-          <p className="font-display text-2xl font-bold tracking-tight">
+          <p className="text-2xl font-bold tracking-tight">
             {formatCurrency(effectiveMonthlyFromYearly)}
             <span className={cn("text-base font-normal", muted)}>/mês</span>
           </p>
@@ -90,7 +90,7 @@ function TierPriceComparison({
   return (
     <div className="space-y-2">
       <div>
-        <p className="font-display text-2xl font-bold tracking-tight">
+        <p className="text-2xl font-bold tracking-tight">
           {formatCurrency(tier.monthlyPrice)}
           <span className={cn("text-base font-normal", muted)}>/mês</span>
         </p>
@@ -128,7 +128,7 @@ function IncludedBenefits({
         className,
       )}
     >
-      <p className="text-center font-display text-lg font-semibold tracking-tight">
+      <p className="text-center text-lg font-semibold tracking-tight">
         O mesmo Minha Church completo — do primeiro ao último membro da faixa
       </p>
       <p className="mx-auto mt-2 max-w-xl text-center text-sm text-muted-foreground">
@@ -212,19 +212,19 @@ export function PricingSection() {
 
   return (
     <>
-      <section className="py-24 sm:py-32">
-        <Container>
-          <div className="mx-auto max-w-2xl text-center">
-            <SectionLabel>Preço</SectionLabel>
-            <Heading as="h1" className="mt-3">
+      <section className="border-b border-border">
+        <Container className="py-16 sm:py-20 lg:py-24">
+          <div className="max-w-2xl">
+            <p className="font-display text-2xl tracking-tight text-foreground sm:text-3xl">
+              Minha Church
+            </p>
+            <Heading as="h1" className="mt-4 text-balance">
               Investimento justo para o tamanho da sua igreja
             </Heading>
-            <p className="mt-4 text-muted-foreground">
+            <p className="mt-5 text-base leading-relaxed text-muted-foreground sm:text-lg">
               Mesmo sistema completo em todas as faixas — você paga conforme
               quantos membros cadastra, não por pacote de funcionalidades.{" "}
-              <span className="font-medium text-foreground">
-                30 dias grátis
-              </span>
+              <span className="font-medium text-foreground">30 dias grátis</span>
               , sem cartão.
             </p>
           </div>
@@ -314,7 +314,7 @@ export function PricingSection() {
                         )}
                         <CardTitle
                           className={cn(
-                            "font-display tracking-tight",
+                            "tracking-tight",
                             tier.highlighted
                               ? "text-xl font-bold"
                               : "text-base font-semibold",

@@ -28,9 +28,9 @@ export function OnboardingHeaderButton() {
       type="button"
       onClick={openOnboarding}
       className={cn(
-        "relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border/80 bg-background/60 shadow-soft transition-all duration-200",
-        "text-foreground hover:bg-background hover:shadow-elevated",
-        open && "bg-background shadow-elevated",
+        "relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border/80 bg-background/60 transition-colors duration-200",
+        "text-foreground hover:bg-background",
+        open && "bg-background",
       )}
       aria-expanded={open}
       aria-haspopup="dialog"

@@ -68,7 +68,7 @@ export function TierCrossingModal({
     <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
       <button
         type="button"
-        className="absolute inset-0 bg-black/45 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-black/45"
         aria-label="Fechar aviso de mudança de faixa"
         onClick={onClose}
       />
@@ -78,16 +78,16 @@ export function TierCrossingModal({
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={descriptionId}
-        className="relative z-10 flex w-full max-w-lg flex-col rounded-t-2xl border border-border bg-background shadow-2xl sm:rounded-2xl"
+        className="relative z-10 flex w-full max-w-lg flex-col rounded-t-xl border border-border bg-background shadow-popover sm:rounded-xl"
       >
         <header className="flex items-start gap-4 px-6 pb-4 pt-6">
-          <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-amber-700 dark:text-amber-300">
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-attention-mark text-attention-foreground">
             <TrendingUp className="size-5" aria-hidden />
           </div>
           <div className="min-w-0 flex-1 pt-0.5">
             <h2
               id={titleId}
-              className="font-display text-xl font-semibold tracking-tight"
+              className="text-xl font-semibold tracking-tight"
             >
               {isOwnerConfirm
                 ? "Mudança de faixa de cobrança"
@@ -135,7 +135,7 @@ export function TierCrossingModal({
           </div>
 
           {isOwnerConfirm && (
-            <div className="rounded-xl border border-amber-500/25 bg-amber-500/8 px-4 py-3 text-sm">
+            <div className="rounded-xl border border-attention-border bg-attention-subtle px-4 py-3 text-sm">
               <p className="font-medium text-foreground">
                 {formatCurrency(preview.currentPrice)}
                 {priceSuffix} → {formatCurrency(preview.projectedPrice)}
