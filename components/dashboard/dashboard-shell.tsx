@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 import { CheckoutReturnHandler } from "@/components/billing/checkout-return-handler";
+import { TierCrossingOwnerHost } from "@/components/billing/tier-crossing-owner-host";
 import { ChurchSwitchOverlay } from "@/components/dashboard/church-switch-overlay";
 import { EmailVerificationBanner } from "@/components/dashboard/email-verification-banner";
 import { OnboardingChecklistProvider } from "@/components/dashboard/onboarding/onboarding-checklist-context";
@@ -117,6 +118,7 @@ export function DashboardShell({
       <Suspense fallback={null}>
         <CheckoutReturnHandler />
       </Suspense>
+      <TierCrossingOwnerHost />
     </OnboardingChecklistProvider>
   );
 }

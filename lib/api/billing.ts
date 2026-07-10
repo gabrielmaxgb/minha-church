@@ -143,3 +143,93 @@ export async function confirmTierCrossing(
     churchId,
   });
 }
+
+export interface TierCrossingRequest {
+  id: string;
+  status: "pending" | "approved" | "dismissed";
+  targetTierId: string;
+  currentTierId: string;
+  currentTierName: string;
+  projectedTierName: string;
+  currentTierMemberRange: string;
+  projectedTierMemberRange: string;
+  currentPrice: number | null;
+  projectedPrice: number | null;
+  interval: BillingPeriod | null;
+  hasActiveSubscription: boolean;
+  emailSent: boolean;
+  requestedByName: string | null;
+}
+
+export interface TierCrossingStaffNotice {
+  id: string;
+  tierId: string;
+  tierName: string;
+  createdAt: string;
+}
+
+export async function requestTierCrossing(
+  churchId: string,
+  targetTierId: string,
+): Promise<TierCrossingRequest> {
+  return apiClient(`/churches/${churchId}/billing/tier-crossing/request`, {
+    method: "POST",
+    body: JSON.stringify({ targetTierId }),
+    churchId,
+  });
+}
+
+export async function fetchPendingTierCrossing(
+  churchId: string,
+): Promise<TierCrossingRequest | null> {
+  const result = await apiClient<TierCrossingRequest | null | undefined>(
+    `/churches/${churchId}/billing/tier-crossing/pending`,
+    { churchId },
+  );
+
+  return result ?? null;
+}
+
+export async function approveTierCrossing(
+  churchId: string,
+  targetTierId: string,
+): Promise<{ acknowledged: boolean; projectedTierId: string }> {
+  return apiClient(`/churches/${churchId}/billing/tier-crossing/approve`, {
+    method: "POST",
+    body: JSON.stringify({ targetTierId }),
+    churchId,
+  });
+}
+
+export async function dismissTierCrossing(
+  churchId: string,
+  targetTierId: string,
+): Promise<{ dismissed: true }> {
+  return apiClient(`/churches/${churchId}/billing/tier-crossing/dismiss`, {
+    method: "POST",
+    body: JSON.stringify({ targetTierId }),
+    churchId,
+  });
+}
+
+export async function fetchTierCrossingStaffNotices(
+  churchId: string,
+): Promise<TierCrossingStaffNotice[]> {
+  return apiClient(`/churches/${churchId}/billing/tier-crossing/notices`, {
+    churchId,
+  });
+}
+
+export async function markTierCrossingStaffNoticeRead(
+  churchId: string,
+  noticeId: string,
+): Promise<{ read: true }> {
+  return apiClient(
+    `/churches/${churchId}/billing/tier-crossing/notices/${noticeId}/read`,
+    {
+      method: "POST",
+      body: JSON.stringify({}),
+      churchId,
+    },
+  );
+}

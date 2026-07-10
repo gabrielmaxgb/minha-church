@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { Check, Copy, KeyRound, X } from "lucide-react";
+import { Check, Copy, KeyRound, Link2, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import type { MemberAccountCredentials } from "@/types/members";
@@ -65,6 +65,7 @@ export function MemberAccountCreatedModal({
 }: MemberAccountCreatedModalProps) {
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
+  const isLinked = account.kind === "linked";
 
   useEffect(() => {
     if (!open) {
@@ -120,15 +121,20 @@ export function MemberAccountCreatedModal({
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3">
             <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-              <KeyRound className="size-5" aria-hidden />
+              {isLinked ? (
+                <Link2 className="size-5" aria-hidden />
+              ) : (
+                <KeyRound className="size-5" aria-hidden />
+              )}
             </div>
             <div>
               <h2 id={titleId} className="font-display text-lg font-semibold">
-                Login criado
+                {isLinked ? "Conta existente vinculada" : "Login criado"}
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Compartilhe as credenciais com {memberName}. No primeiro acesso,
-                será necessário definir uma nova senha.
+                {isLinked
+                  ? `${memberName} já tinha conta MinhaChurch. O acesso a esta igreja foi liberado com o login atual — sem senha nova.`
+                  : `Compartilhe as credenciais com ${memberName}. No primeiro acesso, será necessário definir uma nova senha.`}
               </p>
             </div>
           </div>
@@ -146,7 +152,12 @@ export function MemberAccountCreatedModal({
 
         <div className="mt-6 space-y-4">
           <CopyField label="Login (e-mail ou CPF)" value={account.login} />
-          <CopyField label="Senha temporária" value={account.temporaryPassword} />
+          {account.kind === "created" && (
+            <CopyField
+              label="Senha temporária"
+              value={account.temporaryPassword}
+            />
+          )}
         </div>
 
         <div className="mt-6 flex justify-end">

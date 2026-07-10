@@ -214,7 +214,17 @@ export function ChurchMembershipsSettings() {
   }
 
   function getDraftRoleIds(membership: ChurchMembership): string[] {
-    return drafts[membership.userId] ?? membership.roles.map((role) => role.id);
+    const base =
+      drafts[membership.userId] ?? membership.roles.map((role) => role.id);
+    const memberRoleId = assignableRoles?.find(
+      (role) => role.systemKey === "member",
+    )?.id;
+
+    if (memberRoleId && !base.includes(memberRoleId)) {
+      return [...base, memberRoleId];
+    }
+
+    return base;
   }
 
   function isMembershipDirty(membership: ChurchMembership): boolean {
@@ -245,6 +255,12 @@ export function ChurchMembershipsSettings() {
   }
 
   function toggleRole(membership: ChurchMembership, roleId: string) {
+    const role = assignableRoles?.find((item) => item.id === roleId);
+
+    if (role?.systemKey === "member") {
+      return;
+    }
+
     const current = getDraftRoleIds(membership);
     const next = current.includes(roleId)
       ? current.filter((id) => id !== roleId)
@@ -487,17 +503,26 @@ export function ChurchMembershipsSettings() {
                         </p>
                       )}
                       <div className="divide-y divide-border/50 rounded-lg border border-border/60 bg-card px-2">
-                        {assignableRoles.map((role) => (
-                          <SettingsToggleRow
-                            key={role.id}
-                            label={role.name}
-                            checked={getDraftRoleIds(membership).includes(
-                              role.id,
-                            )}
-                            disabled={isSaving}
-                            onChange={() => toggleRole(membership, role.id)}
-                          />
-                        ))}
+                        {assignableRoles.map((role) => {
+                          const isBaselineMember = role.systemKey === "member";
+
+                          return (
+                            <SettingsToggleRow
+                              key={role.id}
+                              label={role.name}
+                              description={
+                                isBaselineMember
+                                  ? "Atribuído automaticamente a quem tem acesso (membros active)."
+                                  : undefined
+                              }
+                              checked={getDraftRoleIds(membership).includes(
+                                role.id,
+                              )}
+                              disabled={isSaving || isBaselineMember}
+                              onChange={() => toggleRole(membership, role.id)}
+                            />
+                          );
+                        })}
                       </div>
                       </>
                     ) : (

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 
+import { TierCrossingModal } from "@/components/billing/tier-crossing-modal";
 import { MemberAccountCreatedModal } from "@/components/dashboard/members/member-account-created-modal";
 import { MemberForm } from "@/components/dashboard/members/member-form";
 import { MemberMinistriesFunctionsSection } from "@/components/dashboard/members/member-ministries-functions-section";
@@ -29,6 +30,10 @@ import {
   useReceiveMember,
   useUpdateMember,
 } from "@/lib/api/queries";
+import {
+  countsTowardBillingTier,
+  useTierCrossingGate,
+} from "@/lib/billing/use-tier-crossing-gate";
 import {
   formValuesToUpdatePayload,
   GENDER_LABELS,
@@ -199,8 +204,9 @@ export function MemberExpandedPanel({
   canManage,
   onDeleted,
 }: MemberExpandedPanelProps) {
-  const { user } = useAuth();
+  const { user, church } = useAuth();
   const { writesBlocked, reason } = useTrialWriteGuard();
+  const tierCrossing = useTierCrossingGate();
   const [viewTab, setViewTab] = useState<"profile" | "ministries">("profile");
   const [confirmName, setConfirmName] = useState("");
   const [isEditing, setIsEditing] = useState(false);
@@ -236,38 +242,64 @@ export function MemberExpandedPanel({
 
   const onSubmit = form.handleSubmit(async (values) => {
     try {
-      const result = await updateMember.mutateAsync(formValuesToUpdatePayload(values));
-      setIsEditing(false);
-      form.clearErrors("root");
+      const becomingBillable =
+        !countsTowardBillingTier(member.status) &&
+        countsTowardBillingTier(values.status);
 
-      if (result.account) {
-        setCreatedAccount({
-          memberName: result.name,
-          account: result.account,
+      const runUpdate = async () => {
+        const result = await updateMember.mutateAsync(
+          formValuesToUpdatePayload(values),
+        );
+        setIsEditing(false);
+        form.clearErrors("root");
+
+        if (result.account) {
+          setCreatedAccount({
+            memberName: result.name,
+            account: result.account,
+          });
+        }
+      };
+
+      if (becomingBillable) {
+        await tierCrossing.runWithTierCrossingCheck(values.status, runUpdate, {
+          projectedMemberCount: (church?.memberCount ?? 0) + 1,
         });
+      } else {
+        await runUpdate();
       }
     } catch (submitError) {
       applyMemberFormApiError(
         form.setError,
         form.clearErrors,
         submitError,
-        "Não foi possível salvar as alterações.",
+        submitError instanceof Error
+          ? submitError.message
+          : "Não foi possível salvar as alterações.",
       );
     }
   });
 
   async function handleReceiveMember() {
     try {
-      const result = await receiveMember.mutateAsync(member.id);
+      await tierCrossing.runWithTierCrossingCheck(
+        "active",
+        async () => {
+          const result = await receiveMember.mutateAsync(member.id);
 
-      if (result.account) {
-        setCreatedAccount({
-          memberName: result.name,
-          account: result.account,
-        });
-      }
+          if (result.account) {
+            setCreatedAccount({
+              memberName: result.name,
+              account: result.account,
+            });
+          }
+        },
+        {
+          projectedMemberCount: (church?.memberCount ?? 0) + 1,
+        },
+      );
     } catch {
-      // mutation error surfaces via react-query if needed
+      // mutation / preview error surfaces via form or react-query if needed
     }
   }
 
@@ -402,6 +434,20 @@ export function MemberExpandedPanel({
             memberName={createdAccount.memberName}
             account={createdAccount.account}
             onClose={() => setCreatedAccount(null)}
+          />
+        )}
+
+        {tierCrossing.preview && (
+          <TierCrossingModal
+            open
+            preview={tierCrossing.preview}
+            mode={tierCrossing.mode}
+            loading={tierCrossing.loading}
+            error={tierCrossing.error}
+            requestSent={tierCrossing.requestSent}
+            onConfirm={() => void tierCrossing.confirm()}
+            onRequestOwner={() => void tierCrossing.requestOwnerApproval()}
+            onClose={tierCrossing.close}
           />
         )}
       </>
@@ -563,6 +609,20 @@ export function MemberExpandedPanel({
           memberName={createdAccount.memberName}
           account={createdAccount.account}
           onClose={() => setCreatedAccount(null)}
+        />
+      )}
+
+      {tierCrossing.preview && (
+        <TierCrossingModal
+          open
+          preview={tierCrossing.preview}
+          mode={tierCrossing.mode}
+          loading={tierCrossing.loading}
+          error={tierCrossing.error}
+          requestSent={tierCrossing.requestSent}
+          onConfirm={() => void tierCrossing.confirm()}
+          onRequestOwner={() => void tierCrossing.requestOwnerApproval()}
+          onClose={tierCrossing.close}
         />
       )}
     </>

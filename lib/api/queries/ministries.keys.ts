@@ -27,6 +27,9 @@ export interface CreateMinistryRolePayload {
   sortOrder?: number;
   canManageEvents?: boolean;
   canManageRoster?: boolean;
+  canManageTeam?: boolean;
+  canManageRoles?: boolean;
+  singleHolder?: boolean;
 }
 
 export interface UpdateMinistryRolePayload {
@@ -34,6 +37,9 @@ export interface UpdateMinistryRolePayload {
   sortOrder?: number;
   canManageEvents?: boolean;
   canManageRoster?: boolean;
+  canManageTeam?: boolean;
+  canManageRoles?: boolean;
+  singleHolder?: boolean;
 }
 
 async function fetchMinistries(churchId: string): Promise<Ministry[]> {

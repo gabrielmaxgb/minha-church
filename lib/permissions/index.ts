@@ -23,11 +23,23 @@ export function canManageMembers(permissions: UserPermissions) {
 
 /**
  * Vincular/desvincular membros a ministérios e ajustar seus cargos na equipe.
- * Disponível para quem gerencia cadastros (members.manage) e também para quem
- * gerencia ministérios (ministries.manage), sem exigir CRUD dos cadastros.
+ * Disponível para quem gerencia cadastros (members.manage), quem gerencia
+ * ministérios (ministries.manage), ou quem tem a permissão de equipe no
+ * ministério específico.
  */
-export function canManageMinistryMembers(permissions: UserPermissions) {
-  return permissions.members.manage || permissions.ministries.manage;
+export function canManageMinistryMembers(
+  permissions: UserPermissions,
+  ministryId?: string,
+) {
+  if (permissions.members.manage || permissions.ministries.manage) {
+    return true;
+  }
+
+  if (!ministryId) {
+    return false;
+  }
+
+  return (permissions.ministries.teamMinistryIds ?? []).includes(ministryId);
 }
 
 export function canAccessMembers(permissions: UserPermissions | null) {
@@ -52,7 +64,24 @@ export function canManageMinistryRoster(
 ) {
   return (
     permissions.ministries.manage ||
-    permissions.ministries.rosterMinistryIds.includes(ministryId)
+    (permissions.ministries.rosterMinistryIds ?? []).includes(ministryId)
+  );
+}
+
+export function canManageMinistryTeam(
+  permissions: UserPermissions,
+  ministryId: string,
+) {
+  return canManageMinistryMembers(permissions, ministryId);
+}
+
+export function canManageMinistryRoles(
+  permissions: UserPermissions,
+  ministryId: string,
+) {
+  return (
+    permissions.ministries.manage ||
+    (permissions.ministries.rolesMinistryIds ?? []).includes(ministryId)
   );
 }
 

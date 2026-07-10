@@ -167,10 +167,12 @@ export function CreateMemberContent() {
         <TierCrossingModal
           open
           preview={tierCrossing.preview}
-          isOwner={tierCrossing.isOwner}
+          mode={tierCrossing.mode}
           loading={tierCrossing.loading}
           error={tierCrossing.error}
+          requestSent={tierCrossing.requestSent}
           onConfirm={() => void tierCrossing.confirm()}
+          onRequestOwner={() => void tierCrossing.requestOwnerApproval()}
           onClose={tierCrossing.close}
         />
       )}

@@ -10,6 +10,7 @@ export interface ChurchRole {
   sortOrder: number;
   isSystem: boolean;
   systemKey?: string;
+  singleHolder: boolean;
   permissions: ChurchPermissionKey[];
 }
 
@@ -18,6 +19,7 @@ export interface CreateChurchRolePayload {
   color?: string;
   sortOrder?: number;
   permissions: ChurchPermissionKey[];
+  singleHolder?: boolean;
 }
 
 export interface UpdateChurchRolePayload {
@@ -25,6 +27,7 @@ export interface UpdateChurchRolePayload {
   color?: string | null;
   sortOrder?: number;
   permissions?: ChurchPermissionKey[];
+  singleHolder?: boolean;
 }
 
 export const CHURCH_PERMISSION_LABELS: Record<ChurchPermissionKey, string> = {

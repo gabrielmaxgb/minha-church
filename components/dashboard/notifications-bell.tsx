@@ -3,14 +3,30 @@
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Bell, ClipboardList, KeyRound, Mail, UserCheck } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  Bell,
+  ClipboardList,
+  CreditCard,
+  KeyRound,
+  Mail,
+  UserCheck,
+} from "lucide-react";
 
+import { openTierUpgradeApprovalModal } from "@/components/billing/tier-crossing-owner-host";
 import { Button } from "@/components/ui/button";
 import {
   AUTH_ROUTES,
   settingsSectionPath,
 } from "@/constants/routes";
-import { useMyMinistryNotifications, useMySchedules, usePasswordResetRequests, useAnnouncementsUnreadCount } from "@/lib/api/queries";
+import { markTierCrossingStaffNoticeRead } from "@/lib/api/billing";
+import { billingKeys } from "@/lib/api/queries/billing.keys";
+import {
+  useMyMinistryNotifications,
+  useMySchedules,
+  usePasswordResetRequests,
+  useAnnouncementsUnreadCount,
+} from "@/lib/api/queries";
 import { canManageChurchMemberships } from "@/lib/church-memberships/constants";
 import {
   announcementsNotificationDescription,
@@ -28,13 +44,17 @@ import {
   firstPendingScheduleHref,
   schedulePendingCount,
 } from "@/lib/my-schedule/schedule-notifications";
+import { canManageMembers } from "@/lib/permissions";
 import { pendingNotificationStyles } from "@/lib/ui/notification-styles";
 import { cn, formatDateTime } from "@/lib/utils";
-import { useAuth } from "@/providers/auth-provider";
+import { useAuth, useTenant } from "@/providers/auth-provider";
 
 function useNotificationCount(): number {
-  const { permissions } = useAuth();
+  const { permissions, user } = useAuth();
+  const { churchId } = useTenant();
   const canManage = canManageChurchMemberships(permissions);
+  const canMembers = permissions ? canManageMembers(permissions) : false;
+  const isOwner = Boolean(user?.isOwner);
   const hasSchedulesAccess = Boolean(permissions?.schedules.access);
   const hasCommunicationAccess = Boolean(permissions?.communication.access);
 
@@ -45,6 +65,16 @@ function useNotificationCount(): number {
   const { data: ministryNotifications } = useMyMinistryNotifications();
   const { data: unreadAnnouncements } = useAnnouncementsUnreadCount({
     enabled: hasCommunicationAccess,
+  });
+  const { data: pendingTier } = useQuery({
+    ...billingKeys.tierCrossingPending(churchId ?? "unknown"),
+    enabled: Boolean(churchId) && isOwner,
+    refetchInterval: isOwner ? 60_000 : false,
+  });
+  const { data: staffNotices } = useQuery({
+    ...billingKeys.tierCrossingNotices(churchId ?? "unknown"),
+    enabled: Boolean(churchId) && canMembers,
+    refetchInterval: canMembers ? 60_000 : false,
   });
 
   const passwordResetCount = canManage ? (passwordResetRequests?.length ?? 0) : 0;
@@ -57,8 +87,17 @@ function useNotificationCount(): number {
     unreadAnnouncements,
     hasCommunicationAccess,
   );
+  const tierPendingCount = isOwner && pendingTier ? 1 : 0;
+  const tierNoticeCount = canMembers ? (staffNotices?.length ?? 0) : 0;
 
-  return passwordResetCount + pendingScheduleCount + ministryCount + announcementCount;
+  return (
+    passwordResetCount +
+    pendingScheduleCount +
+    ministryCount +
+    announcementCount +
+    tierPendingCount +
+    tierNoticeCount
+  );
 }
 
 function NotificationsPanel({
@@ -72,8 +111,12 @@ function NotificationsPanel({
   titleId: string;
   anchorRect: DOMRect | null;
 }) {
-  const { permissions } = useAuth();
+  const { permissions, user } = useAuth();
+  const { churchId } = useTenant();
+  const queryClient = useQueryClient();
   const canManage = canManageChurchMemberships(permissions);
+  const canMembers = permissions ? canManageMembers(permissions) : false;
+  const isOwner = Boolean(user?.isOwner);
   const hasSchedulesAccess = Boolean(permissions?.schedules.access);
   const hasCommunicationAccess = Boolean(permissions?.communication.access);
 
@@ -99,6 +142,29 @@ function NotificationsPanel({
   } = useAnnouncementsUnreadCount({
     enabled: open && hasCommunicationAccess,
   });
+  const { data: pendingTier } = useQuery({
+    ...billingKeys.tierCrossingPending(churchId ?? "unknown"),
+    enabled: open && Boolean(churchId) && isOwner,
+  });
+  const { data: staffNotices } = useQuery({
+    ...billingKeys.tierCrossingNotices(churchId ?? "unknown"),
+    enabled: open && Boolean(churchId) && canMembers,
+  });
+
+  const markNoticeRead = useMutation({
+    mutationFn: async (noticeId: string) => {
+      if (!churchId) {
+        throw new Error("Igreja não selecionada.");
+      }
+
+      return markTierCrossingStaffNoticeRead(churchId, noticeId);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: billingKeys.tierCrossingNotices(churchId ?? "unknown").queryKey,
+      });
+    },
+  });
 
   const passwordResetCount = canManage ? (passwordResetRequests?.length ?? 0) : 0;
   const pendingScheduleCount = schedulePendingCount(
@@ -110,11 +176,15 @@ function NotificationsPanel({
     unreadAnnouncements,
     hasCommunicationAccess,
   );
+  const tierPendingCount = isOwner && pendingTier ? 1 : 0;
+  const tierNoticeCount = canMembers ? (staffNotices?.length ?? 0) : 0;
   const count =
     passwordResetCount +
     pendingScheduleCount +
     ministryCount +
-    announcementCount;
+    announcementCount +
+    tierPendingCount +
+    tierNoticeCount;
 
   const respondHref = schedules
     ? firstPendingScheduleHref(schedules)
@@ -244,6 +314,85 @@ function NotificationsPanel({
               </div>
             )}
 
+          {!isLoading && !isError && tierPendingCount > 0 && pendingTier && (
+            <div className="border-b border-border/70 px-4 py-3 last:border-b-0">
+              <div className="flex items-start gap-3">
+                <div className={pendingNotificationStyles.icon.sm}>
+                  <CreditCard
+                    className={cn("size-3.5", pendingNotificationStyles.iconText)}
+                    aria-hidden
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className={pendingNotificationStyles.label}>Assinatura</p>
+                  <p className="mt-1 text-sm font-medium leading-snug">
+                    Autorizar nova faixa de cobrança
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {pendingTier.requestedByName
+                      ? `${pendingTier.requestedByName} pediu liberar ${pendingTier.projectedTierName}.`
+                      : `Pedido para liberar ${pendingTier.projectedTierName}.`}
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-2 h-8 text-xs"
+                    onClick={() => {
+                      onClose();
+                      openTierUpgradeApprovalModal();
+                    }}
+                  >
+                    Revisar pedido
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {!isLoading &&
+            !isError &&
+            tierNoticeCount > 0 &&
+            staffNotices?.map((notice) => (
+              <div
+                key={notice.id}
+                className="border-b border-border/70 px-4 py-3 last:border-b-0"
+              >
+                <div className="flex items-start gap-3">
+                  <div className={pendingNotificationStyles.icon.sm}>
+                    <CreditCard
+                      className={cn(
+                        "size-3.5",
+                        pendingNotificationStyles.iconText,
+                      )}
+                      aria-hidden
+                    />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className={pendingNotificationStyles.label}>Assinatura</p>
+                    <p className="mt-1 text-sm font-medium leading-snug">
+                      Faixa {notice.tierName} liberada
+                    </p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      O proprietário autorizou. Você já pode adicionar membros
+                      ativos.
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-2 h-8 text-xs"
+                      disabled={markNoticeRead.isPending}
+                      onClick={() => {
+                        markNoticeRead.mutate(notice.id);
+                        onClose();
+                      }}
+                    >
+                      Entendi
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+
           {!isLoading &&
             !isError &&
             pendingScheduleCount > 0 && (
@@ -372,8 +521,10 @@ function NotificationsPanel({
 export function NotificationsBell() {
   const titleId = useId();
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const { permissions } = useAuth();
+  const { permissions, user } = useAuth();
   const canManage = canManageChurchMemberships(permissions);
+  const canMembers = permissions ? canManageMembers(permissions) : false;
+  const isOwner = Boolean(user?.isOwner);
   const hasSchedulesAccess = Boolean(permissions?.schedules.access);
   const hasCommunicationAccess = Boolean(permissions?.communication.access);
   const [open, setOpen] = useState(false);
@@ -407,6 +558,8 @@ export function NotificationsBell() {
 
   if (
     !canManage &&
+    !canMembers &&
+    !isOwner &&
     !hasSchedulesAccess &&
     !hasMinistryNotifications &&
     !hasCommunicationAccess

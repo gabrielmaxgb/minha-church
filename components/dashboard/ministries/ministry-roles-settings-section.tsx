@@ -26,6 +26,7 @@ import type { Ministry, MinistryRole } from "@/types/ministries";
 import {
   MINISTRY_PERMISSIONS,
   MinistryPermissionToggle,
+  RoleAssignmentConstraintToggle,
   type MinistryPermissionField,
 } from "./ministry-role-permissions-section";
 
@@ -59,6 +60,13 @@ function MinistryRolePermissionsPanel({
     updateRole.mutate({
       roleId: role.id,
       payload: { [field]: next },
+    });
+  }
+
+  function toggleSingleHolder(next: boolean) {
+    updateRole.mutate({
+      roleId: role.id,
+      payload: { singleHolder: next },
     });
   }
 
@@ -117,6 +125,19 @@ function MinistryRolePermissionsPanel({
       </div>
 
       <div className="flex-1 space-y-2 p-3 sm:p-4">
+        <div>
+          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Atribuição
+          </p>
+          <RoleAssignmentConstraintToggle
+            label="Titular único"
+            description="Só uma pessoa por vez pode ter este cargo. Ao atribuir a outra, a anterior perde automaticamente."
+            checked={role.singleHolder ?? false}
+            disabled={!canManage || updateRole.isPending}
+            onToggle={() => toggleSingleHolder(!(role.singleHolder ?? false))}
+          />
+        </div>
+
         {MINISTRY_PERMISSIONS.map((permission) => (
           <MinistryPermissionToggle
             key={permission.field}

@@ -45,6 +45,7 @@ import {
   ChurchRolePermissionsSummary,
 } from "./church-role-permissions-editor";
 import { ChurchRolesGuideModal } from "./church-roles-guide-modal";
+import { RoleAssignmentConstraintToggle } from "@/components/dashboard/ministries/ministry-role-permissions-section";
 
 function permissionsEqual(
   a: readonly ChurchPermissionKey[],
@@ -643,7 +644,42 @@ export function ChurchRolesSettings() {
                   />
                 )}
 
-                <div className="flex-1 px-4 py-4 sm:px-5">
+                <div className="flex-1 space-y-4 px-4 py-4 sm:px-5">
+                  <div>
+                    <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      Atribuição
+                    </p>
+                    <RoleAssignmentConstraintToggle
+                      label="Titular único"
+                      description="Só uma pessoa por vez pode ter este cargo. Ao atribuir a outra, a anterior perde automaticamente."
+                      checked={selectedRole.singleHolder ?? false}
+                      disabled={
+                        !canManage ||
+                        isSaving ||
+                        selectedRole.systemKey === "member" ||
+                        updateRole.isPending
+                      }
+                      onToggle={() => {
+                        if (selectedRole.systemKey === "member") {
+                          return;
+                        }
+
+                        void updateRole.mutateAsync({
+                          roleId: selectedRole.id,
+                          payload: {
+                            singleHolder: !(selectedRole.singleHolder ?? false),
+                          },
+                        });
+                      }}
+                    />
+                    {selectedRole.systemKey === "member" ? (
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        O cargo Membro é compartilhado por todos e não pode ser
+                        titular único.
+                      </p>
+                    ) : null}
+                  </div>
+
                   <ChurchRolePermissionsEditor
                     permissions={getDraftPermissions(selectedRole)}
                     onToggle={(permission) =>

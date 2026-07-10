@@ -66,11 +66,18 @@ export interface ListMembersParams {
   limit?: number;
 }
 
-export interface MemberAccountCredentials {
-  login: string;
-  temporaryPassword: string;
-  mustChangePassword: true;
-}
+export type MemberAccountCredentials =
+  | {
+      kind: "created";
+      login: string;
+      temporaryPassword: string;
+      mustChangePassword: true;
+    }
+  | {
+      kind: "linked";
+      login: string;
+      linkedExistingAccount: true;
+    };
 
 export interface CreateMemberResponse extends Member {
   account?: MemberAccountCredentials;

@@ -38,18 +38,29 @@ export function MinistryRoleToggles({
         </div>
       )}
 
-      {sortedRoles.map((role) => (
-        <SettingsToggleRow
-          key={role.id}
-          label={role.name}
-          description={
-            role.canManageEvents ? "Pode gerenciar atividades" : undefined
-          }
-          checked={selectedRoleIds.includes(role.id)}
-          disabled={disabled || isUpdating}
-          onChange={(checked) => onToggle(role.id, checked)}
-        />
-      ))}
+      {sortedRoles.map((role) => {
+        const managed = [
+          role.canManageEvents ? "eventos" : null,
+          role.canManageRoster ? "escalas" : null,
+          role.canManageTeam ? "equipe" : null,
+          role.canManageRoles ? "cargos" : null,
+        ].filter(Boolean);
+
+        return (
+          <SettingsToggleRow
+            key={role.id}
+            label={role.name}
+            description={
+              managed.length > 0
+                ? `Pode gerenciar ${managed.join(", ")}`
+                : undefined
+            }
+            checked={selectedRoleIds.includes(role.id)}
+            disabled={disabled || isUpdating}
+            onChange={(checked) => onToggle(role.id, checked)}
+          />
+        );
+      })}
     </div>
   );
 }

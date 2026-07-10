@@ -1,11 +1,15 @@
 "use client";
 
 import type { LucideIcon } from "lucide-react";
-import { Calendar, CalendarDays } from "lucide-react";
+import { Calendar, CalendarDays, Shield, Users } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-export type MinistryPermissionField = "canManageEvents" | "canManageRoster";
+export type MinistryPermissionField =
+  | "canManageEvents"
+  | "canManageRoster"
+  | "canManageTeam"
+  | "canManageRoles";
 
 interface MinistryPermissionDefinition {
   field: MinistryPermissionField;
@@ -27,6 +31,19 @@ export const MINISTRY_PERMISSIONS: MinistryPermissionDefinition[] = [
     description:
       "Monta a escala oficial escolhendo entre quem marcou disponibilidade.",
     icon: CalendarDays,
+  },
+  {
+    field: "canManageTeam",
+    label: "Adicionar e/ou remover membros",
+    description:
+      "Vincula e desvincula membros da equipe deste ministério (não altera o cadastro pastoral).",
+    icon: Users,
+  },
+  {
+    field: "canManageRoles",
+    label: "Gerenciar cargos do ministério",
+    description: "Cria, edita e remove cargos de liderança deste ministério.",
+    icon: Shield,
   },
 ];
 
@@ -132,5 +149,44 @@ export function MinistryPermissionToggle({
         label={permission.label}
       />
     </div>
+  );
+}
+
+export function RoleAssignmentConstraintToggle({
+  label,
+  description,
+  checked,
+  disabled,
+  onToggle,
+}: {
+  label: string;
+  description: string;
+  checked: boolean;
+  disabled?: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <label
+      className={cn(
+        "flex w-full cursor-pointer items-start gap-3 rounded-xl border border-border/60 bg-card/40 p-3.5 transition-colors",
+        checked && "border-border bg-muted/30",
+        disabled && "cursor-not-allowed opacity-60",
+      )}
+    >
+      <input
+        type="checkbox"
+        className="mt-1 size-4 shrink-0 rounded border-border accent-foreground"
+        checked={checked}
+        disabled={disabled}
+        onChange={onToggle}
+        aria-label={label}
+      />
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-medium leading-tight">{label}</span>
+        <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
+          {description}
+        </span>
+      </span>
+    </label>
   );
 }

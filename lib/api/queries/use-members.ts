@@ -15,7 +15,7 @@ import {
 } from "@/lib/api/queries/members.keys";
 import { queries } from "@/lib/api/queries";
 import type { ListMembersParams } from "@/types/members";
-import { useTenant } from "@/providers/auth-provider";
+import { useAuth, useTenant } from "@/providers/auth-provider";
 
 export const MEMBERS_PAGE_SIZE = 50;
 
@@ -118,6 +118,7 @@ export function useAckMinistryCatalogNotifications() {
 export function useReceiveMember() {
   const { churchId } = useTenant();
   const queryClient = useQueryClient();
+  const { reloadSession } = useAuth();
 
   return useMutation({
     mutationFn: (memberId: string) => {
@@ -130,6 +131,7 @@ export function useReceiveMember() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: membersKeys._def });
       await queryClient.invalidateQueries({ queryKey: queries.dashboard._def });
+      await reloadSession();
     },
   });
 }

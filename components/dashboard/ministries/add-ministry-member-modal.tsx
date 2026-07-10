@@ -12,7 +12,7 @@ import {
   useAssignMembersToMinistry,
   useMembers,
 } from "@/lib/api/queries";
-import { canManageMinistryMembers } from "@/lib/permissions";
+import { canManageMinistryTeam } from "@/lib/permissions";
 import { useAuth } from "@/providers/auth-provider";
 import type { Ministry, MinistryMember } from "@/types/ministries";
 
@@ -31,7 +31,9 @@ export function AddMinistryMemberModal({
 }: AddMinistryMemberModalProps) {
   const titleId = useId();
   const { permissions } = useAuth();
-  const canManage = permissions ? canManageMinistryMembers(permissions) : false;
+  const canManage = permissions
+    ? canManageMinistryTeam(permissions, ministry.id)
+    : false;
   const [memberIds, setMemberIds] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 

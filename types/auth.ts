@@ -7,7 +7,13 @@ export interface UserRoleSummary {
 export interface UserPermissions {
   dashboard: { access: boolean };
   members: { access: boolean; manage: boolean };
-  ministries: { access: boolean; manage: boolean; rosterMinistryIds: string[] };
+  ministries: {
+    access: boolean;
+    manage: boolean;
+    rosterMinistryIds: string[];
+    teamMinistryIds: string[];
+    rolesMinistryIds: string[];
+  };
   activities: {
     access: boolean;
     createChurchWide: boolean;

@@ -13,6 +13,9 @@ export interface MinistryRole {
   sortOrder: number;
   canManageEvents: boolean;
   canManageRoster: boolean;
+  canManageTeam: boolean;
+  canManageRoles: boolean;
+  singleHolder: boolean;
   createdAt: string;
   updatedAt: string;
 }

@@ -5,29 +5,35 @@ import { ArrowRight, TrendingUp, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import type { TierCrossingPreview } from "@/lib/api/billing";
+import type { TierCrossingModalMode } from "@/lib/billing/use-tier-crossing-gate";
 import { formatCurrency } from "@/lib/utils";
 
 interface TierCrossingModalProps {
   open: boolean;
   preview: TierCrossingPreview;
-  isOwner: boolean;
+  mode: TierCrossingModalMode;
   loading?: boolean;
   error?: string | null;
+  requestSent?: boolean;
   onConfirm: () => void;
+  onRequestOwner: () => void;
   onClose: () => void;
 }
 
 export function TierCrossingModal({
   open,
   preview,
-  isOwner,
+  mode,
   loading = false,
   error = null,
+  requestSent = false,
   onConfirm,
+  onRequestOwner,
   onClose,
 }: TierCrossingModalProps) {
   const titleId = useId();
   const descriptionId = useId();
+  const isOwnerConfirm = mode === "owner-confirm";
 
   useEffect(() => {
     if (!open) {
@@ -55,8 +61,7 @@ export function TierCrossingModal({
     return null;
   }
 
-  const intervalLabel =
-    preview.interval === "yearly" ? "ano" : "mês";
+  const intervalLabel = preview.interval === "yearly" ? "ano" : "mês";
   const priceSuffix = ` / ${intervalLabel}`;
 
   return (
@@ -84,12 +89,14 @@ export function TierCrossingModal({
               id={titleId}
               className="font-display text-xl font-semibold tracking-tight"
             >
-              Mudança de faixa ao cadastrar
+              {isOwnerConfirm
+                ? "Mudança de faixa de cobrança"
+                : "Autorização do proprietário necessária"}
             </h2>
             <p id={descriptionId} className="mt-1 text-sm text-muted-foreground">
-              {isOwner
+              {isOwnerConfirm
                 ? "Este cadastro leva a igreja para a próxima faixa de cobrança."
-                : "Este cadastro leva a igreja para a próxima faixa de cobrança. Confirme para continuar."}
+                : "Adicionar ou ativar este membro mudaria a faixa de pagamento da igreja. Somente o proprietário pode autorizar."}
             </p>
           </div>
           <button
@@ -127,7 +134,7 @@ export function TierCrossingModal({
             </div>
           </div>
 
-          {isOwner && (
+          {isOwnerConfirm && (
             <div className="rounded-xl border border-amber-500/25 bg-amber-500/8 px-4 py-3 text-sm">
               <p className="font-medium text-foreground">
                 {formatCurrency(preview.currentPrice)}
@@ -142,11 +149,21 @@ export function TierCrossingModal({
             </div>
           )}
 
-          {!isOwner && preview.hasActiveSubscription && (
+          {!isOwnerConfirm && !requestSent && (
             <p className="text-sm text-muted-foreground">
-              A assinatura será ajustada automaticamente após salvar este
-              cadastro.
+              Enviaremos um aviso ao proprietário. Depois que ele autorizar, tente
+              novamente esta ação.
             </p>
+          )}
+
+          {requestSent && (
+            <div className="rounded-xl border border-border/70 bg-muted/20 px-4 py-3 text-sm">
+              <p className="font-medium text-foreground">Pedido enviado</p>
+              <p className="mt-1 text-muted-foreground">
+                O proprietário foi notificado. Quando a faixa for liberada, você
+                poderá tentar de novo.
+              </p>
+            </div>
           )}
 
           {error && (
@@ -162,11 +179,21 @@ export function TierCrossingModal({
               onClick={onClose}
               disabled={loading}
             >
-              Voltar
+              {requestSent ? "Fechar" : "Voltar"}
             </Button>
-            <Button type="button" onClick={onConfirm} disabled={loading}>
-              {loading ? "Salvando..." : "Entendi e continuar"}
-            </Button>
+            {isOwnerConfirm ? (
+              <Button type="button" onClick={onConfirm} disabled={loading}>
+                {loading ? "Salvando..." : "Entendi e continuar"}
+              </Button>
+            ) : !requestSent ? (
+              <Button
+                type="button"
+                onClick={onRequestOwner}
+                disabled={loading}
+              >
+                {loading ? "Enviando..." : "Avisar o proprietário"}
+              </Button>
+            ) : null}
           </div>
         </div>
       </div>

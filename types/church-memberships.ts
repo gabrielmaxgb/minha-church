@@ -3,6 +3,8 @@ export interface ChurchMembershipRole {
   name: string;
   color?: string;
   isSystem: boolean;
+  systemKey?: string;
+  sortOrder?: number;
 }
 
 export interface ChurchMembership {
