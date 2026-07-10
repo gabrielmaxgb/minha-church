@@ -19,6 +19,8 @@ export function EmailVerificationBanner() {
     return null;
   }
 
+  const email = user.email;
+
   async function handleResend() {
     setIsSending(true);
     setFeedback(null);
@@ -26,7 +28,7 @@ export function EmailVerificationBanner() {
     setError(null);
 
     try {
-      const response = await resendVerificationEmailRequest(user.email);
+      const response = await resendVerificationEmailRequest(email);
       setFeedback(response.message);
       await reloadSession();
     } catch (submitError) {
@@ -77,7 +79,7 @@ export function EmailVerificationBanner() {
               Confirme seu e-mail para liberar todos os recursos
             </p>
             <p className="text-sm leading-relaxed text-muted-foreground">
-              Enviamos um link para <span className="font-medium text-foreground">{user.email}</span>.
+              Enviamos um link para <span className="font-medium text-foreground">{email}</span>.
               Confirme para concluir o cadastro da igreja e usar todos os recursos do painel.
             </p>
             {feedback && (
