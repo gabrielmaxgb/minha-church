@@ -6,6 +6,7 @@ import {
   createMemberRelation,
   deleteMemberRelation,
   membersKeys,
+  updateMember,
 } from "@/lib/api/queries/members.keys";
 import type { MemberRelationType } from "@/types/members";
 import { useTenant } from "@/providers/auth-provider";
@@ -16,6 +17,31 @@ export function useFamilyGraph(familyId: string, options?: { enabled?: boolean }
   return useQuery({
     ...membersKeys.familyGraph(churchId ?? "unknown", familyId),
     enabled: Boolean(churchId && familyId) && (options?.enabled ?? true),
+  });
+}
+
+export function useSetMemberFamily(familyId?: string) {
+  const { churchId } = useTenant();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: { memberId: string; familyId: string | null }) => {
+      if (!churchId) {
+        throw new Error("Igreja não selecionada.");
+      }
+
+      return updateMember(churchId, payload.memberId, {
+        familyId: payload.familyId,
+      });
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: membersKeys._def });
+      if (familyId && churchId) {
+        await queryClient.invalidateQueries({
+          queryKey: membersKeys.familyGraph(churchId, familyId).queryKey,
+        });
+      }
+    },
   });
 }
 

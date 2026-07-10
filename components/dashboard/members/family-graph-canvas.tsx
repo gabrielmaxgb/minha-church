@@ -370,15 +370,16 @@ export function FamilyGraphCanvas({
     setPendingPair({ fromId: selectedId, toId: memberId });
   }
 
-  async function chooseRelation(type: MemberRelationType, reverse = false) {
+  async function chooseRelation(type: MemberRelationType) {
     if (!pendingPair) return;
-
-    const fromMemberId = reverse ? pendingPair.toId : pendingPair.fromId;
-    const toMemberId = reverse ? pendingPair.fromId : pendingPair.toId;
 
     try {
       setError(null);
-      await onCreateRelation({ fromMemberId, toMemberId, type });
+      await onCreateRelation({
+        fromMemberId: pendingPair.fromId,
+        toMemberId: pendingPair.toId,
+        type,
+      });
       resetSelection();
     } catch (createError) {
       setError(
@@ -430,7 +431,7 @@ export function FamilyGraphCanvas({
   const hint = !canEdit
     ? "Só visualização — quem edita membros pode criar vínculos."
     : pendingPair
-      ? "Como essas pessoas se relacionam?"
+      ? "Como a primeira pessoa se relaciona com a segunda?"
       : selectedId
         ? "Agora toque na outra pessoa."
         : "Toque em alguém, depois em outra pessoa.";
@@ -712,9 +713,12 @@ export function FamilyGraphCanvas({
               <p className="text-sm font-medium text-foreground">
                 {firstName(fromMember.name)}
                 <span className="mx-2 font-normal text-muted-foreground">
-                  e
+                  →
                 </span>
                 {firstName(toMember.name)}
+              </p>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">
+                Ordem do toque
               </p>
             </div>
 
@@ -745,21 +749,6 @@ export function FamilyGraphCanvas({
                 <span className="text-sm font-medium text-foreground">
                   {firstName(fromMember.name)} é pai/mãe de{" "}
                   {firstName(toMember.name)}
-                </span>
-              </button>
-
-              <button
-                type="button"
-                disabled={isBusy}
-                onClick={() => void chooseRelation("parent", true)}
-                className="flex items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors hover:bg-domain-members-subtle/80"
-              >
-                <span className="flex size-9 items-center justify-center rounded-full bg-domain-members-subtle text-[11px] font-semibold text-domain-members-foreground">
-                  →
-                </span>
-                <span className="text-sm font-medium text-foreground">
-                  {firstName(toMember.name)} é pai/mãe de{" "}
-                  {firstName(fromMember.name)}
                 </span>
               </button>
             </div>

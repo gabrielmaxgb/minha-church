@@ -49,6 +49,7 @@ export {
   useCreateMemberRelation,
   useDeleteMemberRelation,
   useFamilyGraph,
+  useSetMemberFamily,
 } from "@/lib/api/queries/use-family-graph";
 export {
   useCreateMember,

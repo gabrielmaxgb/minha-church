@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 import { FamilyGraphCanvas } from "@/components/dashboard/members/family-graph-canvas";
+import { FamilyMembersManager } from "@/components/dashboard/members/family-members-manager";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AUTH_ROUTES } from "@/constants/routes";
 import {
@@ -77,6 +78,13 @@ export function FamilyGraphContent({ familyId }: FamilyGraphContentProps) {
           </p>
         </div>
       </div>
+
+      <FamilyMembersManager
+        familyId={familyId}
+        familyName={data.family.name}
+        members={data.members}
+        canEdit={canEdit}
+      />
 
       <FamilyGraphCanvas
         members={data.members}

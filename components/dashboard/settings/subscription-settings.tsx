@@ -86,11 +86,15 @@ function resolveStatusBadgeClass(data: {
   canceledAt?: string | null;
 }): string | undefined {
   if (isCancelScheduled(data) && data.subscriptionStatus === "active") {
-    return "border-attention-border bg-attention-subtle text-attention-foreground";
+    return "border-billing-border bg-billing-subtle text-billing-foreground";
   }
 
   if (data.subscriptionStatus === "past_due") {
-    return "border-destructive/30 bg-destructive/10 text-destructive";
+    return "border-billing/40 bg-billing-mark text-billing-foreground";
+  }
+
+  if (data.subscriptionStatus === "trialing") {
+    return "border-billing-border bg-billing-subtle text-billing-foreground";
   }
 
   return undefined;
@@ -181,16 +185,23 @@ export function SubscriptionSettings() {
       {data && (
         <div className="space-y-4">
           {isCancelScheduled(data) && data.subscriptionStatus === "active" && (
-            <div className="rounded-xl border border-attention-border bg-attention-subtle px-4 py-3 text-sm">
-              <p className="font-medium text-foreground">
+            <div className="relative overflow-hidden rounded-2xl border border-billing-border bg-gradient-to-br from-billing-subtle to-card px-4 py-3.5 text-sm shadow-xs ring-1 ring-billing/15">
+              <div
+                className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-billing"
+                aria-hidden
+              />
+              <p className="pl-2 text-[11px] font-semibold uppercase tracking-wider text-billing-foreground">
+                Assinatura
+              </p>
+              <p className="mt-1 pl-2 font-medium text-foreground">
                 Cancelamento solicitado
               </p>
-              <p className="mt-1 text-muted-foreground">
+              <p className="mt-1 pl-2 text-muted-foreground">
                 {data.currentPeriodEnd
                   ? `Seu acesso continua até ${formatPeriodEnd(data.currentPeriodEnd)}. Depois disso a assinatura será encerrada e não haverá novas cobranças.`
                   : "Seu acesso continua até o fim do período já pago. Depois disso a assinatura será encerrada."}
               </p>
-              <p className="mt-2 text-muted-foreground">
+              <p className="mt-2 pl-2 text-muted-foreground">
                 Mudou de ideia? Abra{" "}
                 <span className="font-medium text-foreground">
                   Gerenciar assinatura
@@ -201,11 +212,18 @@ export function SubscriptionSettings() {
           )}
 
           {data.subscriptionStatus === "past_due" && (
-            <div className="rounded-xl border border-attention-border bg-attention-subtle px-4 py-3 text-sm">
-              <p className="font-medium text-foreground">
+            <div className="relative overflow-hidden rounded-2xl border border-billing-border bg-gradient-to-br from-billing-mark to-billing-subtle px-4 py-3.5 text-sm shadow-xs ring-1 ring-billing/25">
+              <div
+                className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-billing"
+                aria-hidden
+              />
+              <p className="pl-2 text-[11px] font-semibold uppercase tracking-wider text-billing-foreground">
+                Assinatura
+              </p>
+              <p className="mt-1 pl-2 font-medium text-foreground">
                 Não conseguimos processar o último pagamento
               </p>
-              <p className="mt-1 text-muted-foreground">
+              <p className="mt-1 pl-2 text-muted-foreground">
                 Atualize o cartão ou regularize a fatura para liberar a edição
                 no painel.
               </p>

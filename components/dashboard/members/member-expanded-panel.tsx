@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -7,6 +8,7 @@ import {
   IdCard,
   Loader2,
   MapPin,
+  Network,
   Pencil,
   Phone,
   Trash2,
@@ -16,6 +18,7 @@ import {
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 
 import { TierCrossingModal } from "@/components/billing/tier-crossing-modal";
+import { LinkMemberFamilyModal } from "@/components/dashboard/members/link-member-family-modal";
 import { MemberAccountCreatedModal } from "@/components/dashboard/members/member-account-created-modal";
 import { MemberForm } from "@/components/dashboard/members/member-form";
 import { MemberMinistriesFunctionsSection } from "@/components/dashboard/members/member-ministries-functions-section";
@@ -25,6 +28,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FormAlert } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
+import { familyGraphPath } from "@/constants/routes";
 import {
   useDeleteMember,
   useReceiveMember,
@@ -210,6 +214,7 @@ export function MemberExpandedPanel({
   const [viewTab, setViewTab] = useState<"profile" | "ministries">("profile");
   const [confirmName, setConfirmName] = useState("");
   const [isEditing, setIsEditing] = useState(false);
+  const [familyLinkOpen, setFamilyLinkOpen] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [createdAccount, setCreatedAccount] = useState<{
     memberName: string;
@@ -377,6 +382,24 @@ export function MemberExpandedPanel({
               Editar cadastro
             </Button>
 
+            {member.familyId ? (
+              <Button type="button" variant="outline" asChild>
+                <Link href={familyGraphPath(member.familyId)}>
+                  <Network className="size-4" />
+                  Ver grafo da família
+                </Link>
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setFamilyLinkOpen(true)}
+              >
+                <Network className="size-4" />
+                Ver grafo da família
+              </Button>
+            )}
+
             {member.status === "visitor" && (
               <Button
                 type="button"
@@ -436,6 +459,13 @@ export function MemberExpandedPanel({
             onClose={() => setCreatedAccount(null)}
           />
         )}
+
+        <LinkMemberFamilyModal
+          memberId={member.id}
+          memberName={member.name}
+          open={familyLinkOpen}
+          onClose={() => setFamilyLinkOpen(false)}
+        />
 
         {tierCrossing.preview && (
           <TierCrossingModal
