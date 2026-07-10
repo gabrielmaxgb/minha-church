@@ -12,10 +12,6 @@ export interface CheckoutConfirmResponse {
   interval: BillingPeriod;
 }
 
-export interface PortalSessionResponse {
-  url: string;
-}
-
 export interface SubscriptionSummary {
   subscriptionStatus: "trialing" | "active" | "past_due" | "canceled";
   trialEndsAt: string | null;
@@ -29,6 +25,23 @@ export interface SubscriptionSummary {
   cancelAtPeriodEnd: boolean;
   currentPeriodEnd: string | null;
   canceledAt: string | null;
+}
+
+export interface BillingInvoice {
+  id: string;
+  number: string | null;
+  status: string;
+  amountPaid: number;
+  currency: string;
+  createdAt: string;
+  periodStart: string | null;
+  periodEnd: string | null;
+  hostedInvoiceUrl: string | null;
+  invoicePdf: string | null;
+}
+
+export interface PortalSessionResponse {
+  url: string;
 }
 
 export interface TierCrossingPreview {
@@ -80,6 +93,15 @@ export async function fetchSubscriptionSummary(
 ): Promise<SubscriptionSummary> {
   return apiClient<SubscriptionSummary>(
     `/churches/${churchId}/billing/subscription`,
+    { churchId },
+  );
+}
+
+export async function fetchBillingInvoices(
+  churchId: string,
+): Promise<BillingInvoice[]> {
+  return apiClient<BillingInvoice[]>(
+    `/churches/${churchId}/billing/invoices`,
     { churchId },
   );
 }

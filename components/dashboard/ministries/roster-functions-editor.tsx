@@ -131,7 +131,7 @@ export function RosterFunctionsEditor({
             <Input
               value={customValue}
               onChange={(event) => setCustomValue(event.target.value)}
-              placeholder="Ex.: Recepção, mídia, vocal, coordenação..."
+              placeholder="Ex.: Recepção, infantil, coordenação..."
               disabled={disabled || saving}
               className="rounded-xl border-border/70 bg-background/80"
               onKeyDown={(event) => {

@@ -111,6 +111,7 @@ export {
 } from "@/lib/api/queries/use-ministry-mutations";
 export { usePricing } from "@/lib/api/queries/use-pricing";
 export {
+  useBillingInvoices,
   useBillingPortal,
   useSubscriptionSummary,
 } from "@/lib/api/queries/use-billing";

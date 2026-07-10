@@ -20,6 +20,18 @@ export function useSubscriptionSummary() {
   });
 }
 
+export function useBillingInvoices() {
+  const { church, user } = useAuth();
+  const churchId = church?.id;
+  const enabled = Boolean(user?.isOwner && churchId);
+
+  return useQuery({
+    ...billingKeys.invoices(churchId ?? ""),
+    enabled,
+    staleTime: 60_000,
+  });
+}
+
 export function useBillingPortal() {
   const { church } = useAuth();
 

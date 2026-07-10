@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { Calendar, MapPin, Music2, Pencil, Plus, Repeat, UserPlus } from "lucide-react";
+import { Calendar, CalendarDays, MapPin, Pencil, Plus, Repeat, UserPlus } from "lucide-react";
 
 import { AddMinistryMemberModal } from "@/components/dashboard/ministries/add-ministry-member-modal";
 import { MinistryMembersList } from "@/components/dashboard/ministries/ministry-members-list";
@@ -119,7 +119,7 @@ export function MinistryDashboardSection({
           className="flex w-full items-start gap-4 rounded-2xl border border-foreground/10 bg-gradient-to-br from-muted/50 to-card px-5 py-4 text-left shadow-soft transition-all hover:shadow-elevated"
         >
           <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-foreground text-background">
-            <Music2 className="size-5" aria-hidden />
+            <CalendarDays className="size-5" aria-hidden />
           </span>
           <span className="min-w-0">
             <span className="block font-display text-base font-semibold tracking-tight">
@@ -300,7 +300,11 @@ export function MinistryMembersSection({
           <div>
             <CardTitle>Equipe do ministério</CardTitle>
             <CardDescription>
-              Membros vinculados e seus cargos nesta área de serviço.
+              Membros vinculados a este ministério.{" "}
+              <strong className="font-medium text-foreground">Cargos</strong>{" "}
+              definem liderança (atribuídos aqui);{" "}
+              <strong className="font-medium text-foreground">funções</strong>{" "}
+              vêm do perfil de cada membro.
             </CardDescription>
           </div>
           {canManage && (

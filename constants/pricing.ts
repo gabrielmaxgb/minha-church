@@ -11,7 +11,7 @@ const sharedBenefits = [
 	"Importação de membros por planilha em poucos minutos",
 ];
 
-// Mock — substituir por resposta da API quando o backend expor /pricing
+// Fallback offline — espelha GET /pricing (fonte: billing-plans.config.ts no backend).
 export const pricing: Pricing = {
 	name: "Minha Church",
 	description:

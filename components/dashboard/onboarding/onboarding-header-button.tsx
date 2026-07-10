@@ -29,9 +29,8 @@ export function OnboardingHeaderButton() {
       onClick={openOnboarding}
       className={cn(
         "relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border/80 bg-background/60 shadow-soft transition-all duration-200",
-        open || hasPending
-          ? "text-foreground hover:bg-background hover:shadow-elevated"
-          : "cursor-default text-muted-foreground/50 hover:bg-background/60",
+        "text-foreground hover:bg-background hover:shadow-elevated",
+        open && "bg-background shadow-elevated",
       )}
       aria-expanded={open}
       aria-haspopup="dialog"

@@ -103,7 +103,7 @@ export function ActivityRosterSection({
       {event.isChurchWide && !readOnly ? (
         <EventFormSection
           title="Funções desta atividade"
-          description="Adicione as funções que essa atividade precisa, como recepção, mídia ou louvor."
+          description="Adicione as funções que essa atividade precisa, como recepção, infantil ou mídia."
           icon={ClipboardList}
         >
           {slotPlanError ? (

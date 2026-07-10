@@ -6,8 +6,8 @@ import { useEffect } from "react";
 import { SubscribePricingTrigger } from "@/components/billing/subscribe-pricing-trigger";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { pricing as fallbackPricing } from "@/constants/pricing";
-import { useSubscriptionSummary } from "@/lib/api/queries/use-billing";
+import { pricing as pricingFallback } from "@/constants/pricing";
+import { usePricing, useSubscriptionSummary } from "@/lib/api/queries";
 import { useBillingPortalAction } from "@/lib/billing/use-billing-portal";
 import { suggestTierByMemberCount } from "@/lib/pricing";
 import { formatCurrency } from "@/lib/utils";
@@ -17,6 +17,7 @@ import {
   SettingsPanel,
   SettingsSectionHeader,
 } from "./settings-shared";
+import { SubscriptionInvoicesSection } from "./subscription-invoices";
 
 function formatPeriodEnd(isoDate: string): string {
   return new Intl.DateTimeFormat("pt-BR", {
@@ -110,6 +111,7 @@ function intervalLabel(interval: string | null): string {
 export function SubscriptionSettings() {
   const { user, reloadSession } = useAuth();
   const { data, isPending, isError, refetch } = useSubscriptionSummary();
+  const { data: pricingData } = usePricing();
   const { openPortal, loading: portalLoading, error: portalError } =
     useBillingPortalAction();
 
@@ -135,7 +137,7 @@ export function SubscriptionSettings() {
     return null;
   }
 
-  const tiers = fallbackPricing.tiers;
+  const tiers = pricingData?.tiers ?? pricingFallback.tiers;
   const tier = data
     ? tiers.find((item) => item.id === data.tierId) ??
       suggestTierByMemberCount(data.memberCount, tiers)
@@ -321,9 +323,17 @@ export function SubscriptionSettings() {
             <p className="text-sm text-destructive">{portalError}</p>
           )}
 
+          <SubscriptionInvoicesSection
+            enabled={
+              data.hasActiveSubscription ||
+              data.subscriptionStatus === "past_due" ||
+              data.subscriptionStatus === "canceled"
+            }
+          />
+
           <p className="text-xs text-muted-foreground">
-            A gestão de cartão, faturas e cancelamento é feita com segurança pelo
-            Stripe. Você volta para esta página após concluir.
+            A gestão de cartão e cancelamento é feita com segurança pelo Stripe.
+            Você volta para esta página após concluir.
           </p>
         </div>
       )}

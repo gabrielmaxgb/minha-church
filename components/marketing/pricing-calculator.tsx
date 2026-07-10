@@ -5,6 +5,8 @@ import { ArrowRight, Users } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { pricing as pricingFallback } from "@/constants/pricing";
+import { usePricing } from "@/lib/api/queries";
 import { PUBLIC_ROUTES } from "@/constants/routes";
 import {
   formatMemberCountLabel,
@@ -25,10 +27,12 @@ interface PricingCalculatorProps {
 
 export function PricingCalculator({ period, className }: PricingCalculatorProps) {
   const [memberCount, setMemberCount] = useState(150);
+  const { data: pricingData } = usePricing();
+  const tiers = pricingData?.tiers ?? pricingFallback.tiers;
 
   const suggestedTier = useMemo(
-    () => suggestTierByMemberCount(memberCount),
-    [memberCount],
+    () => suggestTierByMemberCount(memberCount, tiers),
+    [memberCount, tiers],
   );
 
   const monthlyPrice = getTierMonthlyPrice(suggestedTier, period);

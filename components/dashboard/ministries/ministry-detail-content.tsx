@@ -5,9 +5,6 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
-  Calendar,
-  Plus,
-  Shield,
   Trash2,
 } from "lucide-react";
 
@@ -17,7 +14,7 @@ import {
 } from "@/components/dashboard/ministries/ministry-dashboard-section";
 import { MinistryEventsSection } from "@/components/dashboard/ministries/ministry-events-section";
 import { MinistryOverviewSection } from "@/components/dashboard/ministries/ministry-overview-section";
-import { MinistryRolePermissionsSection } from "@/components/dashboard/ministries/ministry-role-permissions-section";
+import { MinistryRolesSettingsSection } from "@/components/dashboard/ministries/ministry-roles-settings-section";
 import { MinistryServiceFunctionsSection } from "@/components/dashboard/ministries/ministry-service-functions-section";
 import { InactiveMinistryBanner } from "@/components/dashboard/ministries/inactive-ministry-banner";
 import { WorshipAvailabilitySection } from "@/components/dashboard/ministries/worship-availability-section";
@@ -31,14 +28,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AUTH_ROUTES } from "@/constants/routes";
 import {
-  useCreateMinistryRole,
   useDeleteMinistry,
-  useDeleteMinistryRole,
   useMinistry,
   useUpdateMinistry,
 } from "@/lib/api/queries";
@@ -49,7 +43,7 @@ import {
 import { canManageMinistries, canManageMinistryMembers, canManageMinistryRoster } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
-import type { Ministry, MinistryRole } from "@/types/ministries";
+import type { Ministry } from "@/types/ministries";
 
 interface MinistryDetailContentProps {
   ministryId: string;
@@ -82,116 +76,6 @@ function SettingsNav({
         </button>
       ))}
     </nav>
-  );
-}
-
-function RoleRow({
-  role,
-  ministryId,
-  canManage,
-}: {
-  role: MinistryRole;
-  ministryId: string;
-  canManage: boolean;
-}) {
-  const deleteRole = useDeleteMinistryRole(ministryId);
-
-  return (
-    <div className="flex items-center justify-between gap-3 rounded-lg border border-border px-4 py-3">
-      <div className="min-w-0">
-        <p className="font-medium">{role.name}</p>
-        <p className="text-xs text-muted-foreground">Ordem {role.sortOrder + 1}</p>
-      </div>
-
-      {canManage && (
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          className="text-muted-foreground hover:text-destructive"
-          disabled={deleteRole.isPending}
-          onClick={() => deleteRole.mutate(role.id)}
-        >
-          <Trash2 className="size-4" />
-        </Button>
-      )}
-    </div>
-  );
-}
-
-function RolesSection({
-  ministry,
-  canManage,
-}: {
-  ministry: Ministry;
-  canManage: boolean;
-}) {
-  const [name, setName] = useState("");
-  const createRole = useCreateMinistryRole(ministry.id);
-  const roles = [...ministry.roles].sort((a, b) => a.sortOrder - b.sortOrder);
-
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    if (!name.trim()) {
-      return;
-    }
-
-    await createRole.mutateAsync({ name: name.trim() });
-    setName("");
-  }
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Cargos</CardTitle>
-        <CardDescription>
-          Defina os papéis dentro deste ministério. As permissões são configuradas na seção ao lado.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {roles.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nenhum cargo cadastrado.</p>
-        ) : (
-          <div className="space-y-2">
-            {roles.map((role) => (
-              <RoleRow
-                key={role.id}
-                role={role}
-                ministryId={ministry.id}
-                canManage={canManage}
-              />
-            ))}
-          </div>
-        )}
-
-        {canManage && (
-          <form
-            onSubmit={handleSubmit}
-            className="space-y-3 rounded-lg border border-dashed border-border p-4"
-          >
-            <p className="text-sm font-medium">Adicionar cargo</p>
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Input
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                placeholder="Ex.: Líder"
-                disabled={createRole.isPending}
-              />
-              <Button
-                type="submit"
-                size="sm"
-                className="shrink-0"
-                disabled={createRole.isPending || !name.trim()}
-              >
-                <Plus className="size-4" />
-                Adicionar
-              </Button>
-            </div>
-          </form>
-        )}
-      </CardContent>
-    </Card>
   );
 }
 
@@ -287,6 +171,9 @@ export function MinistryDetailContent({ ministryId }: MinistryDetailContentProps
     }
     if (requested === "service-functions") {
       setSection("service-functions");
+    }
+    if (requested === "permissions" || requested === "roles") {
+      setSection("roles");
     }
   }, [searchParams]);
 
@@ -396,10 +283,7 @@ export function MinistryDetailContent({ ministryId }: MinistryDetailContentProps
             <MinistryOverviewSection ministry={ministry} canManage={canManage} />
           )}
           {section === "roles" && (
-            <RolesSection ministry={ministry} canManage={canManage} />
-          )}
-          {section === "permissions" && (
-            <MinistryRolePermissionsSection
+            <MinistryRolesSettingsSection
               ministry={ministry}
               canManage={canManage}
             />

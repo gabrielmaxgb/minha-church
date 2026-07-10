@@ -217,7 +217,7 @@ export function OnboardingChecklistProvider({
   );
 
   const contextValue = useMemo<OnboardingChecklistContextValue | null>(() => {
-    if (!isOwner || !church || !isStatusReady || allDone) {
+    if (!isOwner || !church || !isStatusReady) {
       return null;
     }
 
@@ -229,7 +229,6 @@ export function OnboardingChecklistProvider({
       open,
     };
   }, [
-    allDone,
     church,
     completedCount,
     isOwner,

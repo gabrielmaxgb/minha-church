@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Plus } from "lucide-react";
+import { HelpCircle, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,6 +44,7 @@ import {
   ChurchRolePermissionsEditor,
   ChurchRolePermissionsSummary,
 } from "./church-role-permissions-editor";
+import { ChurchRolesGuideModal } from "./church-roles-guide-modal";
 
 function permissionsEqual(
   a: readonly ChurchPermissionKey[],
@@ -118,6 +119,7 @@ export function ChurchRolesSettings() {
   const [drafts, setDrafts] = useState<Record<string, ChurchPermissionKey[]>>({});
   const [nameDrafts, setNameDrafts] = useState<Record<string, string>>({});
   const [newRoleName, setNewRoleName] = useState("");
+  const [guideOpen, setGuideOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -488,6 +490,24 @@ export function ChurchRolesSettings() {
       <SettingsSectionHeader
         title="Cargos"
         description="Configure o que cada cargo vê no menu e o que pode fazer na igreja."
+        action={
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="size-9 shrink-0"
+            onClick={() => setGuideOpen(true)}
+            aria-label="Como funcionam os cargos"
+            title="Como funcionam os cargos"
+          >
+            <HelpCircle className="size-4" />
+          </Button>
+        }
+      />
+
+      <ChurchRolesGuideModal
+        open={guideOpen}
+        onClose={() => setGuideOpen(false)}
       />
 
       {errorMessage && <SettingsAlert message={errorMessage} />}

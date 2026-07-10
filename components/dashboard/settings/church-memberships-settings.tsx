@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
 import { AUTH_ROUTES } from "@/constants/routes";
 import {
   useAssignableRoles,
@@ -29,6 +30,8 @@ import {
   SettingsToggleRow,
 } from "./settings-shared";
 import { TransferOwnershipDialog } from "./transfer-ownership-dialog";
+
+const MEMBERSHIPS_REFRESH_COOLDOWN_MS = 5_000;
 
 type RoleFilter = "all" | "owner" | "none" | string;
 
@@ -90,9 +93,19 @@ function matchesRoleFilter(
 
 export function ChurchMembershipsSettings() {
   const router = useRouter();
-  const { user, permissions, church } = useAuth();
-  const { data: memberships, isLoading, isError } = useChurchMemberships();
-  const { data: assignableRoles } = useAssignableRoles();
+  const { user, permissions, church, reloadSession } = useAuth();
+  const {
+    data: memberships,
+    isLoading,
+    isError,
+    isFetching: isMembershipsFetching,
+    refetch: refetchMemberships,
+  } = useChurchMemberships();
+  const {
+    data: assignableRoles,
+    isFetching: isAssignableRolesFetching,
+    refetch: refetchAssignableRoles,
+  } = useAssignableRoles();
   const updateMembership = useUpdateChurchMembership();
   const transferOwnership = useTransferChurchOwnership();
 
@@ -107,8 +120,28 @@ export function ChurchMembershipsSettings() {
   const [expandedUserIds, setExpandedUserIds] = useState<Set<string>>(
     () => new Set(),
   );
+  const [refreshCooldownEndsAt, setRefreshCooldownEndsAt] = useState(0);
+  const [refreshTick, setRefreshTick] = useState(() => Date.now());
 
   const canManage = canManageChurchMemberships(permissions);
+  const isRefreshing = isMembershipsFetching || isAssignableRolesFetching;
+  const refreshCooldownRemainingMs = Math.max(
+    0,
+    refreshCooldownEndsAt - refreshTick,
+  );
+  const refreshOnCooldown = refreshCooldownRemainingMs > 0;
+
+  useEffect(() => {
+    if (!refreshOnCooldown) {
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      setRefreshTick(Date.now());
+    }, 250);
+
+    return () => window.clearInterval(timer);
+  }, [refreshOnCooldown, refreshCooldownEndsAt]);
 
   const sortedMemberships = useMemo(
     () =>
@@ -285,6 +318,28 @@ export function ChurchMembershipsSettings() {
     }
   }
 
+  async function handleRefreshMemberships() {
+    if (isRefreshing || refreshOnCooldown) {
+      return;
+    }
+
+    setRefreshCooldownEndsAt(Date.now() + MEMBERSHIPS_REFRESH_COOLDOWN_MS);
+
+    try {
+      await Promise.all([
+        refetchMemberships(),
+        refetchAssignableRoles(),
+        reloadSession(),
+      ]);
+    } catch {
+      // Erros já aparecem no estado da query ou via toast global.
+    }
+  }
+
+  const refreshHint = refreshOnCooldown
+    ? `Aguarde ${Math.ceil(refreshCooldownRemainingMs / 1000)}s para atualizar de novo`
+    : "Atualizar lista";
+
   return (
     <div>
       <SettingsSectionHeader
@@ -301,9 +356,25 @@ export function ChurchMembershipsSettings() {
       {isLoading ? (
         <Skeleton className="h-112 w-full rounded-xl" />
       ) : isError ? (
-        <p className="text-sm text-muted-foreground">
-          Não foi possível carregar os usuários da igreja.
-        </p>
+        <div className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Não foi possível carregar os usuários da igreja.
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => void handleRefreshMemberships()}
+            disabled={refreshOnCooldown || isRefreshing}
+            title={refreshHint}
+          >
+            <RefreshCw
+              className={isRefreshing ? "size-4 animate-spin" : "size-4"}
+              aria-hidden
+            />
+            Atualizar lista
+          </Button>
+        </div>
       ) : sortedMemberships.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           Nenhum usuário com acesso a esta igreja.
@@ -319,6 +390,10 @@ export function ChurchMembershipsSettings() {
               totalCount={sortedMemberships.length}
               countLabel="usuário com acesso"
               countLabelPlural="usuários com acesso"
+              onRefresh={() => void handleRefreshMemberships()}
+              isRefreshing={isRefreshing}
+              refreshDisabled={refreshOnCooldown}
+              refreshHint={refreshHint}
             />
             <SettingsFilterPills>
               <SettingsFilterPill

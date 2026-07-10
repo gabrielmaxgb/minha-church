@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Music2 } from "lucide-react";
+import { ClipboardList, HelpCircle, Loader2 } from "lucide-react";
 
 import { EventRosterSlotsEditor } from "@/components/dashboard/activities/event-roster-slots-editor";
+import { MinistryRolesGuideModal } from "@/components/dashboard/ministries/ministry-roles-guide-modal";
 import { SettingsSaveBar } from "@/components/dashboard/settings/settings-shared";
+import { Button } from "@/components/ui/button";
 import { useReplaceMinistryServiceFunctions } from "@/lib/api/queries";
 import {
   DEFAULT_MINISTRY_SERVICE_FUNCTION,
@@ -38,6 +40,7 @@ export function MinistryServiceFunctionsSection({
   ministry,
   canManage,
 }: MinistryServiceFunctionsSectionProps) {
+  const [guideOpen, setGuideOpen] = useState(false);
   const replaceFunctions = useReplaceMinistryServiceFunctions(ministry.id);
   const savedLabelsSignature = ministry.serviceFunctions
     .map((item) => item.label)
@@ -71,18 +74,41 @@ export function MinistryServiceFunctionsSection({
     <section className="space-y-4">
       <div className="flex items-start gap-3">
         <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted text-foreground">
-          <Music2 className="size-4" aria-hidden />
+          <ClipboardList className="size-4" aria-hidden />
         </div>
-        <div>
-          <h2 className="font-display text-lg font-semibold tracking-tight">
-            Funções de serviço
-          </h2>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <h2 className="font-display text-lg font-semibold tracking-tight">
+              Funções na escala
+            </h2>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="size-9 shrink-0"
+              onClick={() => setGuideOpen(true)}
+              aria-label="Cargos e funções — qual a diferença?"
+              title="Cargos e funções — qual a diferença?"
+            >
+              <HelpCircle className="size-4" />
+            </Button>
+          </div>
           <p className="mt-1 text-sm text-muted-foreground">
-            Defina como a equipe pode servir neste ministério. Os membros
-            escolhem, no perfil, em quais funções podem atuar.
+            Tarefas em que a equipe pode servir neste ministério ou grupo de
+            serviço — por exemplo Recepção, Infantil, Mídia ou Hospitalidade. Os
+            membros escolhem no perfil em quais funções podem atuar.{" "}
+            <strong className="font-medium text-foreground">
+              Não confunda com cargos de liderança
+            </strong>{" "}
+            (Líder, Coordenador), que ficam em Cargos de liderança.
           </p>
         </div>
       </div>
+
+      <MinistryRolesGuideModal
+        open={guideOpen}
+        onClose={() => setGuideOpen(false)}
+      />
 
       <div className="rounded-2xl border border-border/70 bg-card p-4 sm:p-5">
         {canManage ? (
