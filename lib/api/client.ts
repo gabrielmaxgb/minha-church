@@ -9,6 +9,8 @@ export class ApiError extends Error {
 	constructor(
 		message: string,
 		public status: number,
+		public code?: string,
+		public email?: string,
 	) {
 		super(message);
 		this.name = "ApiError";
@@ -28,18 +30,34 @@ function getApiBaseUrl(): string {
 	return baseURL;
 }
 
-async function parseErrorMessage(response: Response): Promise<string> {
+async function parseErrorBody(response: Response): Promise<{
+	message: string;
+	code?: string;
+	email?: string;
+}> {
 	let raw = `API error: ${response.status}`;
+	let code: string | undefined;
+	let email: string | undefined;
 
 	try {
 		const body = (await response.json()) as {
 			message?: string | string[];
+			code?: string;
+			email?: string;
 		};
 
 		if (Array.isArray(body.message)) {
 			raw = body.message.join(", ");
 		} else if (typeof body.message === "string") {
 			raw = body.message;
+		}
+
+		if (typeof body.code === "string") {
+			code = body.code;
+		}
+
+		if (typeof body.email === "string") {
+			email = body.email;
 		}
 	} catch {
 		// Ignora corpo inválido.
@@ -50,10 +68,15 @@ async function parseErrorMessage(response: Response): Promise<string> {
 		/throttlerexception/i.test(raw) ||
 		/too many requests/i.test(raw)
 	) {
-		return "Muitas tentativas em pouco tempo. Aguarde um momento e tente novamente.";
+		return {
+			message:
+				"Muitas tentativas em pouco tempo. Aguarde um momento e tente novamente.",
+			code,
+			email,
+		};
 	}
 
-	return raw;
+	return { message: raw, code, email };
 }
 
 export async function apiClient<T>(
@@ -87,6 +110,7 @@ export async function apiClient<T>(
 		!endpoint.startsWith("/auth/login") &&
 		!endpoint.startsWith("/auth/register-church") &&
 		!endpoint.startsWith("/auth/verify-email") &&
+		!endpoint.startsWith("/auth/resend-verification") &&
 		!endpoint.startsWith("/auth/refresh");
 
 	if (canRefresh) {
@@ -99,8 +123,13 @@ export async function apiClient<T>(
 	}
 
 	if (!response.ok) {
-		const message = await parseErrorMessage(response);
-		throw new ApiError(message, response.status);
+		const error = await parseErrorBody(response);
+		throw new ApiError(
+			error.message,
+			response.status,
+			error.code,
+			error.email,
+		);
 	}
 
 	if (response.status === 204) {

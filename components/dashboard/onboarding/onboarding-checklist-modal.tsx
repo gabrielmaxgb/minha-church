@@ -208,8 +208,8 @@ export function OnboardingChecklistModal({
             {allDone ? "Explorar o painel" : "Explorar por conta própria"}
           </Button>
           <p className="text-center text-xs text-muted-foreground">
-            Você pode reabrir este guia quando quiser pelo botão
-            &ldquo;Primeiros passos&rdquo;.
+            Você pode reabrir este guia quando quiser pelo ícone ao lado das
+            notificações.
           </p>
         </footer>
       </div>

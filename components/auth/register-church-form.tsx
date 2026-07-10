@@ -19,6 +19,7 @@ import {
 import { FormAlert, FormField, FormMessage } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { AUTH_ROUTES, PUBLIC_ROUTES } from "@/constants/routes";
+import { isRegisterChurchPending } from "@/types/auth";
 import {
   registerChurchSchema,
   type RegisterChurchFormValues,
@@ -67,13 +68,22 @@ export function RegisterChurchForm() {
     setIsLoading(true);
 
     try {
-      await registerChurch({
+      const result = await registerChurch({
         churchName: values.churchName.trim(),
         ownerName: values.ownerName.trim(),
         ownerEmail: values.ownerEmail.trim().toLowerCase(),
         password: values.password,
         acceptTerms: values.acceptTerms,
       });
+
+      if (isRegisterChurchPending(result)) {
+        const params = new URLSearchParams({
+          verify: "sent",
+          email: result.email,
+        });
+        window.location.replace(`${PUBLIC_ROUTES.login}?${params.toString()}`);
+        return;
+      }
 
       window.location.replace(AUTH_ROUTES.dashboard);
     } catch (submitError) {
@@ -99,14 +109,14 @@ export function RegisterChurchForm() {
             Criar conta da igreja
           </CardTitle>
           <CardDescription className="text-balance">
-            Cadastro rápido para começar a organizar membros, comunicados e
-            escalas.
+            Em poucos minutos você entra no painel com 30 dias de teste — membros,
+            escalas e comunicados liberados.
           </CardDescription>
         </div>
 
         <div className="inline-flex items-center justify-center gap-1.5 rounded-full border border-border bg-muted/30 px-3 py-1 text-xs text-muted-foreground">
           <Sparkles className="size-3.5 text-primary" aria-hidden />
-          Grátis para começar — sem cartão
+          30 dias grátis · sem cartão · faixas a partir de R$ 119/mês
         </div>
       </CardHeader>
 

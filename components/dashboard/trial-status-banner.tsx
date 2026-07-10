@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { Clock, Lock, Sparkles } from "lucide-react";
+import { AlertTriangle, Clock, CreditCard, Lock, Sparkles } from "lucide-react";
 
+import { SubscribePricingTrigger } from "@/components/billing/subscribe-pricing-trigger";
 import { Button } from "@/components/ui/button";
-import { PUBLIC_ROUTES } from "@/constants/routes";
+import { AUTH_ROUTES } from "@/constants/routes";
+import { useBillingPortalAction } from "@/lib/billing/use-billing-portal";
 import { useFeatureLock } from "@/lib/subscription/use-feature-lock";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
@@ -46,13 +48,56 @@ export function TrialStatusBanner() {
     trialDaysRemaining,
     trialEndsAt,
   } = useFeatureLock();
+  const { openPortal, loading: portalLoading } = useBillingPortalAction();
 
-  // Só o proprietário decide sobre plano — evita "barulho" para os demais.
   if (!user?.isOwner) {
     return null;
   }
 
+  if (subscriptionStatus === "past_due") {
+    return (
+      <div className="mb-6 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-4 sm:px-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex gap-3">
+            <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-amber-700 dark:text-amber-300">
+              <AlertTriangle className="size-4" aria-hidden />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-semibold text-foreground">
+                Pagamento da assinatura pendente
+              </p>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                Não conseguimos cobrar a renovação. Atualize o cartão para
+                continuar editando ministérios, comunicados e configurações.
+              </p>
+            </div>
+          </div>
+          <div className="flex shrink-0 flex-col gap-2 sm:items-end">
+            <Button
+              type="button"
+              size="sm"
+              className="w-full gap-2 sm:w-auto"
+              disabled={portalLoading}
+              onClick={() => void openPortal()}
+            >
+              <CreditCard className="size-4" />
+              Atualizar pagamento
+            </Button>
+            <Link
+              href={`${AUTH_ROUTES.settings}?section=subscription`}
+              className="text-center text-xs text-muted-foreground underline-offset-4 hover:underline sm:text-right"
+            >
+              Ver detalhes da assinatura
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (locked) {
+    const isCanceled = subscriptionStatus === "canceled";
+
     return (
       <div className="mb-6 rounded-2xl border border-destructive/25 bg-destructive/8 px-4 py-4 sm:px-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -62,19 +107,21 @@ export function TrialStatusBanner() {
             </div>
             <div className="space-y-1">
               <p className="text-sm font-semibold text-foreground">
-                Seu período de teste terminou
+                {isCanceled
+                  ? "Sua assinatura foi encerrada"
+                  : "Seu período de teste terminou"}
               </p>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Você ainda pode consultar o painel, ver o que já criou e
-                cadastrar novos membros. Para editar ministérios, atividades,
-                comunicados e configurações da igreja, escolha um plano.
+                {isCanceled
+                  ? "Você ainda pode consultar o painel e cadastrar novos membros. Para voltar a editar ministérios, atividades e comunicados, reative a assinatura."
+                  : "Você ainda pode consultar o painel, ver o que já criou e cadastrar novos membros. Para editar ministérios, atividades, comunicados e configurações, assine a faixa do tamanho da sua igreja."}
               </p>
             </div>
           </div>
           <div className="sm:shrink-0">
-            <Button asChild size="sm" className="w-full sm:w-auto">
-              <Link href={PUBLIC_ROUTES.pricing}>Ver planos</Link>
-            </Button>
+            <SubscribePricingTrigger className="w-full sm:w-auto">
+              {isCanceled ? "Reativar assinatura" : "Assinar agora"}
+            </SubscribePricingTrigger>
           </div>
         </div>
       </div>
@@ -126,25 +173,18 @@ export function TrialStatusBanner() {
             <p className="text-sm leading-relaxed text-muted-foreground">
               {countdownMessage}{" "}
               {isUrgent
-                ? "Assine um plano para não perder os recursos de gestão quando o teste acabar."
-                : "Explore o painel com calma — quando quiser, veja os planos e continue sem interrupções."}
+                ? "Veja a faixa da sua igreja para continuar gerenciando tudo sem interrupção."
+                : "Explore com calma — a cobrança só começa se você decidir continuar após o teste."}
             </p>
           </div>
         </div>
         <div className="sm:shrink-0">
-          <Button
-            asChild
-            size="sm"
+          <SubscribePricingTrigger
             variant="outline"
-            className={cn(
-              "w-full bg-background/80 sm:w-auto",
-              isUrgent
-                ? "border-amber-500/30"
-                : "border-sky-500/25",
-            )}
+            className="w-full bg-background/80 sm:w-auto"
           >
-            <Link href={PUBLIC_ROUTES.pricing}>Ver planos</Link>
-          </Button>
+            Assinar agora
+          </SubscribePricingTrigger>
         </div>
       </div>
     </div>

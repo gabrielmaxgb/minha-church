@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
+import { AUTH_ROUTES } from "@/constants/routes";
 import {
   useAssignableRoles,
   useChurchMemberships,
@@ -27,6 +30,8 @@ import {
   SettingsToggleRow,
 } from "./settings-shared";
 import { TransferOwnershipDialog } from "./transfer-ownership-dialog";
+
+const MEMBERSHIPS_REFRESH_COOLDOWN_MS = 5_000;
 
 type RoleFilter = "all" | "owner" | "none" | string;
 
@@ -87,9 +92,20 @@ function matchesRoleFilter(
 }
 
 export function ChurchMembershipsSettings() {
-  const { user, permissions } = useAuth();
-  const { data: memberships, isLoading, isError } = useChurchMemberships();
-  const { data: assignableRoles } = useAssignableRoles();
+  const router = useRouter();
+  const { user, permissions, church, reloadSession } = useAuth();
+  const {
+    data: memberships,
+    isLoading,
+    isError,
+    isFetching: isMembershipsFetching,
+    refetch: refetchMemberships,
+  } = useChurchMemberships();
+  const {
+    data: assignableRoles,
+    isFetching: isAssignableRolesFetching,
+    refetch: refetchAssignableRoles,
+  } = useAssignableRoles();
   const updateMembership = useUpdateChurchMembership();
   const transferOwnership = useTransferChurchOwnership();
 
@@ -104,8 +120,28 @@ export function ChurchMembershipsSettings() {
   const [expandedUserIds, setExpandedUserIds] = useState<Set<string>>(
     () => new Set(),
   );
+  const [refreshCooldownEndsAt, setRefreshCooldownEndsAt] = useState(0);
+  const [refreshTick, setRefreshTick] = useState(() => Date.now());
 
   const canManage = canManageChurchMemberships(permissions);
+  const isRefreshing = isMembershipsFetching || isAssignableRolesFetching;
+  const refreshCooldownRemainingMs = Math.max(
+    0,
+    refreshCooldownEndsAt - refreshTick,
+  );
+  const refreshOnCooldown = refreshCooldownRemainingMs > 0;
+
+  useEffect(() => {
+    if (!refreshOnCooldown) {
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      setRefreshTick(Date.now());
+    }, 250);
+
+    return () => window.clearInterval(timer);
+  }, [refreshOnCooldown, refreshCooldownEndsAt]);
 
   const sortedMemberships = useMemo(
     () =>
@@ -272,6 +308,7 @@ export function ChurchMembershipsSettings() {
     try {
       await transferOwnership.mutateAsync(transferTarget.userId);
       setTransferTarget(null);
+      router.replace(`${AUTH_ROUTES.settings}?section=profile`);
     } catch (error) {
       setErrorMessage(
         error instanceof Error
@@ -281,11 +318,37 @@ export function ChurchMembershipsSettings() {
     }
   }
 
+  async function handleRefreshMemberships() {
+    if (isRefreshing || refreshOnCooldown) {
+      return;
+    }
+
+    setRefreshCooldownEndsAt(Date.now() + MEMBERSHIPS_REFRESH_COOLDOWN_MS);
+
+    try {
+      await Promise.all([
+        refetchMemberships(),
+        refetchAssignableRoles(),
+        reloadSession(),
+      ]);
+    } catch {
+      // Erros já aparecem no estado da query ou via toast global.
+    }
+  }
+
+  const refreshHint = refreshOnCooldown
+    ? `Aguarde ${Math.ceil(refreshCooldownRemainingMs / 1000)}s para atualizar de novo`
+    : "Atualizar lista";
+
   return (
     <div>
       <SettingsSectionHeader
         title="Usuários"
-        description="Defina os cargos de cada pessoa. O proprietário pode transferir a propriedade da igreja para outro usuário."
+        description={
+          church?.memberCount != null
+            ? `Pessoas com login no painel (cargos e permissões). A lista de membros cadastrados tem ${church.memberCount} pessoa${church.memberCount === 1 ? "" : "s"} — veja em Membros no menu lateral.`
+            : "Pessoas com login no painel. Defina cargos e permissões; o proprietário pode transferir a propriedade da igreja."
+        }
       />
 
       {errorMessage && <SettingsAlert message={errorMessage} />}
@@ -293,9 +356,25 @@ export function ChurchMembershipsSettings() {
       {isLoading ? (
         <Skeleton className="h-112 w-full rounded-xl" />
       ) : isError ? (
-        <p className="text-sm text-muted-foreground">
-          Não foi possível carregar os usuários da igreja.
-        </p>
+        <div className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Não foi possível carregar os usuários da igreja.
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => void handleRefreshMemberships()}
+            disabled={refreshOnCooldown || isRefreshing}
+            title={refreshHint}
+          >
+            <RefreshCw
+              className={isRefreshing ? "size-4 animate-spin" : "size-4"}
+              aria-hidden
+            />
+            Atualizar lista
+          </Button>
+        </div>
       ) : sortedMemberships.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           Nenhum usuário com acesso a esta igreja.
@@ -309,6 +388,12 @@ export function ChurchMembershipsSettings() {
               placeholder="Buscar nome ou e-mail..."
               resultCount={filteredMemberships.length}
               totalCount={sortedMemberships.length}
+              countLabel="usuário com acesso"
+              countLabelPlural="usuários com acesso"
+              onRefresh={() => void handleRefreshMemberships()}
+              isRefreshing={isRefreshing}
+              refreshDisabled={refreshOnCooldown}
+              refreshHint={refreshHint}
             />
             <SettingsFilterPills>
               <SettingsFilterPill
@@ -447,19 +532,26 @@ export function ChurchMembershipsSettings() {
                       !membership.isOwner &&
                       membership.userId !== user.id && (
                         <div className="mt-4 border-t border-border/60 pt-4">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            disabled={
-                              transferOwnership.isPending ||
-                              isSaving ||
-                              Boolean(savingUserId)
-                            }
-                            onClick={() => setTransferTarget(membership)}
-                          >
-                            Transferir propriedade
-                          </Button>
+                          {membership.canReceiveOwnership ? (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              disabled={
+                                transferOwnership.isPending ||
+                                isSaving ||
+                                Boolean(savingUserId)
+                              }
+                              onClick={() => setTransferTarget(membership)}
+                            >
+                              Transferir propriedade
+                            </Button>
+                          ) : (
+                            <p className="text-sm text-muted-foreground">
+                              Para receber a propriedade, cadastre um e-mail no
+                              perfil do membro vinculado a este acesso.
+                            </p>
+                          )}
                         </div>
                       )}
                   </SettingsExpandableRow>

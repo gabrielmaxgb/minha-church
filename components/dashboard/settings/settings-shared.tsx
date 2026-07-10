@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Loader2, Search } from "lucide-react";
+import { ChevronDown, Loader2, RefreshCw, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,18 +9,23 @@ import { cn } from "@/lib/utils";
 export function SettingsSectionHeader({
   title,
   description,
+  action,
 }: {
   title: string;
   description?: string;
+  action?: React.ReactNode;
 }) {
   return (
-    <div className="mb-5">
-      <h2 className="font-display text-lg font-semibold tracking-tight">
-        {title}
-      </h2>
-      {description && (
-        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-      )}
+    <div className="mb-5 flex items-start justify-between gap-3">
+      <div className="min-w-0 flex-1">
+        <h2 className="font-display text-lg font-semibold tracking-tight">
+          {title}
+        </h2>
+        {description && (
+          <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+        )}
+      </div>
+      {action ? <div className="shrink-0">{action}</div> : null}
     </div>
   );
 }
@@ -85,28 +90,63 @@ export function SettingsSidebarToolbar({
   placeholder = "Buscar...",
   resultCount,
   totalCount,
+  countLabel = "usuário",
+  countLabelPlural = "usuários",
+  onRefresh,
+  isRefreshing = false,
+  refreshDisabled = false,
+  refreshHint,
 }: {
   search: string;
   onSearchChange: (value: string) => void;
   placeholder?: string;
   resultCount: number;
   totalCount: number;
+  countLabel?: string;
+  countLabelPlural?: string;
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
+  refreshDisabled?: boolean;
+  refreshHint?: string;
 }) {
   return (
     <div className="space-y-2 px-3 py-3 sm:px-4">
-      <div className="relative">
-        <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          value={search}
-          onChange={(event) => onSearchChange(event.target.value)}
-          placeholder={placeholder}
-          className="h-9 rounded-lg border-border/70 bg-background/80 pl-8 text-sm"
-        />
+      <div className="flex gap-2">
+        <div className="relative min-w-0 flex-1">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(event) => onSearchChange(event.target.value)}
+            placeholder={placeholder}
+            className="h-9 rounded-lg border-border/70 bg-background/80 pl-8 text-sm"
+          />
+        </div>
+        {onRefresh ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="size-9 shrink-0"
+            onClick={onRefresh}
+            disabled={refreshDisabled || isRefreshing}
+            title={refreshHint ?? "Atualizar lista"}
+            aria-label={refreshHint ?? "Atualizar lista"}
+          >
+            <Loader2
+              className={cn("size-4", isRefreshing ? "animate-spin" : "hidden")}
+              aria-hidden
+            />
+            <RefreshCw
+              className={cn("size-4", isRefreshing && "hidden")}
+              aria-hidden
+            />
+          </Button>
+        ) : null}
       </div>
       <p className="px-1 text-[11px] text-muted-foreground">
         {resultCount === totalCount
-          ? `${totalCount} usuário${totalCount === 1 ? "" : "s"}`
-          : `${resultCount} de ${totalCount} usuários`}
+          ? `${totalCount} ${totalCount === 1 ? countLabel : countLabelPlural}`
+          : `${resultCount} de ${totalCount} ${countLabelPlural}`}
       </p>
     </div>
   );

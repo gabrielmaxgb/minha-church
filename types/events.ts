@@ -43,6 +43,8 @@ export interface ChurchEventDetail extends ChurchEvent {
   myAvailabilityStatus?: "available" | "unavailable" | null;
   myRoleLabels?: string[];
   needsRosterFunctions?: boolean;
+  /** Pode marcar disponibilidade (membro do ministério ou evento da igreja). */
+  canRespondToAvailability?: boolean;
 }
 
 /** Resumo leve de uma ocorrência na série — para navegação lateral */

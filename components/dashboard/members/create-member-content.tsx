@@ -9,6 +9,7 @@ import { FormProvider, useForm, useWatch } from "react-hook-form";
 
 import { MemberAccountCreatedModal } from "@/components/dashboard/members/member-account-created-modal";
 import { MemberForm } from "@/components/dashboard/members/member-form";
+import { TierCrossingModal } from "@/components/billing/tier-crossing-modal";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -30,6 +31,7 @@ import {
   type MemberFormValues,
 } from "@/lib/members/form";
 import { applyMemberFormApiError } from "@/lib/members/form-api-errors";
+import { useTierCrossingGate } from "@/lib/billing/use-tier-crossing-gate";
 import { createMemberFormSchema } from "@/lib/validation/schemas";
 import type { MemberAccountCredentials } from "@/types/members";
 
@@ -41,6 +43,7 @@ export function CreateMemberContent() {
   } | null>(null);
   const createMember = useCreateMember();
   const { locked: memberAccessLocked } = useFeatureLock();
+  const tierCrossing = useTierCrossingGate();
 
   const form = useForm<MemberFormValues>({
     resolver: zodResolver(createMemberFormSchema()),
@@ -53,23 +56,29 @@ export function CreateMemberContent() {
 
   const onSubmit = form.handleSubmit(async (values) => {
     try {
-      const result = await createMember.mutateAsync(formValuesToCreatePayload(values));
+      await tierCrossing.runWithTierCrossingCheck(values.status, async () => {
+        const result = await createMember.mutateAsync(
+          formValuesToCreatePayload(values),
+        );
 
-      if (result.account) {
-        setCreatedAccount({
-          memberName: result.name,
-          account: result.account,
-        });
-        return;
-      }
+        if (result.account) {
+          setCreatedAccount({
+            memberName: result.name,
+            account: result.account,
+          });
+          return;
+        }
 
-      router.push(AUTH_ROUTES.members);
+        router.push(AUTH_ROUTES.members);
+      });
     } catch (submitError) {
       applyMemberFormApiError(
         form.setError,
         form.clearErrors,
         submitError,
-        "Não foi possível cadastrar o membro.",
+        submitError instanceof Error
+          ? submitError.message
+          : "Não foi possível cadastrar o membro.",
       );
     }
   });
@@ -151,6 +160,18 @@ export function CreateMemberContent() {
           memberName={createdAccount.memberName}
           account={createdAccount.account}
           onClose={handleCloseAccountModal}
+        />
+      )}
+
+      {tierCrossing.preview && (
+        <TierCrossingModal
+          open
+          preview={tierCrossing.preview}
+          isOwner={tierCrossing.isOwner}
+          loading={tierCrossing.loading}
+          error={tierCrossing.error}
+          onConfirm={() => void tierCrossing.confirm()}
+          onClose={tierCrossing.close}
         />
       )}
     </>

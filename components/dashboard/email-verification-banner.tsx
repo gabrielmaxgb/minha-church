@@ -15,9 +15,11 @@ export function EmailVerificationBanner() {
   const [pendingHint, setPendingHint] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  if (!user || user.emailVerified !== false) {
+  if (!user?.isOwner || user.emailVerified !== false) {
     return null;
   }
+
+  const email = user.email;
 
   async function handleResend() {
     setIsSending(true);
@@ -26,7 +28,7 @@ export function EmailVerificationBanner() {
     setError(null);
 
     try {
-      const response = await resendVerificationEmailRequest();
+      const response = await resendVerificationEmailRequest(email);
       setFeedback(response.message);
       await reloadSession();
     } catch (submitError) {
@@ -77,8 +79,8 @@ export function EmailVerificationBanner() {
               Confirme seu e-mail para liberar todos os recursos
             </p>
             <p className="text-sm leading-relaxed text-muted-foreground">
-              Enviamos um link para <span className="font-medium text-foreground">{user.email}</span>.
-              Enquanto isso, você pode explorar o painel com limite de até 5 membros.
+              Enviamos um link para <span className="font-medium text-foreground">{email}</span>.
+              Confirme para concluir o cadastro da igreja e usar todos os recursos do painel.
             </p>
             {feedback && (
               <p className="text-sm text-emerald-700 dark:text-emerald-300">{feedback}</p>

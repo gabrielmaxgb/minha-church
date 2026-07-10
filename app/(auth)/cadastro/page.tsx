@@ -5,7 +5,7 @@ import { RegisterChurchForm } from "@/components/auth/register-church-form";
 export const metadata: Metadata = {
   title: "Criar conta",
   description:
-    "Cadastre sua igreja no Minha Church em poucos passos e comece grátis.",
+    "Cadastre sua igreja em minutos. 30 dias grátis, sem cartão — pague só pela faixa do tamanho da sua comunidade.",
 };
 
 export default function RegisterChurchPage() {

@@ -219,7 +219,7 @@ export function EventRosterSlotsEditor({
         <Input
           value={customValue}
           onChange={(event) => setCustomValue(event.target.value)}
-          placeholder={dense ? "Outra função..." : "Ex.: Recepção, som, vocal..."}
+          placeholder={dense ? "Outra função..." : "Ex.: Recepção, infantil, coordenação..."}
           disabled={disabled}
           className={cn(
             "min-w-0 flex-1 border-border/70 bg-background/80",

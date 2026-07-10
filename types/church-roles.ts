@@ -87,7 +87,8 @@ export const CHURCH_PERMISSION_GROUPS: Array<{
   {
     id: "sections",
     label: "Acesso às seções",
-    description: "Controla o que aparece no menu lateral para quem tem este cargo.",
+    description:
+      "Controla o que aparece no menu lateral. Desativar uma seção remove as ações administrativas vinculadas a ela.",
     permissions: [
       "dashboard_access",
       "members_access",
@@ -104,7 +105,7 @@ export const CHURCH_PERMISSION_GROUPS: Array<{
     id: "actions",
     label: "Ações administrativas",
     description:
-      "Capacidades extras além de visualizar — criar, editar e gerenciar recursos.",
+      "Capacidades de criar, editar e gerenciar. Ao ativar, o acesso à seção correspondente no menu é incluído automaticamente.",
     permissions: [
       "members_manage",
       "ministries_manage",

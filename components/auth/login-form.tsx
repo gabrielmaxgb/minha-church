@@ -21,11 +21,14 @@ import { FormAlert, FormField, FormMessage } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import {
   DEMO_ACCOUNTS,
+  DEMO_BILLING_TIER_ACCOUNTS,
   DEMO_MOCK_MEMBERS,
   DEMO_PASSWORD,
   SHOW_DEMO_ACCOUNTS,
 } from "@/constants/demo-accounts";
 import { PUBLIC_ROUTES, AUTH_ROUTES, resolvePostLoginRedirect } from "@/constants/routes";
+import { resendVerificationEmailRequest } from "@/lib/api/auth";
+import { ApiError } from "@/lib/api/client";
 import { loginSchema, type LoginFormValues } from "@/lib/validation/schemas";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
@@ -36,7 +39,17 @@ function LoginFormContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingIdentifier, setLoadingIdentifier] = useState<string | null>(null);
+  const [isResendingVerification, setIsResendingVerification] = useState(false);
+  const [verificationFeedback, setVerificationFeedback] = useState<string | null>(null);
+  const [loginVerificationEmail, setLoginVerificationEmail] = useState<string | null>(
+    null,
+  );
   const passwordResetSuccess = searchParams.get("reset") === "success";
+  const verificationSent = searchParams.get("verify") === "sent";
+  const pendingVerificationEmail =
+    loginVerificationEmail ??
+    searchParams.get("email")?.trim().toLowerCase() ??
+    "";
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -65,6 +78,28 @@ function LoginFormContent() {
     window.location.replace(destination);
   }, [isAuthenticated, isAuthLoading, user, searchParams]);
 
+  async function handleResendVerification() {
+    if (!pendingVerificationEmail) {
+      return;
+    }
+
+    setIsResendingVerification(true);
+    setVerificationFeedback(null);
+
+    try {
+      const response = await resendVerificationEmailRequest(pendingVerificationEmail);
+      setVerificationFeedback(response.message);
+    } catch (resendError) {
+      setVerificationFeedback(
+        resendError instanceof Error
+          ? resendError.message
+          : "Não foi possível reenviar o e-mail.",
+      );
+    } finally {
+      setIsResendingVerification(false);
+    }
+  }
+
   async function performLogin(loginIdentifierValue: string, loginPassword: string) {
     clearErrors("root");
     setIsLoading(true);
@@ -82,12 +117,22 @@ function LoginFormContent() {
 
       window.location.replace(destination);
     } catch (loginError) {
-      setError("root", {
-        message:
-          loginError instanceof Error
-            ? loginError.message
-            : "Não foi possível entrar. Tente novamente.",
-      });
+      if (
+        loginError instanceof ApiError &&
+        loginError.code === "EMAIL_VERIFICATION_REQUIRED"
+      ) {
+        setLoginVerificationEmail(loginError.email?.trim().toLowerCase() ?? null);
+        setVerificationFeedback(null);
+        clearErrors("root");
+      } else {
+        setLoginVerificationEmail(null);
+        setError("root", {
+          message:
+            loginError instanceof Error
+              ? loginError.message
+              : "Não foi possível entrar. Tente novamente.",
+        });
+      }
       setIsLoading(false);
       setLoadingIdentifier(null);
     }
@@ -118,7 +163,40 @@ function LoginFormContent() {
             </FormAlert>
           )}
 
-          {errors.root?.message && <FormAlert>{errors.root.message}</FormAlert>}
+          {(verificationSent || loginVerificationEmail) && (
+            <div className="space-y-3 rounded-xl border border-amber-500/25 bg-amber-500/10 px-4 py-3">
+              <p className="text-sm leading-relaxed text-foreground">
+                {verificationSent ? "Enviamos um link de confirmação" : "Confirme seu e-mail"}
+                {pendingVerificationEmail ? (
+                  <>
+                    {" "}
+                    para{" "}
+                    <span className="font-medium">{pendingVerificationEmail}</span>
+                  </>
+                ) : null}
+                . Confirme seu e-mail antes de entrar.
+              </p>
+              {verificationFeedback && (
+                <p className="text-sm text-muted-foreground">{verificationFeedback}</p>
+              )}
+              {pendingVerificationEmail ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="border-amber-500/30 bg-background/80"
+                  disabled={isResendingVerification}
+                  onClick={() => void handleResendVerification()}
+                >
+                  {isResendingVerification ? "Reenviando..." : "Reenviar link"}
+                </Button>
+              ) : null}
+            </div>
+          )}
+
+          {errors.root?.message && !loginVerificationEmail && (
+            <FormAlert>{errors.root.message}</FormAlert>
+          )}
 
           <FormField
             label="E-mail ou CPF"
@@ -219,6 +297,31 @@ function LoginFormContent() {
                       </span>
                     </button>
                   ))}
+                </div>
+
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground">
+                    Faixas Stripe — trial expirado
+                  </p>
+                  <div className="mt-2 grid gap-2">
+                    {DEMO_BILLING_TIER_ACCOUNTS.map((account) => (
+                      <button
+                        key={account.email}
+                        type="button"
+                        disabled={isLoading}
+                        onClick={() => handleQuickLogin(account.email)}
+                        className={cn(
+                          "flex w-full items-center justify-between gap-3 rounded-md border border-border bg-background px-3 py-2 text-left text-sm transition-colors hover:bg-muted/60",
+                          loadingIdentifier === account.email && "opacity-70",
+                        )}
+                      >
+                        <span className="font-medium">{account.label}</span>
+                        <span className="truncate text-xs text-muted-foreground">
+                          {account.email}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 <div>

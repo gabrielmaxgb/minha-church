@@ -25,11 +25,24 @@ export function ensureMinistryServiceFunctionLabels(labels: string[]): string[] 
   return [DEFAULT_MINISTRY_SERVICE_FUNCTION, ...normalized];
 }
 
-/** Presets comuns para funções na escala (louvor, mídia, recepção, etc.). */
+/** Presets exibidos como sugestões ao configurar funções na escala. */
 export const ROSTER_ROLE_PRESETS = [
   { id: CHURCH_WIDE_DEFAULT_ROSTER_ROLE, label: "Voluntário" },
   { id: "reception", label: "Recepção" },
   { id: "media", label: "Mídia" },
+  { id: "children", label: "Infantil" },
+  { id: "intercession", label: "Intercessão" },
+  { id: "hospitality", label: "Hospitalidade" },
+  { id: "diaconia", label: "Diaconia" },
+  { id: "evangelism", label: "Evangelismo" },
+  { id: "security", label: "Segurança" },
+  { id: "coordination", label: "Coordenação" },
+  { id: "support", label: "Apoio geral" },
+  { id: "other", label: "Outro" },
+] as const;
+
+/** Rótulos legados (ex.: louvor) — só para exibir/normalizar dados já cadastrados. */
+export const ROSTER_ROLE_LEGACY_LABELS = [
   { id: "vocal", label: "Vocal" },
   { id: "backing_vocal", label: "Backing vocal" },
   { id: "acoustic_guitar", label: "Violão" },
@@ -40,8 +53,20 @@ export const ROSTER_ROLE_PRESETS = [
   { id: "pads", label: "Pads / loops" },
   { id: "violin", label: "Violino" },
   { id: "saxophone", label: "Saxofone" },
-  { id: "other", label: "Outro" },
 ] as const;
+
+function allKnownRosterRoles() {
+  const seen = new Set<string>();
+
+  return [...ROSTER_ROLE_PRESETS, ...ROSTER_ROLE_LEGACY_LABELS].filter((item) => {
+    if (seen.has(item.id)) {
+      return false;
+    }
+
+    seen.add(item.id);
+    return true;
+  });
+}
 
 export type RosterRolePresetId = (typeof ROSTER_ROLE_PRESETS)[number]["id"];
 
@@ -85,7 +110,7 @@ export function formatRosterRole(value: string): string {
   }
 
   const normalized = normalizeRosterRoleValue(trimmed);
-  const preset = ROSTER_ROLE_PRESETS.find((item) => item.id === normalized);
+  const preset = allKnownRosterRoles().find((item) => item.id === normalized);
 
   return preset?.label ?? trimmed;
 }
@@ -97,7 +122,7 @@ export function normalizeRosterRoleValue(value: string): string {
     return "";
   }
 
-  const preset = ROSTER_ROLE_PRESETS.find(
+  const preset = allKnownRosterRoles().find(
     (item) =>
       item.id === trimmed ||
       item.id === trimmed.toLowerCase() ||
@@ -130,7 +155,7 @@ export function isRosterRoleSelected(
   values: string[],
   presetId: RosterRolePresetId | string,
 ): boolean {
-  const preset = ROSTER_ROLE_PRESETS.find((item) => item.id === presetId);
+  const preset = allKnownRosterRoles().find((item) => item.id === presetId);
   const target = preset?.id ?? normalizeRosterRoleValue(String(presetId));
 
   return normalizeRosterRoleList(values).includes(target);
@@ -387,8 +412,8 @@ export function isRosterCollectionComplete(event: {
   return hasAvailabilityResponses || hasAssignments;
 }
 
-/** @deprecated Use ROSTER_ROLE_PRESETS */
-export const WORSHIP_INSTRUMENTS = ROSTER_ROLE_PRESETS;
+/** @deprecated Use ROSTER_ROLE_LEGACY_LABELS */
+export const WORSHIP_INSTRUMENTS = ROSTER_ROLE_LEGACY_LABELS;
 
 /** @deprecated Use formatRosterRole */
 export function formatWorshipInstrument(id: string): string {

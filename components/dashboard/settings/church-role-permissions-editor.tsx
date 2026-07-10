@@ -21,6 +21,10 @@ import {
 
 import { cn } from "@/lib/utils";
 import {
+  getSectionIncludedByLabel,
+  isSectionAccessRequiredByActions,
+} from "@/lib/permissions/church-role-permission-links";
+import {
   CHURCH_PERMISSION_DESCRIPTIONS,
   CHURCH_PERMISSION_GROUPS,
   CHURCH_PERMISSION_LABELS,
@@ -105,17 +109,27 @@ function PermissionCard({
   permission,
   checked,
   variant,
+  allPermissions,
   onToggle,
 }: {
   permission: ChurchPermissionKey;
   checked: boolean;
   variant: "sections" | "actions";
+  allPermissions: ChurchPermissionKey[];
   onToggle: () => void;
 }) {
   const Icon = PERMISSION_ICONS[permission];
   const styles = GROUP_STYLES[variant];
   const label = CHURCH_PERMISSION_LABELS[permission];
   const description = CHURCH_PERMISSION_DESCRIPTIONS[permission];
+  const includedByLabel =
+    variant === "sections"
+      ? getSectionIncludedByLabel(permission, allPermissions)
+      : null;
+  const isIncludedByAction =
+    variant === "sections" &&
+    checked &&
+    isSectionAccessRequiredByActions(permission, allPermissions);
 
   return (
     <div
@@ -150,10 +164,24 @@ function PermissionCard({
         </span>
 
         <span className="min-w-0 flex-1 pt-0.5">
-          <span className="block text-sm font-medium leading-tight">{label}</span>
+          <span className="flex flex-wrap items-center gap-2">
+            <span className="block text-sm font-medium leading-tight">
+              {label}
+            </span>
+            {isIncludedByAction ? (
+              <span className="rounded-full border border-border/70 bg-background/80 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                Incluída por ação
+              </span>
+            ) : null}
+          </span>
           <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
             {description}
           </span>
+          {includedByLabel ? (
+            <span className="mt-1.5 block text-xs font-medium text-foreground/80">
+              Ativa via: {includedByLabel}
+            </span>
+          ) : null}
         </span>
       </button>
 
@@ -262,6 +290,7 @@ function PermissionGroup({
             permission={permission}
             checked={permissions.includes(permission)}
             variant={group.id}
+            allPermissions={permissions}
             onToggle={() => onToggle(permission)}
           />
         ))}

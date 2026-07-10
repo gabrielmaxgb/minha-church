@@ -74,7 +74,10 @@ export function ActivityDetailContent({ eventId }: ActivityDetailContentProps) {
       ? canManageEventRoster(permissions, event, user?.id ?? null)
       : false;
   const showAvailabilityPanel = Boolean(
-    event?.usesRoster && event.rosterOpen && !canManageRoster,
+    event?.usesRoster &&
+      event.rosterOpen &&
+      !canManageRoster &&
+      event.canRespondToAvailability,
   );
   const eventDateChip = event ? formatEventDateChip(event.startsAt) : null;
   const relativeEventDay = event ? formatRelativeEventDay(event.startsAt) : null;

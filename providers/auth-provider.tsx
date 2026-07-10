@@ -33,7 +33,8 @@ import {
 } from "@/lib/auth/cookies";
 import { terminateSession } from "@/lib/auth/session";
 import { isProtectedAreaPath, PUBLIC_ROUTES } from "@/constants/routes";
-import type { AuthResponse, ChangePasswordPayload, Church, LoginCredentials, RegisterChurchPayload, UpdateProfilePayload, User, UserPermissions } from "@/types/auth";
+import type { AuthResponse, ChangePasswordPayload, Church, LoginCredentials, RegisterChurchPayload, RegisterChurchResult, UpdateProfilePayload, User, UserPermissions } from "@/types/auth";
+import { isRegisterChurchPending } from "@/types/auth";
 
 function redirectToLogin() {
   window.location.replace(`${PUBLIC_ROUTES.login}?force=1`);
@@ -73,7 +74,7 @@ interface AuthContextValue {
   isSwitchingChurch: boolean;
   switchingToChurchName: string | null;
   login: (credentials: LoginCredentials) => Promise<AuthResponse>;
-  registerChurch: (payload: RegisterChurchPayload) => Promise<AuthResponse>;
+  registerChurch: (payload: RegisterChurchPayload) => Promise<RegisterChurchResult>;
   logout: () => Promise<void>;
   switchChurch: (churchId: string) => Promise<void>;
   changePassword: (payload: ChangePasswordPayload) => Promise<void>;
@@ -244,13 +245,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const registerChurch = useCallback(
     async (payload: RegisterChurchPayload) => {
-      const session = await registerChurchRequest(payload);
-      const next = commitSession(session, undefined, sessionSetters);
+      const result = await registerChurchRequest(payload);
+
+      if (isRegisterChurchPending(result)) {
+        return result;
+      }
+
+      const next = commitSession(result, undefined, sessionSetters);
 
       scheduleTokenRefresh(next.expiresIn);
       setIsLoading(false);
 
-      return session;
+      return result;
     },
     [scheduleTokenRefresh, sessionSetters],
   );

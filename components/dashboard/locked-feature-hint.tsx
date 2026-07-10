@@ -34,7 +34,7 @@ export function LockedFeatureHint({
           href={PUBLIC_ROUTES.pricing}
           className="font-medium text-foreground underline underline-offset-2 hover:text-primary"
         >
-          escolha um plano
+          veja a faixa da sua igreja
         </Link>
         .
       </span>

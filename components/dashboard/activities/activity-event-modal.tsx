@@ -93,7 +93,10 @@ export function ActivityEventModal({
       ? canManageEventRoster(permissions, event, user?.id ?? null)
       : false;
   const showAvailabilityPanel = Boolean(
-    event?.usesRoster && event.rosterOpen && !canManageRoster,
+    event?.usesRoster &&
+      event.rosterOpen &&
+      !canManageRoster &&
+      event.canRespondToAvailability,
   );
   const isPending = updateEvent.isPending || deleteEvent.isPending;
 

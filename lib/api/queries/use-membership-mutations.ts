@@ -52,10 +52,11 @@ export function useTransferChurchOwnership() {
       return transferChurchOwnership(churchId, userId);
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: membershipsKeys._def });
+      await queryClient.cancelQueries({ queryKey: membershipsKeys._def });
+      await reloadSession();
+      queryClient.removeQueries({ queryKey: membershipsKeys._def });
       await queryClient.invalidateQueries({ queryKey: auditLogsKeys._def });
       await queryClient.invalidateQueries({ queryKey: queries.dashboard._def });
-      await reloadSession();
     },
   });
 }

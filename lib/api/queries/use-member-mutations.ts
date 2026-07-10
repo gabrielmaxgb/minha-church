@@ -11,6 +11,7 @@ import {
   updateMember,
 } from "@/lib/api/queries/members.keys";
 import { membershipsKeys, queries } from "@/lib/api/queries";
+import { billingKeys } from "@/lib/api/queries/billing.keys";
 import { useTenant } from "@/providers/auth-provider";
 
 function useInvalidateMembers() {
@@ -38,6 +39,7 @@ export function useCreateMember() {
     onSuccess: async () => {
       await invalidate();
       await queryClient.invalidateQueries({ queryKey: membershipsKeys._def });
+      await queryClient.invalidateQueries({ queryKey: billingKeys._def });
     },
   });
 }

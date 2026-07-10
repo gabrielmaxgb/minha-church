@@ -16,6 +16,30 @@ export const DEMO_ACCOUNTS: DemoAccount[] = [
   { email: "member@igreja.com.br", label: "Membro" },
 ];
 
+/** Igrejas por faixa Stripe — seed `npm run db:seed:billing-tiers` */
+export const DEMO_BILLING_TIER_ACCOUNTS: DemoAccount[] = [
+  {
+    email: "owner-tier-small@billing.test",
+    label: "Tier Small — 50 membros",
+  },
+  {
+    email: "owner-tier-growth@billing.test",
+    label: "Tier Growth — 200 membros",
+  },
+  {
+    email: "owner-tier-consolidated@billing.test",
+    label: "Tier Consolidated — 500 membros",
+  },
+  {
+    email: "owner-tier-multi@billing.test",
+    label: "Tier Multi — 800 membros",
+  },
+  {
+    email: "owner-tier-crossing@billing.test",
+    label: "Tier Crossing — 99 membros (teste P2)",
+  },
+];
+
 /** Membros mock — Igreja Batista Central (senha: senha123) */
 export const DEMO_MOCK_MEMBERS: DemoAccount[] = [
   { email: "ana.mendes@batistacentral.demo", label: "Ana Carolina Mendes" },

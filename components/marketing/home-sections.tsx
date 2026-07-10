@@ -55,7 +55,8 @@ export function HeroSection() {
             </Button>
           </div>
           <p className="mt-4 text-sm text-muted-foreground">
-            Grátis para igrejas com até 50 membros · Sem cartão de crédito
+            30 dias grátis com tudo liberado · Sem cartão · Faixas a partir de
+            R$ 119/mês
           </p>
         </MotionDiv>
       </Container>
@@ -195,8 +196,8 @@ export function CtaSection() {
             Sua igreja merece mais do que planilhas
           </Heading>
           <p className="mx-auto mt-4 max-w-md text-background/70">
-            Comece grátis hoje e veja como é simples organizar membros, cultos e
-            finanças em um só lugar.
+            Teste 30 dias sem cartão. Organize membros, escalas e comunicados —
+            e pague só pela faixa do tamanho da sua igreja quando continuar.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Button
