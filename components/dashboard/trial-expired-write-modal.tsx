@@ -1,10 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { Lock } from "lucide-react";
 
+import { SubscribePricingTrigger } from "@/components/billing/subscribe-pricing-trigger";
 import { Button } from "@/components/ui/button";
-import { PUBLIC_ROUTES } from "@/constants/routes";
 
 interface TrialExpiredWriteModalProps {
   open: boolean;
@@ -42,17 +41,17 @@ export function TrialExpiredWriteModal({
           Período de teste encerrado
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          Você ainda pode consultar o painel e cadastrar membros, mas não é
-          possível {action} sem um plano ativo. O que você já criou continua
-          disponível para consulta.
+          Você ainda pode consultar o painel e cadastrar membros. Para{" "}
+          {action}, assine a faixa correspondente ao tamanho da sua igreja.
+          Tudo o que você já criou continua disponível para consulta.
         </p>
         <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button type="button" variant="outline" onClick={onClose}>
             Agora não
           </Button>
-          <Button asChild>
-            <Link href={PUBLIC_ROUTES.pricing}>Ver planos</Link>
-          </Button>
+          <SubscribePricingTrigger onOpen={onClose} size="default">
+            Assinar agora
+          </SubscribePricingTrigger>
         </div>
       </div>
     </div>

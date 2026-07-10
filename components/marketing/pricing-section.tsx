@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/card";
 import { Heading, SectionHeader, SectionLabel } from "@/components/ui/heading";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PricingCalculator } from "@/components/marketing/pricing-calculator";
 import { usePricing } from "@/lib/api/queries/use-pricing";
 import {
   formatPricePerMember,
@@ -128,11 +129,12 @@ function IncludedBenefits({
       )}
     >
       <p className="text-center font-display text-lg font-semibold tracking-tight">
-        Tudo incluído em qualquer faixa
+        O mesmo Minha Church completo — do primeiro ao último membro da faixa
       </p>
       <p className="mx-auto mt-2 max-w-xl text-center text-sm text-muted-foreground">
-        Troque planilhas, grupos de WhatsApp e sistemas fragmentados por um
-        lugar só — com o mesmo pacote completo em todas as faixas.
+        Escalas, comunicados, ministérios, permissões e cadastro pastoral: tudo
+        liberado em qualquer faixa. A diferença é só quantos membros você
+        gerencia.
       </p>
       <ul className="mt-6 grid gap-3 sm:grid-cols-2">
         {benefits.map((benefit) => (
@@ -215,11 +217,15 @@ export function PricingSection() {
           <div className="mx-auto max-w-2xl text-center">
             <SectionLabel>Preço</SectionLabel>
             <Heading as="h1" className="mt-3">
-              Pague de acordo com o tamanho da sua igreja
+              Investimento justo para o tamanho da sua igreja
             </Heading>
             <p className="mt-4 text-muted-foreground">
-              Todas as funcionalidades incluídas em qualquer faixa. Teste grátis
-              por 14 dias, sem cartão de crédito.
+              Mesmo sistema completo em todas as faixas — você paga conforme
+              quantos membros cadastra, não por pacote de funcionalidades.{" "}
+              <span className="font-medium text-foreground">
+                30 dias grátis
+              </span>
+              , sem cartão.
             </p>
           </div>
 
@@ -233,10 +239,8 @@ export function PricingSection() {
 
           {pricing && (
             <>
-              
-
-            <div className="mx-auto max-w-3xl text-center">
-              <div className=" mx-auto max-w-3xl text-center mt-8 inline-flex rounded-lg border border-border p-1">
+            <div className="mx-auto mt-12 max-w-3xl text-center">
+              <div className="inline-flex rounded-lg border border-border p-1">
                 <button
                   type="button"
                   onClick={() => setPeriod("monthly")}
@@ -274,6 +278,14 @@ export function PricingSection() {
               </div>
             </div>
 
+              <PricingCalculator period={period} className="mt-8" />
+
+            <div className="mx-auto max-w-3xl text-center">
+              <p className="mt-14 text-sm font-medium text-muted-foreground">
+                Tabela completa por faixa
+              </p>
+            </div>
+
               <MotionSection
                 className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:items-center"
                 variants={staggerContainer}
@@ -295,6 +307,11 @@ export function PricingSection() {
                       )}
                     >
                       <CardHeader>
+                        {tier.highlighted && (
+                          <span className="mb-2 inline-flex w-fit rounded-full bg-background/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-background">
+                            Mais escolhida
+                          </span>
+                        )}
                         <CardTitle
                           className={cn(
                             "font-display tracking-tight",
@@ -373,8 +390,8 @@ export function PricingSection() {
       </section>
 
       <CtaBanner
-        title="Teste grátis por 30 dias"
-        description="Todas as funcionalidades incluídas. Sem cartão de crédito."
+        title="30 dias para organizar sua igreja de verdade"
+        description="Use tudo — membros, escalas, comunicados e ministérios. Só escolhe a faixa quando decidir continuar."
         primaryLabel="Começar grátis"
         primaryHref={PUBLIC_ROUTES.register}
         secondaryLabel="Ver recursos"

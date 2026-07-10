@@ -15,8 +15,15 @@ import {
 } from "@/lib/api/queries";
 import { canManageChurchRoles } from "@/lib/permissions";
 import {
+  applyChurchPermissionGroupToggle,
+  applyChurchPermissionToggle,
+  expandLinkedSectionAccess,
+  getSectionDisableWarning,
+} from "@/lib/permissions/church-role-permission-links";
+import {
   ALL_CHURCH_PERMISSIONS,
   CHURCH_PERMISSION_GROUPS,
+  CHURCH_PERMISSION_LABELS,
   type ChurchPermissionKey,
 } from "@/types/church-roles";
 import { useAuth } from "@/providers/auth-provider";
@@ -115,6 +122,12 @@ export function ChurchRolesSettings() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [roleToDelete, setRoleToDelete] = useState<ChurchRole | null>(null);
+  const [permissionConfirm, setPermissionConfirm] = useState<{
+    title: string;
+    description: string;
+    roleId: string;
+    nextPermissions: ChurchPermissionKey[];
+  } | null>(null);
 
   const canManage = permissions ? canManageChurchRoles(permissions) : false;
 
@@ -192,7 +205,8 @@ export function ChurchRolesSettings() {
   }
 
   function getDraftPermissions(role: ChurchRole): ChurchPermissionKey[] {
-    return drafts[role.id] ?? role.permissions;
+    const base = drafts[role.id] ?? role.permissions;
+    return expandLinkedSectionAccess(base);
   }
 
   function isPermissionsDirty(role: ChurchRole): boolean {
@@ -202,7 +216,10 @@ export function ChurchRolesSettings() {
       return false;
     }
 
-    return !permissionsEqual(draft, role.permissions);
+    return !permissionsEqual(
+      expandLinkedSectionAccess(draft),
+      expandLinkedSectionAccess(role.permissions),
+    );
   }
 
   function isNameDirty(role: ChurchRole): boolean {
@@ -248,21 +265,35 @@ export function ChurchRolesSettings() {
     }
 
     setDrafts((current) => {
-      if (permissionsEqual(nextPermissions, role.permissions)) {
+      const normalized = expandLinkedSectionAccess(nextPermissions);
+
+      if (permissionsEqual(normalized, expandLinkedSectionAccess(role.permissions))) {
         const next = { ...current };
         delete next[roleId];
         return next;
       }
 
-      return { ...current, [roleId]: nextPermissions };
+      return { ...current, [roleId]: normalized };
     });
   }
 
   function togglePermission(role: ChurchRole, permission: ChurchPermissionKey) {
     const current = getDraftPermissions(role);
-    const next = current.includes(permission)
-      ? current.filter((item) => item !== permission)
-      : [...current, permission];
+    const next = applyChurchPermissionToggle(current, permission);
+
+    if (current.includes(permission)) {
+      const warning = getSectionDisableWarning(permission, current);
+
+      if (warning) {
+        setPermissionConfirm({
+          title: `Desativar “${CHURCH_PERMISSION_LABELS[permission]}”?`,
+          description: warning,
+          roleId: role.id,
+          nextPermissions: next,
+        });
+        return;
+      }
+    }
 
     setDraftPermissions(role.id, next);
   }
@@ -279,11 +310,42 @@ export function ChurchRolesSettings() {
     }
 
     const current = getDraftPermissions(role);
-    const next = enabled
-      ? [...new Set([...current, ...group.permissions])]
-      : current.filter((item) => !group.permissions.includes(item));
+    const next = applyChurchPermissionGroupToggle(
+      current,
+      group.permissions,
+      enabled,
+    );
+
+    if (!enabled && groupId === "sections") {
+      const hasLinkedActions = group.permissions.some((section) =>
+        getSectionDisableWarning(section, current),
+      );
+
+      if (hasLinkedActions) {
+        setPermissionConfirm({
+          title: "Limpar acesso às seções?",
+          description:
+            "As ações administrativas vinculadas a cada seção também serão removidas — por exemplo, desativar “Membros” remove “Gerenciar membros”.",
+          roleId: role.id,
+          nextPermissions: next,
+        });
+        return;
+      }
+    }
 
     setDraftPermissions(role.id, next);
+  }
+
+  function confirmPermissionChange() {
+    if (!permissionConfirm) {
+      return;
+    }
+
+    setDraftPermissions(
+      permissionConfirm.roleId,
+      permissionConfirm.nextPermissions,
+    );
+    setPermissionConfirm(null);
   }
 
   function discardChanges(role: ChurchRole) {
@@ -315,8 +377,8 @@ export function ChurchRolesSettings() {
 
     const payload: UpdateChurchRolePayload = {};
 
-    if (permissionsChanged) {
-      payload.permissions = permissionDraft;
+    if (permissionsChanged && permissionDraft) {
+      payload.permissions = expandLinkedSectionAccess(permissionDraft);
     }
 
     if (nameChanged) {
@@ -595,6 +657,69 @@ export function ChurchRolesSettings() {
           onConfirm={() => void confirmDeleteRole()}
         />
       )}
+
+      {permissionConfirm ? (
+        <PermissionLinkConfirmDialog
+          title={permissionConfirm.title}
+          description={permissionConfirm.description}
+          onCancel={() => setPermissionConfirm(null)}
+          onConfirm={confirmPermissionChange}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function PermissionLinkConfirmDialog({
+  title,
+  description,
+  onCancel,
+  onConfirm,
+}: {
+  title: string;
+  description: string;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/45 backdrop-blur-[2px]"
+        aria-label="Fechar"
+        onClick={onCancel}
+      />
+
+      <div
+        role="dialog"
+        aria-modal="true"
+        className="relative z-10 w-full max-w-md rounded-t-2xl border border-border bg-background p-6 shadow-2xl sm:rounded-2xl"
+      >
+        <h2 className="font-display text-lg font-semibold tracking-tight">
+          {title}
+        </h2>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          {description}
+        </p>
+
+        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            className="w-full sm:w-auto"
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="button"
+            onClick={onConfirm}
+            className="w-full sm:w-auto"
+          >
+            Continuar
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

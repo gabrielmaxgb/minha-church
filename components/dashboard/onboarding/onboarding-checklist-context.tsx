@@ -1,8 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { useRouter } from "next/navigation";
-import { Rocket } from "lucide-react";
 
 import {
   OnboardingChecklistModal,
@@ -19,43 +27,64 @@ import {
 } from "@/lib/api/queries";
 import { useAuth } from "@/providers/auth-provider";
 
-function dismissStorageKey(churchId: string): string {
+function dismissedStorageKey(churchId: string): string {
   return `mc:onboarding-checklist:dismissed:${churchId}`;
 }
 
-function readDismissed(churchId: string): boolean {
+function autoShownStorageKey(churchId: string): string {
+  return `mc:onboarding-checklist:auto-shown:${churchId}`;
+}
+
+function readStorage(key: string): boolean {
   if (typeof window === "undefined") {
     return false;
   }
 
   try {
-    return window.localStorage.getItem(dismissStorageKey(churchId)) === "1";
+    return window.localStorage.getItem(key) === "1";
   } catch {
     return false;
   }
 }
 
-function persistDismissed(churchId: string): void {
+function writeStorage(key: string): void {
   if (typeof window === "undefined") {
     return;
   }
 
   try {
-    window.localStorage.setItem(dismissStorageKey(churchId), "1");
+    window.localStorage.setItem(key, "1");
   } catch {
-    // Ignora falhas de storage (ex.: modo privado) — o guia continua funcional.
+    // Ignora falhas de storage (ex.: modo privado).
   }
 }
 
-export function OnboardingChecklist() {
+interface OnboardingChecklistContextValue {
+  openOnboarding: () => void;
+  showLauncher: boolean;
+  completedCount: number;
+  totalSteps: number;
+  open: boolean;
+}
+
+const OnboardingChecklistContext =
+  createContext<OnboardingChecklistContextValue | null>(null);
+
+export function useOnboardingChecklist() {
+  return useContext(OnboardingChecklistContext);
+}
+
+export function OnboardingChecklistProvider({
+  children,
+}: {
+  children: ReactNode;
+}) {
   const router = useRouter();
   const { user, church } = useAuth();
 
   const isOwner = Boolean(user?.isOwner);
   const churchId = church?.id ?? null;
 
-  // Captura, na primeira montagem para esta igreja, se a verificação de e-mail
-  // é relevante. Assim o passo não some da lista logo após ser concluído.
   const [emailStepRelevant, setEmailStepRelevant] = useState(false);
   const emailRelevanceChurchRef = useRef<string | null>(null);
 
@@ -93,7 +122,7 @@ export function OnboardingChecklist() {
         id: "verify-email",
         title: "Confirme seu e-mail",
         description:
-          "Garante a segurança da conta e libera todos os recursos, sem limite de membros.",
+          "Garante a segurança da conta do proprietário e conclui o cadastro da igreja.",
         actionLabel: "Ver como confirmar",
         href: AUTH_ROUTES.dashboard,
         done: emailVerified,
@@ -145,21 +174,24 @@ export function OnboardingChecklist() {
   const completedCount = steps.filter((step) => step.done).length;
 
   const [open, setOpen] = useState(false);
-  const autoOpenChurchRef = useRef<string | null>(null);
+  const autoOpenAttemptedRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!isOwner || !churchId || !isStatusReady) {
+    if (!isOwner || !churchId || !isStatusReady || allDone) {
       return;
     }
 
-    // Abre automaticamente apenas uma vez por igreja, se ainda não foi dispensado.
-    if (autoOpenChurchRef.current === churchId) {
+    if (autoOpenAttemptedRef.current === churchId) {
       return;
     }
 
-    autoOpenChurchRef.current = churchId;
+    autoOpenAttemptedRef.current = churchId;
 
-    if (!readDismissed(churchId) && !allDone) {
+    const alreadyDismissed = readStorage(dismissedStorageKey(churchId));
+    const alreadyAutoShown = readStorage(autoShownStorageKey(churchId));
+
+    if (!alreadyDismissed && !alreadyAutoShown) {
+      writeStorage(autoShownStorageKey(churchId));
       setOpen(true);
     }
   }, [allDone, churchId, isOwner, isStatusReady]);
@@ -168,9 +200,13 @@ export function OnboardingChecklist() {
     setOpen(false);
 
     if (churchId) {
-      persistDismissed(churchId);
+      writeStorage(dismissedStorageKey(churchId));
     }
   }, [churchId]);
+
+  const openOnboarding = useCallback(() => {
+    setOpen(true);
+  }, []);
 
   const handleSelectStep = useCallback(
     (href: string) => {
@@ -180,36 +216,42 @@ export function OnboardingChecklist() {
     [handleClose, router],
   );
 
-  if (!isOwner || !church) {
-    return null;
-  }
+  const contextValue = useMemo<OnboardingChecklistContextValue | null>(() => {
+    if (!isOwner || !church || !isStatusReady || allDone) {
+      return null;
+    }
 
-  const showLauncher = isStatusReady && !allDone;
+    return {
+      openOnboarding,
+      showLauncher: true,
+      completedCount,
+      totalSteps: steps.length,
+      open,
+    };
+  }, [
+    allDone,
+    church,
+    completedCount,
+    isOwner,
+    isStatusReady,
+    open,
+    openOnboarding,
+    steps.length,
+  ]);
 
   return (
-    <>
-      {showLauncher && !open && (
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-elevated transition-transform duration-200 hover:scale-[1.03] active:scale-100 sm:bottom-6 sm:right-6"
-          aria-label={`Abrir guia de primeiros passos (${completedCount} de ${steps.length} concluídos)`}
-        >
-          <Rocket className="size-4" aria-hidden />
-          <span className="hidden sm:inline">Primeiros passos</span>
-          <span className="inline-flex items-center justify-center rounded-full bg-primary-foreground/20 px-1.5 text-xs tabular-nums">
-            {completedCount}/{steps.length}
-          </span>
-        </button>
-      )}
+    <OnboardingChecklistContext.Provider value={contextValue}>
+      {children}
 
-      <OnboardingChecklistModal
-        open={open}
-        onClose={handleClose}
-        onSelectStep={handleSelectStep}
-        steps={steps}
-        churchName={church.name}
-      />
-    </>
+      {isOwner && church && (
+        <OnboardingChecklistModal
+          open={open}
+          onClose={handleClose}
+          onSelectStep={handleSelectStep}
+          steps={steps}
+          churchName={church.name}
+        />
+      )}
+    </OnboardingChecklistContext.Provider>
   );
 }

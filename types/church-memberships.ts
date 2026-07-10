@@ -10,6 +10,7 @@ export interface ChurchMembership {
   userId: string;
   churchId: string;
   isOwner: boolean;
+  canReceiveOwnership: boolean;
   roles: ChurchMembershipRole[];
   createdAt: string;
   user: {

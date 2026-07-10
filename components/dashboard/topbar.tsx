@@ -6,8 +6,10 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { NotificationsBell } from "@/components/dashboard/notifications-bell";
+import { OnboardingHeaderButton } from "@/components/dashboard/onboarding/onboarding-header-button";
 import { formatUserAccessLabel } from "@/lib/user-display";
 import { getUserLoginLabel } from "@/lib/user-profile";
+import { formatMemberCountLabel } from "@/lib/pricing";
 import { AUTH_ROUTES } from "@/constants/routes";
 import { useAuth } from "@/providers/auth-provider";
 import { cn } from "@/lib/utils";
@@ -43,6 +45,11 @@ export function DashboardTopbar({
   const [menuOpen, setMenuOpen] = useState(false);
   const [churchMenuOpen, setChurchMenuOpen] = useState(false);
 
+  const churchLabel =
+    church?.memberCount != null
+      ? `${church.name} · ${formatMemberCountLabel(church.memberCount)}`
+      : church?.name;
+
   return (
     <header className="z-20 shrink-0 border-b border-border/70 bg-surface-elevated/90 shadow-soft backdrop-blur-md">
       <div className="flex h-[4.25rem] items-center justify-between gap-4 px-4 sm:px-6">
@@ -70,8 +77,9 @@ export function DashboardTopbar({
           </div>
         </div>
 
-        <div className="flex h-10 items-center gap-2 sm:gap-3">
+        <div className="flex h-10 items-center gap-1.5 sm:gap-2">
           <NotificationsBell />
+          <OnboardingHeaderButton />
 
           {church && (
             <div className="relative hidden h-10 min-w-0 sm:block">
@@ -91,7 +99,7 @@ export function DashboardTopbar({
                   <Church className="size-3.5" aria-hidden />
                 </span>
                 <span className="min-w-0 flex-1 truncate font-display text-sm font-semibold leading-tight tracking-tight text-foreground">
-                  {church.name}
+                  {churchLabel}
                 </span>
                 {churches.length > 1 && (
                   <ChevronDown className="size-4 shrink-0 text-primary/70" />

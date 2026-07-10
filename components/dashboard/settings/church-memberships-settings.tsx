@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { AUTH_ROUTES } from "@/constants/routes";
 import {
   useAssignableRoles,
   useChurchMemberships,
@@ -87,7 +89,8 @@ function matchesRoleFilter(
 }
 
 export function ChurchMembershipsSettings() {
-  const { user, permissions } = useAuth();
+  const router = useRouter();
+  const { user, permissions, church } = useAuth();
   const { data: memberships, isLoading, isError } = useChurchMemberships();
   const { data: assignableRoles } = useAssignableRoles();
   const updateMembership = useUpdateChurchMembership();
@@ -272,6 +275,7 @@ export function ChurchMembershipsSettings() {
     try {
       await transferOwnership.mutateAsync(transferTarget.userId);
       setTransferTarget(null);
+      router.replace(`${AUTH_ROUTES.settings}?section=profile`);
     } catch (error) {
       setErrorMessage(
         error instanceof Error
@@ -285,7 +289,11 @@ export function ChurchMembershipsSettings() {
     <div>
       <SettingsSectionHeader
         title="Usuários"
-        description="Defina os cargos de cada pessoa. O proprietário pode transferir a propriedade da igreja para outro usuário."
+        description={
+          church?.memberCount != null
+            ? `Pessoas com login no painel (cargos e permissões). A lista de membros cadastrados tem ${church.memberCount} pessoa${church.memberCount === 1 ? "" : "s"} — veja em Membros no menu lateral.`
+            : "Pessoas com login no painel. Defina cargos e permissões; o proprietário pode transferir a propriedade da igreja."
+        }
       />
 
       {errorMessage && <SettingsAlert message={errorMessage} />}
@@ -309,6 +317,8 @@ export function ChurchMembershipsSettings() {
               placeholder="Buscar nome ou e-mail..."
               resultCount={filteredMemberships.length}
               totalCount={sortedMemberships.length}
+              countLabel="usuário com acesso"
+              countLabelPlural="usuários com acesso"
             />
             <SettingsFilterPills>
               <SettingsFilterPill
@@ -447,19 +457,26 @@ export function ChurchMembershipsSettings() {
                       !membership.isOwner &&
                       membership.userId !== user.id && (
                         <div className="mt-4 border-t border-border/60 pt-4">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            disabled={
-                              transferOwnership.isPending ||
-                              isSaving ||
-                              Boolean(savingUserId)
-                            }
-                            onClick={() => setTransferTarget(membership)}
-                          >
-                            Transferir propriedade
-                          </Button>
+                          {membership.canReceiveOwnership ? (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              disabled={
+                                transferOwnership.isPending ||
+                                isSaving ||
+                                Boolean(savingUserId)
+                              }
+                              onClick={() => setTransferTarget(membership)}
+                            >
+                              Transferir propriedade
+                            </Button>
+                          ) : (
+                            <p className="text-sm text-muted-foreground">
+                              Para receber a propriedade, cadastre um e-mail no
+                              perfil do membro vinculado a este acesso.
+                            </p>
+                          )}
                         </div>
                       )}
                   </SettingsExpandableRow>

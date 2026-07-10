@@ -108,14 +108,11 @@ function VerifyEmailFormContent() {
       <CardFooter className="flex flex-col gap-3">
         {status === "success" && (
           <Button className="w-full" asChild>
-            <Link href={AUTH_ROUTES.dashboard}>Ir para o painel</Link>
+            <Link href={PUBLIC_ROUTES.login}>Entrar no painel</Link>
           </Button>
         )}
         {status === "error" && (
           <>
-            <Button className="w-full" asChild>
-              <Link href={AUTH_ROUTES.dashboard}>Ir para o painel</Link>
-            </Button>
             <Button className="w-full" variant="outline" asChild>
               <Link href={PUBLIC_ROUTES.login}>Voltar ao login</Link>
             </Button>

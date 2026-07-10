@@ -84,6 +84,10 @@ export function TransferOwnershipDialog({
               Essa pessoa poderá transferir a propriedade novamente, gerenciar
               todos os acessos e terá as permissões máximas da igreja.
             </p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Na primeira entrada como proprietário, será necessário confirmar o
+              e-mail cadastrado no membro antes de acessar o painel.
+            </p>
           </div>
         </div>
 

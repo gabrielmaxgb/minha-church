@@ -10,6 +10,7 @@ import type { UserPermissions } from "@/types/auth";
 
 export type SettingsSection =
   | "profile"
+  | "subscription"
   | "ministries"
   | "pending-users"
   | "password-reset-requests"
@@ -31,6 +32,11 @@ const ALL_ITEMS: SettingsNavItem[] = [
     description: "Seus dados pessoais",
   },
   {
+    id: "subscription",
+    label: "Assinatura",
+    description: "Plano e cobrança",
+  },
+  {
     id: "ministries",
     label: "Ministérios e Grupos de serviço",
     description: "Funções em que você serve",
@@ -43,7 +49,7 @@ const ALL_ITEMS: SettingsNavItem[] = [
   {
     id: "members",
     label: "Usuários",
-    description: "Cargos e permissões",
+    description: "Acesso ao painel e cargos",
   },
   {
     id: "pending-users",
@@ -68,11 +74,15 @@ const ALL_ITEMS: SettingsNavItem[] = [
 ];
 
 export function useSettingsNav(permissions: UserPermissions | null) {
-  const { church } = useAuth();
+  const { church, user } = useAuth();
   const writesBlocked = Boolean(church?.featuresLocked);
 
   return useMemo(() => {
     return ALL_ITEMS.filter((item) => {
+      if (item.id === "subscription") {
+        return Boolean(user?.isOwner);
+      }
+
       if (writesBlocked) {
         return item.id === "profile";
       }
@@ -95,7 +105,7 @@ export function useSettingsNav(permissions: UserPermissions | null) {
 
       return false;
     });
-  }, [permissions, writesBlocked]);
+  }, [permissions, user?.isOwner, writesBlocked]);
 }
 
 const emptyPermissions: UserPermissions = {

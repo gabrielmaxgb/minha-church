@@ -22,12 +22,12 @@ export const generalFaq: FaqItem[] = [
   {
     question: "Como funciona o período gratuito?",
     answer:
-      "Você testa todas as funcionalidades por 14 dias, sem cartão. Depois escolhe a faixa de membros e o ciclo de cobrança (mensal ou anual).",
+      "Você testa todas as funcionalidades por 30 dias, sem cartão. Depois de organizar sua igreja no sistema, assina a faixa correspondente ao tamanho do cadastro (mensal ou anual).",
   },
   {
     question: "Funciona para igrejas pequenas?",
     answer:
-      "Sim. O Minha Church foi pensado para igrejas de todos os tamanhos — desde comunidades com poucas dezenas de membros até grandes congregações multi-campus.",
+      "Sim. A faixa inicial (até 100 membros cadastrados) começa em R$ 119/mês — pensada para comunidades que querem sair das planilhas sem pesar no orçamento.",
   },
   {
     question: "Posso cancelar a qualquer momento?",
@@ -40,27 +40,32 @@ export const billingFaq: FaqItem[] = [
   {
     question: "Preciso de cartão de crédito para começar?",
     answer:
-      "Não. O teste de 14 dias é gratuito e não exige cartão de crédito.",
+      "Não. O teste de 30 dias é gratuito e não exige cartão de crédito.",
+  },
+  {
+    question: "Como sei qual faixa escolher?",
+    answer:
+      "Pela quantidade de membros cadastrados no sistema. Até 100 membros: Pequena Igreja (R$ 119/mês). De 101 a 300: Igreja em Crescimento (R$ 289/mês). A página de preços mostra a tabela completa e uma calculadora para simular.",
   },
   {
     question: "Quais formas de pagamento são aceitas?",
     answer:
-      "Aceitamos cartão de crédito, boleto bancário e PIX — no ciclo mensal ou anual.",
+      "Cartão de crédito e PIX no ciclo mensal ou anual. Boleto pode ser habilitado conforme disponibilidade no checkout.",
   },
   {
     question: "Existe desconto no plano anual?",
     answer:
-      "Sim. No plano anual você economiza o equivalente a 2 meses em relação ao pagamento mensal.",
+      "Sim. No plano anual você economiza o equivalente a 2 meses em relação ao pagamento mensal (por exemplo, Pequena Igreja: R$ 1.190/ano em vez de R$ 1.428 no mensal).",
   },
   {
     question: "O preço inclui todas as funcionalidades?",
     answer:
-      "Sim. Todas as faixas incluem as mesmas funcionalidades — a diferença é apenas a quantidade de membros cadastrados.",
+      "Sim. Todas as faixas incluem o mesmo pacote completo — membros, ministérios, escalas, comunicados e permissões. A diferença é só a quantidade de membros cadastrados.",
   },
   {
     question: "O que acontece se minha igreja crescer?",
     answer:
-      "Quando você ultrapassar o limite da faixa atual, avisamos e você migra para a próxima. A cobrança é ajustada proporcionalmente.",
+      "Quando você ultrapassar o limite da faixa atual, avisamos com antecedência e você migra para a próxima. A cobrança é ajustada de forma proporcional — sem surpresas escondidas.",
   },
   {
     question: "Posso mudar de mensal para anual depois?",

@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
+import { CheckoutReturnHandler } from "@/components/billing/checkout-return-handler";
 import { ChurchSwitchOverlay } from "@/components/dashboard/church-switch-overlay";
 import { EmailVerificationBanner } from "@/components/dashboard/email-verification-banner";
-import { OnboardingChecklist } from "@/components/dashboard/onboarding/onboarding-checklist";
+import { OnboardingChecklistProvider } from "@/components/dashboard/onboarding/onboarding-checklist-context";
 import { TrialStatusBanner } from "@/components/dashboard/trial-status-banner";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
@@ -63,7 +64,8 @@ export function DashboardShell({
   }
 
   return (
-    <div className="relative flex h-screen overflow-hidden bg-surface">
+    <OnboardingChecklistProvider>
+      <div className="relative flex h-screen overflow-hidden bg-surface">
       {isSwitchingChurch && switchingToChurchName && (
         <ChurchSwitchOverlay churchName={switchingToChurchName} />
       )}
@@ -110,9 +112,12 @@ export function DashboardShell({
           <DashboardContentMotion>{children}</DashboardContentMotion>
         </main>
       </div>
+      </div>
 
-      {!isSwitchingChurch && <OnboardingChecklist />}
-    </div>
+      <Suspense fallback={null}>
+        <CheckoutReturnHandler />
+      </Suspense>
+    </OnboardingChecklistProvider>
   );
 }
 

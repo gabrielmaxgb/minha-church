@@ -85,12 +85,16 @@ export function SettingsSidebarToolbar({
   placeholder = "Buscar...",
   resultCount,
   totalCount,
+  countLabel = "usuário",
+  countLabelPlural = "usuários",
 }: {
   search: string;
   onSearchChange: (value: string) => void;
   placeholder?: string;
   resultCount: number;
   totalCount: number;
+  countLabel?: string;
+  countLabelPlural?: string;
 }) {
   return (
     <div className="space-y-2 px-3 py-3 sm:px-4">
@@ -105,8 +109,8 @@ export function SettingsSidebarToolbar({
       </div>
       <p className="px-1 text-[11px] text-muted-foreground">
         {resultCount === totalCount
-          ? `${totalCount} usuário${totalCount === 1 ? "" : "s"}`
-          : `${resultCount} de ${totalCount} usuários`}
+          ? `${totalCount} ${totalCount === 1 ? countLabel : countLabelPlural}`
+          : `${resultCount} de ${totalCount} ${countLabelPlural}`}
       </p>
     </div>
   );

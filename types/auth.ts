@@ -91,6 +91,25 @@ export interface RegisterChurchPayload {
   acceptTerms: boolean;
 }
 
+export interface RegisterChurchPendingResponse {
+  requiresEmailVerification: true;
+  message: string;
+  email: string;
+}
+
+export type RegisterChurchResult =
+  | AuthResponse
+  | RegisterChurchPendingResponse;
+
+export function isRegisterChurchPending(
+  response: RegisterChurchResult,
+): response is RegisterChurchPendingResponse {
+  return (
+    "requiresEmailVerification" in response &&
+    response.requiresEmailVerification === true
+  );
+}
+
 export interface ChangePasswordPayload {
   currentPassword: string;
   newPassword: string;
