@@ -36,12 +36,42 @@ const primaryNav: {
   label: string;
   icon: typeof LayoutDashboard;
   badge?: number;
+  domainClass: string;
 }[] = [
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { id: "members", label: "Membros", icon: Users },
-  { id: "ministries", label: "Ministérios", icon: Layers },
-  { id: "activities", label: "Atividades", icon: Calendar },
-  { id: "schedules", label: "Minhas escalas", icon: CalendarDays, badge: 2 },
+  {
+    id: "dashboard",
+    label: "Início",
+    icon: LayoutDashboard,
+    domainClass: "bg-domain-home-subtle text-domain-home-foreground",
+  },
+  {
+    id: "members",
+    label: "Membros",
+    icon: Users,
+    domainClass: "bg-domain-members-subtle text-domain-members-foreground",
+  },
+  {
+    id: "ministries",
+    label: "Ministérios",
+    icon: Layers,
+    domainClass:
+      "bg-domain-ministries-subtle text-domain-ministries-foreground",
+  },
+  {
+    id: "activities",
+    label: "Atividades",
+    icon: Calendar,
+    domainClass:
+      "bg-domain-activities-subtle text-domain-activities-foreground",
+  },
+  {
+    id: "schedules",
+    label: "Minhas escalas",
+    icon: CalendarDays,
+    badge: 2,
+    domainClass:
+      "bg-domain-schedules-subtle text-domain-schedules-foreground",
+  },
 ];
 
 const upcomingEvents = [
@@ -139,21 +169,21 @@ function MockDashboardHero({ compact }: { compact?: boolean }) {
     <section className="space-y-3">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0 space-y-1">
-          <p className="text-[10px] text-muted-foreground">domingo, 6 de julho</p>
+          <p className="text-[10px] text-muted-foreground">
+            domingo, 6 de julho · Igreja Esperança
+          </p>
           <p className="text-base font-semibold tracking-tight">
             Boa noite, Samuel
           </p>
+          <p className="text-[10px] text-muted-foreground">
+            O essencial da sua semana
+          </p>
         </div>
         {!compact && (
-          <div className="flex gap-2">
-            <span className="inline-flex items-center gap-1 rounded-md bg-foreground px-2.5 py-1.5 text-[10px] font-medium text-background">
-              <Plus className="size-3" />
-              Nova atividade
-            </span>
-            <span className="rounded-md border border-border px-2.5 py-1.5 text-[10px] font-medium">
-              Ver membros
-            </span>
-          </div>
+          <span className="inline-flex items-center gap-1 rounded-md bg-foreground px-2.5 py-1.5 text-[10px] font-medium text-background">
+            <Plus className="size-3" />
+            Nova atividade
+          </span>
         )}
       </div>
 
@@ -168,18 +198,16 @@ function MockDashboardHero({ compact }: { compact?: boolean }) {
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="text-[10px] font-medium text-muted-foreground">
-                Próximo culto / atividade
+                Próximo culto
               </span>
               <span className="rounded-md bg-attention-subtle px-1.5 py-0.5 text-[9px] font-medium text-attention-foreground">
-                Amanhã
+                Amanhã · 19:00
               </span>
             </div>
             <p className="mt-0.5 truncate text-sm font-medium">Culto de Domingo</p>
             <p className="mt-1 inline-flex items-center gap-1 text-[10px] text-muted-foreground">
-              <Calendar className="size-3" />
-              19:00
-              <MapPin className="ml-2 size-3" />
-              Templo principal
+              <MapPin className="size-3" />
+              Templo principal · Louvor com 3 aguardando resposta
             </p>
           </div>
           <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
@@ -192,27 +220,34 @@ function MockDashboardHero({ compact }: { compact?: boolean }) {
 function MockPendencias() {
   return (
     <section className="rounded-lg border border-border bg-card p-4">
-      <div className="mb-3 flex items-start justify-between gap-2">
-        <div>
-          <p className="text-sm font-medium tracking-tight">Pendências</p>
-          <p className="mt-0.5 text-[10px] text-muted-foreground">
-            O que precisa da sua atenção.
-          </p>
-        </div>
+      <div className="mb-3">
+        <p className="text-sm font-medium tracking-tight">Antes do culto</p>
+        <p className="mt-0.5 text-[10px] text-muted-foreground">
+          O que ainda precisa de resposta.
+        </p>
       </div>
       <ul className="space-y-1.5">
-        <li className="flex items-start gap-2.5 rounded-md border border-attention-border/70 bg-attention-subtle/50 px-2.5 py-2">
+        <li className="flex items-start gap-2.5 rounded-md border border-attention-border bg-attention-subtle px-2.5 py-2">
           <ClipboardList className="mt-0.5 size-3.5 shrink-0 text-attention-foreground" />
           <div className="min-w-0">
-            <p className="text-[11px] font-medium">2 escalas sem resposta</p>
-            <p className="text-[9px] text-muted-foreground">Louvor · Responder</p>
+            <p className="text-[11px] font-medium">3 escalas sem resposta</p>
+            <p className="text-[9px] text-muted-foreground">
+              Louvor · Fechar escala
+            </p>
           </div>
         </li>
         <li className="flex items-start gap-2.5 rounded-md border border-border px-2.5 py-2">
           <UserCheck className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
           <div className="min-w-0">
-            <p className="text-[11px] font-medium">Funções da escala</p>
-            <p className="text-[9px] text-muted-foreground">Complete seu perfil</p>
+            <p className="text-[11px] font-medium">1 acesso pendente</p>
+            <p className="text-[9px] text-muted-foreground">Aprovar entrada</p>
+          </div>
+        </li>
+        <li className="flex items-start gap-2.5 rounded-md border border-border px-2.5 py-2">
+          <Bell className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
+          <div className="min-w-0">
+            <p className="text-[11px] font-medium">Comunicado do ensaio</p>
+            <p className="text-[9px] text-muted-foreground">Publicar para Louvor</p>
           </div>
         </li>
       </ul>
@@ -270,17 +305,18 @@ function MockEventsPanel({ compact }: { compact?: boolean }) {
   );
 }
 
-function MockGrowthMetric() {
+function MockCommunication() {
   return (
-    <div className="rounded-lg border border-border bg-card p-4">
-      <p className="text-[10px] font-medium text-muted-foreground">
-        Membros ativos
+    <section className="rounded-lg border border-border bg-card p-4">
+      <p className="text-sm font-medium tracking-tight">Comunicação</p>
+      <p className="mt-0.5 text-[10px] text-muted-foreground">
+        Último aviso publicado
       </p>
-      <p className="mt-1 text-2xl font-semibold tracking-tight tabular-nums">98</p>
-      <p className="mt-1 text-[10px] text-muted-foreground">
-        79% do cadastro · Ver membros
+      <p className="mt-3 text-[11px] font-medium">Ensaio de louvor — quinta 20h</p>
+      <p className="mt-0.5 text-[9px] text-muted-foreground">
+        Louvor · Publicado ontem
       </p>
-    </div>
+    </section>
   );
 }
 
@@ -294,10 +330,10 @@ function DashboardView({ compact }: { compact?: boolean }) {
           compact ? "grid-cols-1" : "lg:grid-cols-2",
         )}
       >
-        <MockEventsPanel compact={compact} />
         <MockPendencias />
+        <MockEventsPanel compact={compact} />
       </div>
-      <MockGrowthMetric />
+      {!compact ? <MockCommunication /> : null}
     </div>
   );
 }
@@ -357,25 +393,34 @@ function SchedulesView() {
     <div className="space-y-3">
       <div className={pendingNotificationStyles.banner.compact}>
         <p className="text-[11px] font-medium">
-          2 eventos aguardando sua resposta em Louvor
+          Culto de Domingo · 3 pessoas ainda não responderam
+        </p>
+        <p className="mt-1 text-[10px] text-muted-foreground">
+          Feche a escala de Louvor antes das 19h.
         </p>
       </div>
-      {["Ministério de Louvor", "Recepção"].map((name) => (
+      {[
+        { name: "Ana Silva", role: "Vocal", status: "Aguardando" },
+        { name: "Carlos Mendes", role: "Violão", status: "Posso ir" },
+        { name: "João Pereira", role: "Recepção", status: "Aguardando" },
+      ].map((row) => (
         <div
-          key={name}
-          className="flex items-center gap-3 rounded-xl border border-border bg-background px-3 py-3"
+          key={row.name}
+          className="flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2.5"
         >
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted">
-            <Layers className="size-4" />
-          </span>
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-semibold">{name}</p>
-            <p className="text-[10px] text-muted-foreground">
-              Cadastre funções na escala
-            </p>
+            <p className="text-[11px] font-medium">{row.name}</p>
+            <p className="text-[10px] text-muted-foreground">{row.role}</p>
           </div>
-          <span className={cn(pendingNotificationStyles.badge, "rounded-full px-2 py-0.5 text-[9px]")}>
-            Funções pendentes
+          <span
+            className={cn(
+              "shrink-0 rounded-md px-2 py-0.5 text-[9px] font-medium",
+              row.status === "Posso ir"
+                ? "bg-success-subtle text-success-foreground"
+                : "bg-attention-subtle text-attention-foreground",
+            )}
+          >
+            {row.status}
           </span>
         </div>
       ))}
@@ -388,24 +433,24 @@ const viewMeta: Record<
   { title: string; subtitle?: string }
 > = {
   dashboard: {
-    title: "Dashboard",
-    subtitle: "Visão geral da igreja",
+    title: "Início",
+    subtitle: "A semana da igreja",
   },
   members: {
     title: "Membros",
-    subtitle: "Cadastro e histórico pastoral",
+    subtitle: "Cadastro pastoral",
   },
   ministries: {
     title: "Ministérios",
-    subtitle: "Áreas de serviço, cargos e equipes",
+    subtitle: "Equipes e cargos",
   },
   activities: {
     title: "Atividades",
-    subtitle: "Eventos e encontros por ministério",
+    subtitle: "Agenda da igreja",
   },
   schedules: {
-    title: "Minhas escalas",
-    subtitle: "Escalas e disponibilidade por ministério",
+    title: "Escalas",
+    subtitle: "Confirmações do culto",
   },
 };
 
@@ -422,14 +467,14 @@ function AppMock({
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-xl border border-border bg-card shadow-lg",
+        "overflow-hidden rounded-xl border border-border bg-card shadow-popover",
         className,
       )}
     >
       <BrowserChrome />
 
-      <div className={cn("flex", compact ? "min-h-[420px]" : "min-h-[540px]")}>
-        <aside className="hidden w-44 shrink-0 flex-col border-r border-border/80 bg-surface sm:flex">
+      <div className={cn("flex", compact ? "min-h-[400px]" : "min-h-[520px]")}>
+        <aside className="hidden w-48 shrink-0 flex-col border-r border-border bg-surface md:flex">
           <div className="border-b border-border px-4 py-4">
             <div className="flex items-center gap-2">
               <LogoMark size={28} />
@@ -438,7 +483,7 @@ function AppMock({
           </div>
 
           <nav className="flex flex-1 flex-col gap-0.5 px-2 py-4">
-            <p className="px-2 pb-2 text-[9px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+            <p className="px-2 pb-2 text-[9px] font-medium tracking-wide text-muted-foreground">
               Menu
             </p>
             {primaryNav.map((item) => {
@@ -452,7 +497,7 @@ function AppMock({
                   className={cn(
                     "relative flex items-center gap-2 rounded-lg px-2.5 py-2 text-left text-[10px] transition-colors",
                     isActive
-                      ? "bg-muted font-medium text-foreground"
+                      ? cn("font-medium", item.domainClass)
                       : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
                   )}
                 >

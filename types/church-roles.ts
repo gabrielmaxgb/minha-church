@@ -31,7 +31,7 @@ export interface UpdateChurchRolePayload {
 }
 
 export const CHURCH_PERMISSION_LABELS: Record<ChurchPermissionKey, string> = {
-  dashboard_access: "Dashboard",
+  dashboard_access: "Início",
   members_access: "Membros",
   ministries_access: "Ministérios",
   activities_access: "Atividades",
@@ -40,33 +40,33 @@ export const CHURCH_PERMISSION_LABELS: Record<ChurchPermissionKey, string> = {
   communication_access: "Comunicação",
   reports_access: "Relatórios",
   settings_access: "Configurações",
-  members_manage: "Gerenciar membros",
-  ministries_manage: "Gerenciar ministérios",
+  members_manage: "Cadastrar e editar membros",
+  ministries_manage: "Cadastrar e editar ministérios",
   events_create_church_wide: "Criar atividades em toda a igreja",
-  communication_manage: "Gerenciar comunicados",
-  roles_manage: "Gerenciar cargos da igreja",
+  communication_manage: "Publicar e editar comunicados",
+  roles_manage: "Definir cargos da igreja",
   memberships_manage: "Atribuir cargos a usuários",
 };
 
 export const CHURCH_PERMISSION_DESCRIPTIONS: Record<ChurchPermissionKey, string> = {
   dashboard_access:
-    "Abre a página inicial com resumo, indicadores e atalhos. Não dá acesso aos dados detalhados de cada área.",
+    "Abre a página inicial com o essencial da semana e atalhos. Não dá acesso aos dados detalhados de cada área.",
   members_access:
-    "Ver a lista de membros e abrir cada ficha (contato, ministérios e situação). Somente leitura — cadastrar ou editar exige “Gerenciar membros”.",
+    "Ver a lista de membros e abrir cada ficha (contato, ministérios e situação). Somente leitura — cadastrar ou editar exige “Cadastrar e editar membros”.",
   ministries_access:
-    "Ver os ministérios, suas equipes e cargos. Somente leitura — criar ou editar exige “Gerenciar ministérios”.",
+    "Ver os ministérios, suas equipes e cargos. Somente leitura — criar ou editar exige “Cadastrar e editar ministérios”.",
   activities_access:
-    "Ver a agenda e os detalhes das atividades e eventos da igreja. Criar atividades exige a permissão de ação correspondente.",
+    "Ver a agenda e os detalhes das atividades e eventos da igreja. Criar atividades exige a permissão correspondente.",
   schedules_access:
     "Abre “Minhas escalas”, onde a pessoa acompanha as próprias convocações e marca disponibilidade.",
   finances_access:
-    "Abre a área financeira da igreja (entradas, saídas e relatórios financeiros).",
+    "Abre a área financeira da igreja (entradas, saídas e relatórios).",
   communication_access:
     "Abre a área de comunicação, com avisos e mensagens da igreja.",
   reports_access:
-    "Abre os relatórios e indicadores consolidados da igreja.",
+    "Abre os resumos e relatórios da igreja.",
   settings_access:
-    "Abre as configurações gerais da igreja. Abas específicas ainda podem exigir permissões próprias (cargos, usuários).",
+    "Abre as configurações gerais da igreja. Algumas abas ainda pedem permissões próprias (cargos, usuários).",
   members_manage:
     "Cadastrar, editar e excluir membros, receber visitantes como membros e vincular ou desvincular pessoas de ministérios. Já inclui o acesso de leitura de “Membros”.",
   ministries_manage:
@@ -89,9 +89,9 @@ export const CHURCH_PERMISSION_GROUPS: Array<{
 }> = [
   {
     id: "sections",
-    label: "Acesso às seções",
+    label: "O que aparece no menu",
     description:
-      "Controla o que aparece no menu lateral. Desativar uma seção remove as ações administrativas vinculadas a ela.",
+      "Controla as áreas visíveis no menu. Desativar uma área também remove as permissões de edição ligadas a ela.",
     permissions: [
       "dashboard_access",
       "members_access",
@@ -106,9 +106,9 @@ export const CHURCH_PERMISSION_GROUPS: Array<{
   },
   {
     id: "actions",
-    label: "Ações administrativas",
+    label: "Permissões de edição",
     description:
-      "Capacidades de criar, editar e gerenciar. Ao ativar, o acesso à seção correspondente no menu é incluído automaticamente.",
+      "Capacidades de criar e editar. Ao ativar, o acesso à área correspondente no menu é incluído automaticamente.",
     permissions: [
       "members_manage",
       "ministries_manage",

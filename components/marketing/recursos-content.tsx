@@ -10,6 +10,8 @@ import { CtaBanner } from "@/components/marketing/cta-banner";
 import { MotionDiv, MotionSection } from "@/components/motion/motion-section";
 import { Heading } from "@/components/ui/heading";
 import { fadeInUp } from "@/lib/motion";
+import { domainMark, domainText } from "@/lib/ui/domain-theme";
+import { cn } from "@/lib/utils";
 
 export function RecursosContent() {
   return (
@@ -17,15 +19,12 @@ export function RecursosContent() {
       <section className="border-b border-border">
         <Container className="py-16 sm:py-20 lg:py-24">
           <MotionDiv variants={fadeInUp} className="max-w-2xl">
-            <p className="font-display text-2xl tracking-tight text-foreground sm:text-3xl">
-              Minha Church
-            </p>
-            <Heading as="h1" className="mt-4 text-balance">
-              Tudo para administrar sua igreja
+            <Heading as="h1" className="text-balance">
+              A rotina da igreja, organizada de ponta a ponta
             </Heading>
             <p className="mt-5 text-base leading-relaxed text-muted-foreground sm:text-lg">
-              Do cadastro de membros à prestação de contas — ferramentas para a
-              rotina pastoral, sem planilhas espalhadas.
+              Do primeiro contato às escalas do culto e aos avisos da semana —
+              fluxos que a liderança usa de verdade.
             </p>
           </MotionDiv>
         </Container>
@@ -35,18 +34,28 @@ export function RecursosContent() {
         <Container>
           <div className="divide-y divide-border border-y border-border">
             {resourceSections.map((section, index) => (
-              <div
-                key={section.id}
-                id={section.id}
-                className="scroll-mt-24"
-              >
+              <div key={section.id} id={section.id} className="scroll-mt-24">
                 <MotionSection
                   variants={fadeInUp}
                   className="grid gap-4 py-10 sm:grid-cols-[4rem_1fr] sm:gap-10"
                 >
-                  <span className="font-mono text-sm text-muted-foreground">
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
+                  <div className="flex items-start gap-2 sm:flex-col sm:gap-3">
+                    <span
+                      className={cn(
+                        "mt-1.5 size-2 shrink-0 rounded-full",
+                        domainMark[section.domain],
+                      )}
+                      aria-hidden
+                    />
+                    <span
+                      className={cn(
+                        "font-mono text-sm",
+                        domainText[section.domain],
+                      )}
+                    >
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                  </div>
                   <div className="max-w-2xl">
                     <h2 className="text-base font-medium text-foreground">
                       {section.title}

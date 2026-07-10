@@ -129,7 +129,7 @@ function IncludedBenefits({
       )}
     >
       <p className="text-center text-lg font-semibold tracking-tight">
-        O mesmo Minha Church completo — do primeiro ao último membro da faixa
+        O mesmo Minha Church em todas as faixas — do primeiro ao último membro
       </p>
       <p className="mx-auto mt-2 max-w-xl text-center text-sm text-muted-foreground">
         Escalas, comunicados, ministérios, permissões e cadastro pastoral: tudo
@@ -215,14 +215,11 @@ export function PricingSection() {
       <section className="border-b border-border">
         <Container className="py-16 sm:py-20 lg:py-24">
           <div className="max-w-2xl">
-            <p className="font-display text-2xl tracking-tight text-foreground sm:text-3xl">
-              Minha Church
-            </p>
-            <Heading as="h1" className="mt-4 text-balance">
+            <Heading as="h1" className="text-balance">
               Investimento justo para o tamanho da sua igreja
             </Heading>
             <p className="mt-5 text-base leading-relaxed text-muted-foreground sm:text-lg">
-              Mesmo sistema completo em todas as faixas — você paga conforme
+              As mesmas ferramentas em todas as faixas — você paga conforme
               quantos membros cadastra, não por pacote de funcionalidades.{" "}
               <span className="font-medium text-foreground">30 dias grátis</span>
               , sem cartão.

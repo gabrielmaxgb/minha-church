@@ -1,19 +1,23 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 
 import { CreateActivityModal } from "@/components/dashboard/activities/create-activity-modal";
 import { DashboardActionsPanel } from "@/components/dashboard/home/dashboard-actions-panel";
 import { DashboardEventsPanel } from "@/components/dashboard/home/dashboard-events-panel";
 import { DashboardHero } from "@/components/dashboard/home/dashboard-hero";
-import { DashboardMetricCard } from "@/components/dashboard/home/dashboard-metric-card";
+import { DashboardWeekPulse } from "@/components/dashboard/home/dashboard-week-pulse";
 import { WorshipScheduleBanner } from "@/components/dashboard/my-schedule/worship-schedule-banner";
-import { Skeleton } from "@/components/ui/skeleton";
+import {
+  StaggerItem,
+  StaggerList,
+} from "@/components/motion/dashboard-motion";
 import { AUTH_ROUTES } from "@/constants/routes";
 import {
   useAnnouncements,
   useChurchEvents,
-  useDashboardSummary,
+  useMySchedules,
   usePasswordResetRequests,
   usePendingAccessUsers,
 } from "@/lib/api/queries";
@@ -29,7 +33,6 @@ import {
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 import type { ChurchEvent } from "@/types/events";
-import Link from "next/link";
 
 function sortUpcomingEvents(events: ChurchEvent[]): ChurchEvent[] {
   return collapseRecurringEventsForList(events);
@@ -48,8 +51,6 @@ export function DashboardHomeContent() {
     ? canCreateAnyActivity(permissions)
     : false;
 
-  const { data: summary, isLoading: summaryLoading, isError } =
-    useDashboardSummary();
   const { data: events, isLoading: eventsLoading } = useChurchEvents(
     {},
     { enabled: canAccessActivitiesData },
@@ -62,6 +63,9 @@ export function DashboardHomeContent() {
   });
   const { data: announcements } = useAnnouncements({
     enabled: hasCommunicationAccess,
+  });
+  const { data: schedule } = useMySchedules({
+    enabled: canAccessSchedulesData,
   });
 
   const upcomingEvents = useMemo(
@@ -84,9 +88,13 @@ export function DashboardHomeContent() {
   }, [events]);
 
   const recentAnnouncements = useMemo(
-    () => (announcements ?? []).slice(0, 3),
+    () => (announcements ?? []).slice(0, 4),
     [announcements],
   );
+
+  const pendingAttentionCount =
+    (pendingAccess?.length ?? 0) + (passwordResets?.length ?? 0);
+  const schedulePendingCount = schedule?.summary.pendingAvailabilityCount ?? 0;
 
   const showActionsPanel = Boolean(
     permissions &&
@@ -97,115 +105,117 @@ export function DashboardHomeContent() {
         permissions.finances.access),
   );
 
+  const showWeekPulse =
+    canAccessActivitiesData ||
+    canAccessMembersData ||
+    pendingAttentionCount > 0 ||
+    schedulePendingCount > 0;
+
   if (!user || !church) {
     return null;
   }
 
   return (
     <>
-      <div className="space-y-8">
-        <DashboardHero
-          userName={user.name}
-          churchName={church.name}
-          nextEvent={nextEvent}
-          canCreateActivity={canCreateActivity}
-          canAccessMembers={canAccessMembersData}
-          canAccessActivities={canAccessActivitiesData}
-          onCreateActivity={() => setCreateActivityOpen(true)}
-        />
+      <StaggerList className="space-y-8">
+        <StaggerItem>
+          <DashboardHero
+            userName={user.name}
+            churchName={church.name}
+            nextEvent={nextEvent}
+            canCreateActivity={canCreateActivity}
+            canAccessMembers={canAccessMembersData}
+            canAccessActivities={canAccessActivitiesData}
+            onCreateActivity={() => setCreateActivityOpen(true)}
+          />
+        </StaggerItem>
 
-        {canAccessSchedulesData ? <WorshipScheduleBanner /> : null}
-
-        <div
-          className={cn(
-            "grid gap-6",
-            canAccessActivitiesData && showActionsPanel
-              ? "xl:grid-cols-[minmax(0,1fr)_18rem]"
-              : undefined,
-          )}
-        >
-          {canAccessActivitiesData ? (
-            <DashboardEventsPanel
-              events={upcomingEvents}
-              isLoading={eventsLoading}
-              canCreateActivity={canCreateActivity}
-              onCreateActivity={() => setCreateActivityOpen(true)}
+        {showWeekPulse ? (
+          <StaggerItem>
+            <DashboardWeekPulse
+              events={canAccessActivitiesData ? upcomingEvents : []}
+              memberCount={church.memberCount}
+              pendingAttentionCount={pendingAttentionCount}
+              schedulePendingCount={schedulePendingCount}
+              canAccessMembers={canAccessMembersData}
+              canAccessSchedules={canAccessSchedulesData}
+              canAccessActivities={canAccessActivitiesData}
             />
-          ) : null}
+          </StaggerItem>
+        ) : null}
 
-          {showActionsPanel ? (
-            <DashboardActionsPanel
-              pendingAccessCount={pendingAccess?.length ?? 0}
-              passwordResetCount={passwordResets?.length ?? 0}
-              onCreateActivity={() => setCreateActivityOpen(true)}
-            />
-          ) : null}
-        </div>
+        {canAccessSchedulesData ? (
+          <StaggerItem>
+            <WorshipScheduleBanner />
+          </StaggerItem>
+        ) : null}
 
-        <div
-          className={cn(
-            "grid gap-6",
-            canAccessMembersData && hasCommunicationAccess
-              ? "md:grid-cols-2"
-              : undefined,
-          )}
-        >
-          {canAccessMembersData ? (
-            <section className="space-y-3">
-              <div>
-                <h2 className="text-sm font-medium text-foreground">
-                  Crescimento
-                </h2>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  Cadastro pastoral — abra a lista para agir
-                </p>
-              </div>
-              {summaryLoading ? (
-                <Skeleton className="h-24 rounded-lg" />
-              ) : (
-                <DashboardMetricCard
-                  label="Membros ativos"
-                  value={String(summary?.activeMembers ?? 0)}
-                  hint={
-                    summary?.memberCount != null
-                      ? `${summary.memberCount} no cadastro total`
-                      : undefined
-                  }
-                  href={AUTH_ROUTES.members}
-                />
-              )}
-            </section>
-          ) : null}
+        <StaggerItem>
+          <div
+            className={cn(
+              "grid gap-6",
+              canAccessActivitiesData && showActionsPanel
+                ? "xl:grid-cols-[minmax(0,1fr)_17rem]"
+                : undefined,
+            )}
+          >
+            {canAccessActivitiesData ? (
+              <DashboardEventsPanel
+                events={upcomingEvents}
+                isLoading={eventsLoading}
+                canCreateActivity={canCreateActivity}
+                onCreateActivity={() => setCreateActivityOpen(true)}
+              />
+            ) : null}
 
-          {hasCommunicationAccess ? (
-            <section className="rounded-lg border border-border bg-card">
-              <div className="flex items-center justify-between border-b border-border px-4 py-3">
-                <div>
-                  <h2 className="text-sm font-medium text-foreground">
-                    Comunicação
+            {showActionsPanel ? (
+              <DashboardActionsPanel
+                pendingAccessCount={pendingAccess?.length ?? 0}
+                passwordResetCount={passwordResets?.length ?? 0}
+                onCreateActivity={() => setCreateActivityOpen(true)}
+              />
+            ) : null}
+          </div>
+        </StaggerItem>
+
+        {hasCommunicationAccess ? (
+          <StaggerItem>
+            <section className="rounded-xl border border-domain-communication/20 bg-gradient-to-br from-domain-communication-subtle/70 via-card to-card">
+              <div className="flex flex-col gap-2 border-b border-domain-communication/15 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <h2 className="text-sm font-medium text-domain-communication-foreground">
+                    Comunicação recente
                   </h2>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    Avisos recentes
+                    Avisos publicados para a igreja
                   </p>
                 </div>
                 <Link
                   href={AUTH_ROUTES.communication}
-                  className="text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                  className="shrink-0 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
                 >
                   Ver tudo
                 </Link>
               </div>
               {recentAnnouncements.length === 0 ? (
-                <p className="px-4 py-6 text-sm text-muted-foreground">
-                  Nenhum comunicado recente.
-                </p>
+                <div className="px-4 py-6">
+                  <p className="text-sm text-muted-foreground">
+                    Nenhum comunicado recente.
+                  </p>
+                  <Link
+                    href={AUTH_ROUTES.communication}
+                    className="mt-2 inline-flex text-sm font-medium text-foreground transition-colors hover:text-foreground/70"
+                  >
+                    Publicar aviso
+                  </Link>
+                </div>
               ) : (
-                <ul className="divide-y divide-border">
+                <ul className="divide-y divide-border/70">
                   {recentAnnouncements.map((item) => (
                     <li key={item.id}>
                       <Link
                         href={AUTH_ROUTES.communication}
-                        className="block px-4 py-3 transition-colors hover:bg-muted/40"
+                        className="block px-4 py-3 transition-colors hover:bg-domain-communication-subtle/40"
                       >
                         <p className="truncate text-sm font-medium text-foreground">
                           {item.title}
@@ -219,16 +229,9 @@ export function DashboardHomeContent() {
                 </ul>
               )}
             </section>
-          ) : null}
-        </div>
-
-        {isError && (
-          <p className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-muted-foreground">
-            Não foi possível carregar o resumo. Verifique se o backend está
-            rodando.
-          </p>
-        )}
-      </div>
+          </StaggerItem>
+        ) : null}
+      </StaggerList>
 
       {canCreateActivity && (
         <CreateActivityModal

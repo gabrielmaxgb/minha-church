@@ -14,6 +14,10 @@ import { AUTH_ROUTES } from "@/constants/routes";
 import { useMySchedules, useAnnouncementsUnreadCount } from "@/lib/api/queries";
 import { announcementsUnreadCount } from "@/lib/communication/announcement-notifications";
 import { canAccessNavItem, canAccessSchedules } from "@/lib/permissions";
+import {
+  domainNavActive,
+  type ProductDomain,
+} from "@/lib/ui/domain-theme";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 
@@ -28,6 +32,7 @@ function NavLink({
   label,
   icon: Icon,
   isActive,
+  domain,
   badge,
   onNavigate,
 }: {
@@ -35,6 +40,7 @@ function NavLink({
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   isActive: boolean;
+  domain: ProductDomain;
   badge?: number;
   onNavigate?: () => void;
 }) {
@@ -43,20 +49,23 @@ function NavLink({
       href={href}
       onClick={onNavigate}
       className={cn(
-        "flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors duration-150",
+        "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors duration-150",
         isActive
-          ? "bg-muted font-medium text-foreground"
-          : "font-normal text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+          ? cn("font-medium", domainNavActive[domain])
+          : "font-normal text-muted-foreground hover:bg-muted/50 hover:text-foreground",
       )}
     >
-      <Icon className="size-4 shrink-0 opacity-70" aria-hidden />
+      <Icon
+        className={cn("size-4 shrink-0", isActive ? "opacity-90" : "opacity-65")}
+        aria-hidden
+      />
       <span className="flex-1 truncate">{label}</span>
       {badge !== undefined && badge > 0 && (
         <span
           className={cn(
             "flex h-5 min-w-5 items-center justify-center rounded-md px-1 text-[10px] font-semibold tabular-nums",
             isActive
-              ? "bg-foreground text-background"
+              ? "bg-foreground/90 text-background"
               : "bg-attention-subtle text-attention-foreground",
           )}
         >
@@ -115,11 +124,11 @@ export function DashboardSidebar({
   return (
     <aside
       className={cn(
-        "flex h-full w-full shrink-0 flex-col border-r border-border bg-surface lg:w-56",
+        "flex h-full w-full shrink-0 flex-col border-r border-border/80 bg-surface lg:w-56",
         className,
       )}
     >
-      <div className="border-b border-border px-3 py-3.5">
+      <div className="border-b border-border/80 px-3 py-3.5">
         <div className="flex items-start gap-2">
           <div className="min-w-0 flex-1">
             <SidebarChurchBrand />
@@ -148,6 +157,7 @@ export function DashboardSidebar({
               href={item.href}
               label={item.label}
               icon={item.icon}
+              domain={item.domain}
               isActive={isActive}
               badge={
                 item.href === AUTH_ROUTES.mySchedules
@@ -163,7 +173,7 @@ export function DashboardSidebar({
 
         {visibleSecondaryNavItems.length > 0 && (
           <>
-            <div className="my-3 border-t border-border" />
+            <div className="my-3 border-t border-border/80" />
             {visibleSecondaryNavItems.map((item) => {
               const isActive =
                 pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -174,6 +184,7 @@ export function DashboardSidebar({
                   href={item.href}
                   label={item.label}
                   icon={item.icon}
+                  domain={item.domain}
                   isActive={isActive}
                   onNavigate={onNavigate}
                 />

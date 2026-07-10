@@ -34,15 +34,17 @@ export function DashboardEventsPanel({
   const { writesBlocked, blockProps } = useTrialWriteGuard();
 
   return (
-    <section className="rounded-lg border border-border bg-card">
-      <div className="flex items-start justify-between gap-3 border-b border-border px-4 py-3.5">
-        <div>
-          <h2 className="text-sm font-medium text-foreground">Agenda</h2>
+    <section className="rounded-xl border border-domain-activities/20 bg-gradient-to-br from-domain-activities-subtle/50 via-card to-card">
+      <div className="flex flex-col gap-3 border-b border-domain-activities/15 px-4 py-3.5 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h2 className="text-sm font-medium text-domain-activities-foreground">
+            Agenda da semana
+          </h2>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Próximas atividades da igreja e dos ministérios
+            Próximos cultos e encontros
           </p>
         </div>
-        <Button variant="outline" size="sm" asChild>
+        <Button variant="outline" size="sm" className="w-full shrink-0 sm:w-auto" asChild>
           <Link href={AUTH_ROUTES.activities}>Ver todas</Link>
         </Button>
       </div>

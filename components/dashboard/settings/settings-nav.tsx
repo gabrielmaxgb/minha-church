@@ -49,7 +49,7 @@ const ALL_ITEMS: SettingsNavItem[] = [
   {
     id: "members",
     label: "Usuários",
-    description: "Acesso ao painel e cargos",
+    description: "Acesso e cargos",
   },
   {
     id: "pending-users",

@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 type HeadingLevel = "h1" | "h2" | "h3" | "h4";
 
 const styles: Record<HeadingLevel, string> = {
-  h1: "page-title text-3xl sm:text-4xl lg:text-[2.75rem] lg:leading-[1.1]",
+  h1: "text-3xl font-semibold tracking-tight sm:text-4xl lg:text-[2.75rem] lg:leading-[1.1]",
   h2: "text-xl font-semibold tracking-tight sm:text-2xl",
   h3: "text-base font-semibold tracking-tight",
   h4: "text-sm font-medium tracking-tight",
@@ -35,7 +35,7 @@ export function SectionLabel({ children, className }: SectionLabelProps) {
   return (
     <p
       className={cn(
-        "text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground",
+        "text-xs font-medium tracking-wide text-muted-foreground",
         className,
       )}
     >

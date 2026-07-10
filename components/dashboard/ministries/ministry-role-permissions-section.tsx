@@ -21,13 +21,13 @@ interface MinistryPermissionDefinition {
 export const MINISTRY_PERMISSIONS: MinistryPermissionDefinition[] = [
   {
     field: "canManageEvents",
-    label: "Gerenciar eventos",
+    label: "Criar e editar eventos",
     description: "Cria e edita atividades deste ministério.",
     icon: Calendar,
   },
   {
     field: "canManageRoster",
-    label: "Gerenciar escalas",
+    label: "Montar escalas",
     description:
       "Monta a escala oficial escolhendo entre quem marcou disponibilidade.",
     icon: CalendarDays,
@@ -41,7 +41,7 @@ export const MINISTRY_PERMISSIONS: MinistryPermissionDefinition[] = [
   },
   {
     field: "canManageRoles",
-    label: "Gerenciar cargos do ministério",
+    label: "Definir cargos do ministério",
     description: "Cria, edita e remove cargos de liderança deste ministério.",
     icon: Shield,
   },

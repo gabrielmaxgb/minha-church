@@ -19,7 +19,7 @@ export const footerNavLinks: NavLink[] = [
 
 export const siteConfig = {
   name: "Minha Church",
-  tagline: "Gestão de igreja sem planilhas e grupos espalhados.",
+  tagline: "A rotina da igreja, em um só lugar.",
   description:
-    "Plataforma de gestão para igrejas — membros, cultos, finanças e comunicação em um único sistema, feito para pastores e líderes.",
+    "Membros, escalas e comunicados para igrejas — sem planilhas e grupos espalhados. Feito para pastores e líderes.",
 };

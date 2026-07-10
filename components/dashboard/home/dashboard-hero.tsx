@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { motion, useReducedMotion } from "motion/react";
 import { Calendar, ChevronRight, MapPin, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import {
   getFirstName,
   getTimeGreeting,
 } from "@/lib/dashboard/date-utils";
+import { formatEventCountdown } from "@/lib/dashboard/week-density";
 import { cn } from "@/lib/utils";
 import type { ChurchEvent } from "@/types/events";
 
@@ -28,6 +30,7 @@ interface DashboardHeroProps {
 
 export function DashboardHero({
   userName,
+  churchName,
   nextEvent,
   canCreateActivity,
   canAccessMembers,
@@ -35,18 +38,28 @@ export function DashboardHero({
   onCreateActivity,
 }: DashboardHeroProps) {
   const { locked, reason } = useFeatureLock();
+  const shouldReduceMotion = useReducedMotion();
   const relativeDay = nextEvent
     ? formatRelativeEventDay(nextEvent.startsAt)
+    : null;
+  const countdown = nextEvent
+    ? formatEventCountdown(nextEvent.startsAt)
     : null;
 
   return (
     <section className="space-y-5">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0 space-y-1">
-          <p className="text-xs text-muted-foreground">{formatLongDate()}</p>
+          <p className="text-xs text-muted-foreground">
+            {formatLongDate()}
+            {churchName ? ` · ${churchName}` : ""}
+          </p>
           <h2 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
             {getTimeGreeting()}, {getFirstName(userName)}
           </h2>
+          <p className="text-sm text-muted-foreground">
+            Aqui está o essencial da sua semana.
+          </p>
         </div>
 
         {(canCreateActivity || canAccessMembers) && (
@@ -72,66 +85,81 @@ export function DashboardHero({
       </div>
 
       {canAccessActivities && nextEvent ? (
-        <Link
-          href={AUTH_ROUTES.activities}
-          className="group flex items-center gap-4 rounded-lg border border-border bg-card p-4 transition-colors duration-150 hover:bg-muted/40"
+        <motion.div
+          initial={shouldReduceMotion ? false : { opacity: 0, y: 10 }}
+          animate={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
         >
-          <div className="flex size-12 shrink-0 flex-col items-center justify-center rounded-md bg-foreground text-background">
-            <span className="text-sm font-semibold leading-none">
-              {new Date(nextEvent.startsAt).getDate()}
-            </span>
-            <span className="mt-0.5 text-[10px] font-medium uppercase tracking-wide opacity-80">
-              {new Intl.DateTimeFormat("pt-BR", { month: "short" })
-                .format(new Date(nextEvent.startsAt))
-                .replace(".", "")}
-            </span>
-          </div>
-
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <p className="text-xs font-medium text-muted-foreground">
-                Próximo culto / atividade
-              </p>
-              {relativeDay && (
-                <span
-                  className={cn(
-                    "rounded-md px-1.5 py-0.5 text-[11px] font-medium",
-                    relativeDay === "Hoje"
-                      ? "bg-attention-subtle text-attention-foreground"
-                      : "bg-muted text-muted-foreground",
-                  )}
-                >
-                  {relativeDay}
-                </span>
-              )}
-            </div>
-            <p className="mt-0.5 truncate text-base font-medium text-foreground">
-              {nextEvent.name}
-            </p>
-            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
-              <span className="inline-flex items-center gap-1">
-                <Calendar className="size-3 shrink-0" />
-                {formatEventTime(nextEvent.startsAt)}
+          <Link
+            href={AUTH_ROUTES.activities}
+            className="group relative flex items-start gap-3 overflow-hidden rounded-xl border border-domain-activities/25 bg-gradient-to-br from-domain-activities-subtle via-card to-card p-4 shadow-xs transition-colors duration-150 hover:border-domain-activities/40 sm:items-center sm:gap-4 sm:p-5"
+          >
+            <div
+              className="pointer-events-none absolute -right-8 -top-10 size-36 rounded-full bg-domain-activities/10 blur-2xl"
+              aria-hidden
+            />
+            <div className="relative flex size-14 shrink-0 flex-col items-center justify-center rounded-xl bg-domain-activities text-white shadow-xs sm:size-16">
+              <span className="text-lg font-semibold leading-none sm:text-xl">
+                {new Date(nextEvent.startsAt).getDate()}
               </span>
-              {nextEvent.location && (
-                <span className="inline-flex min-w-0 items-center gap-1">
-                  <MapPin className="size-3 shrink-0" />
-                  <span className="truncate">{nextEvent.location}</span>
-                </span>
-              )}
+              <span className="mt-0.5 text-[10px] font-medium uppercase tracking-wide opacity-90">
+                {new Intl.DateTimeFormat("pt-BR", { month: "short" })
+                  .format(new Date(nextEvent.startsAt))
+                  .replace(".", "")}
+              </span>
             </div>
-          </div>
 
-          <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-        </Link>
+            <div className="relative min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-xs font-medium text-domain-activities-foreground">
+                  Próximo culto
+                </p>
+                {relativeDay && (
+                  <span
+                    className={cn(
+                      "rounded-md px-1.5 py-0.5 text-[11px] font-medium",
+                      relativeDay === "Hoje"
+                        ? "bg-attention-subtle text-attention-foreground"
+                        : "bg-domain-activities/10 text-domain-activities-foreground",
+                    )}
+                  >
+                    {relativeDay}
+                  </span>
+                )}
+                {countdown && (
+                  <span className="rounded-md bg-foreground/5 px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+                    {countdown}
+                  </span>
+                )}
+              </div>
+              <p className="mt-1 text-lg font-semibold tracking-tight text-foreground break-words sm:text-xl">
+                {nextEvent.name}
+              </p>
+              <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground sm:text-sm">
+                <span className="inline-flex items-center gap-1">
+                  <Calendar className="size-3.5 shrink-0" />
+                  {formatEventTime(nextEvent.startsAt)}
+                </span>
+                {nextEvent.location && (
+                  <span className="inline-flex min-w-0 items-center gap-1">
+                    <MapPin className="size-3.5 shrink-0" />
+                    <span className="truncate">{nextEvent.location}</span>
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <ChevronRight className="relative mt-1 size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 sm:mt-0" />
+          </Link>
+        </motion.div>
       ) : canAccessActivities ? (
-        <div className="rounded-lg border border-dashed border-border bg-card px-4 py-4">
+        <div className="rounded-xl border border-dashed border-border bg-card px-4 py-5">
           <p className="text-sm font-medium text-foreground">
             Nenhuma atividade agendada
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
             {canCreateActivity
-              ? "Agende o próximo culto ou encontro para a equipe se organizar."
+              ? "Agende o próximo culto para a equipe se organizar."
               : "Quando houver eventos, eles aparecerão aqui."}
           </p>
           {canCreateActivity && (

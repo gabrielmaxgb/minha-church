@@ -4,19 +4,20 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff } from "lucide-react";
+import {
+  ArrowRight,
+  CalendarDays,
+  Eye,
+  EyeOff,
+  HeartHandshake,
+  Sparkles,
+} from "lucide-react";
 import { Suspense, useState } from "react";
 import { useForm } from "react-hook-form";
+import { motion, useReducedMotion } from "motion/react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { FormAlert, FormField, FormMessage } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import {
@@ -26,24 +27,49 @@ import {
   DEMO_PASSWORD,
   SHOW_DEMO_ACCOUNTS,
 } from "@/constants/demo-accounts";
-import { PUBLIC_ROUTES, AUTH_ROUTES, resolvePostLoginRedirect } from "@/constants/routes";
+import {
+  PUBLIC_ROUTES,
+  AUTH_ROUTES,
+  resolvePostLoginRedirect,
+} from "@/constants/routes";
 import { resendVerificationEmailRequest } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { loginSchema, type LoginFormValues } from "@/lib/validation/schemas";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 
+const welcomePoints = [
+  {
+    icon: HeartHandshake,
+    title: "Bem-vindo de volta",
+    description: "A semana da sua igreja, pronta pra você.",
+    tone: "text-domain-members-foreground bg-domain-members-subtle",
+  },
+  {
+    icon: CalendarDays,
+    title: "Próximo culto em vista",
+    description: "Agenda, escalas e avisos no mesmo lugar.",
+    tone: "text-domain-activities-foreground bg-domain-activities-subtle",
+  },
+] as const;
+
 function LoginFormContent() {
   const searchParams = useSearchParams();
   const { login, isAuthenticated, isLoading: isAuthLoading, user } = useAuth();
+  const shouldReduceMotion = useReducedMotion();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [loadingIdentifier, setLoadingIdentifier] = useState<string | null>(null);
-  const [isResendingVerification, setIsResendingVerification] = useState(false);
-  const [verificationFeedback, setVerificationFeedback] = useState<string | null>(null);
-  const [loginVerificationEmail, setLoginVerificationEmail] = useState<string | null>(
+  const [loadingIdentifier, setLoadingIdentifier] = useState<string | null>(
     null,
   );
+  const [isResendingVerification, setIsResendingVerification] = useState(false);
+  const [verificationFeedback, setVerificationFeedback] = useState<string | null>(
+    null,
+  );
+  const [loginVerificationEmail, setLoginVerificationEmail] = useState<
+    string | null
+  >(null);
+  const [demoOpen, setDemoOpen] = useState(false);
   const passwordResetSuccess = searchParams.get("reset") === "success";
   const verificationSent = searchParams.get("verify") === "sent";
   const pendingVerificationEmail =
@@ -87,7 +113,9 @@ function LoginFormContent() {
     setVerificationFeedback(null);
 
     try {
-      const response = await resendVerificationEmailRequest(pendingVerificationEmail);
+      const response = await resendVerificationEmailRequest(
+        pendingVerificationEmail,
+      );
       setVerificationFeedback(response.message);
     } catch (resendError) {
       setVerificationFeedback(
@@ -100,7 +128,10 @@ function LoginFormContent() {
     }
   }
 
-  async function performLogin(loginIdentifierValue: string, loginPassword: string) {
+  async function performLogin(
+    loginIdentifierValue: string,
+    loginPassword: string,
+  ) {
     clearErrors("root");
     setIsLoading(true);
     setLoadingIdentifier(loginIdentifierValue);
@@ -121,7 +152,9 @@ function LoginFormContent() {
         loginError instanceof ApiError &&
         loginError.code === "EMAIL_VERIFICATION_REQUIRED"
       ) {
-        setLoginVerificationEmail(loginError.email?.trim().toLowerCase() ?? null);
+        setLoginVerificationEmail(
+          loginError.email?.trim().toLowerCase() ?? null,
+        );
         setVerificationFeedback(null);
         clearErrors("root");
       } else {
@@ -149,227 +182,318 @@ function LoginFormContent() {
   }
 
   return (
-    <Card className="w-full max-w-md border-border shadow-none">
-      <CardHeader className="text-center">
-        <CardTitle className="text-2xl font-semibold tracking-tight">Entrar</CardTitle>
-        <CardDescription>Acesse o painel da sua igreja</CardDescription>
-      </CardHeader>
+    <motion.div
+      className="relative w-full"
+      initial={shouldReduceMotion ? false : { opacity: 0, y: 16 }}
+      animate={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <div className="overflow-hidden rounded-2xl border border-border/70 bg-card/90 shadow-popover backdrop-blur-sm lg:grid lg:min-h-[34rem] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
+        <aside className="relative flex overflow-hidden border-b border-border/60 bg-gradient-to-br from-domain-members-subtle via-card to-domain-activities-subtle/80 px-6 py-8 sm:px-8 sm:py-10 lg:min-h-full lg:border-b-0 lg:border-r lg:px-10 lg:py-12">
+          <div
+            className="pointer-events-none absolute -left-16 -top-20 size-56 rounded-full bg-domain-members/15 blur-3xl"
+            aria-hidden
+          />
+          <div
+            className="pointer-events-none absolute -bottom-20 -right-10 size-48 rounded-full bg-domain-activities/20 blur-3xl"
+            aria-hidden
+          />
 
-      <form onSubmit={onSubmit} noValidate>
-        <CardContent className="space-y-4">
-          {passwordResetSuccess && (
-            <FormAlert variant="success">
-              Senha redefinida com sucesso. Faça login com sua nova senha.
-            </FormAlert>
-          )}
+          <div className="relative my-auto space-y-6">
+            <p className="inline-flex items-center gap-1.5 rounded-full border border-domain-members/25 bg-domain-members-subtle px-3 py-1 text-xs font-medium text-domain-members-foreground">
+              <Sparkles className="size-3.5" aria-hidden />
+              A semana da sua igreja
+            </p>
 
-          {(verificationSent || loginVerificationEmail) && (
-            <div className="space-y-3 rounded-lg border border-attention-border bg-attention-subtle px-4 py-3">
-              <p className="text-sm leading-relaxed text-foreground">
-                {verificationSent ? "Enviamos um link de confirmação" : "Confirme seu e-mail"}
-                {pendingVerificationEmail ? (
-                  <>
-                    {" "}
-                    para{" "}
-                    <span className="font-medium">{pendingVerificationEmail}</span>
-                  </>
-                ) : null}
-                . Confirme seu e-mail antes de entrar.
+            <div className="space-y-3">
+              <h1 className="font-display text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+                Que bom te ver de novo
+              </h1>
+              <p className="max-w-sm text-sm leading-relaxed text-muted-foreground sm:text-base">
+                Entre para ver o próximo culto, as escalas e o que ainda precisa
+                da sua atenção.
               </p>
-              {verificationFeedback && (
-                <p className="text-sm text-muted-foreground">{verificationFeedback}</p>
-              )}
-              {pendingVerificationEmail ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="border-attention-border bg-background"
-                  disabled={isResendingVerification}
-                  onClick={() => void handleResendVerification()}
+            </div>
+
+            <ul className="space-y-3">
+              {welcomePoints.map((item) => (
+                <li
+                  key={item.title}
+                  className="flex items-start gap-3 rounded-xl border border-border/50 bg-card/70 p-3"
                 >
-                  {isResendingVerification ? "Reenviando..." : "Reenviar link"}
-                </Button>
-              ) : null}
-            </div>
-          )}
+                  <span
+                    className={cn(
+                      "mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg",
+                      item.tone,
+                    )}
+                  >
+                    <item.icon className="size-4" aria-hidden />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground">
+                      {item.title}
+                    </p>
+                    <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+                      {item.description}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </aside>
 
-          {errors.root?.message && !loginVerificationEmail && (
-            <FormAlert>{errors.root.message}</FormAlert>
-          )}
-
-          <FormField
-            label="E-mail ou CPF"
-            htmlFor="identifier"
-            error={errors.identifier?.message}
-            required
-          >
-            <Input
-              id="identifier"
-              type="text"
-              placeholder="pastor@igreja.com.br ou CPF"
-              autoComplete="username"
-              disabled={isLoading}
-              aria-invalid={errors.identifier ? true : undefined}
-              {...register("identifier")}
-            />
-          </FormField>
-
-          <div className="space-y-2">
-            <div className="flex items-center justify-between gap-2">
-              <label
-                htmlFor="password"
-                className="text-sm font-medium leading-none text-foreground"
-              >
-                Senha
-                <span className="ml-0.5 text-destructive" aria-hidden>
-                  *
-                </span>
-              </label>
-              <Link
-                href={PUBLIC_ROUTES.forgotPassword}
-                className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-              >
-                Esqueceu a senha?
-              </Link>
-            </div>
-            <div className="relative">
-              <Input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                placeholder="••••••••"
-                autoComplete="current-password"
-                disabled={isLoading}
-                className="pr-10"
-                aria-invalid={errors.password ? true : undefined}
-                {...register("password")}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
-                aria-label={showPassword ? "Ocultar senha" : "Exibir senha"}
-                tabIndex={-1}
-              >
-                {showPassword ? (
-                  <EyeOff className="size-4" />
-                ) : (
-                  <Eye className="size-4" />
-                )}
-              </button>
-            </div>
-            <FormMessage>{errors.password?.message}</FormMessage>
+        <div className="flex flex-col justify-center px-5 py-7 sm:px-8 sm:py-9 lg:px-10 lg:py-12">
+          <div className="mb-6 space-y-1">
+            <h2 className="text-xl font-semibold tracking-tight text-foreground">
+              Entrar
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Use o e-mail ou CPF da sua conta.
+            </p>
           </div>
 
-          {!process.env.NEXT_PUBLIC_API_URL?.trim() && (
-            <p className="rounded-md border border-dashed border-border px-3 py-2 text-xs text-muted-foreground">
-              Configure <code className="text-foreground">NEXT_PUBLIC_API_URL</code>{" "}
-              no <code className="text-foreground">.env.local</code> apontando para
-              o backend Nest.
-            </p>
-          )}
+          <form onSubmit={onSubmit} noValidate className="space-y-4">
+            {passwordResetSuccess && (
+              <FormAlert variant="success">
+                Senha redefinida com sucesso. Faça login com sua nova senha.
+              </FormAlert>
+            )}
 
-          {SHOW_DEMO_ACCOUNTS && (
-            <div className="rounded-lg border border-border bg-muted/20 p-3">
-              <p className="text-xs font-medium text-foreground">
-                Contas de teste
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Senha de todas: <code className="text-foreground">{DEMO_PASSWORD}</code>
-              </p>
-
-              <div className="mt-3 space-y-3">
-                <div className="grid gap-2">
-                  {DEMO_ACCOUNTS.map((account) => (
-                    <button
-                      key={account.email}
-                      type="button"
-                      disabled={isLoading}
-                      onClick={() => handleQuickLogin(account.email)}
-                      className={cn(
-                        "flex w-full items-center justify-between gap-3 rounded-md border border-border bg-background px-3 py-2 text-left text-sm transition-colors hover:bg-muted/60",
-                        loadingIdentifier === account.email && "opacity-70",
-                      )}
-                    >
-                      <span className="font-medium">{account.label}</span>
-                      <span className="truncate text-xs text-muted-foreground">
-                        {account.email}
+            {(verificationSent || loginVerificationEmail) && (
+              <div className="space-y-3 rounded-xl border border-attention-border bg-attention-subtle px-4 py-3">
+                <p className="text-sm leading-relaxed text-foreground">
+                  {verificationSent
+                    ? "Enviamos um link de confirmação"
+                    : "Confirme seu e-mail"}
+                  {pendingVerificationEmail ? (
+                    <>
+                      {" "}
+                      para{" "}
+                      <span className="font-medium">
+                        {pendingVerificationEmail}
                       </span>
-                    </button>
-                  ))}
-                </div>
-
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground">
-                    Faixas Stripe — trial expirado
+                    </>
+                  ) : null}
+                  . Confirme seu e-mail antes de entrar.
+                </p>
+                {verificationFeedback && (
+                  <p className="text-sm text-muted-foreground">
+                    {verificationFeedback}
                   </p>
-                  <div className="mt-2 grid gap-2">
-                    {DEMO_BILLING_TIER_ACCOUNTS.map((account) => (
-                      <button
-                        key={account.email}
-                        type="button"
-                        disabled={isLoading}
-                        onClick={() => handleQuickLogin(account.email)}
-                        className={cn(
-                          "flex w-full items-center justify-between gap-3 rounded-md border border-border bg-background px-3 py-2 text-left text-sm transition-colors hover:bg-muted/60",
-                          loadingIdentifier === account.email && "opacity-70",
-                        )}
-                      >
-                        <span className="font-medium">{account.label}</span>
-                        <span className="truncate text-xs text-muted-foreground">
-                          {account.email}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground">
-                    Membros mock — Batista Central
-                  </p>
-                  <div className="mt-2 grid max-h-44 gap-2 overflow-y-auto pr-1">
-                    {DEMO_MOCK_MEMBERS.map((account) => (
-                      <button
-                        key={account.email}
-                        type="button"
-                        disabled={isLoading}
-                        onClick={() => handleQuickLogin(account.email)}
-                        className={cn(
-                          "flex w-full items-center justify-between gap-3 rounded-md border border-border bg-background px-3 py-2 text-left text-sm transition-colors hover:bg-muted/60",
-                          loadingIdentifier === account.email && "opacity-70",
-                        )}
-                      >
-                        <span className="font-medium">{account.label}</span>
-                        <span className="truncate text-xs text-muted-foreground">
-                          {account.email}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                )}
+                {pendingVerificationEmail ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="border-attention-border bg-background"
+                    disabled={isResendingVerification}
+                    onClick={() => void handleResendVerification()}
+                  >
+                    {isResendingVerification ? "Reenviando..." : "Reenviar link"}
+                  </Button>
+                ) : null}
               </div>
-            </div>
-          )}
-        </CardContent>
+            )}
 
-        <CardFooter className="flex flex-col gap-4">
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Entrando..." : "Entrar"}
-          </Button>
+            {errors.root?.message && !loginVerificationEmail && (
+              <FormAlert>{errors.root.message}</FormAlert>
+            )}
 
-          <p className="text-center text-sm text-muted-foreground">
-            Ainda não tem conta?{" "}
-            <Link
-              href={PUBLIC_ROUTES.register}
-              className="font-medium text-foreground underline-offset-4 hover:underline"
+            <FormField
+              label="E-mail ou CPF"
+              htmlFor="identifier"
+              error={errors.identifier?.message}
+              required
             >
-              Começar grátis
-            </Link>
-          </p>
-        </CardFooter>
-      </form>
-    </Card>
+              <Input
+                id="identifier"
+                type="text"
+                placeholder="pastor@igreja.com.br ou CPF"
+                autoComplete="username"
+                disabled={isLoading}
+                aria-invalid={errors.identifier ? true : undefined}
+                {...register("identifier")}
+              />
+            </FormField>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <label
+                  htmlFor="password"
+                  className="text-sm font-medium leading-none text-foreground"
+                >
+                  Senha
+                  <span className="ml-0.5 text-destructive" aria-hidden>
+                    *
+                  </span>
+                </label>
+                <Link
+                  href={PUBLIC_ROUTES.forgotPassword}
+                  className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Esqueceu a senha?
+                </Link>
+              </div>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                  disabled={isLoading}
+                  className="pr-10"
+                  aria-invalid={errors.password ? true : undefined}
+                  {...register("password")}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                  aria-label={showPassword ? "Ocultar senha" : "Exibir senha"}
+                  tabIndex={-1}
+                >
+                  {showPassword ? (
+                    <EyeOff className="size-4" />
+                  ) : (
+                    <Eye className="size-4" />
+                  )}
+                </button>
+              </div>
+              <FormMessage>{errors.password?.message}</FormMessage>
+            </div>
+
+            {!process.env.NEXT_PUBLIC_API_URL?.trim() && (
+              <p className="rounded-md border border-dashed border-border px-3 py-2 text-xs text-muted-foreground">
+                Configure{" "}
+                <code className="text-foreground">NEXT_PUBLIC_API_URL</code> no{" "}
+                <code className="text-foreground">.env.local</code> apontando
+                para o backend Nest.
+              </p>
+            )}
+
+            <Button
+              type="submit"
+              size="lg"
+              className="w-full gap-2"
+              disabled={isLoading}
+            >
+              {isLoading ? "Entrando..." : "Entrar na igreja"}
+              {!isLoading && <ArrowRight className="size-4" aria-hidden />}
+            </Button>
+
+            <p className="text-center text-sm text-muted-foreground">
+              Ainda não tem conta?{" "}
+              <Link
+                href={PUBLIC_ROUTES.register}
+                className="font-medium text-foreground underline-offset-4 hover:underline"
+              >
+                Começar grátis
+              </Link>
+            </p>
+
+            {SHOW_DEMO_ACCOUNTS && (
+              <div className="rounded-xl border border-border/70 bg-muted/15 p-3">
+                <button
+                  type="button"
+                  onClick={() => setDemoOpen((open) => !open)}
+                  className="flex w-full items-center justify-between gap-2 text-left"
+                >
+                  <span>
+                    <span className="block text-xs font-medium text-foreground">
+                      Contas de teste
+                    </span>
+                    <span className="mt-0.5 block text-xs text-muted-foreground">
+                      Senha: <code className="text-foreground">{DEMO_PASSWORD}</code>
+                    </span>
+                  </span>
+                  <span className="text-xs font-medium text-muted-foreground">
+                    {demoOpen ? "Ocultar" : "Mostrar"}
+                  </span>
+                </button>
+
+                {demoOpen && (
+                  <div className="mt-3 space-y-3">
+                    <div className="grid gap-2">
+                      {DEMO_ACCOUNTS.map((account) => (
+                        <button
+                          key={account.email}
+                          type="button"
+                          disabled={isLoading}
+                          onClick={() => handleQuickLogin(account.email)}
+                          className={cn(
+                            "flex w-full items-center justify-between gap-3 rounded-lg border border-border/70 bg-card px-3 py-2 text-left text-sm transition-colors hover:bg-domain-members-subtle/50",
+                            loadingIdentifier === account.email && "opacity-70",
+                          )}
+                        >
+                          <span className="font-medium">{account.label}</span>
+                          <span className="truncate text-xs text-muted-foreground">
+                            {account.email}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground">
+                        Faixas Stripe — trial expirado
+                      </p>
+                      <div className="mt-2 grid gap-2">
+                        {DEMO_BILLING_TIER_ACCOUNTS.map((account) => (
+                          <button
+                            key={account.email}
+                            type="button"
+                            disabled={isLoading}
+                            onClick={() => handleQuickLogin(account.email)}
+                            className={cn(
+                              "flex w-full items-center justify-between gap-3 rounded-lg border border-border/70 bg-card px-3 py-2 text-left text-sm transition-colors hover:bg-muted/60",
+                              loadingIdentifier === account.email &&
+                                "opacity-70",
+                            )}
+                          >
+                            <span className="font-medium">{account.label}</span>
+                            <span className="truncate text-xs text-muted-foreground">
+                              {account.email}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground">
+                        Membros mock — Batista Central
+                      </p>
+                      <div className="mt-2 grid max-h-44 gap-2 overflow-y-auto pr-1">
+                        {DEMO_MOCK_MEMBERS.map((account) => (
+                          <button
+                            key={account.email}
+                            type="button"
+                            disabled={isLoading}
+                            onClick={() => handleQuickLogin(account.email)}
+                            className={cn(
+                              "flex w-full items-center justify-between gap-3 rounded-lg border border-border/70 bg-card px-3 py-2 text-left text-sm transition-colors hover:bg-muted/60",
+                              loadingIdentifier === account.email &&
+                                "opacity-70",
+                            )}
+                          >
+                            <span className="font-medium">{account.label}</span>
+                            <span className="truncate text-xs text-muted-foreground">
+                              {account.email}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </form>
+        </div>
+      </div>
+    </motion.div>
   );
 }
 
@@ -377,7 +501,7 @@ export function LoginForm() {
   return (
     <Suspense
       fallback={
-        <Card className="w-full max-w-sm border-border shadow-none">
+        <Card className="w-full max-w-md rounded-2xl border-border/70 shadow-none">
           <CardContent className="py-10 text-center text-sm text-muted-foreground">
             Carregando...
           </CardContent>

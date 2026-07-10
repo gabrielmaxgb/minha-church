@@ -326,7 +326,7 @@ export function ChurchRolesSettings() {
         setPermissionConfirm({
           title: "Limpar acesso às seções?",
           description:
-            "As ações administrativas vinculadas a cada seção também serão removidas — por exemplo, desativar “Membros” remove “Gerenciar membros”.",
+            "As permissões de edição ligadas a cada área também serão removidas — por exemplo, desativar “Membros” remove “Cadastrar e editar membros”.",
           roleId: role.id,
           nextPermissions: next,
         });

@@ -60,7 +60,7 @@ export const billingFaq: FaqItem[] = [
   {
     question: "O preço inclui todas as funcionalidades?",
     answer:
-      "Sim. Todas as faixas incluem o mesmo pacote completo — membros, ministérios, escalas, comunicados e permissões. A diferença é só a quantidade de membros cadastrados.",
+      "Sim. Todas as faixas incluem as mesmas ferramentas — membros, ministérios, escalas, comunicados e permissões. A diferença é só a quantidade de membros cadastrados.",
   },
   {
     question: "O que acontece se minha igreja crescer?",
@@ -70,6 +70,6 @@ export const billingFaq: FaqItem[] = [
   {
     question: "Posso mudar de mensal para anual depois?",
     answer:
-      "Sim. Você pode alternar entre cobrança mensal e anual a qualquer momento pelo painel da conta.",
+      "Sim. Você pode alternar entre cobrança mensal e anual a qualquer momento nas configurações da conta.",
   },
 ];

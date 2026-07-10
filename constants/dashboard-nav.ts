@@ -13,22 +13,25 @@ import {
 
 import { AUTH_ROUTES } from "@/constants/routes";
 import type { NavPermissionKey } from "@/lib/permissions";
+import type { ProductDomain } from "@/lib/ui/domain-theme";
 
 export interface DashboardNavItem {
   label: string;
   href: string;
   icon: LucideIcon;
   description?: string;
+  domain: ProductDomain;
   /** Seção exige permissão de acesso configurada no cargo */
   permission: NavPermissionKey;
 }
 
 export const dashboardNavItems: DashboardNavItem[] = [
   {
-    label: "Dashboard",
+    label: "Início",
     href: AUTH_ROUTES.dashboard,
     icon: LayoutDashboard,
-    description: "Visão geral da igreja",
+    description: "A semana da sua igreja",
+    domain: "home",
     permission: "dashboard",
   },
   {
@@ -36,6 +39,7 @@ export const dashboardNavItems: DashboardNavItem[] = [
     href: AUTH_ROUTES.members,
     icon: Users,
     description: "Cadastro e histórico pastoral",
+    domain: "members",
     permission: "members",
   },
   {
@@ -43,20 +47,23 @@ export const dashboardNavItems: DashboardNavItem[] = [
     href: AUTH_ROUTES.ministries,
     icon: Layers,
     description: "Áreas de serviço, cargos e equipes",
+    domain: "ministries",
     permission: "ministries",
   },
   {
     label: "Atividades",
     href: AUTH_ROUTES.activities,
     icon: Calendar,
-    description: "Eventos e encontros por ministério",
+    description: "Cultos e encontros da semana",
+    domain: "activities",
     permission: "activities",
   },
   {
     label: "Minhas escalas",
     href: AUTH_ROUTES.mySchedules,
     icon: CalendarDays,
-    description: "Escalas e disponibilidade por ministério",
+    description: "Convocações e disponibilidade",
+    domain: "schedules",
     permission: "schedules",
   },
   {
@@ -64,20 +71,23 @@ export const dashboardNavItems: DashboardNavItem[] = [
     href: AUTH_ROUTES.finances,
     icon: Wallet,
     description: "Entradas, saídas e prestação de contas",
+    domain: "finances",
     permission: "finances",
   },
   {
     label: "Comunicação",
     href: AUTH_ROUTES.communication,
     icon: Mail,
-    description: "Comunicados para a igreja e ministérios",
+    description: "Avisos para a igreja e ministérios",
+    domain: "communication",
     permission: "communication",
   },
   {
     label: "Relatórios",
     href: AUTH_ROUTES.reports,
     icon: BarChart3,
-    description: "Indicadores e exportações",
+    description: "Resumos para a liderança",
+    domain: "reports",
     permission: "reports",
   },
 ];
@@ -88,6 +98,7 @@ export const dashboardSecondaryNavItems: DashboardNavItem[] = [
     href: AUTH_ROUTES.settings,
     icon: Settings,
     description: "Perfil e preferências da igreja",
+    domain: "settings",
     permission: "settings",
   },
 ];

@@ -4,7 +4,7 @@ import { LoginForm } from "@/components/auth/login-form";
 
 export const metadata: Metadata = {
   title: "Entrar",
-  description: "Acesse o painel da sua igreja no Minha Church.",
+  description: "Entre para ver a semana da sua igreja no Minha Church.",
 };
 
 export default function LoginPage() {

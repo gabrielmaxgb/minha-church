@@ -1,6 +1,5 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  BarChart3,
   Calendar,
   MessageSquare,
   Users,
@@ -14,108 +13,107 @@ export interface FeatureHighlight {
   items: string[];
 }
 
+/** Fluxos do dia a dia — usado em recursos e referências internas. */
 export const homeFeatures: FeatureHighlight[] = [
   {
-    title: "Gestão de membros",
-    description: "Toda a sua comunidade organizada, do cadastro ao acompanhamento pastoral.",
+    title: "Do primeiro contato ao acompanhamento pastoral",
+    description:
+      "Cadastre visitantes e membros, registre o histórico e saiba quem está ativo na comunidade.",
     icon: Users,
-    items: ["Cadastro completo", "Histórico pastoral", "Controle de presença"],
+    items: [
+      "Cadastro pastoral",
+      "Histórico e anotações",
+      "Status ativo, visitante ou inativo",
+    ],
   },
   {
-    title: "Cultos e eventos",
-    description: "Planeje cultos, eventos e escalas sem depender de planilhas.",
+    title: "Convide voluntários e feche a escala",
+    description:
+      "Peça disponibilidade, acompanhe respostas e monte a equipe do culto com antecedência.",
     icon: Calendar,
-    items: ["Agenda de cultos", "Escalas de voluntários", "Confirmação de presença"],
+    items: [
+      "Agenda de cultos e eventos",
+      "Convocação e confirmação",
+      "Escala oficial por função",
+    ],
   },
   {
-    title: "Finanças",
-    description: "Transparência total no controle financeiro da igreja.",
-    icon: Wallet,
-    items: ["Dízimos e ofertas", "Relatórios mensais", "Prestação de contas"],
-  },
-  {
-    title: "Comunicação",
-    description: "Mantenha líderes e membros alinhados em um só canal.",
+    title: "Avise a igreja com histórico",
+    description:
+      "Comunicados para toda a igreja ou por ministério — sem depender de grupos de WhatsApp.",
     icon: MessageSquare,
-    items: ["Avisos por e-mail", "Comunicados segmentados", "Histórico de mensagens"],
+    items: [
+      "Avisos segmentados",
+      "Registro do que foi publicado",
+      "Leitura pela equipe",
+    ],
   },
 ];
 
 export const resourceSections = [
   {
     id: "membros",
-    title: "Gestão de membros",
+    domain: "members" as const,
+    title: "Do primeiro contato ao acompanhamento pastoral",
     description:
-      "Cadastre e acompanhe cada membro com histórico pastoral, dados de contato e controle de presença em cultos e eventos.",
+      "Cadastre e acompanhe cada pessoa com histórico pastoral, contato e status — a referência da comunidade.",
     items: [
-      "Cadastro completo com dados pessoais e familiares",
+      "Cadastro com dados pessoais e de contato",
       "Histórico pastoral e anotações confidenciais",
-      "Controle de presença por culto ou evento",
-      "Importação em massa via planilha",
-      "Segmentação por ministério ou célula",
+      "Status: visitante, ativo ou inativo",
+      "Vínculo com ministérios e cargos",
+      "Importação a partir de planilha",
     ],
   },
   {
     id: "cultos",
-    title: "Cultos e eventos",
+    domain: "activities" as const,
+    title: "Agenda da igreja e do ministério",
     description:
-      "Organize a agenda da igreja, monte escalas e acompanhe a participação da comunidade.",
+      "Planeje cultos e encontros, com visibilidade para quem precisa da agenda do dia.",
     items: [
-      "Calendário de cultos e eventos especiais",
-      "Escalas de louvor, recepção e mídia",
-      "Confirmação de voluntários",
-      "Check-in de participantes",
-      "Relatório de frequência",
+      "Calendário de cultos e eventos",
+      "Eventos da igreja e por ministério",
+      "Local, horário e recorrência",
+      "Detalhe do evento com escala e avisos",
     ],
   },
   {
     id: "escalas",
-    title: "Escalas de voluntários",
+    domain: "schedules" as const,
+    title: "Convide, confirme e feche a escala",
     description:
-      "Distribua responsabilidades de forma clara e evite conflitos de agenda.",
+      "Distribua funções com clareza e saiba quem estará presente antes do culto.",
     items: [
-      "Escalas por ministério",
-      "Notificação automática aos voluntários",
-      "Substituições e confirmações",
-      "Histórico de serviços",
+      "Pedido de disponibilidade",
+      "Respostas dos voluntários",
+      "Escala oficial por função",
+      "Histórico de serviço",
     ],
   },
   {
     id: "financas",
-    title: "Finanças",
+    domain: "finances" as const,
+    title: "Prestação de contas (em breve)",
     description:
-      "Registre entradas e saídas, gere relatórios e facilite a prestação de contas.",
+      "O módulo financeiro ainda está em construção. A landing não promete o que o produto ainda não entrega.",
     items: [
-      "Registro de dízimos e ofertas",
-      "Categorias de despesas",
-      "Relatórios mensais e anuais",
-      "Exportação para contabilidade",
-      "Prestação de contas para liderança",
+      "Registro de entradas e saídas",
+      "Relatórios para liderança",
+      "Exportação para prestação de contas",
     ],
   },
   {
     id: "comunicacao",
-    title: "Comunicação",
+    domain: "communication" as const,
+    title: "Avisos com histórico, não só no WhatsApp",
     description:
-      "Envie avisos e comunicados para toda a igreja ou grupos específicos.",
+      "Publique comunicados para a igreja ou ministérios e mantenha o registro do que foi dito.",
     items: [
       "Comunicados por e-mail",
-      "Segmentação por ministério ou faixa etária",
-      "Templates de mensagens",
-      "Histórico de envios",
+      "Segmentação por ministério",
+      "Histórico de publicações",
+      "Leitura pela equipe",
     ],
-  },
-  {
-    id: "relatorios",
-    title: "Relatórios",
-    description:
-      "Visualize dados da igreja em dashboards claros para tomada de decisão.",
-    items: [
-      "Dashboard com indicadores principais",
-      "Relatório de membros ativos",
-      "Relatório financeiro consolidado",
-      "Exportação em PDF e Excel",
-    ],
-    icon: BarChart3,
   },
 ];

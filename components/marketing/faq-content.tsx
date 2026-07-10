@@ -10,10 +10,7 @@ export function FaqContent() {
       <section className="border-b border-border">
         <Container className="py-16 sm:py-20 lg:py-24">
           <div className="max-w-2xl">
-            <p className="font-display text-2xl tracking-tight text-foreground sm:text-3xl">
-              Minha Church
-            </p>
-            <Heading as="h1" className="mt-4 text-balance">
+            <Heading as="h1" className="text-balance">
               Perguntas frequentes
             </Heading>
             <p className="mt-5 text-base leading-relaxed text-muted-foreground sm:text-lg">

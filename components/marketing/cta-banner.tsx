@@ -28,7 +28,7 @@ export function CtaBanner({
   return (
     <section className={cn("py-16 sm:py-24", className)}>
       <Container>
-        <div className="border border-border bg-foreground px-8 py-14 text-center text-background sm:px-16">
+        <div className="rounded-2xl border border-border bg-foreground px-5 py-12 text-center text-background sm:px-12 sm:py-14 lg:px-16">
           <Heading as="h2" className="text-background">
             {title}
           </Heading>

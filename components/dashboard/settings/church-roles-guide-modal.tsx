@@ -141,7 +141,7 @@ export function ChurchRolesGuideModal({
               <li className="flex gap-2">
                 <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary" />
                 <span>
-                  <strong className="text-foreground">Ações administrativas</strong>{" "}
+                  <strong className="text-foreground">Permissões de edição</strong>{" "}
                   permitem criar, editar e excluir. Ao ativar uma ação, o acesso
                   à seção correspondente é incluído automaticamente.
                 </span>

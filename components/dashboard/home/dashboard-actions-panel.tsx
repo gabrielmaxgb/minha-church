@@ -102,7 +102,7 @@ export function DashboardActionsPanel({
   if (canSeeMembers) {
     quickActions.push({
       label: "Ver membros",
-      description: "Lista completa",
+      description: "Cadastro da igreja",
       href: AUTH_ROUTES.members,
       icon: Users,
     });
@@ -124,7 +124,9 @@ export function DashboardActionsPanel({
         <section className="rounded-lg border border-attention-border bg-attention-subtle">
           <div className="flex items-center gap-2 border-b border-attention-border/60 px-4 py-3">
             <AlertCircle className="size-4 text-attention-foreground" aria-hidden />
-            <h2 className="text-sm font-medium text-foreground">Pendências</h2>
+            <h2 className="text-sm font-medium text-foreground">
+              Precisa da sua atenção
+            </h2>
           </div>
           <ul className="p-1.5">
             {attentionItems.map((item) => (
@@ -150,9 +152,9 @@ export function DashboardActionsPanel({
       )}
 
       {quickActions.length > 0 && (
-        <section className="rounded-lg border border-border bg-card">
-          <div className="border-b border-border px-4 py-3">
-            <h2 className="text-sm font-medium text-foreground">Ações</h2>
+        <section className="rounded-lg border border-border/80 bg-card">
+          <div className="border-b border-border/80 px-4 py-3">
+            <h2 className="text-sm font-medium text-foreground">Atalhos</h2>
           </div>
           <ul className="p-1.5">
             {quickActions.map((action) => {
