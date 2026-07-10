@@ -11,6 +11,7 @@ interface EventMutationScopeDialogProps {
   open: boolean;
   action: "edit" | "delete";
   busy?: boolean;
+  hideThisOption?: boolean;
   onConfirm: (scope: EventMutationScope) => void;
   onCancel: () => void;
 }
@@ -19,6 +20,7 @@ export function EventMutationScopeDialog({
   open,
   action,
   busy = false,
+  hideThisOption = false,
   onConfirm,
   onCancel,
 }: EventMutationScopeDialogProps) {
@@ -27,9 +29,9 @@ export function EventMutationScopeDialog({
 
   useEffect(() => {
     if (open) {
-      setScope("this");
+      setScope(hideThisOption ? "this_and_following" : "this");
     }
-  }, [open]);
+  }, [open, hideThisOption]);
 
   if (!open) {
     return null;
@@ -61,7 +63,9 @@ export function EventMutationScopeDialog({
           Evento recorrente
         </h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          Como no Google Agenda: escolha em quais ocorrências aplicar esta ação.
+          {hideThisOption
+            ? "A regra de repetição mudou — escolha se vale daqui pra frente ou para toda a série."
+            : "Como no Google Agenda: escolha em quais ocorrências aplicar esta ação."}
         </p>
 
         <div className="mt-5">
@@ -71,6 +75,7 @@ export function EventMutationScopeDialog({
             onChange={setScope}
             disabled={busy}
             actionLabel={action}
+            hideThisOption={hideThisOption}
           />
         </div>
 

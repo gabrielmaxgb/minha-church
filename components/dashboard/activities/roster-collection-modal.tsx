@@ -206,6 +206,7 @@ export function RosterCollectionModal({
 
   const busy = setCollection.isPending;
   const isRecurring = Boolean(event.recurrenceSeriesId && event.recurrence);
+  const isChurchWide = Boolean(event.isChurchWide);
 
   return (
     <LargeModalShell
@@ -246,6 +247,14 @@ export function RosterCollectionModal({
           className="mb-4 rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive"
         >
           {error}
+        </div>
+      ) : null}
+
+      {isChurchWide ? (
+        <div className="mb-4 rounded-xl border border-domain-members/20 bg-domain-members-subtle/50 px-4 py-3.5 text-sm leading-relaxed text-domain-members-foreground">
+          Evento da igreja inteira — quando a coleta estiver aberta,{" "}
+          <span className="font-medium">todos os membros</span> poderão se
+          voluntariar e marcar disponibilidade.
         </div>
       ) : null}
 

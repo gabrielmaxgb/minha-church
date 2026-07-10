@@ -46,6 +46,10 @@ export function memberDetailPath(memberId: string): string {
   return `${AUTH_ROUTES.members}/${memberId}`;
 }
 
+export function familyGraphPath(familyId: string): string {
+  return `${AUTH_ROUTES.members}/familias/${familyId}`;
+}
+
 export function activityDetailPath(eventId: string): string {
   return `${AUTH_ROUTES.activities}/${eventId}`;
 }

@@ -8,8 +8,12 @@ import type {
 } from "@/lib/members/form";
 import type {
   CreateMemberResponse,
+  Family,
+  FamilyGraph,
   ListMembersParams,
   Member,
+  MemberRelation,
+  MemberRelationType,
   MembersListResponse,
   ReceiveMemberResponse,
   UpdateMemberResponse,
@@ -27,6 +31,10 @@ async function fetchMembers(
 
   if (params.search) {
     searchParams.set("search", params.search);
+  }
+
+  if (params.familyId) {
+    searchParams.set("familyId", params.familyId);
   }
 
   if (params.page) {
@@ -156,10 +164,75 @@ async function removeMemberMinistry(
   );
 }
 
+async function fetchFamilies(churchId: string): Promise<Family[]> {
+  return apiClient<Family[]>(buildTenantPath(churchId, "/families"), {
+    churchId,
+  });
+}
+
+async function createFamily(
+  churchId: string,
+  name: string,
+): Promise<Family> {
+  return apiClient<Family>(buildTenantPath(churchId, "/families"), {
+    churchId,
+    method: "POST",
+    body: JSON.stringify({ name }),
+  });
+}
+
+async function fetchFamilyGraph(
+  churchId: string,
+  familyId: string,
+): Promise<FamilyGraph> {
+  return apiClient<FamilyGraph>(
+    buildTenantPath(churchId, `/families/${familyId}/graph`),
+    { churchId },
+  );
+}
+
+async function createMemberRelation(
+  churchId: string,
+  familyId: string,
+  payload: {
+    fromMemberId: string;
+    toMemberId: string;
+    type: MemberRelationType;
+  },
+): Promise<MemberRelation> {
+  return apiClient<MemberRelation>(
+    buildTenantPath(churchId, `/families/${familyId}/relations`),
+    {
+      churchId,
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
+}
+
+async function deleteMemberRelation(
+  churchId: string,
+  familyId: string,
+  relationId: string,
+): Promise<void> {
+  await apiClient<void>(
+    buildTenantPath(churchId, `/families/${familyId}/relations/${relationId}`),
+    { churchId, method: "DELETE" },
+  );
+}
+
 export const membersKeys = createQueryKeys("members", {
   list: (churchId: string, params: ListMembersParams = {}) => ({
     queryKey: [churchId, params],
     queryFn: () => fetchMembers(churchId, params),
+  }),
+  families: (churchId: string) => ({
+    queryKey: [churchId, "families"],
+    queryFn: () => fetchFamilies(churchId),
+  }),
+  familyGraph: (churchId: string, familyId: string) => ({
+    queryKey: [churchId, "families", familyId, "graph"],
+    queryFn: () => fetchFamilyGraph(churchId, familyId),
   }),
   me: (churchId: string) => ({
     queryKey: [churchId, "me"],
@@ -178,8 +251,13 @@ export const membersKeys = createQueryKeys("members", {
 export {
   ackMinistryCatalogNotifications,
   assignMemberMinistry,
+  createFamily,
   createMember,
+  createMemberRelation,
   deleteMember,
+  deleteMemberRelation,
+  fetchFamilies,
+  fetchFamilyGraph,
   fetchMember,
   fetchMembers,
   fetchMyMember,

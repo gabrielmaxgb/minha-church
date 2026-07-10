@@ -31,6 +31,8 @@ interface EventMutationScopeFieldsProps {
   disabled?: boolean;
   actionLabel?: "edit" | "delete" | "collection";
   name?: string;
+  /** Quando a regra de recorrência muda, “somente este” não se aplica. */
+  hideThisOption?: boolean;
 }
 
 export function EventMutationScopeFields({
@@ -39,6 +41,7 @@ export function EventMutationScopeFields({
   disabled = false,
   actionLabel = "edit",
   name = "event-mutation-scope",
+  hideThisOption = false,
 }: EventMutationScopeFieldsProps) {
   const title =
     actionLabel === "delete"
@@ -46,6 +49,10 @@ export function EventMutationScopeFields({
       : actionLabel === "collection"
         ? "Alcance da coleta de disponibilidade"
         : "Editar eventos recorrentes";
+
+  const options = hideThisOption
+    ? SCOPE_OPTIONS.filter((option) => option.value !== "this")
+    : SCOPE_OPTIONS;
 
   return (
     <fieldset className="space-y-3" disabled={disabled}>
@@ -55,11 +62,13 @@ export function EventMutationScopeFields({
       <p className="text-sm text-muted-foreground">
         {actionLabel === "collection"
           ? "Escolha se abre ou fecha a coleta só nesta data, nesta e nas próximas, ou em toda a série."
-          : "Escolha o alcance, como no Google Agenda."}
+          : hideThisOption
+            ? "A regra de repetição vale para a série — escolha o alcance, como no Google Agenda."
+            : "Escolha o alcance, como no Google Agenda."}
       </p>
 
       <div className="space-y-2">
-        {SCOPE_OPTIONS.map((option) => {
+        {options.map((option) => {
           const selected = value === option.value;
 
           return (

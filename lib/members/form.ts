@@ -26,6 +26,7 @@ export interface MemberFormValues {
   visitorSince: string;
   baptismDate: string;
   membershipDate: string;
+  familyId: string;
 }
 
 export interface CreateMemberPayload {
@@ -49,6 +50,7 @@ export interface CreateMemberPayload {
   visitorSince?: string;
   baptismDate?: string;
   membershipDate?: string;
+  familyId?: string;
 }
 
 export interface UpdateMemberPayload {
@@ -72,6 +74,7 @@ export interface UpdateMemberPayload {
   visitorSince?: string | null;
   baptismDate?: string | null;
   membershipDate?: string | null;
+  familyId?: string | null;
 }
 
 function toDateInputValue(value: string | null | undefined): string {
@@ -118,6 +121,7 @@ export function emptyMemberFormValues(
     visitorSince: "",
     baptismDate: "",
     membershipDate: "",
+    familyId: "",
   };
 }
 
@@ -143,6 +147,7 @@ export function memberToFormValues(member: Member): MemberFormValues {
     visitorSince: toDateInputValue(member.visitorSince),
     baptismDate: toDateInputValue(member.baptismDate),
     membershipDate: toDateInputValue(member.membershipDate),
+    familyId: member.familyId ?? "",
   };
 }
 
@@ -177,6 +182,7 @@ export function formValuesToCreatePayload(
     visitorSince: optionalString(values.visitorSince),
     baptismDate: optionalString(values.baptismDate),
     membershipDate: optionalString(values.membershipDate),
+    familyId: optionalString(values.familyId),
   };
 }
 
@@ -207,6 +213,7 @@ export function formValuesToUpdatePayload(
     visitorSince: nullableString(values.visitorSince),
     baptismDate: nullableString(values.baptismDate),
     membershipDate: nullableString(values.membershipDate),
+    familyId: nullableString(values.familyId),
   };
 }
 

@@ -18,6 +18,7 @@ import {
 import { ActivityScheduleFields } from "@/components/dashboard/activities/activity-schedule-fields";
 import { EventFormSection } from "@/components/dashboard/activities/event-form-section";
 import { EventMutationScopeFields } from "@/components/dashboard/activities/event-mutation-scope-fields";
+import { EventRecurrenceFields } from "@/components/dashboard/activities/event-recurrence-fields";
 import { EventRosterOptionsFields } from "@/components/dashboard/activities/event-roster-options-fields";
 import { EventVisibilityFields } from "@/components/dashboard/activities/event-visibility-fields";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +31,14 @@ import {
   useUpdateChurchEvent,
 } from "@/lib/api/queries";
 import { toDatetimeLocalValue } from "@/lib/activities/datetime";
+import {
+  buildRecurrencePayload,
+  defaultRecurrenceFormState,
+  recurrenceFormStateFromEvent,
+  recurrenceFormStatesEqual,
+  syncRecurrenceDaysWithStart,
+  type EventRecurrenceFormState,
+} from "@/lib/events/recurrence";
 import {
   rosterSlotPlanEqual,
   rosterSlotsToPlan,
@@ -85,6 +94,13 @@ export function EditActivityModal({
   const [rosterSlotPlan, setRosterSlotPlan] = useState<RosterSlotPlanItem[]>([]);
   const [availabilityMessage, setAvailabilityMessage] = useState("");
   const [visibleToChurch, setVisibleToChurch] = useState(true);
+  const [recurrence, setRecurrence] = useState<EventRecurrenceFormState>(
+    defaultRecurrenceFormState(new Date().toISOString()),
+  );
+  const [initialRecurrence, setInitialRecurrence] =
+    useState<EventRecurrenceFormState>(
+      defaultRecurrenceFormState(new Date().toISOString()),
+    );
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editScope, setEditScope] = useState<EventMutationScope>("this");
@@ -94,6 +110,11 @@ export function EditActivityModal({
   const deleteEvent = useDeleteChurchEvent(event?.id ?? "");
   const isPending = updateEvent.isPending || deleteEvent.isPending;
   const isRecurring = Boolean(event?.recurrenceSeriesId && event?.recurrence);
+  const recurrenceChanged = !recurrenceFormStatesEqual(
+    recurrence,
+    initialRecurrence,
+  );
+  const recurrenceRequiresSeriesScope = recurrenceChanged && isRecurring;
 
   const hasChanges = useMemo(() => {
     if (!event) {
@@ -115,9 +136,24 @@ export function EditActivityModal({
         rosterSlotPlan,
         rosterSlotsToPlan(event.rosterSlots ?? []),
       ) ||
-      (availabilityMessage.trim() || "") !== (event.availabilityMessage ?? "")
+      (availabilityMessage.trim() || "") !== (event.availabilityMessage ?? "") ||
+      recurrenceChanged
     );
-  }, [event, name, description, highlightNote, location, startsAt, endsAt, usesRoster, rosterOpen, rosterSlotPlan, availabilityMessage, visibleToChurch]);
+  }, [
+    event,
+    name,
+    description,
+    highlightNote,
+    location,
+    startsAt,
+    endsAt,
+    usesRoster,
+    rosterOpen,
+    rosterSlotPlan,
+    availabilityMessage,
+    visibleToChurch,
+    recurrenceChanged,
+  ]);
 
   useEffect(() => {
     if (!open || !event) {
@@ -132,6 +168,8 @@ export function EditActivityModal({
       setRosterSlotPlan([]);
       setAvailabilityMessage("");
       setVisibleToChurch(true);
+      setRecurrence(defaultRecurrenceFormState(new Date().toISOString()));
+      setInitialRecurrence(defaultRecurrenceFormState(new Date().toISOString()));
       setError(null);
       setConfirmDelete(false);
       setEditScope("this");
@@ -139,17 +177,25 @@ export function EditActivityModal({
       return;
     }
 
+    const nextStarts = toDatetimeLocalValue(event.startsAt);
+    const nextRecurrence = recurrenceFormStateFromEvent(
+      event.recurrence,
+      nextStarts,
+    );
+
     setName(event.name);
     setDescription(event.description ?? "");
     setHighlightNote(event.highlightNote ?? "");
     setLocation(event.location ?? "");
-    setStartsAt(toDatetimeLocalValue(event.startsAt));
+    setStartsAt(nextStarts);
     setEndsAt(event.endsAt ? toDatetimeLocalValue(event.endsAt) : "");
     setUsesRoster(event.usesRoster);
     setRosterOpen(event.rosterOpen);
     setVisibleToChurch(event.visibleToChurch ?? true);
     setRosterSlotPlan(rosterSlotsToPlan(event.rosterSlots ?? []));
     setAvailabilityMessage(event.availabilityMessage ?? "");
+    setRecurrence(nextRecurrence);
+    setInitialRecurrence(nextRecurrence);
     setError(null);
     setConfirmDelete(false);
     setEditScope("this");
@@ -162,6 +208,16 @@ export function EditActivityModal({
       document.body.style.overflow = previousOverflow;
     };
   }, [open, event]);
+
+  useEffect(() => {
+    if (!recurrenceRequiresSeriesScope) {
+      return;
+    }
+
+    if (editScope === "this") {
+      setEditScope("this_and_following");
+    }
+  }, [recurrenceRequiresSeriesScope, editScope]);
 
   useEffect(() => {
     if (!open) {
@@ -196,7 +252,22 @@ export function EditActivityModal({
       return;
     }
 
+    if (
+      recurrence.endType === "on_date" &&
+      recurrence.repeatMode !== "none" &&
+      !recurrence.endDate
+    ) {
+      setError("Informe a data final da repetição.");
+      return;
+    }
+
     try {
+      const recurrencePayload = recurrenceChanged
+        ? recurrence.repeatMode === "none"
+          ? null
+          : buildRecurrencePayload(recurrence)
+        : undefined;
+
       await updateEvent.mutateAsync({
         name: name.trim(),
         description: description.trim() || null,
@@ -211,7 +282,18 @@ export function EditActivityModal({
         availabilityMessage: usesRoster
           ? availabilityMessage.trim() || null
           : null,
-        ...(isRecurring ? { scope: editScope } : {}),
+        ...(recurrencePayload !== undefined
+          ? { recurrence: recurrencePayload }
+          : {}),
+        ...(isRecurring
+          ? {
+              scope: recurrenceRequiresSeriesScope
+                ? editScope === "this"
+                  ? "this_and_following"
+                  : editScope
+                : editScope,
+            }
+          : {}),
       });
       onClose();
     } catch (submitError) {
@@ -404,11 +486,29 @@ export function EditActivityModal({
                   idPrefix="edit-activity"
                   startsAt={startsAt}
                   endsAt={endsAt}
-                  onStartsAtChange={setStartsAt}
+                  onStartsAtChange={(value) => {
+                    setStartsAt(value);
+                    setRecurrence((current) =>
+                      syncRecurrenceDaysWithStart(current, value),
+                    );
+                  }}
                   onEndsAtChange={setEndsAt}
                   disabled={isPending}
                   elevated
                 />
+            </EventFormSection>
+
+            <EventFormSection
+              title="Repetição"
+              description="Trate a série como um único evento — altere a regra quando precisar, como no Google Agenda."
+              icon={Repeat}
+            >
+              <EventRecurrenceFields
+                value={recurrence}
+                onChange={setRecurrence}
+                startsAt={startsAt}
+                disabled={isPending}
+              />
             </EventFormSection>
 
             {event.ministryId && (
@@ -452,7 +552,11 @@ export function EditActivityModal({
             {isRecurring && (
               <EventFormSection
                 title="Alcance das alterações"
-                description="Defina se a edição vale só para esta data ou para a série inteira."
+                description={
+                  recurrenceRequiresSeriesScope
+                    ? "A regra de repetição mudou — escolha se vale daqui pra frente ou para toda a série."
+                    : "Defina se a edição vale só para esta data ou para a série inteira."
+                }
                 icon={Repeat}
               >
                 <EventMutationScopeFields
@@ -461,6 +565,7 @@ export function EditActivityModal({
                   onChange={setEditScope}
                   disabled={isPending}
                   actionLabel="edit"
+                  hideThisOption={recurrenceRequiresSeriesScope}
                 />
               </EventFormSection>
             )}
