@@ -41,6 +41,7 @@ export const memberFormSchema = z.object({
 	visitorSince: z.string(),
 	baptismDate: z.string(),
 	membershipDate: z.string(),
+	familyId: z.string(),
 }) satisfies z.ZodType<MemberFormValues>;
 
 export function createMemberFormSchema(

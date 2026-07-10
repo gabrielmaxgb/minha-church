@@ -165,7 +165,7 @@ export function AddMinistryMemberModal({
     <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
       <button
         type="button"
-        className="absolute inset-0 bg-black/45 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-black/45"
         aria-label="Fechar modal"
         disabled={assignMembers.isPending}
         onClick={() => {
@@ -179,14 +179,14 @@ export function AddMinistryMemberModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative z-10 flex w-full max-w-3xl flex-col rounded-t-2xl border border-border bg-background shadow-2xl sm:max-h-[min(90dvh,720px)] sm:rounded-2xl"
+        className="relative z-10 flex w-full max-w-3xl flex-col rounded-t-xl border border-border bg-background shadow-popover sm:max-h-[min(90dvh,720px)] sm:rounded-xl"
       >
         <header className="flex items-start gap-4 px-8 pb-5 pt-8">
           <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             <UserPlus className="size-5" aria-hidden />
           </div>
           <div className="min-w-0 flex-1 pt-0.5">
-            <h2 id={titleId} className="font-display text-2xl font-semibold tracking-tight">
+            <h2 id={titleId} className="text-2xl font-semibold tracking-tight">
               Adicionar membros
             </h2>
             <p className="mt-1.5 text-sm text-muted-foreground">

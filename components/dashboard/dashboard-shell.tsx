@@ -51,7 +51,7 @@ export function DashboardShell({
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <p className="animate-pulse text-sm text-muted-foreground">Carregando painel...</p>
+        <p className="animate-pulse text-sm text-muted-foreground">Carregando...</p>
       </div>
     );
   }
@@ -66,7 +66,7 @@ export function DashboardShell({
 
   return (
     <OnboardingChecklistProvider>
-      <div className="relative flex h-screen overflow-hidden bg-surface">
+      <div className="relative flex h-screen overflow-hidden bg-background">
       {isSwitchingChurch && switchingToChurchName && (
         <ChurchSwitchOverlay churchName={switchingToChurchName} />
       )}

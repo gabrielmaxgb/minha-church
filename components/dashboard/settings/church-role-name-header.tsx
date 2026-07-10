@@ -79,7 +79,7 @@ export function ChurchRoleNameHeader({
               className={cn(
                 "pr-11 text-base font-medium transition-colors",
                 isNameDirty &&
-                  "border-amber-500/40 bg-amber-500/4 focus-visible:bg-amber-500/6",
+                  "border-attention-border bg-attention-subtle focus-visible:bg-attention-mark",
                 !isNameDirty &&
                   "group-hover:border-border group-hover:bg-background",
               )}
@@ -97,7 +97,7 @@ export function ChurchRoleNameHeader({
         </FormField>
 
         {isNameDirty && (
-          <p className="mt-2 text-xs font-medium text-amber-700 dark:text-amber-400">
+          <p className="mt-2 text-xs font-medium text-attention-foreground">
             Nome alterado — salve para aplicar.
           </p>
         )}

@@ -1,5 +1,6 @@
 import type { MyScheduleEvent } from "@/types/ministries";
 import { formatRosterRole } from "@/lib/ministries/roster";
+import { pendingNotificationStyles } from "@/lib/ui/notification-styles";
 
 export type ScheduleEventDisplayKind =
   | "assigned"
@@ -37,29 +38,27 @@ export function scheduleEventCalendarLabel(event: MyScheduleEvent): string {
   return event.name;
 }
 
-import { pendingNotificationStyles } from "@/lib/ui/notification-styles";
-
 export function scheduleEventStyle(kind: ScheduleEventDisplayKind): string {
   switch (kind) {
     case "assigned":
-      return "bg-emerald-500/12 text-emerald-900 dark:text-emerald-100";
+      return "bg-success-subtle text-success-foreground";
     case "pending":
       return `${pendingNotificationStyles.schedule.pill}`;
     case "available":
-      return "bg-sky-500/12 text-sky-900 dark:text-sky-100";
+      return "bg-muted text-foreground";
     case "unavailable":
-      return "bg-muted text-muted-foreground";
+      return "bg-muted/60 text-muted-foreground";
   }
 }
 
 export function scheduleEventBorderStyle(kind: ScheduleEventDisplayKind): string {
   switch (kind) {
     case "assigned":
-      return "border-emerald-500/20 bg-emerald-500/5";
+      return "border-success/20 bg-success-subtle";
     case "pending":
       return "border-attention-border bg-attention-subtle";
     case "available":
-      return "border-sky-500/20 bg-sky-500/5";
+      return "border-border bg-muted/30";
     case "unavailable":
       return "border-border bg-muted/20";
   }

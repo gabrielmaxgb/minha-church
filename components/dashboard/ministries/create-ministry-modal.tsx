@@ -122,7 +122,7 @@ export function CreateMinistryModal({ open, onClose }: CreateMinistryModalProps)
     >
       <button
         type="button"
-        className="absolute inset-0 bg-black/45 backdrop-blur-[2px] transition-opacity"
+        className="absolute inset-0 bg-black/45 transition-opacity"
         aria-label="Fechar modal"
         disabled={createMinistry.isPending}
         onClick={() => {
@@ -140,7 +140,7 @@ export function CreateMinistryModal({ open, onClose }: CreateMinistryModalProps)
         aria-describedby={descriptionId}
         className={cn(
           "relative z-10 flex max-h-[min(92dvh,640px)] w-full max-w-lg flex-col",
-          "rounded-t-2xl border border-border bg-background shadow-2xl sm:rounded-2xl",
+          "rounded-t-xl border border-border bg-background shadow-popover sm:rounded-xl",
         )}
       >
         <header className="flex items-start gap-4 px-6 pb-4 pt-6">
@@ -151,7 +151,7 @@ export function CreateMinistryModal({ open, onClose }: CreateMinistryModalProps)
           <div className="min-w-0 flex-1 pt-0.5">
             <h2
               id={titleId}
-              className="font-display text-xl font-semibold tracking-tight"
+              className="text-xl font-semibold tracking-tight"
             >
               Novo ministério
             </h2>

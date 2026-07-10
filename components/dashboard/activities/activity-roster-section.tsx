@@ -178,7 +178,7 @@ export function ActivityRosterSection({
         ) : null}
 
         {!readOnly && !event.rosterOpen ? (
-          <p className="mb-4 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
+          <p className="mb-4 rounded-xl border border-attention-border bg-attention-subtle px-4 py-3 text-sm text-attention-foreground">
             A coleta está fechada. Ninguém receberá notificação para marcar sua
             disponibilidade até você abrir a coleta com o botão «Coleta de disponibilidade» acima.
           </p>

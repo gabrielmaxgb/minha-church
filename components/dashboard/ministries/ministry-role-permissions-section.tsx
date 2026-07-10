@@ -21,13 +21,13 @@ interface MinistryPermissionDefinition {
 export const MINISTRY_PERMISSIONS: MinistryPermissionDefinition[] = [
   {
     field: "canManageEvents",
-    label: "Gerenciar eventos",
+    label: "Criar e editar eventos",
     description: "Cria e edita atividades deste ministério.",
     icon: Calendar,
   },
   {
     field: "canManageRoster",
-    label: "Gerenciar escalas",
+    label: "Montar escalas",
     description:
       "Monta a escala oficial escolhendo entre quem marcou disponibilidade.",
     icon: CalendarDays,
@@ -41,7 +41,7 @@ export const MINISTRY_PERMISSIONS: MinistryPermissionDefinition[] = [
   },
   {
     field: "canManageRoles",
-    label: "Gerenciar cargos do ministério",
+    label: "Definir cargos do ministério",
     description: "Cria, edita e remove cargos de liderança deste ministério.",
     icon: Shield,
   },
@@ -100,8 +100,8 @@ export function MinistryPermissionToggle({
       className={cn(
         "flex w-full items-start gap-3 rounded-xl border p-3.5 transition-all duration-200",
         checked
-          ? "border-violet-500/35 bg-violet-500/6"
-          : "border-border/60 bg-card/40",
+          ? "border-foreground/20 bg-muted/40"
+          : "border-border bg-card",
         disabled && "opacity-60",
       )}
     >
@@ -119,14 +119,14 @@ export function MinistryPermissionToggle({
           className={cn(
             "flex size-9 shrink-0 items-center justify-center rounded-lg transition-colors",
             checked
-              ? "bg-violet-500/10"
+              ? "bg-foreground text-background"
               : "bg-muted/50 group-hover:bg-muted group-disabled:group-hover:bg-muted/50",
           )}
         >
           <Icon
             className={cn(
               "size-4",
-              checked ? "text-violet-800 dark:text-violet-300" : "text-muted-foreground",
+              checked ? "text-background" : "text-muted-foreground",
             )}
             aria-hidden
           />

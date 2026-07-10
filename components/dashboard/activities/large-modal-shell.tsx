@@ -60,7 +60,7 @@ export function LargeModalShell({
     <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4 lg:p-6">
       <button
         type="button"
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/45"
         aria-label="Fechar"
         disabled={disabled}
         onClick={() => {
@@ -75,14 +75,14 @@ export function LargeModalShell({
         aria-modal="true"
         aria-labelledby={titleId}
         className={cn(
-          "relative z-10 flex max-h-[min(96dvh,920px)] w-full max-w-5xl flex-col overflow-hidden rounded-t-3xl border border-border/80 bg-background shadow-2xl sm:rounded-3xl",
+          "relative z-10 flex max-h-[min(96dvh,920px)] w-full max-w-5xl flex-col overflow-hidden rounded-t-xl border border-border/80 bg-background shadow-popover sm:rounded-xl",
           className,
         )}
       >
         <header className="shrink-0 border-b border-border/80 bg-muted/15 px-5 py-5 sm:px-8 sm:py-6">
           <div className="flex items-start gap-4 pr-10">
             {Icon ? (
-              <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-foreground text-background shadow-sm">
+              <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-foreground text-background">
                 <Icon className="size-5" aria-hidden />
               </div>
             ) : null}
@@ -90,7 +90,7 @@ export function LargeModalShell({
             <div className="min-w-0 flex-1 space-y-1">
               <h2
                 id={titleId}
-                className="font-display text-xl font-semibold tracking-tight sm:text-2xl"
+                className="text-xl font-semibold tracking-tight sm:text-2xl"
               >
                 {title}
               </h2>

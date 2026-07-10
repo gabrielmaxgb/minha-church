@@ -78,7 +78,7 @@ export function MinistryServiceFunctionsSection({
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
-            <h2 className="font-display text-lg font-semibold tracking-tight">
+            <h2 className="text-lg font-semibold tracking-tight">
               Funções na escala
             </h2>
             <Button
@@ -110,7 +110,7 @@ export function MinistryServiceFunctionsSection({
         onClose={() => setGuideOpen(false)}
       />
 
-      <div className="rounded-2xl border border-border/70 bg-card p-4 sm:p-5">
+      <div className="rounded-xl border border-border/70 bg-card p-4 sm:p-5">
         {canManage ? (
           <>
             <EventRosterSlotsEditor

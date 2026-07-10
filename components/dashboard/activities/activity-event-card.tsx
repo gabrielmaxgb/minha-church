@@ -33,9 +33,9 @@ export function ActivityEventCard({
       <Link href={activityDetailPath(event.id)} className="block">
         <article
           className={cn(
-            "rounded-2xl border bg-card p-5 shadow-soft transition-shadow duration-300 hover:shadow-elevated",
+            "rounded-xl border bg-card p-5 transition-shadow duration-150 hover:shadow-elevated",
             highlighted
-              ? "border-primary/15 bg-gradient-to-br from-card to-muted/40"
+              ? "border-primary/15 bg-muted/20"
               : "border-border/70",
           )}
         >

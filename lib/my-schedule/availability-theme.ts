@@ -5,20 +5,19 @@ export function getAvailabilityTheme(
 ) {
   if (status === "available") {
     return {
-      shell: "border-emerald-500/35 bg-emerald-500/10",
+      shell: "border-success/30 bg-success-subtle",
       statusTitle: "Você marcou: posso ir",
       statusHint: "Sua disponibilidade foi registrada.",
-      statusTone: "text-emerald-900 dark:text-emerald-100",
-      statusHintTone: "text-emerald-800/80 dark:text-emerald-200/80",
-      roleActive:
-        "border-emerald-700 bg-emerald-700 text-white dark:border-emerald-500 dark:bg-emerald-600",
+      statusTone: "text-success-foreground",
+      statusHintTone: "text-muted-foreground",
+      roleActive: "border-success bg-success text-white",
       roleIdle:
-        "border-emerald-500/25 bg-background/80 text-emerald-900/70 hover:border-emerald-600/40 hover:text-emerald-900 dark:text-emerald-100/80",
-      messageBox: "border-emerald-500/20 bg-emerald-500/8",
-      messageLabel: "text-emerald-800 dark:text-emerald-300",
-      primaryButton: "bg-emerald-600 text-white hover:bg-emerald-600/90",
+        "border-success/25 bg-card text-success-foreground/80 hover:border-success/40 hover:text-success-foreground",
+      messageBox: "border-success/20 bg-success-subtle",
+      messageLabel: "text-success-foreground",
+      primaryButton: "bg-success text-white hover:bg-success/90",
       secondaryButton:
-        "border-emerald-600/40 bg-emerald-500/5 text-emerald-900 hover:bg-emerald-500/15 dark:text-emerald-100",
+        "border-success/40 bg-success-subtle text-success-foreground hover:bg-success/15",
     };
   }
 
@@ -30,28 +29,28 @@ export function getAvailabilityTheme(
       statusTone: "text-destructive",
       statusHintTone: "text-destructive/80",
       roleActive:
-        "border-destructive bg-destructive text-destructive-foreground",
+        "border-destructive bg-destructive text-white",
       roleIdle:
-        "border-destructive/20 bg-background/80 text-destructive/70 hover:border-destructive/35 hover:text-destructive",
+        "border-destructive/20 bg-card text-destructive/70 hover:border-destructive/35 hover:text-destructive",
       messageBox: "border-destructive/20 bg-destructive/5",
       messageLabel: "text-destructive",
-      primaryButton: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+      primaryButton: "bg-destructive text-white hover:bg-destructive/90",
       secondaryButton:
         "border-destructive/40 bg-destructive/5 text-destructive hover:bg-destructive/10",
     };
   }
 
   return {
-    shell: "border-amber-500/35 bg-amber-500/8",
+    shell: "border-attention-border bg-attention-subtle",
     statusTitle: "Ainda não respondeu",
     statusHint: "Escolha se pode ir neste dia.",
-    statusTone: "text-amber-950 dark:text-amber-100",
-    statusHintTone: "text-amber-900/75 dark:text-amber-100/75",
+    statusTone: "text-attention-foreground",
+    statusHintTone: "text-muted-foreground",
     roleActive: "border-foreground bg-foreground text-background",
     roleIdle:
       "border-border bg-background text-muted-foreground hover:border-foreground/30 hover:text-foreground",
-    messageBox: "border-sky-500/20 bg-sky-500/8",
-    messageLabel: "text-sky-800 dark:text-sky-300",
+    messageBox: "border-border bg-muted/40",
+    messageLabel: "text-muted-foreground",
     primaryButton: "",
     secondaryButton: "",
   };

@@ -52,19 +52,19 @@ const PERMISSION_ICONS: Record<ChurchPermissionKey, LucideIcon> = {
 const GROUP_STYLES = {
   sections: {
     icon: Navigation,
-    accent: "text-sky-700 dark:text-sky-300",
-    iconBg: "bg-sky-500/10",
-    cardBorder: "border-sky-500/15",
-    cardActive: "border-sky-500/35 bg-sky-500/6",
-    progress: "bg-sky-500",
+    accent: "text-foreground",
+    iconBg: "bg-muted",
+    cardBorder: "border-border/70",
+    cardActive: "border-border bg-muted/40",
+    progress: "bg-foreground",
   },
   actions: {
     icon: Shield,
-    accent: "text-amber-800 dark:text-amber-300",
-    iconBg: "bg-amber-500/12",
-    cardBorder: "border-amber-500/15",
-    cardActive: "border-amber-500/35 bg-amber-500/6",
-    progress: "bg-amber-500",
+    accent: "text-attention-foreground",
+    iconBg: "bg-attention-mark",
+    cardBorder: "border-attention-border/70",
+    cardActive: "border-attention-border bg-attention-subtle",
+    progress: "bg-attention-emphasis",
   },
 } as const;
 
@@ -214,7 +214,7 @@ function PermissionGroup({
   return (
     <section
       className={cn(
-        "overflow-hidden rounded-2xl border bg-card/30 shadow-soft",
+        "overflow-hidden rounded-xl border bg-card/30",
         styles.cardBorder,
       )}
     >

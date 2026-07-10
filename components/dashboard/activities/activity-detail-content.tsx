@@ -89,7 +89,7 @@ export function ActivityDetailContent({ eventId }: ActivityDetailContentProps) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-5 w-40" />
-        <Skeleton className="h-[28rem] rounded-2xl" />
+        <Skeleton className="h-[28rem] rounded-xl" />
       </div>
     );
   }
@@ -168,8 +168,7 @@ export function ActivityDetailContent({ eventId }: ActivityDetailContentProps) {
         >
         <Card
           className={cn(
-            event.isChurchWide &&
-              "border-primary/15 bg-gradient-to-br from-card to-muted/30",
+            event.isChurchWide && "border-primary/15 bg-muted/20",
           )}
         >
           <CardHeader className="pb-4">
@@ -206,7 +205,7 @@ export function ActivityDetailContent({ eventId }: ActivityDetailContentProps) {
               )}
             </div>
 
-            <h1 className="mt-3 font-display text-2xl font-semibold tracking-tight">
+            <h1 className="page-title mt-3">
               {event.name}
             </h1>
 
@@ -218,14 +217,14 @@ export function ActivityDetailContent({ eventId }: ActivityDetailContentProps) {
           </CardHeader>
 
           <CardContent>
-            <div className="mb-4 flex flex-col gap-4 rounded-2xl border border-primary/20 bg-primary/5 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+            <div className="mb-4 flex flex-col gap-4 rounded-xl border border-primary/20 bg-primary/5 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
               <div className="flex min-w-0 items-center gap-4">
                 {eventDateChip ? (
                   <div
-                    className="flex shrink-0 flex-col items-center justify-center rounded-xl border border-primary/15 bg-background px-3.5 py-2.5 shadow-soft"
+                    className="flex shrink-0 flex-col items-center justify-center rounded-xl border border-primary/15 bg-background px-3.5 py-2.5"
                     aria-hidden
                   >
-                    <span className="font-display text-3xl font-bold leading-none tabular-nums text-foreground">
+                    <span className="text-3xl font-bold leading-none tabular-nums text-foreground">
                       {eventDateChip.day}
                     </span>
                     <span className="mt-1 text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-primary">
@@ -238,7 +237,7 @@ export function ActivityDetailContent({ eventId }: ActivityDetailContentProps) {
                   <p className="text-xs font-semibold uppercase tracking-wide text-primary/80">
                     Data e hora
                   </p>
-                  <p className="mt-1 font-display text-xl font-semibold capitalize leading-tight text-foreground sm:text-2xl">
+                  <p className="mt-1 text-xl font-semibold capitalize leading-tight text-foreground sm:text-2xl">
                     {formatLongDate(new Date(event.startsAt))}
                   </p>
                   {relativeEventDay ? (
@@ -252,7 +251,7 @@ export function ActivityDetailContent({ eventId }: ActivityDetailContentProps) {
               <div className="flex shrink-0 items-center gap-3 sm:flex-col sm:items-end sm:gap-1">
                 <div className="flex items-center gap-2">
                   <Clock className="size-5 text-primary" aria-hidden />
-                  <p className="font-display text-3xl font-bold tabular-nums tracking-tight text-foreground sm:text-4xl">
+                  <p className="text-3xl font-bold tabular-nums tracking-tight text-foreground sm:text-4xl">
                     {formatEventTime(event.startsAt)}
                   </p>
                 </div>

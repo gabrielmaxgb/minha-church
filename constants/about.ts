@@ -17,12 +17,12 @@ export const securityFeatures = [
   {
     title: "Disponibilidade",
     description:
-      "Infraestrutura em nuvem com monitoramento 24/7 e SLA de 99,9% de uptime.",
+      "Infraestrutura em nuvem com monitoramento contínuo e alta disponibilidade.",
   },
   {
     title: "Controle de acesso",
     description:
-      "Permissões granulares por perfil — pastor, tesoureiro, secretário, líder de ministério.",
+      "Permissões por perfil — pastor, tesoureiro, secretário, líder de ministério.",
   },
   {
     title: "Exportação de dados",
@@ -35,7 +35,7 @@ export const aboutStory = {
   origin:
     "O Minha Church nasceu da frustração de ver pastores e líderes perdendo horas em planilhas, grupos de WhatsApp e sistemas genéricos que não entendem a realidade de uma igreja.",
   mission:
-    "Nossa missão é devolver tempo ao ministério — oferecendo uma plataforma simples, acessível e feita especificamente para igrejas evangélicas no Brasil.",
+    "Nossa missão é devolver tempo ao ministério — com uma ferramenta simples, acessível e feita para igrejas evangélicas no Brasil.",
   vision:
-    "Queremos que toda igreja, independente do tamanho, tenha acesso a ferramentas profissionais de gestão sem precisar de um time de TI.",
+    "Queremos que toda igreja, independente do tamanho, organize a semana com clareza — sem precisar de um time de TI.",
 };

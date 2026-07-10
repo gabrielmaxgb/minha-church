@@ -61,14 +61,14 @@ export function EventAvailabilityPanel({
   return (
     <div
       className={cn(
-        "space-y-3 rounded-2xl border p-4 sm:p-5",
+        "space-y-3 rounded-lg border p-4 sm:p-5",
         theme.shell,
         className,
       )}
     >
       {showHeader ? (
         <div className="space-y-1 border-b border-current/10 pb-3">
-          <h3 className="font-display text-base font-semibold tracking-tight">
+          <h3 className="text-sm font-semibold tracking-tight">
             Você pode ir?
           </h3>
           <p className="text-sm text-muted-foreground">

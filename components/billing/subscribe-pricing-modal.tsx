@@ -62,7 +62,7 @@ function TierCard({
         ) : null}
         <CardTitle
           className={cn(
-            "font-display tracking-tight",
+            "tracking-tight",
             isSuggested ? "text-xl font-bold" : "text-base font-semibold",
           )}
         >
@@ -78,7 +78,7 @@ function TierCard({
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-1">
-        <p className="font-display text-3xl font-bold tracking-tight">
+        <p className="text-3xl font-bold tracking-tight">
           {formatCurrency(monthlyPrice)}
           <span
             className={cn(
@@ -176,7 +176,7 @@ export function SubscribePricingModal({
     <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4 md:p-6">
       <button
         type="button"
-        className="absolute inset-0 bg-black/50 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-black/45"
         aria-label="Fechar"
         onClick={onClose}
       />
@@ -184,7 +184,7 @@ export function SubscribePricingModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="subscribe-pricing-title"
-        className="relative z-10 flex max-h-[96vh] w-full max-w-6xl flex-col overflow-hidden rounded-t-3xl border border-border bg-background shadow-2xl sm:rounded-3xl"
+        className="relative z-10 flex max-h-[96vh] w-full max-w-6xl flex-col overflow-hidden rounded-t-xl border border-border bg-background shadow-popover sm:rounded-xl"
       >
         <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-5 sm:px-8 sm:py-6">
           <div className="space-y-2 pr-4">
@@ -193,7 +193,7 @@ export function SubscribePricingModal({
             </p>
             <h2
               id="subscribe-pricing-title"
-              className="font-display text-2xl font-semibold tracking-tight sm:text-3xl"
+              className="text-2xl font-semibold tracking-tight sm:text-3xl"
             >
               O preço certo para o tamanho da sua igreja
             </h2>
@@ -304,8 +304,8 @@ export function SubscribePricingModal({
                   ))}
                 </div>
 
-                <div className="w-full rounded-2xl border border-border bg-muted/25 p-5 sm:p-6">
-                  <p className="text-center font-display text-lg font-semibold tracking-tight">
+                <div className="w-full rounded-xl border border-border bg-muted/25 p-5 sm:p-6">
+                  <p className="text-center text-lg font-semibold tracking-tight">
                     Mesmas funcionalidades em todas as faixas
                   </p>
                   <p className="mx-auto mt-2 max-w-2xl text-center text-sm text-muted-foreground">

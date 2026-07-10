@@ -78,7 +78,7 @@ function VerifyEmailFormContent() {
   return (
     <Card className="w-full max-w-md border-border shadow-none">
       <CardHeader className="text-center">
-        <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+        <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
           {status === "loading" ? (
             <Loader2 className="size-6 animate-spin" aria-hidden />
           ) : status === "success" ? (
@@ -87,7 +87,7 @@ function VerifyEmailFormContent() {
             <XCircle className="size-6 text-destructive" aria-hidden />
           )}
         </div>
-        <CardTitle className="font-display text-2xl">Verificar e-mail</CardTitle>
+        <CardTitle className="text-2xl font-semibold tracking-tight">Verificar e-mail</CardTitle>
         <CardDescription>
           {status === "loading"
             ? "Confirmando seu endereço de e-mail..."

@@ -33,7 +33,7 @@ function StepBadge({
         "flex shrink-0 items-center justify-center rounded-full border-2 font-bold",
         size === "sm" ? "size-6 text-[10px]" : "size-7 text-xs",
         complete
-          ? "border-emerald-600 bg-emerald-600 text-white"
+          ? "border-success bg-success text-white"
           : disabled
             ? "border-border bg-muted text-muted-foreground"
             : "border-foreground bg-background text-foreground",
@@ -95,7 +95,7 @@ export function WorkflowStep({
       </div>
 
       <div className="pb-1">
-        <h3 className="font-display text-base font-semibold tracking-tight text-foreground">
+        <h3 className="text-base font-semibold tracking-tight text-foreground">
           {title}
         </h3>
         <p className="mt-1 text-sm leading-relaxed text-muted-foreground">

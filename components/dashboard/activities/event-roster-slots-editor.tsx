@@ -125,7 +125,7 @@ export function EventRosterSlotsEditor({
         dense ? "space-y-2.5" : "space-y-4",
         embedded
           ? "rounded-lg border border-border/50 bg-background/80 p-2.5"
-          : "rounded-2xl border border-border/80 bg-muted/15 p-4",
+          : "rounded-xl border border-border/80 bg-muted/15 p-4",
         className,
       )}
     >

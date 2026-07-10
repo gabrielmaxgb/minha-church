@@ -2,18 +2,16 @@ import { formatRosterRole } from "@/lib/ministries/roster";
 import { cn } from "@/lib/utils";
 
 const cargoBadgeClassName =
-  "border-sky-500/25 bg-sky-500/10 text-sky-800 dark:text-sky-300";
+  "border-border bg-muted/60 text-foreground";
 const functionBadgeClassName =
-  "border-violet-500/25 bg-violet-500/10 text-violet-700 dark:text-violet-300";
+  "border-border bg-card text-muted-foreground";
 
-const cargoLabelClassName =
-  "text-[10px] font-semibold uppercase tracking-[0.12em] text-sky-700/85 dark:text-sky-400/90";
-const functionLabelClassName =
-  "text-[10px] font-semibold uppercase tracking-[0.12em] text-violet-700/85 dark:text-violet-400/90";
+const sectionLabelClassName =
+  "text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground";
 
 function badgeBaseClassName(size: "sm" | "md") {
   return cn(
-    "inline-flex items-center rounded-full border font-medium",
+    "inline-flex items-center rounded-md border font-medium",
     size === "sm" ? "px-2 py-0.5 text-[11px]" : "px-2.5 py-0.5 text-xs",
   );
 }
@@ -72,7 +70,7 @@ export function MemberMinistryTagsSummary({
 
   return (
     <div className={cn("space-y-1.5", className)}>
-      <TagGroup label="Cargos" labelClassName={cargoLabelClassName}>
+      <TagGroup label="Cargos" labelClassName={sectionLabelClassName}>
         {roles.length > 0 ? (
           roles.map((role) => (
             <MinistryCargoBadge key={role.id}>{role.name}</MinistryCargoBadge>
@@ -83,7 +81,7 @@ export function MemberMinistryTagsSummary({
       </TagGroup>
 
       {(hasFunctions || showEmptyFunctions) && (
-        <TagGroup label="Funções" labelClassName={functionLabelClassName}>
+        <TagGroup label="Funções" labelClassName={sectionLabelClassName}>
           {hasFunctions ? (
             instruments.map((instrument) => (
               <MinistryFunctionBadge key={instrument} label={instrument} />
@@ -116,6 +114,8 @@ function TagGroup({
   );
 }
 
+export const ministryTagSectionTitleClassName = sectionLabelClassName;
+
 export function MinistryTagSection({
   title,
   titleClassName,
@@ -123,13 +123,13 @@ export function MinistryTagSection({
   hint,
 }: {
   title: string;
-  titleClassName: string;
+  titleClassName?: string;
   children: React.ReactNode;
   hint?: string;
 }) {
   return (
     <section className="space-y-2">
-      <p className={titleClassName}>{title}</p>
+      <p className={titleClassName ?? sectionLabelClassName}>{title}</p>
       {children}
       {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
     </section>

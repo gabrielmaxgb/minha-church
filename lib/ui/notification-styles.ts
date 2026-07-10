@@ -6,12 +6,12 @@ export const pendingNotificationStyles = {
   banner: {
     compact:
       "rounded-xl border border-attention-border bg-attention-subtle px-4 py-3",
-    full: `relative overflow-hidden rounded-2xl border border-attention-border/80 bg-attention-subtle py-5 pl-5 pr-5 shadow-soft sm:py-6 sm:pl-6 sm:pr-6 ${accentBar}`,
+    full: `relative overflow-hidden rounded-xl border border-attention-border/80 bg-attention-subtle py-5 pl-5 pr-5 sm:py-6 sm:pl-6 sm:pr-6 ${accentBar}`,
     inline:
       "rounded-xl border border-attention-border bg-attention-subtle px-4 py-3",
-    interactive: `group relative block overflow-hidden rounded-2xl border border-attention-border/80 bg-attention-subtle py-5 pl-5 pr-5 shadow-soft transition-all hover:border-attention-border hover:shadow-soft sm:py-6 sm:pl-6 sm:pr-6 ${accentBar}`,
+    interactive: `group relative block overflow-hidden rounded-xl border border-attention-border/80 bg-attention-subtle py-5 pl-5 pr-5 transition-colors hover:border-attention-border sm:py-6 sm:pl-6 sm:pr-6 ${accentBar}`,
     section:
-      "rounded-3xl border border-attention-border bg-attention-subtle p-5 shadow-soft",
+      "rounded-xl border border-attention-border bg-attention-subtle p-5",
     item: "flex items-start gap-3 rounded-xl border border-attention-border/70 bg-card/70 px-3 py-2.5 transition-colors hover:bg-card",
   },
   icon: {
@@ -33,7 +33,7 @@ export const pendingNotificationStyles = {
       "border border-attention-border/80 bg-attention-mark text-attention-foreground",
     dot: "bg-attention-emphasis",
     card:
-      "overflow-hidden rounded-2xl border border-attention-border/70 bg-card shadow-soft",
+      "overflow-hidden rounded-xl border border-attention-border/70 bg-card",
     cardHeader:
       "border-b border-attention-border/60 bg-attention-subtle px-4 py-3 sm:px-5",
   },

@@ -52,7 +52,7 @@ export function ChurchRolesGuideModal({
     <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
       <button
         type="button"
-        className="absolute inset-0 bg-black/45 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-black/45"
         aria-label="Fechar"
         onClick={onClose}
       />
@@ -61,7 +61,7 @@ export function ChurchRolesGuideModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative z-10 flex w-full max-w-lg flex-col rounded-t-2xl border border-border bg-background shadow-2xl sm:max-h-[min(90dvh,680px)] sm:rounded-2xl"
+        className="relative z-10 flex w-full max-w-lg flex-col rounded-t-xl border border-border bg-background shadow-popover sm:max-h-[min(90dvh,680px)] sm:rounded-xl"
       >
         <header className="flex items-start gap-3 px-6 pb-4 pt-6">
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -70,7 +70,7 @@ export function ChurchRolesGuideModal({
           <div className="min-w-0 flex-1">
             <h2
               id={titleId}
-              className="font-display text-lg font-semibold tracking-tight"
+              className="text-lg font-semibold tracking-tight"
             >
               Como funcionam os cargos
             </h2>
@@ -99,14 +99,14 @@ export function ChurchRolesGuideModal({
             </p>
           </div>
 
-          <section className="rounded-xl border border-sky-500/20 bg-sky-500/5 p-4">
-            <div className="flex items-center gap-2 text-sky-700 dark:text-sky-300">
+          <section className="rounded-xl border border-border/70 bg-muted/15 p-4">
+            <div className="flex items-center gap-2 text-foreground">
               <Shield className="size-4" aria-hidden />
               <h3 className="text-sm font-semibold">Cargos padrão e personalizados</h3>
             </div>
             <ul className="mt-3 space-y-2 text-xs leading-relaxed text-muted-foreground">
               <li className="flex gap-2">
-                <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-sky-500" />
+                <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-muted-foreground" />
                 <span>
                   <strong className="text-foreground">Cargos padrão</strong>{" "}
                   (Administrador, Pastor, Secretário…) vêm com a igreja. Você
@@ -114,7 +114,7 @@ export function ChurchRolesGuideModal({
                 </span>
               </li>
               <li className="flex gap-2">
-                <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-violet-500" />
+                <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-foreground" />
                 <span>
                   <strong className="text-foreground">Cargos personalizados</strong>{" "}
                   são criados por você para necessidades específicas (ex.: líder
@@ -141,13 +141,13 @@ export function ChurchRolesGuideModal({
               <li className="flex gap-2">
                 <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary" />
                 <span>
-                  <strong className="text-foreground">Ações administrativas</strong>{" "}
+                  <strong className="text-foreground">Permissões de edição</strong>{" "}
                   permitem criar, editar e excluir. Ao ativar uma ação, o acesso
                   à seção correspondente é incluído automaticamente.
                 </span>
               </li>
               <li className="flex gap-2">
-                <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-amber-500" />
+                <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-attention-emphasis" />
                 <span>
                   Se você desativar uma seção, as ações ligadas a ela também são
                   removidas — evita permissões “soltas” sem menu.
@@ -170,8 +170,8 @@ export function ChurchRolesGuideModal({
             </p>
           </section>
 
-          <section className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
-            <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300">
+          <section className="rounded-xl border border-attention-border bg-attention-subtle p-4">
+            <div className="flex items-center gap-2 text-attention-foreground">
               <Crown className="size-4" aria-hidden />
               <h3 className="text-sm font-semibold">Proprietário da igreja</h3>
             </div>

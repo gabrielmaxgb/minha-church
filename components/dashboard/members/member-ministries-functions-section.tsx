@@ -82,12 +82,12 @@ function MemberMinistryFunctionsCard({
   }
 
   return (
-    <article className="rounded-2xl border border-border/70 bg-card p-4 sm:p-5">
+    <article className="rounded-lg border border-border bg-card p-4 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <h3 className="font-medium text-foreground">{link.ministryName}</h3>
           <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-sky-700/85 dark:text-sky-400/90">
+            <span className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
               Cargos
             </span>
             {link.roles.length > 0 ? (
@@ -114,13 +114,12 @@ function MemberMinistryFunctionsCard({
       <div className="mt-4">
       <MinistryTagSection
         title="Funções de serviço"
-        titleClassName="text-[10px] font-semibold uppercase tracking-[0.12em] text-violet-700/85 dark:text-violet-400/90"
         hint="Marque as funções em que você pode servir neste ministério."
       >
         {isLoading ? (
-          <Skeleton className="h-20 w-full rounded-xl" />
+          <Skeleton className="h-20 w-full rounded-lg" />
         ) : catalog.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-border bg-muted/15 px-4 py-5 text-sm text-muted-foreground">
+          <p className="rounded-lg border border-dashed border-border bg-muted/15 px-4 py-5 text-sm text-muted-foreground">
             O líder ainda não definiu as funções deste ministério.
           </p>
         ) : editable ? (
@@ -136,12 +135,12 @@ function MemberMinistryFunctionsCard({
                   disabled={updateInstruments.isPending || (locked && active)}
                   onClick={() => toggleRole(item.label)}
                   className={cn(
-                    "rounded-full border px-3 py-1.5 text-sm transition-colors disabled:opacity-50",
+                    "rounded-md border px-3 py-1.5 text-sm transition-colors disabled:opacity-50",
                     active
                       ? locked
-                        ? "cursor-default border-violet-500/25 bg-violet-500/12 text-violet-800 dark:text-violet-300"
-                        : "border-violet-500/25 bg-violet-600 text-white"
-                      : "border-border bg-background text-muted-foreground hover:border-violet-500/25 hover:text-foreground",
+                        ? "cursor-default border-border bg-muted text-foreground"
+                        : "border-foreground bg-foreground text-background"
+                      : "border-border bg-background text-muted-foreground hover:border-foreground/30 hover:text-foreground",
                     locked && active && "cursor-default",
                   )}
                 >

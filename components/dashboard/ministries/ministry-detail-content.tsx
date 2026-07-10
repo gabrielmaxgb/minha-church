@@ -221,7 +221,7 @@ export function MinistryDetailContent({ ministryId }: MinistryDetailContentProps
       </Link>
 
       <div className="flex flex-wrap items-center gap-2">
-        <h1 className="font-display text-2xl font-semibold">{ministry.name}</h1>
+        <h1 className="page-title">{ministry.name}</h1>
         {inactive && (
           <Badge variant="outline">Inativo</Badge>
         )}

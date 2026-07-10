@@ -2,12 +2,11 @@
 
 import { Container } from "@/components/layout/container";
 import { CtaBanner } from "@/components/marketing/cta-banner";
-import { MotionSection } from "@/components/motion/motion-section";
-import { Heading, SectionHeader, SectionLabel } from "@/components/ui/heading";
+import { MotionDiv, MotionSection } from "@/components/motion/motion-section";
+import { Heading } from "@/components/ui/heading";
 import { aboutStory } from "@/constants/about";
 import { PUBLIC_ROUTES } from "@/constants/routes";
-import { fadeInUp, staggerContainer, staggerItem } from "@/lib/motion";
-import { motion } from "motion/react";
+import { fadeInUp } from "@/lib/motion";
 
 const values = [
   {
@@ -31,58 +30,62 @@ export function AboutContent() {
   return (
     <>
       <section className="border-b border-border">
-        <Container className="py-24 sm:py-32">
-          <MotionSection className="mx-auto max-w-3xl text-center" variants={fadeInUp}>
-            <SectionLabel>Nossa história</SectionLabel>
-            <Heading as="h1" className="mt-3">
+        <Container className="py-16 sm:py-20 lg:py-24">
+          <MotionDiv variants={fadeInUp} className="max-w-2xl">
+            <Heading as="h1" className="text-balance">
               Por que criamos o Minha Church
             </Heading>
-            <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
+            <p className="mt-5 text-base leading-relaxed text-muted-foreground sm:text-lg">
               {aboutStory.origin}
             </p>
-          </MotionSection>
+          </MotionDiv>
         </Container>
       </section>
 
-      <section className="py-24 sm:py-32">
+      <section className="border-b border-border py-16 sm:py-24">
         <Container>
-          <div className="mx-auto max-w-3xl">
-            <Heading as="h2">Nossa missão</Heading>
+          <MotionSection variants={fadeInUp} className="max-w-2xl">
+            <Heading as="h2">Missão</Heading>
             <p className="mt-4 leading-relaxed text-muted-foreground">
               {aboutStory.mission}
             </p>
             <p className="mt-4 leading-relaxed text-muted-foreground">
               {aboutStory.vision}
             </p>
-          </div>
+          </MotionSection>
         </Container>
       </section>
 
-      <section className="border-y border-border bg-muted/40 py-24 sm:py-32">
+      <section className="border-b border-border py-16 sm:py-24">
         <Container>
-          <SectionHeader
-            label="Valores"
-            title="Nossos princípios"
-            description="O que guia cada decisão que tomamos."
-          />
-
-          <MotionSection
-            className="mt-16 grid gap-6 md:grid-cols-3"
-            variants={staggerContainer}
-          >
-            {values.map((value) => (
-              <motion.div
-                key={value.title}
-                variants={staggerItem}
-                className="rounded-lg border border-border bg-background p-6"
-              >
-                <Heading as="h3">{value.title}</Heading>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  {value.description}
-                </p>
-              </motion.div>
-            ))}
+          <MotionSection variants={fadeInUp} className="max-w-2xl">
+            <Heading as="h2">Princípios</Heading>
+            <p className="mt-3 text-muted-foreground">
+              O que guia cada decisão que tomamos.
+            </p>
           </MotionSection>
+
+          <div className="mt-12 divide-y divide-border border-y border-border">
+            {values.map((value, index) => (
+              <MotionDiv
+                key={value.title}
+                variants={fadeInUp}
+                className="grid gap-4 py-8 sm:grid-cols-[4rem_1fr] sm:gap-8"
+              >
+                <span className="font-mono text-sm text-muted-foreground">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <div>
+                  <h3 className="text-base font-medium text-foreground">
+                    {value.title}
+                  </h3>
+                  <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+                    {value.description}
+                  </p>
+                </div>
+              </MotionDiv>
+            ))}
+          </div>
         </Container>
       </section>
 

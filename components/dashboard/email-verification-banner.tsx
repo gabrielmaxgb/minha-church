@@ -68,10 +68,10 @@ export function EmailVerificationBanner() {
   }
 
   return (
-    <div className="mb-6 rounded-2xl border border-amber-500/25 bg-amber-500/10 px-4 py-4 sm:px-5">
+    <div className="mb-6 rounded-xl border border-attention-border bg-attention-subtle px-4 py-4 sm:px-5">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex gap-3">
-          <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-amber-700 dark:text-amber-300">
+          <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-attention-mark text-attention-foreground">
             <MailCheck className="size-4" aria-hidden />
           </div>
           <div className="space-y-1">
@@ -83,10 +83,10 @@ export function EmailVerificationBanner() {
               Confirme para concluir o cadastro da igreja e usar todos os recursos do painel.
             </p>
             {feedback && (
-              <p className="text-sm text-emerald-700 dark:text-emerald-300">{feedback}</p>
+              <p className="text-sm text-success-foreground">{feedback}</p>
             )}
             {pendingHint && (
-              <p className="text-sm leading-relaxed text-amber-900/80 dark:text-amber-100/90">
+              <p className="text-sm leading-relaxed text-attention-foreground">
                 {pendingHint}
               </p>
             )}
@@ -99,7 +99,7 @@ export function EmailVerificationBanner() {
             type="button"
             variant="outline"
             size="sm"
-            className="border-amber-500/30 bg-background/80"
+            className="border-attention-border bg-card"
             disabled={isSending || isRefreshing}
             onClick={() => void handleResend()}
           >

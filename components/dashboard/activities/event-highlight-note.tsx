@@ -15,7 +15,7 @@ export function EventHighlightNote({ note, className }: EventHighlightNoteProps)
   return (
     <div
       className={cn(
-        "rounded-2xl border-l-4 border-primary bg-primary/5 px-5 py-4",
+        "rounded-xl border-l-4 border-primary bg-primary/5 px-5 py-4",
         className,
       )}
     >

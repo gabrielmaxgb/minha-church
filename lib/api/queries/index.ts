@@ -44,6 +44,12 @@ export {
 } from "@/lib/api/queries/use-event-mutations";
 export { useDashboardSummary } from "@/lib/api/queries/use-dashboard-summary";
 export { useAckMinistryCatalogNotifications, useMember, useMembers, useMembersInfinite, useMyMember, useMyMinistryNotifications, useReceiveMember } from "@/lib/api/queries/use-members";
+export { useCreateFamily, useFamilies } from "@/lib/api/queries/use-families";
+export {
+  useCreateMemberRelation,
+  useDeleteMemberRelation,
+  useFamilyGraph,
+} from "@/lib/api/queries/use-family-graph";
 export {
   useCreateMember,
   useDeleteMember,

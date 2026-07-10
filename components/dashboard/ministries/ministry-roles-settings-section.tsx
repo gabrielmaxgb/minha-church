@@ -76,7 +76,7 @@ function MinistryRolePermissionsPanel({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="font-display text-base font-semibold tracking-tight">
+              <h3 className="text-sm font-medium tracking-tight">
                 {role.name}
               </h3>
               <Badge variant="secondary" className="font-normal tabular-nums">
@@ -115,7 +115,7 @@ function MinistryRolePermissionsPanel({
             aria-label={`${role.name}: ${enabledCount} de ${MINISTRY_PERMISSIONS.length} permissões`}
           >
             <div
-              className="h-full rounded-full bg-sky-500 transition-all duration-300 ease-out"
+              className="h-full rounded-full bg-foreground transition-all duration-150 ease-out"
               style={{
                 width: `${(enabledCount / MINISTRY_PERMISSIONS.length) * 100}%`,
               }}
@@ -272,7 +272,7 @@ export function MinistryRolesSettingsSection({
                         className="h-9 text-sm"
                       />
                       {looksLikeFunction && (
-                        <p className="rounded-lg border border-amber-500/25 bg-amber-500/5 px-2.5 py-2 text-xs leading-relaxed text-muted-foreground">
+                        <p className="rounded-lg border border-attention-border bg-attention-subtle px-2.5 py-2 text-xs leading-relaxed text-muted-foreground">
                           Isso parece uma{" "}
                           <strong className="text-foreground">
                             função na escala

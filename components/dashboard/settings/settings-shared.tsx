@@ -18,7 +18,7 @@ export function SettingsSectionHeader({
   return (
     <div className="mb-5 flex items-start justify-between gap-3">
       <div className="min-w-0 flex-1">
-        <h2 className="font-display text-lg font-semibold tracking-tight">
+        <h2 className="text-lg font-semibold tracking-tight">
           {title}
         </h2>
         {description && (
@@ -180,7 +180,7 @@ export function SettingsFilterPill({
       className={cn(
         "rounded-full border px-2.5 py-1 text-[11px] font-medium transition-all duration-200",
         active
-          ? "border-primary/20 bg-primary text-primary-foreground shadow-soft"
+          ? "border-primary/20 bg-primary text-primary-foreground"
           : "border-border/70 bg-background/60 text-muted-foreground hover:bg-muted/60 hover:text-foreground",
       )}
     >
@@ -207,7 +207,7 @@ export function SettingsExpandableRow({
   children: React.ReactNode;
 }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-soft transition-shadow duration-200 hover:shadow-elevated">
+    <div className="overflow-hidden rounded-xl border border-border/70 bg-card transition-colors duration-200 hover:border-border">
       <button
         type="button"
         onClick={onToggle}
@@ -224,7 +224,7 @@ export function SettingsExpandableRow({
             <span className="truncate font-medium">{title}</span>
             {dirty && (
               <span
-                className="size-1.5 shrink-0 rounded-full bg-amber-500"
+                className="size-1.5 shrink-0 rounded-full bg-attention-emphasis"
                 aria-label="Alterações não salvas"
               />
             )}
@@ -288,7 +288,7 @@ export function SettingsSidebarItem({
         <span className="truncate">{label}</span>
         {dirty && (
           <span
-            className="ml-auto size-1.5 shrink-0 rounded-full bg-amber-500"
+            className="ml-auto size-1.5 shrink-0 rounded-full bg-attention-emphasis"
             aria-label="Alterações não salvas"
           />
         )}

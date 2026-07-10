@@ -216,10 +216,7 @@ export function MinistryMembersList({
 
                 {isExpanded && (
                   <div className="space-y-4 border-t border-border/60 px-3 pb-3 pt-3">
-                    <MinistryTagSection
-                      title="Cargos"
-                      titleClassName="text-[10px] font-semibold uppercase tracking-[0.12em] text-sky-700/85 dark:text-sky-400/90"
-                    >
+                    <MinistryTagSection title="Cargos">
                       {canManage ? (
                         <MinistryRoleToggles
                           roles={roles}
@@ -252,7 +249,6 @@ export function MinistryMembersList({
                     {(member.instruments?.length ?? 0) > 0 && (
                       <MinistryTagSection
                         title="Funções de serviço"
-                        titleClassName="text-[10px] font-semibold uppercase tracking-[0.12em] text-violet-700/85 dark:text-violet-400/90"
                         hint={
                           canManage
                             ? "O membro define as funções no perfil, em Ministérios e Grupos de serviço."
@@ -297,7 +293,7 @@ function FilterPill({
       className={cn(
         "rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-200",
         active
-          ? "border-primary/20 bg-primary text-primary-foreground shadow-soft"
+          ? "border-primary/20 bg-primary text-primary-foreground"
           : "border-border/80 bg-card text-muted-foreground hover:bg-muted/60 hover:text-foreground",
       )}
     >

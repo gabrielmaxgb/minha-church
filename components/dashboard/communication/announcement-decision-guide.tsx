@@ -57,7 +57,7 @@ export function AnnouncementDecisionGuide({
     <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
       <button
         type="button"
-        className="absolute inset-0 bg-black/45 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-black/45"
         aria-label="Fechar"
         onClick={onClose}
       />
@@ -66,14 +66,14 @@ export function AnnouncementDecisionGuide({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative z-10 flex w-full max-w-lg flex-col rounded-t-2xl border border-border bg-background shadow-2xl sm:max-h-[min(90dvh,640px)] sm:rounded-2xl"
+        className="relative z-10 flex w-full max-w-lg flex-col rounded-t-xl border border-border bg-background shadow-popover sm:max-h-[min(90dvh,640px)] sm:rounded-xl"
       >
         <header className="flex items-start gap-3 px-6 pb-4 pt-6">
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <HelpCircle className="size-5" aria-hidden />
           </div>
           <div className="min-w-0 flex-1">
-            <h2 id={titleId} className="font-display text-lg font-semibold tracking-tight">
+            <h2 id={titleId} className="text-lg font-semibold tracking-tight">
               Comunicado ou evento?
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -102,8 +102,8 @@ export function AnnouncementDecisionGuide({
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
-            <section className="rounded-xl border border-sky-500/20 bg-sky-500/5 p-4">
-              <div className="flex items-center gap-2 text-sky-700 dark:text-sky-300">
+            <section className="rounded-xl border border-border/70 bg-muted/15 p-4">
+              <div className="flex items-center gap-2 text-foreground">
                 <CalendarDays className="size-4" aria-hidden />
                 <h3 className="text-sm font-semibold">Crie um evento</h3>
               </div>
@@ -113,15 +113,15 @@ export function AnnouncementDecisionGuide({
                     key={sign}
                     className="flex gap-2 text-xs leading-relaxed text-muted-foreground"
                   >
-                    <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-sky-500" />
+                    <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-muted-foreground" />
                     {sign}
                   </li>
                 ))}
               </ul>
             </section>
 
-            <section className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
-              <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300">
+            <section className="rounded-xl border border-attention-border bg-attention-subtle p-4">
+              <div className="flex items-center gap-2 text-attention-foreground">
                 <Megaphone className="size-4" aria-hidden />
                 <h3 className="text-sm font-semibold">Crie um comunicado</h3>
               </div>
@@ -131,7 +131,7 @@ export function AnnouncementDecisionGuide({
                     key={sign}
                     className="flex gap-2 text-xs leading-relaxed text-muted-foreground"
                   >
-                    <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-amber-500" />
+                    <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-attention-mark" />
                     {sign}
                   </li>
                 ))}

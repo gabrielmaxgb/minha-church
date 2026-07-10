@@ -218,7 +218,7 @@ export function ActivityCalendar({
           >
             <ChevronRight className="size-4" />
           </Button>
-          <h2 className="ml-1 font-display text-lg font-semibold tracking-tight">
+          <h2 className="ml-1 text-lg font-semibold tracking-tight">
             {formatMonthTitle(year, monthIndex)}
           </h2>
         </div>
@@ -234,7 +234,7 @@ export function ActivityCalendar({
           Igreja
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span className="size-2.5 rounded-full bg-sky-500" />
+          <span className="size-2.5 rounded-full bg-muted-foreground" />
           Ministério
         </span>
         <span className="text-muted-foreground/80">
@@ -249,7 +249,7 @@ export function ActivityCalendar({
       )}
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
-        <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-soft">
+        <div className="overflow-hidden rounded-xl border border-border/70 bg-card">
           <div className="grid grid-cols-7 border-b border-border/60 bg-muted/30">
             {getWeekdayLabels().map((label) => (
               <div
@@ -314,7 +314,7 @@ export function ActivityCalendar({
                         <span
                           className={cn(
                             "hidden size-1.5 rounded-full sm:block",
-                            hasChurchEvent ? "bg-foreground" : "bg-sky-500",
+                            hasChurchEvent ? "bg-foreground" : "bg-muted-foreground",
                           )}
                         />
                       )}
@@ -328,7 +328,7 @@ export function ActivityCalendar({
                             "truncate rounded px-1 py-0.5 text-[10px] font-medium leading-tight",
                             event.isChurchWide
                               ? "bg-foreground text-background"
-                              : "bg-sky-500/15 text-sky-900 dark:text-sky-100",
+                              : "bg-muted text-muted-foreground",
                           )}
                           title={event.name}
                         >
@@ -348,7 +348,7 @@ export function ActivityCalendar({
                           key={event.id}
                           className={cn(
                             "size-1.5 rounded-full",
-                            event.isChurchWide ? "bg-foreground" : "bg-sky-500",
+                            event.isChurchWide ? "bg-foreground" : "bg-muted-foreground",
                           )}
                         />
                       ))}
@@ -360,7 +360,7 @@ export function ActivityCalendar({
           )}
         </div>
 
-        <aside className="rounded-2xl border border-border/70 bg-card p-4 shadow-soft">
+        <aside className="rounded-xl border border-border/70 bg-card p-4">
           <div className="mb-3 flex items-start justify-between gap-2">
             <div className="min-w-0">
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -374,8 +374,8 @@ export function ActivityCalendar({
                   }
                   animate={{ opacity: 1, y: 0 }}
                   exit={shouldReduceMotion ? undefined : { opacity: 0, y: -6 }}
-                  transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                  className="mt-1 font-display text-xl font-bold tracking-tight capitalize text-foreground"
+                  transition={{ duration: 0.15, ease: [0.22, 1, 0.36, 1] }}
+                  className="mt-1 text-xl font-semibold tracking-tight capitalize text-foreground"
                 >
                   {selectedInMonth || selectedDateKey
                     ? formatDayTitle(selectedDateKey)
@@ -409,7 +409,7 @@ export function ActivityCalendar({
                 initial={shouldReduceMotion ? false : { opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={shouldReduceMotion ? undefined : { opacity: 0, y: -8 }}
-                transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ duration: 0.15, ease: [0.22, 1, 0.36, 1] }}
               >
                 {selectedEvents.length === 0 ? (
                   <div className="rounded-xl border border-dashed border-border/80 bg-muted/15 px-4 py-8 text-center">
@@ -442,7 +442,7 @@ export function ActivityCalendar({
                               "size-2 rounded-full",
                               group.kind === "church"
                                 ? "bg-foreground"
-                                : "bg-sky-500",
+                                : "bg-muted-foreground",
                             )}
                           />
                           {group.label}

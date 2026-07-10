@@ -54,7 +54,7 @@ export function RosterFunctionsEditor({
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border/70 bg-muted/10">
+    <div className="overflow-hidden rounded-xl border border-border/70 bg-muted/10">
       <div className="space-y-5 p-4 sm:p-5">
         <div className="space-y-3">
           <div>

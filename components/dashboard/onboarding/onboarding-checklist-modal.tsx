@@ -71,7 +71,7 @@ export function OnboardingChecklistModal({
     <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
       <button
         type="button"
-        className="absolute inset-0 bg-black/45 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-black/45"
         aria-label="Fechar guia de primeiros passos"
         onClick={onClose}
       />
@@ -81,7 +81,7 @@ export function OnboardingChecklistModal({
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={descriptionId}
-        className="relative z-10 flex max-h-[min(94dvh,760px)] w-full max-w-lg flex-col rounded-t-2xl border border-border bg-background shadow-2xl sm:rounded-2xl"
+        className="relative z-10 flex max-h-[min(94dvh,760px)] w-full max-w-lg flex-col rounded-t-xl border border-border bg-background shadow-popover sm:rounded-xl"
       >
         <header className="flex items-start gap-4 px-6 pb-4 pt-6">
           <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
@@ -90,7 +90,7 @@ export function OnboardingChecklistModal({
           <div className="min-w-0 flex-1 pt-0.5">
             <h2
               id={titleId}
-              className="font-display text-xl font-semibold tracking-tight"
+              className="text-xl font-semibold tracking-tight"
             >
               Primeiros passos
             </h2>
@@ -117,7 +117,7 @@ export function OnboardingChecklistModal({
               {completed} de {total} concluído{completed === 1 ? "" : "s"}
             </span>
             {allDone && (
-              <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-success-foreground">
                 <Check className="size-3.5" aria-hidden />
                 Tudo pronto!
               </span>
@@ -144,9 +144,9 @@ export function OnboardingChecklistModal({
             <li key={step.id}>
               <div
                 className={cn(
-                  "flex items-start gap-3 rounded-2xl border p-4 transition-colors",
+                  "flex items-start gap-3 rounded-xl border p-4 transition-colors",
                   step.done
-                    ? "border-emerald-500/25 bg-emerald-500/6"
+                    ? "border-success/30 bg-success-subtle"
                     : "border-border/70 bg-surface-elevated/60",
                 )}
               >
@@ -154,7 +154,7 @@ export function OnboardingChecklistModal({
                   className={cn(
                     "mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full border text-[11px] font-semibold",
                     step.done
-                      ? "border-emerald-500/40 bg-emerald-500 text-white"
+                      ? "border-success/40 bg-success text-white"
                       : "border-border bg-background text-muted-foreground",
                   )}
                   aria-hidden

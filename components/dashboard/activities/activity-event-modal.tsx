@@ -21,6 +21,7 @@ import { ActivityScheduleFields } from "@/components/dashboard/activities/activi
 import { EventHighlightNote } from "@/components/dashboard/activities/event-highlight-note";
 import { EventFormSection } from "@/components/dashboard/activities/event-form-section";
 import { EventMutationScopeDialog } from "@/components/dashboard/activities/event-mutation-scope-dialog";
+import { EventRecurrenceFields } from "@/components/dashboard/activities/event-recurrence-fields";
 import { EventVisibilityFields } from "@/components/dashboard/activities/event-visibility-fields";
 import { LargeModalShell } from "@/components/dashboard/activities/large-modal-shell";
 import { TrialExpiredWriteModal } from "@/components/dashboard/trial-expired-write-modal";
@@ -37,7 +38,15 @@ import {
   useUpdateChurchEvent,
 } from "@/lib/api/queries";
 import { toDatetimeLocalValue } from "@/lib/activities/datetime";
-import { formatRecurrenceSummary } from "@/lib/events/recurrence";
+import {
+  buildRecurrencePayload,
+  defaultRecurrenceFormState,
+  formatRecurrenceSummary,
+  recurrenceFormStateFromEvent,
+  recurrenceFormStatesEqual,
+  syncRecurrenceDaysWithStart,
+  type EventRecurrenceFormState,
+} from "@/lib/events/recurrence";
 import {
   canManageActivity,
   canManageEventRoster,
@@ -76,6 +85,13 @@ export function ActivityEventModal({
   const [startsAt, setStartsAt] = useState("");
   const [endsAt, setEndsAt] = useState("");
   const [visibleToChurch, setVisibleToChurch] = useState(true);
+  const [recurrence, setRecurrence] = useState<EventRecurrenceFormState>(
+    defaultRecurrenceFormState(new Date().toISOString()),
+  );
+  const [initialRecurrence, setInitialRecurrence] =
+    useState<EventRecurrenceFormState>(
+      defaultRecurrenceFormState(new Date().toISOString()),
+    );
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [scopeDialog, setScopeDialog] = useState<"edit" | "delete" | null>(null);
@@ -84,6 +100,11 @@ export function ActivityEventModal({
   const deleteEvent = useDeleteChurchEvent(eventId ?? "");
 
   const isRecurring = Boolean(event?.recurrenceSeriesId && event?.recurrence);
+  const recurrenceChanged = !recurrenceFormStatesEqual(
+    recurrence,
+    initialRecurrence,
+  );
+  const recurrenceRequiresSeriesScope = recurrenceChanged && isRecurring;
   const canManage =
     event && permissions
       ? canManageActivity(permissions, event, user?.id ?? null)
@@ -113,7 +134,8 @@ export function ActivityEventModal({
       startsAt !== toDatetimeLocalValue(event.startsAt) ||
       (endsAt || "") !==
         (event.endsAt ? toDatetimeLocalValue(event.endsAt) : "") ||
-      visibleToChurch !== (event.visibleToChurch ?? true)
+      visibleToChurch !== (event.visibleToChurch ?? true) ||
+      recurrenceChanged
     );
   }, [
     event,
@@ -125,6 +147,7 @@ export function ActivityEventModal({
     startsAt,
     endsAt,
     visibleToChurch,
+    recurrenceChanged,
   ]);
 
   useEffect(() => {
@@ -144,13 +167,21 @@ export function ActivityEventModal({
       return;
     }
 
+    const nextStarts = toDatetimeLocalValue(event.startsAt);
+    const nextRecurrence = recurrenceFormStateFromEvent(
+      event.recurrence,
+      nextStarts,
+    );
+
     setName(event.name);
     setDescription(event.description ?? "");
     setHighlightNote(event.highlightNote ?? "");
     setLocation(event.location ?? "");
-    setStartsAt(toDatetimeLocalValue(event.startsAt));
+    setStartsAt(nextStarts);
     setEndsAt(event.endsAt ? toDatetimeLocalValue(event.endsAt) : "");
     setVisibleToChurch(event.visibleToChurch ?? true);
+    setRecurrence(nextRecurrence);
+    setInitialRecurrence(nextRecurrence);
     setError(null);
     setConfirmDelete(false);
   }, [event, mode]);
@@ -159,6 +190,28 @@ export function ActivityEventModal({
     if (!event) {
       return;
     }
+
+    if (
+      recurrence.endType === "on_date" &&
+      recurrence.repeatMode !== "none" &&
+      !recurrence.endDate
+    ) {
+      setError("Informe a data final da repetição.");
+      setScopeDialog(null);
+      return;
+    }
+
+    const recurrencePayload = recurrenceChanged
+      ? recurrence.repeatMode === "none"
+        ? null
+        : buildRecurrencePayload(recurrence)
+      : undefined;
+
+    const resolvedScope = recurrenceRequiresSeriesScope
+      ? scope === "this" || !scope
+        ? "this_and_following"
+        : scope
+      : scope;
 
     try {
       await updateEvent.mutateAsync({
@@ -169,10 +222,17 @@ export function ActivityEventModal({
         startsAt: new Date(startsAt).toISOString(),
         endsAt: endsAt ? new Date(endsAt).toISOString() : null,
         visibleToChurch: event.ministryId ? visibleToChurch : undefined,
-        ...(isRecurring && scope ? { scope } : {}),
+        ...(recurrencePayload !== undefined
+          ? { recurrence: recurrencePayload }
+          : {}),
+        ...(isRecurring && resolvedScope ? { scope: resolvedScope } : {}),
       });
       setScopeDialog(null);
-      setMode("view");
+      if (initialMode === "edit") {
+        onClose();
+      } else {
+        setMode("view");
+      }
     } catch (saveError) {
       setError(
         saveError instanceof Error
@@ -204,6 +264,15 @@ export function ActivityEventModal({
 
     if (!name.trim()) {
       setError("Informe o nome da atividade.");
+      return;
+    }
+
+    if (
+      recurrence.endType === "on_date" &&
+      recurrence.repeatMode !== "none" &&
+      !recurrence.endDate
+    ) {
+      setError("Informe a data final da repetição.");
       return;
     }
 
@@ -295,9 +364,13 @@ export function ActivityEventModal({
                 variant="outline"
                 disabled={isPending}
                 onClick={() => {
-                  setMode("view");
                   setConfirmDelete(false);
                   setError(null);
+                  if (initialMode === "edit") {
+                    onClose();
+                    return;
+                  }
+                  setMode("view");
                 }}
               >
                 Cancelar edição
@@ -501,10 +574,28 @@ export function ActivityEventModal({
                 idPrefix="event-modal"
                 startsAt={startsAt}
                 endsAt={endsAt}
-                onStartsAtChange={setStartsAt}
+                onStartsAtChange={(value) => {
+                  setStartsAt(value);
+                  setRecurrence((current) =>
+                    syncRecurrenceDaysWithStart(current, value),
+                  );
+                }}
                 onEndsAtChange={setEndsAt}
                 disabled={isPending}
                 elevated
+              />
+            </EventFormSection>
+
+            <EventFormSection
+              title="Repetição"
+              description="Trate a série como um único evento — altere a regra quando precisar."
+              icon={Repeat}
+            >
+              <EventRecurrenceFields
+                value={recurrence}
+                onChange={setRecurrence}
+                startsAt={startsAt}
+                disabled={isPending}
               />
             </EventFormSection>
 
@@ -578,6 +669,9 @@ export function ActivityEventModal({
         open={scopeDialog !== null}
         action={scopeDialog === "delete" ? "delete" : "edit"}
         busy={isPending}
+        hideThisOption={
+          scopeDialog === "edit" && recurrenceRequiresSeriesScope
+        }
         onCancel={() => setScopeDialog(null)}
         onConfirm={(scope) => {
           if (scopeDialog === "delete") {

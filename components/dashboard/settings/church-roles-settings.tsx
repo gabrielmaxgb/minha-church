@@ -62,16 +62,14 @@ function permissionsEqual(
 
 const CHURCH_ROLE_GROUP_TONES = {
   system: {
-    label: "text-sky-700 dark:text-sky-300",
-    dot: "bg-sky-500",
-    badge:
-      "bg-sky-500/10 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300",
+    label: "text-muted-foreground",
+    dot: "bg-foreground/50",
+    badge: "bg-muted text-muted-foreground",
   },
   custom: {
-    label: "text-violet-700 dark:text-violet-300",
-    dot: "bg-violet-500",
-    badge:
-      "bg-violet-500/10 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300",
+    label: "text-foreground",
+    dot: "bg-foreground",
+    badge: "bg-muted text-foreground",
   },
 } as const;
 
@@ -328,7 +326,7 @@ export function ChurchRolesSettings() {
         setPermissionConfirm({
           title: "Limpar acesso às seções?",
           description:
-            "As ações administrativas vinculadas a cada seção também serão removidas — por exemplo, desativar “Membros” remove “Gerenciar membros”.",
+            "As permissões de edição ligadas a cada área também serão removidas — por exemplo, desativar “Membros” remove “Cadastrar e editar membros”.",
           roleId: role.id,
           nextPermissions: next,
         });
@@ -741,7 +739,7 @@ function PermissionLinkConfirmDialog({
     <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
       <button
         type="button"
-        className="absolute inset-0 bg-black/45 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-black/45"
         aria-label="Fechar"
         onClick={onCancel}
       />
@@ -749,9 +747,9 @@ function PermissionLinkConfirmDialog({
       <div
         role="dialog"
         aria-modal="true"
-        className="relative z-10 w-full max-w-md rounded-t-2xl border border-border bg-background p-6 shadow-2xl sm:rounded-2xl"
+        className="relative z-10 w-full max-w-md rounded-t-xl border border-border bg-background p-6 shadow-popover sm:rounded-xl"
       >
-        <h2 className="font-display text-lg font-semibold tracking-tight">
+        <h2 className="text-lg font-semibold tracking-tight">
           {title}
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
@@ -795,7 +793,7 @@ function DeleteRoleConfirmDialog({
     <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
       <button
         type="button"
-        className="absolute inset-0 bg-black/45 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-black/45"
         aria-label="Fechar"
         disabled={isDeleting}
         onClick={() => {
@@ -808,9 +806,9 @@ function DeleteRoleConfirmDialog({
       <div
         role="dialog"
         aria-modal="true"
-        className="relative z-10 w-full max-w-md rounded-t-2xl border border-border bg-background p-6 shadow-2xl sm:rounded-2xl"
+        className="relative z-10 w-full max-w-md rounded-t-xl border border-border bg-background p-6 shadow-popover sm:rounded-xl"
       >
-        <h2 className="font-display text-lg font-semibold tracking-tight">
+        <h2 className="text-lg font-semibold tracking-tight">
           Excluir cargo &quot;{roleName}&quot;?
         </h2>
         <p className="mt-2 text-sm text-muted-foreground">

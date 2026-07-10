@@ -159,7 +159,7 @@ export function EventRosterAssignments({
             {assignments.map((assignment) => (
               <li
                 key={assignment.id}
-                className="flex items-center justify-between gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-3"
+                className="flex items-center justify-between gap-3 rounded-xl border border-success/30 bg-success-subtle px-4 py-3"
               >
                 <div className="flex min-w-0 items-center gap-2">
                   <Badge variant="secondary" className="shrink-0">
@@ -290,13 +290,13 @@ export function EventRosterPublicCard({
   }
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-soft">
+    <section className="overflow-hidden rounded-xl border border-border/80 bg-card">
       <header className="flex items-start gap-3 border-b border-border/60 bg-muted/25 px-5 py-4">
         <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-foreground text-background">
           <Users className="size-4" aria-hidden />
         </div>
         <div>
-          <h3 className="font-display text-base font-semibold tracking-tight">
+          <h3 className="text-base font-semibold tracking-tight">
             Equipe escalada
           </h3>
           <p className="mt-0.5 text-sm text-muted-foreground">

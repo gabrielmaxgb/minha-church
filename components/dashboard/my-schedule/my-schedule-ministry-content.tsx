@@ -146,14 +146,14 @@ export function MyScheduleMinistryContent({
     return (
       <div className="space-y-4">
         <Skeleton className="h-5 w-32" />
-        <Skeleton className="h-64 rounded-2xl" />
+        <Skeleton className="h-64 rounded-lg" />
       </div>
     );
   }
 
   if (isError || !data) {
     return (
-      <div className="rounded-2xl border border-border bg-muted/20 px-5 py-8 text-center text-sm text-muted-foreground">
+      <div className="rounded-lg border border-border bg-muted/20 px-5 py-8 text-center text-sm text-muted-foreground">
         Não foi possível carregar suas escalas. Tente novamente em instantes.
       </div>
     );
@@ -168,9 +168,9 @@ export function MyScheduleMinistryContent({
             Minhas escalas
           </Link>
         </Button>
-        <div className="rounded-2xl border border-dashed border-border bg-muted/15 px-6 py-12 text-center">
+        <div className="rounded-lg border border-dashed border-border bg-muted/15 px-6 py-12 text-center">
           <Layers className="mx-auto size-10 text-muted-foreground" />
-          <p className="mt-4 font-display text-lg font-semibold text-foreground">
+          <p className="mt-4 text-base font-semibold text-foreground">
             Ministério não encontrado
           </p>
           <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">

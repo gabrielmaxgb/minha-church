@@ -63,15 +63,15 @@ export function ProfileMinistriesSettings() {
 
       {isLoading ? (
         <div className="space-y-4">
-          <Skeleton className="h-32 w-full rounded-2xl" />
-          <Skeleton className="h-32 w-full rounded-2xl" />
+          <Skeleton className="h-32 w-full rounded-xl" />
+          <Skeleton className="h-32 w-full rounded-xl" />
         </div>
       ) : isError || !member ? (
-        <div className="rounded-2xl border border-dashed border-border bg-muted/15 px-4 py-8 text-center text-sm text-muted-foreground">
+        <div className="rounded-xl border border-dashed border-border bg-muted/15 px-4 py-8 text-center text-sm text-muted-foreground">
           Não foi possível carregar seus vínculos com ministérios.
         </div>
       ) : member.ministries.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border bg-muted/15 px-4 py-8 text-center">
+        <div className="rounded-xl border border-dashed border-border bg-muted/15 px-4 py-8 text-center">
           <div className="mx-auto flex size-10 items-center justify-center rounded-xl bg-muted text-muted-foreground">
             <UserCheck className="size-4" aria-hidden />
           </div>

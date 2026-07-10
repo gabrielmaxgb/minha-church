@@ -45,10 +45,10 @@ const MINISTRY_SETTINGS: MinistrySettingDefinition[] = [
       "Inativos permanecem no histórico, mas aparecem desmarcados na lista.",
     icon: Power,
     accent: {
-      activeBorder: "border-emerald-500/35",
-      activeBg: "bg-emerald-500/6",
-      iconBg: "bg-emerald-500/10",
-      iconColor: "text-emerald-800 dark:text-emerald-300",
+      activeBorder: "border-success/30",
+      activeBg: "bg-success-subtle",
+      iconBg: "bg-success-subtle",
+      iconColor: "text-success-foreground",
     },
   },
 ];
@@ -210,14 +210,11 @@ export function MinistryOverviewSection({
   }
 
   return (
-    <Card className="overflow-hidden border-border/80 shadow-soft">
+    <Card className="overflow-hidden border-border">
       <CardHeader>
         <div className="flex items-start gap-3">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/10">
-            <Layers
-              className="size-4 text-violet-800 dark:text-violet-300"
-              aria-hidden
-            />
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted text-foreground">
+            <Layers className="size-4" aria-hidden />
           </span>
           <div className="min-w-0">
             <CardTitle>Visão geral</CardTitle>
@@ -230,7 +227,7 @@ export function MinistryOverviewSection({
 
       <CardContent className="p-0">
         {!canManage && (
-          <p className="mx-6 mb-5 rounded-xl border border-border/70 bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
+          <p className="mx-6 mb-5 rounded-lg border border-border bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
             Você pode visualizar estas informações. Para editá-las, é necessário
             gerenciar ministérios na igreja.
           </p>
@@ -243,11 +240,11 @@ export function MinistryOverviewSection({
           }}
         >
           <div className="space-y-5 px-6 pb-6">
-            <section className="overflow-hidden rounded-2xl border border-border/70 bg-muted/10">
-              <header className="border-b border-border/50 px-4 py-3.5 sm:px-5">
+            <section className="overflow-hidden rounded-lg border border-border bg-muted/10">
+              <header className="border-b border-border px-4 py-3.5 sm:px-5">
                 <div className="flex items-center gap-2">
                   <Tag className="size-4 text-muted-foreground" aria-hidden />
-                  <h3 className="text-sm font-semibold tracking-tight">
+                  <h3 className="text-sm font-medium tracking-tight">
                     Identidade
                   </h3>
                 </div>
@@ -265,7 +262,7 @@ export function MinistryOverviewSection({
                     onChange={(event) => setName(event.target.value)}
                     disabled={disabled}
                     placeholder="Ex.: Ministério de Louvor"
-                    className="rounded-xl border-border/70 bg-background/80"
+                    className="rounded-lg border-border bg-background"
                   />
                 </div>
 
@@ -287,15 +284,15 @@ export function MinistryOverviewSection({
                       onChange={(event) => setDescription(event.target.value)}
                       disabled={disabled}
                       placeholder="Breve resumo do propósito ou área de atuação do ministério."
-                      className="min-h-[96px] rounded-xl border-border/70 bg-background/80 pl-9"
+                      className="min-h-[96px] rounded-lg border-border bg-background pl-9"
                     />
                   </div>
                 </div>
               </div>
             </section>
 
-            <section className="overflow-hidden rounded-2xl border border-border/70 bg-card/30">
-              <header className="border-b border-border/50 px-4 py-3.5 sm:px-5">
+            <section className="overflow-hidden rounded-lg border border-border bg-card">
+              <header className="border-b border-border px-4 py-3.5 sm:px-5">
                 <div className="flex items-center gap-2">
                   <Power className="size-4 text-muted-foreground" aria-hidden />
                   <h3 className="text-sm font-semibold tracking-tight">

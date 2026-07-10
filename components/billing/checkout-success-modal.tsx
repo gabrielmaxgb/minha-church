@@ -110,13 +110,13 @@ export function CheckoutSuccessModal({
       {canDismissOverlay ? (
         <button
           type="button"
-          className="absolute inset-0 bg-foreground/25 backdrop-blur-[2px]"
+          className="absolute inset-0 bg-foreground/30"
           aria-label="Fechar"
           onClick={onClose}
         />
       ) : (
         <div
-          className="absolute inset-0 bg-foreground/25 backdrop-blur-[2px]"
+          className="absolute inset-0 bg-foreground/30"
           aria-hidden
         />
       )}
@@ -128,7 +128,7 @@ export function CheckoutSuccessModal({
         aria-labelledby={titleId}
         aria-busy={phase === "confirming"}
         className={cn(
-          "relative z-10 flex max-h-[min(90vh,720px)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl",
+          "relative z-10 flex max-h-[min(90vh,720px)] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-border bg-card shadow-popover",
         )}
       >
         {phase === "confirming" ? (
@@ -139,7 +139,7 @@ export function CheckoutSuccessModal({
                   <Loader2 className="size-6 animate-spin" aria-hidden />
                 </div>
                 <div>
-                  <h2 id={titleId} className="font-display text-xl font-semibold tracking-tight">
+                  <h2 id={titleId} className="text-xl font-semibold tracking-tight">
                     Confirmando pagamento
                   </h2>
                   <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
@@ -162,14 +162,14 @@ export function CheckoutSuccessModal({
 
         {phase === "error" ? (
           <>
-            <div className="border-b border-border/80 bg-amber-500/10 px-6 py-5">
+            <div className="border-b border-border/80 bg-attention-subtle px-6 py-5">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">
-                  <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-amber-600 text-white">
+                  <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-attention text-white">
                     <AlertCircle className="size-6" aria-hidden />
                   </div>
                   <div>
-                    <h2 id={titleId} className="font-display text-xl font-semibold tracking-tight">
+                    <h2 id={titleId} className="text-xl font-semibold tracking-tight">
                       Pagamento recebido, confirmação pendente
                     </h2>
                     <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
@@ -193,7 +193,7 @@ export function CheckoutSuccessModal({
             </div>
 
             <div className="flex-1 space-y-4 overflow-y-auto px-6 py-5">
-              <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-950 dark:text-amber-100">
+              <div className="rounded-xl border border-attention-border bg-attention-subtle px-4 py-3 text-sm text-attention-foreground">
                 {errorMessage ??
                   "Não foi possível confirmar o pagamento. Tente novamente."}
               </div>
@@ -217,14 +217,14 @@ export function CheckoutSuccessModal({
 
         {phase === "success" && tier ? (
           <>
-            <div className="border-b border-border/80 bg-emerald-500/10 px-6 py-5">
+            <div className="border-b border-border/80 bg-success-subtle px-6 py-5">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">
-                  <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white">
+                  <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-success text-white">
                     <CheckCircle2 className="size-6" aria-hidden />
                   </div>
                   <div>
-                    <h2 id={titleId} className="font-display text-xl font-semibold tracking-tight">
+                    <h2 id={titleId} className="text-xl font-semibold tracking-tight">
                       Parabéns! Assinatura confirmada
                     </h2>
                     <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
@@ -248,7 +248,7 @@ export function CheckoutSuccessModal({
             </div>
 
             <div className="flex-1 space-y-4 overflow-y-auto px-6 py-5">
-              <div className="flex items-start gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-950 dark:text-emerald-100">
+              <div className="flex items-start gap-3 rounded-xl border border-success/30 bg-success-subtle px-4 py-3 text-sm text-success-foreground">
                 <Sparkles className="mt-0.5 size-4 shrink-0" aria-hidden />
                 <p>
                   Tudo certo! Membros, ministérios, escalas e comunicados já estão

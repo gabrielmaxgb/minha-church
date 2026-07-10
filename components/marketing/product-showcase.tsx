@@ -36,12 +36,42 @@ const primaryNav: {
   label: string;
   icon: typeof LayoutDashboard;
   badge?: number;
+  domainClass: string;
 }[] = [
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { id: "members", label: "Membros", icon: Users },
-  { id: "ministries", label: "Ministérios", icon: Layers },
-  { id: "activities", label: "Atividades", icon: Calendar },
-  { id: "schedules", label: "Minhas escalas", icon: CalendarDays, badge: 2 },
+  {
+    id: "dashboard",
+    label: "Início",
+    icon: LayoutDashboard,
+    domainClass: "bg-domain-home-subtle text-domain-home-foreground",
+  },
+  {
+    id: "members",
+    label: "Membros",
+    icon: Users,
+    domainClass: "bg-domain-members-subtle text-domain-members-foreground",
+  },
+  {
+    id: "ministries",
+    label: "Ministérios",
+    icon: Layers,
+    domainClass:
+      "bg-domain-ministries-subtle text-domain-ministries-foreground",
+  },
+  {
+    id: "activities",
+    label: "Atividades",
+    icon: Calendar,
+    domainClass:
+      "bg-domain-activities-subtle text-domain-activities-foreground",
+  },
+  {
+    id: "schedules",
+    label: "Minhas escalas",
+    icon: CalendarDays,
+    badge: 2,
+    domainClass:
+      "bg-domain-schedules-subtle text-domain-schedules-foreground",
+  },
 ];
 
 const upcomingEvents = [
@@ -106,23 +136,21 @@ function BrowserChrome() {
 
 function MockTopbar({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
-    <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-border/70 bg-surface-elevated/90 px-4">
+    <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-border bg-background px-4">
       <div className="min-w-0">
-        <h3 className="truncate font-display text-sm font-semibold tracking-tight">
-          {title}
-        </h3>
+        <h3 className="truncate text-sm font-medium tracking-tight">{title}</h3>
         {subtitle && (
           <p className="truncate text-[10px] text-muted-foreground">{subtitle}</p>
         )}
       </div>
       <div className="flex shrink-0 items-center gap-2">
-        <div className="relative flex size-8 items-center justify-center rounded-xl border border-border/80 bg-background/60">
+        <div className="relative flex size-8 items-center justify-center rounded-lg border border-border bg-card">
           <Bell className="size-3.5 text-foreground" />
           <span className={cn(pendingNotificationStyles.bellBadge, "size-3.5 min-w-3.5 text-[8px]")}>
             1
           </span>
         </div>
-        <div className="hidden items-center gap-1.5 rounded-xl border border-border/80 bg-background/60 px-2.5 py-1.5 sm:flex">
+        <div className="hidden items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1.5 sm:flex">
           <span className="max-w-[7rem] truncate text-[10px] font-medium">
             Igreja Esperança
           </span>
@@ -136,108 +164,50 @@ function MockTopbar({ title, subtitle }: { title: string; subtitle?: string }) {
   );
 }
 
-function MockMetricCard({
-  label,
-  value,
-  hint,
-  icon: Icon,
-  accent,
-}: {
-  label: string;
-  value: string;
-  hint: string;
-  icon: typeof Users;
-  accent: "emerald" | "sky" | "amber" | "violet";
-}) {
-  const accentIcon = {
-    emerald: "bg-emerald-500/10 text-emerald-700",
-    sky: "bg-sky-500/10 text-sky-700",
-    amber: "bg-amber-500/10 text-amber-700",
-    violet: "bg-violet-500/10 text-violet-700",
-  }[accent];
-
-  return (
-    <div className="rounded-xl border border-border/70 bg-card p-3 shadow-soft">
-      <div
-        className={cn(
-          "flex size-8 items-center justify-center rounded-lg",
-          accentIcon,
-        )}
-      >
-        <Icon className="size-4" strokeWidth={1.75} />
-      </div>
-      <p className="mt-3 text-[10px] font-medium text-muted-foreground">
-        {label}
-      </p>
-      <p className="mt-0.5 font-display text-xl font-bold tracking-tight">
-        {value}
-      </p>
-      <p className="mt-1 text-[9px] leading-relaxed text-muted-foreground">
-        {hint}
-      </p>
-    </div>
-  );
-}
-
 function MockDashboardHero({ compact }: { compact?: boolean }) {
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-border/70 bg-gradient-to-br from-card via-card to-muted/40 p-4 shadow-soft">
+    <section className="space-y-3">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0 space-y-1">
-          <p className="text-[10px] font-medium text-muted-foreground">
-            domingo, 6 de julho
+          <p className="text-[10px] text-muted-foreground">
+            domingo, 6 de julho · Igreja Esperança
           </p>
-          <p className="font-display text-base font-bold tracking-tight">
+          <p className="text-base font-semibold tracking-tight">
             Boa noite, Samuel
           </p>
           <p className="text-[10px] text-muted-foreground">
-            Panorama de hoje na{" "}
-            <span className="font-medium text-foreground">Igreja Esperança</span>
-            {" "}— membros, atividades e o que vem a seguir.
+            O essencial da sua semana
           </p>
         </div>
         {!compact && (
-          <div className="flex gap-2">
-            <span className="inline-flex items-center gap-1 rounded-md bg-foreground px-2.5 py-1.5 text-[10px] font-medium text-background">
-              <Plus className="size-3" />
-              Nova atividade
-            </span>
-            <span className="rounded-md border border-border px-2.5 py-1.5 text-[10px] font-medium">
-              Ver membros
-            </span>
-          </div>
+          <span className="inline-flex items-center gap-1 rounded-md bg-foreground px-2.5 py-1.5 text-[10px] font-medium text-background">
+            <Plus className="size-3" />
+            Nova atividade
+          </span>
         )}
       </div>
 
-      <div className="mt-3 rounded-xl border border-border/60 bg-surface-elevated/80 p-3">
+      <div className="rounded-lg border border-border bg-card p-3">
         <div className="flex items-start gap-3">
-          <div className="flex size-11 shrink-0 flex-col items-center justify-center rounded-lg bg-foreground text-background shadow-soft">
-            <span className="text-sm font-bold leading-none">6</span>
-            <span className="mt-0.5 text-[8px] font-semibold uppercase tracking-wider opacity-80">
+          <div className="flex size-11 shrink-0 flex-col items-center justify-center rounded-md bg-foreground text-background">
+            <span className="text-sm font-semibold leading-none">6</span>
+            <span className="mt-0.5 text-[8px] font-medium uppercase tracking-wide opacity-80">
               jul
             </span>
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Próximo na agenda
+              <span className="text-[10px] font-medium text-muted-foreground">
+                Próximo culto
               </span>
-              <span className="rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-semibold text-amber-800">
-                Amanhã
-              </span>
-              <span className="inline-flex items-center gap-0.5 rounded-full bg-primary/8 px-1.5 py-0.5 text-[9px] font-medium">
-                <Sparkles className="size-2.5" />
-                Igreja
+              <span className="rounded-md bg-attention-subtle px-1.5 py-0.5 text-[9px] font-medium text-attention-foreground">
+                Amanhã · 19:00
               </span>
             </div>
-            <p className="mt-0.5 truncate font-display text-sm font-semibold">
-              Culto de Domingo
-            </p>
+            <p className="mt-0.5 truncate text-sm font-medium">Culto de Domingo</p>
             <p className="mt-1 inline-flex items-center gap-1 text-[10px] text-muted-foreground">
-              <Calendar className="size-3" />
-              19:00
-              <MapPin className="ml-2 size-3" />
-              Templo principal
+              <MapPin className="size-3" />
+              Templo principal · Louvor com 3 aguardando resposta
             </p>
           </div>
           <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
@@ -247,37 +217,41 @@ function MockDashboardHero({ compact }: { compact?: boolean }) {
   );
 }
 
-function MockScheduleBanner() {
+function MockPendencias() {
   return (
-    <div
-      className={cn(
-        "relative overflow-hidden rounded-2xl border border-attention-border/80 bg-attention-subtle p-4 shadow-soft",
-        "before:absolute before:inset-y-3 before:left-0 before:w-0.5 before:rounded-full before:bg-attention-emphasis",
-      )}
-    >
-      <div className="flex flex-col gap-3 pl-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex min-w-0 items-start gap-3">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-attention-border bg-attention-mark text-attention-foreground">
-            <ClipboardList className="size-5" />
-          </div>
-          <div>
-            <p className="text-[9px] font-semibold uppercase tracking-wider text-attention-foreground/75">
-              Perfil da escala incompleto
-            </p>
-            <p className="mt-0.5 font-display text-sm font-bold">
-              Adicione pelo menos uma função
-            </p>
-            <p className="mt-0.5 text-[10px] text-muted-foreground">
-              Você participa de Louvor, mas ainda não informou como costuma servir.
-            </p>
-          </div>
-        </div>
-        <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-foreground px-3 py-2 text-[10px] font-medium text-background">
-          Cadastrar funções
-          <ChevronRight className="size-3.5" />
-        </span>
+    <section className="rounded-lg border border-border bg-card p-4">
+      <div className="mb-3">
+        <p className="text-sm font-medium tracking-tight">Antes do culto</p>
+        <p className="mt-0.5 text-[10px] text-muted-foreground">
+          O que ainda precisa de resposta.
+        </p>
       </div>
-    </div>
+      <ul className="space-y-1.5">
+        <li className="flex items-start gap-2.5 rounded-md border border-attention-border bg-attention-subtle px-2.5 py-2">
+          <ClipboardList className="mt-0.5 size-3.5 shrink-0 text-attention-foreground" />
+          <div className="min-w-0">
+            <p className="text-[11px] font-medium">3 escalas sem resposta</p>
+            <p className="text-[9px] text-muted-foreground">
+              Louvor · Fechar escala
+            </p>
+          </div>
+        </li>
+        <li className="flex items-start gap-2.5 rounded-md border border-border px-2.5 py-2">
+          <UserCheck className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
+          <div className="min-w-0">
+            <p className="text-[11px] font-medium">1 acesso pendente</p>
+            <p className="text-[9px] text-muted-foreground">Aprovar entrada</p>
+          </div>
+        </li>
+        <li className="flex items-start gap-2.5 rounded-md border border-border px-2.5 py-2">
+          <Bell className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
+          <div className="min-w-0">
+            <p className="text-[11px] font-medium">Comunicado do ensaio</p>
+            <p className="text-[9px] text-muted-foreground">Publicar para Louvor</p>
+          </div>
+        </li>
+      </ul>
+    </section>
   );
 }
 
@@ -285,27 +259,22 @@ function MockEventsPanel({ compact }: { compact?: boolean }) {
   const items = compact ? upcomingEvents.slice(0, 2) : upcomingEvents;
 
   return (
-    <section className="rounded-2xl border border-border/70 bg-card p-4 shadow-soft">
+    <section className="rounded-lg border border-border bg-card p-4">
       <div className="mb-3 flex items-start justify-between gap-2">
         <div>
-          <p className="font-display text-sm font-semibold tracking-tight">
-            Agenda da igreja
-          </p>
+          <p className="text-sm font-medium tracking-tight">Agenda</p>
           <p className="mt-0.5 text-[10px] text-muted-foreground">
-            Próximas atividades — da igreja e dos ministérios.
+            Próximas atividades da igreja.
           </p>
         </div>
         <span className="rounded-md border border-border px-2 py-1 text-[9px] font-medium">
           Ver todas
         </span>
       </div>
-      <ol className="space-y-1.5">
+      <ol className="divide-y divide-border">
         {items.map((event) => (
-          <li
-            key={event.name}
-            className="flex items-center gap-3 rounded-xl border border-border/60 bg-muted/10 px-2.5 py-2"
-          >
-            <div className="flex size-10 shrink-0 flex-col items-center justify-center rounded-lg bg-muted/80 text-[9px] font-semibold leading-tight">
+          <li key={event.name} className="flex items-center gap-3 py-2 first:pt-0 last:pb-0">
+            <div className="flex size-9 shrink-0 flex-col items-center justify-center rounded-md bg-muted text-[9px] font-semibold leading-tight">
               <span>{event.day}</span>
               <span className="text-muted-foreground">{event.month}</span>
             </div>
@@ -325,7 +294,7 @@ function MockEventsPanel({ compact }: { compact?: boolean }) {
               </p>
             </div>
             {event.relative && (
-              <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[9px] font-medium text-muted-foreground">
+              <span className="shrink-0 text-[9px] font-medium text-muted-foreground">
                 {event.relative}
               </span>
             )}
@@ -336,30 +305,17 @@ function MockEventsPanel({ compact }: { compact?: boolean }) {
   );
 }
 
-function MockActionsPanel() {
+function MockCommunication() {
   return (
-    <section className="rounded-2xl border border-border/70 bg-card p-4 shadow-soft">
-      <p className="font-display text-sm font-semibold tracking-tight">
-        Ações rápidas
-      </p>
+    <section className="rounded-lg border border-border bg-card p-4">
+      <p className="text-sm font-medium tracking-tight">Comunicação</p>
       <p className="mt-0.5 text-[10px] text-muted-foreground">
-        Atalhos para o dia a dia da liderança.
+        Último aviso publicado
       </p>
-      <ul className="mt-3 space-y-1">
-        {[
-          { label: "Novo membro", desc: "Cadastrar na igreja" },
-          { label: "Novo ministério", desc: "Criar área de serviço" },
-          { label: "Nova atividade", desc: "Agendar culto ou evento" },
-        ].map((action) => (
-          <li
-            key={action.label}
-            className="rounded-lg border border-border/60 px-2.5 py-2 text-[10px] transition-colors hover:bg-muted/30"
-          >
-            <span className="block font-medium">{action.label}</span>
-            <span className="text-muted-foreground">{action.desc}</span>
-          </li>
-        ))}
-      </ul>
+      <p className="mt-3 text-[11px] font-medium">Ensaio de louvor — quinta 20h</p>
+      <p className="mt-0.5 text-[9px] text-muted-foreground">
+        Louvor · Publicado ontem
+      </p>
     </section>
   );
 }
@@ -368,48 +324,23 @@ function DashboardView({ compact }: { compact?: boolean }) {
   return (
     <div className="space-y-3">
       <MockDashboardHero compact={compact} />
-      <MockScheduleBanner />
-      <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
-        <MockMetricCard
-          label="Membros cadastrados"
-          value="124"
-          hint="Total na igreja"
-          icon={Users}
-          accent="emerald"
-        />
-        <MockMetricCard
-          label="Membros ativos"
-          value="98"
-          hint="79% do cadastro"
-          icon={UserCheck}
-          accent="sky"
-        />
-        <MockMetricCard
-          label="Próximas atividades"
-          value="8"
-          hint="Domingo"
-          icon={CalendarDays}
-          accent="amber"
-        />
-        <MockMetricCard
-          label="Ministérios ativos"
-          value="4"
-          hint="Áreas de serviço em operação"
-          icon={Layers}
-          accent="violet"
-        />
-      </div>
-      <div className={cn("grid gap-3", compact ? "grid-cols-1" : "lg:grid-cols-[1fr_11rem]")}>
+      <div
+        className={cn(
+          "grid gap-3",
+          compact ? "grid-cols-1" : "lg:grid-cols-2",
+        )}
+      >
+        <MockPendencias />
         <MockEventsPanel compact={compact} />
-        {!compact && <MockActionsPanel />}
       </div>
+      {!compact ? <MockCommunication /> : null}
     </div>
   );
 }
 
 function MembersView() {
   return (
-    <div className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-soft">
+    <div className="overflow-hidden rounded-lg border border-border bg-card">
       <div className="grid grid-cols-[1fr_1fr_1fr] gap-2 border-b border-border bg-muted/30 px-3 py-2 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
         <span>Nome</span>
         <span>Função</span>
@@ -435,13 +366,13 @@ function MinistriesView() {
       {ministries.map((ministry) => (
         <div
           key={ministry.name}
-          className="flex items-center justify-between rounded-xl border border-border/70 bg-card px-3 py-3 shadow-soft"
+          className="flex items-center justify-between rounded-lg border border-border bg-card px-3 py-3"
         >
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-1.5">
-              <p className="truncate text-[11px] font-semibold">{ministry.name}</p>
+              <p className="truncate text-[11px] font-medium">{ministry.name}</p>
               {ministry.roster && (
-                <span className="rounded-full bg-muted px-1.5 py-0.5 text-[9px] font-medium text-muted-foreground">
+                <span className="rounded-md bg-muted px-1.5 py-0.5 text-[9px] font-medium text-muted-foreground">
                   Escalas
                 </span>
               )}
@@ -462,25 +393,34 @@ function SchedulesView() {
     <div className="space-y-3">
       <div className={pendingNotificationStyles.banner.compact}>
         <p className="text-[11px] font-medium">
-          2 eventos aguardando sua resposta em Louvor
+          Culto de Domingo · 3 pessoas ainda não responderam
+        </p>
+        <p className="mt-1 text-[10px] text-muted-foreground">
+          Feche a escala de Louvor antes das 19h.
         </p>
       </div>
-      {["Ministério de Louvor", "Recepção"].map((name) => (
+      {[
+        { name: "Ana Silva", role: "Vocal", status: "Aguardando" },
+        { name: "Carlos Mendes", role: "Violão", status: "Posso ir" },
+        { name: "João Pereira", role: "Recepção", status: "Aguardando" },
+      ].map((row) => (
         <div
-          key={name}
-          className="flex items-center gap-3 rounded-xl border border-border bg-background px-3 py-3"
+          key={row.name}
+          className="flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2.5"
         >
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted">
-            <Layers className="size-4" />
-          </span>
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-semibold">{name}</p>
-            <p className="text-[10px] text-muted-foreground">
-              Cadastre funções na escala
-            </p>
+            <p className="text-[11px] font-medium">{row.name}</p>
+            <p className="text-[10px] text-muted-foreground">{row.role}</p>
           </div>
-          <span className={cn(pendingNotificationStyles.badge, "rounded-full px-2 py-0.5 text-[9px]")}>
-            Funções pendentes
+          <span
+            className={cn(
+              "shrink-0 rounded-md px-2 py-0.5 text-[9px] font-medium",
+              row.status === "Posso ir"
+                ? "bg-success-subtle text-success-foreground"
+                : "bg-attention-subtle text-attention-foreground",
+            )}
+          >
+            {row.status}
           </span>
         </div>
       ))}
@@ -493,24 +433,24 @@ const viewMeta: Record<
   { title: string; subtitle?: string }
 > = {
   dashboard: {
-    title: "Dashboard",
-    subtitle: "Visão geral da igreja",
+    title: "Início",
+    subtitle: "A semana da igreja",
   },
   members: {
     title: "Membros",
-    subtitle: "Cadastro e histórico pastoral",
+    subtitle: "Cadastro pastoral",
   },
   ministries: {
     title: "Ministérios",
-    subtitle: "Áreas de serviço, cargos e equipes",
+    subtitle: "Equipes e cargos",
   },
   activities: {
     title: "Atividades",
-    subtitle: "Eventos e encontros por ministério",
+    subtitle: "Agenda da igreja",
   },
   schedules: {
-    title: "Minhas escalas",
-    subtitle: "Escalas e disponibilidade por ministério",
+    title: "Escalas",
+    subtitle: "Confirmações do culto",
   },
 };
 
@@ -527,25 +467,23 @@ function AppMock({
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-xl border border-border bg-card shadow-lg",
+        "overflow-hidden rounded-xl border border-border bg-card shadow-popover",
         className,
       )}
     >
       <BrowserChrome />
 
-      <div className={cn("flex", compact ? "min-h-[420px]" : "min-h-[540px]")}>
-        <aside className="hidden w-44 shrink-0 flex-col border-r border-border/80 bg-surface sm:flex">
-          <div className="border-b border-border/60 px-4 py-4">
+      <div className={cn("flex", compact ? "min-h-[400px]" : "min-h-[520px]")}>
+        <aside className="hidden w-48 shrink-0 flex-col border-r border-border bg-surface md:flex">
+          <div className="border-b border-border px-4 py-4">
             <div className="flex items-center gap-2">
               <LogoMark size={28} />
-              <span className="font-display text-[11px] font-semibold">
-                Minha Church
-              </span>
+              <span className="text-[11px] font-semibold">Minha Church</span>
             </div>
           </div>
 
           <nav className="flex flex-1 flex-col gap-0.5 px-2 py-4">
-            <p className="px-2 pb-2 text-[9px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/80">
+            <p className="px-2 pb-2 text-[9px] font-medium tracking-wide text-muted-foreground">
               Menu
             </p>
             {primaryNav.map((item) => {
@@ -557,10 +495,10 @@ function AppMock({
                   type="button"
                   onClick={() => setActiveView(item.id)}
                   className={cn(
-                    "relative flex items-center gap-2 rounded-xl px-2.5 py-2 text-left text-[10px] font-medium transition-colors",
+                    "relative flex items-center gap-2 rounded-lg px-2.5 py-2 text-left text-[10px] transition-colors",
                     isActive
-                      ? "bg-primary text-primary-foreground shadow-soft"
-                      : "text-muted-foreground hover:bg-background/50 hover:text-foreground",
+                      ? cn("font-medium", item.domainClass)
+                      : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
                   )}
                 >
                   <item.icon className="size-3.5 shrink-0" strokeWidth={1.75} />
@@ -570,7 +508,7 @@ function AppMock({
                       className={cn(
                         "flex size-4 min-w-4 items-center justify-center rounded-full text-[8px] font-bold tabular-nums",
                         isActive
-                          ? "bg-primary-foreground text-primary"
+                          ? "bg-foreground text-background"
                           : pendingNotificationStyles.countBadge,
                       )}
                     >
@@ -581,11 +519,11 @@ function AppMock({
               );
             })}
 
-            <div className="my-3 border-t border-border/60" />
+            <div className="my-3 border-t border-border" />
 
             <button
               type="button"
-              className="flex items-center gap-2 rounded-xl px-2.5 py-2 text-[10px] font-medium text-muted-foreground"
+              className="flex items-center gap-2 rounded-lg px-2.5 py-2 text-[10px] font-medium text-muted-foreground"
             >
               <Settings className="size-3.5" />
               Configurações

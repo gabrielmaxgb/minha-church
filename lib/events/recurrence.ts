@@ -68,6 +68,47 @@ export function defaultRecurrenceFormState(startsAt: string): EventRecurrenceFor
   };
 }
 
+export function recurrenceFormStateFromEvent(
+  recurrence: EventRecurrence | null | undefined,
+  startsAt: string,
+): EventRecurrenceFormState {
+  const base = defaultRecurrenceFormState(startsAt);
+
+  if (!recurrence) {
+    return base;
+  }
+
+  return {
+    repeatMode: recurrence.frequency,
+    interval: recurrence.interval,
+    daysOfWeek:
+      recurrence.daysOfWeek.length > 0
+        ? [...recurrence.daysOfWeek]
+        : base.daysOfWeek,
+    endType: recurrence.endDate
+      ? "on_date"
+      : recurrence.maxOccurrences
+        ? "after_count"
+        : "never",
+    endDate: recurrence.endDate ?? "",
+    maxOccurrences: recurrence.maxOccurrences ?? 10,
+  };
+}
+
+export function recurrenceFormStatesEqual(
+  a: EventRecurrenceFormState,
+  b: EventRecurrenceFormState,
+): boolean {
+  return (
+    a.repeatMode === b.repeatMode &&
+    a.interval === b.interval &&
+    a.endType === b.endType &&
+    a.endDate === b.endDate &&
+    a.maxOccurrences === b.maxOccurrences &&
+    a.daysOfWeek.join(",") === b.daysOfWeek.join(",")
+  );
+}
+
 export function syncRecurrenceDaysWithStart(
   state: EventRecurrenceFormState,
   startsAt: string,

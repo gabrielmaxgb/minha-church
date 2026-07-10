@@ -11,6 +11,7 @@ interface EventMutationScopeDialogProps {
   open: boolean;
   action: "edit" | "delete";
   busy?: boolean;
+  hideThisOption?: boolean;
   onConfirm: (scope: EventMutationScope) => void;
   onCancel: () => void;
 }
@@ -19,6 +20,7 @@ export function EventMutationScopeDialog({
   open,
   action,
   busy = false,
+  hideThisOption = false,
   onConfirm,
   onCancel,
 }: EventMutationScopeDialogProps) {
@@ -27,9 +29,9 @@ export function EventMutationScopeDialog({
 
   useEffect(() => {
     if (open) {
-      setScope("this");
+      setScope(hideThisOption ? "this_and_following" : "this");
     }
-  }, [open]);
+  }, [open, hideThisOption]);
 
   if (!open) {
     return null;
@@ -41,7 +43,7 @@ export function EventMutationScopeDialog({
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
       <button
         type="button"
-        className="absolute inset-0 bg-black/55 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-black/45"
         aria-label="Cancelar"
         disabled={busy}
         onClick={() => {
@@ -55,13 +57,15 @@ export function EventMutationScopeDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative z-10 w-full max-w-lg rounded-2xl border border-border bg-background p-6 shadow-2xl"
+        className="relative z-10 w-full max-w-lg rounded-xl border border-border bg-background p-6 shadow-popover"
       >
-        <h3 id={titleId} className="font-display text-lg font-semibold tracking-tight">
+        <h3 id={titleId} className="text-lg font-semibold tracking-tight">
           Evento recorrente
         </h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          Como no Google Agenda: escolha em quais ocorrências aplicar esta ação.
+          {hideThisOption
+            ? "A regra de repetição mudou — escolha se vale daqui pra frente ou para toda a série."
+            : "Como no Google Agenda: escolha em quais ocorrências aplicar esta ação."}
         </p>
 
         <div className="mt-5">
@@ -71,6 +75,7 @@ export function EventMutationScopeDialog({
             onChange={setScope}
             disabled={busy}
             actionLabel={action}
+            hideThisOption={hideThisOption}
           />
         </div>
 

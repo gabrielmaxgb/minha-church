@@ -92,5 +92,7 @@ export interface UpdateChurchEventPayload {
   rosterRoles?: string[];
   rosterSlotPlan?: RosterSlotPlanItem[];
   visibleToChurch?: boolean;
+  /** Atualiza a regra; `null` remove a repetição no escopo. */
+  recurrence?: EventRecurrenceInput | null;
   scope?: EventMutationScope;
 }

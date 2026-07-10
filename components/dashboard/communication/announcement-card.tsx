@@ -28,7 +28,7 @@ const PRIORITY_META: Record<
   important: {
     label: "Importante",
     className:
-      "bg-amber-500/12 text-amber-800 dark:text-amber-300 border border-amber-500/25",
+      "bg-attention-subtle text-attention-foreground border border-attention-border",
   },
   urgent: {
     label: "Urgente",
@@ -44,7 +44,7 @@ const STATUS_META: Record<
   published: null,
   scheduled: {
     label: "Agendado",
-    className: "bg-sky-500/12 text-sky-700 dark:text-sky-300",
+    className: "bg-muted text-muted-foreground",
   },
   expired: {
     label: "Expirado",
@@ -80,9 +80,9 @@ export function AnnouncementCard({
   return (
     <article
       className={cn(
-        "relative overflow-hidden rounded-2xl border bg-card p-4 shadow-soft transition-colors sm:p-5",
+        "relative overflow-hidden rounded-lg border bg-card p-4 transition-colors sm:p-5",
         announcement.pinned
-          ? "border-primary/25 border-l-[3px] border-l-primary bg-background/95 shadow-[0_8px_24px_-18px_rgba(0,0,0,0.35)]"
+          ? "border-primary/25 border-l-[3px] border-l-primary bg-background/95"
           : announcement.priority === "urgent"
             ? "border-destructive/25"
             : "border-border/70",
@@ -90,7 +90,7 @@ export function AnnouncementCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <h3 className="font-display text-base font-semibold leading-tight">
+          <h3 className="text-base font-semibold leading-tight">
             {announcement.title}
           </h3>
 
@@ -103,7 +103,7 @@ export function AnnouncementCard({
                 "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
                 announcement.audienceType === "church_wide"
                   ? "bg-primary/10 text-primary"
-                  : "bg-violet-500/10 text-violet-700 dark:text-violet-300",
+                  : "bg-muted text-muted-foreground",
               )}
             >
               {announcement.audienceType === "church_wide" ? (

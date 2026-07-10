@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 import {
   Church,
   IdCard,
   MapPin,
   Phone,
   UserRound,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 import { Controller, useFormContext } from "react-hook-form";
@@ -15,14 +17,19 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { SelectField } from "@/components/ui/select-field";
+import { Button } from "@/components/ui/button";
 import {
   GENDER_LABELS,
   MARITAL_STATUS_LABELS,
   MEMBER_STATUS_FORM_LABELS,
   type MemberFormValues,
 } from "@/lib/members/form";
+import { useCreateFamily, useFamilies } from "@/lib/api/queries";
+import { familyGraphPath } from "@/constants/routes";
+import { canManageMembers } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import { formatCpfInput } from "@/lib/validation/shared";
+import { useAuth } from "@/providers/auth-provider";
 import type { Gender, MaritalStatus, MemberStatus } from "@/types/members";
 
 interface MemberFormProps {
@@ -47,18 +54,16 @@ function FormSection({
   return (
     <section
       className={cn(
-        "overflow-hidden rounded-2xl border border-border/80 bg-card shadow-soft",
+        "overflow-hidden rounded-lg border border-border bg-card",
         className,
       )}
     >
-      <header className="flex items-start gap-3 border-b border-border/60 bg-muted/25 px-5 py-4 sm:px-6">
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-foreground text-background">
+      <header className="flex items-start gap-3 border-b border-border bg-muted/25 px-5 py-4 sm:px-6">
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-foreground text-background">
           <Icon className="size-4" aria-hidden />
         </div>
         <div className="min-w-0 pt-0.5">
-          <h3 className="font-display text-base font-semibold tracking-tight">
-            {title}
-          </h3>
+          <h3 className="text-sm font-medium tracking-tight">{title}</h3>
           {description && (
             <p className="mt-0.5 text-sm leading-relaxed text-muted-foreground">
               {description}
@@ -95,6 +100,12 @@ export function MemberForm({
 
   const status = watch("status");
   const maritalStatus = watch("maritalStatus");
+  const { permissions } = useAuth();
+  const canManage = permissions ? canManageMembers(permissions) : false;
+  const { data: families = [] } = useFamilies();
+  const createFamily = useCreateFamily();
+  const [newFamilyName, setNewFamilyName] = useState("");
+  const [showNewFamily, setShowNewFamily] = useState(false);
 
   useEffect(() => {
     if (maritalStatus !== "married") {
@@ -102,6 +113,21 @@ export function MemberForm({
     }
   }, [maritalStatus, setValue]);
 
+  async function handleCreateFamily() {
+    const name = newFamilyName.trim();
+    if (name.length < 2 || createFamily.isPending) {
+      return;
+    }
+
+    try {
+      const family = await createFamily.mutateAsync(name);
+      setValue("familyId", family.id);
+      setNewFamilyName("");
+      setShowNewFamily(false);
+    } catch {
+      // erro fica no mutate; formulário continua editável
+    }
+  }
   return (
     <div className="space-y-5">
       <FormSection
@@ -320,6 +346,106 @@ export function MemberForm({
               )}
             />
           </FormField>
+        )}
+      </FormSection>
+
+      <FormSection
+        icon={Users}
+        title="Família"
+        description="Agrupe pessoas da mesma casa. Só um nome — sem complicação."
+        className="border-domain-members/20"
+      >
+        <FormField
+          className="sm:col-span-2"
+          label="Família"
+          htmlFor="member-family"
+        >
+          <Controller
+            name="familyId"
+            control={control}
+            render={({ field }) => (
+              <SelectField
+                id="member-family"
+                value={field.value}
+                onChange={field.onChange}
+                disabled={disabled}
+              >
+                <option value="">Sem família</option>
+                {families.map((family) => (
+                  <option key={family.id} value={family.id}>
+                    {family.name}
+                    {family.memberCount > 0
+                      ? ` (${family.memberCount})`
+                      : ""}
+                  </option>
+                ))}
+              </SelectField>
+            )}
+          />
+        </FormField>
+
+        {watch("familyId") ? (
+          <div className="sm:col-span-2">
+            <Link
+              href={familyGraphPath(watch("familyId"))}
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-domain-members-foreground transition-colors hover:underline"
+            >
+              Abrir grafo desta família
+            </Link>
+          </div>
+        ) : null}
+
+        {canManage && !disabled && (
+          <div className="sm:col-span-2">
+            {showNewFamily ? (
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <Input
+                  value={newFamilyName}
+                  onChange={(event) => setNewFamilyName(event.target.value)}
+                  placeholder="Ex.: Família Silva"
+                  disabled={createFamily.isPending}
+                />
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => void handleCreateFamily()}
+                    disabled={
+                      createFamily.isPending || newFamilyName.trim().length < 2
+                    }
+                  >
+                    {createFamily.isPending ? "Criando..." : "Criar"}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setShowNewFamily(false);
+                      setNewFamilyName("");
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowNewFamily(true)}
+                className="text-sm font-medium text-domain-members-foreground transition-colors hover:underline"
+              >
+                + Nova família
+              </button>
+            )}
+            {createFamily.isError && (
+              <p className="mt-2 text-sm text-destructive">
+                {createFamily.error instanceof Error
+                  ? createFamily.error.message
+                  : "Não foi possível criar a família."}
+              </p>
+            )}
+          </div>
         )}
       </FormSection>
 
