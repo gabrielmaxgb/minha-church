@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ArrowRight,
   CalendarDays,
+  Church,
   Eye,
   EyeOff,
   MessageSquare,
@@ -16,6 +17,7 @@ import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { motion, useReducedMotion } from "motion/react";
 
+import { BusyOverlay } from "@/components/ui/busy-overlay";
 import { Button } from "@/components/ui/button";
 import { FormAlert, FormField, FormMessage } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
@@ -129,7 +131,18 @@ export function RegisterChurchForm() {
       animate={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
       transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
     >
-      <div className="overflow-hidden rounded-2xl border border-border/70 bg-card/90 shadow-popover backdrop-blur-sm lg:grid lg:min-h-[36rem] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
+      <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-card/90 shadow-popover backdrop-blur-sm lg:grid lg:min-h-[36rem] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
+        <BusyOverlay
+          active={isLoading}
+          icon={Church}
+          steps={[
+            "Criando sua igreja...",
+            "Preparando o painel...",
+            "Quase lá...",
+          ]}
+          hint="Só um instante — estamos montando o espaço da sua comunidade."
+        />
+
         {/* Painel de empolgação */}
         <aside className="relative flex overflow-hidden border-b border-border/60 bg-gradient-to-br from-domain-activities-subtle via-card to-domain-members-subtle/80 px-6 py-8 sm:px-8 sm:py-10 lg:min-h-full lg:border-b-0 lg:border-r lg:px-10 lg:py-12">
           <div

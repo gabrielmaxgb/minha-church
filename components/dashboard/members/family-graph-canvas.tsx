@@ -32,7 +32,8 @@ interface NodePosition {
   generation: number;
 }
 
-const BASE_WIDTH = 960;
+const BASE_WIDTH = 1100;
+const MIN_HEIGHT = 560;
 const PAD_X = 96;
 const PAD_Y = 80;
 const NODE_W = 112;
@@ -67,7 +68,7 @@ function layoutNodes(
   relations: MemberRelation[],
 ): { positions: NodePosition[]; height: number; width: number } {
   if (members.length === 0) {
-    return { positions: [], height: 360, width: BASE_WIDTH };
+    return { positions: [], height: MIN_HEIGHT, width: BASE_WIDTH };
   }
 
   const ids = members.map((m) => m.id);
@@ -202,7 +203,7 @@ function layoutNodes(
 
   const maxGen = gens.length > 0 ? Math.max(...gens) : 0;
   const height = Math.max(
-    400,
+    MIN_HEIGHT,
     PAD_Y * 2 + (maxGen + 1) * NODE_H + maxGen * (ROW_GAP - NODE_H),
   );
 
@@ -408,7 +409,7 @@ export function FamilyGraphCanvas({
 
   if (members.length === 0) {
     return (
-      <div className="flex min-h-[320px] flex-col items-center justify-center rounded-[1.75rem] border border-dashed border-domain-members/25 bg-domain-members-subtle/40 px-6 text-center">
+      <div className="flex min-h-[28rem] flex-col items-center justify-center rounded-[1.75rem] border border-dashed border-domain-members/25 bg-domain-members-subtle/40 px-6 text-center">
         <div className="flex size-14 items-center justify-center rounded-2xl bg-domain-members-subtle text-domain-members-foreground">
           <Users className="size-6" aria-hidden />
         </div>
@@ -493,13 +494,13 @@ export function FamilyGraphCanvas({
           aria-hidden
         />
 
-        <div
-          className="relative w-full overflow-x-auto"
-        >
+        <div className="relative w-full overflow-x-auto">
           <div
             className="relative mx-auto"
             style={{
               width: "100%",
+              minWidth: width,
+              minHeight: height,
               aspectRatio: `${width} / ${height}`,
             }}
           >

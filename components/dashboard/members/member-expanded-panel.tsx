@@ -13,6 +13,7 @@ import {
   Phone,
   Trash2,
   UserCheck,
+  UserPlus,
   UserRound,
 } from "lucide-react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
@@ -25,6 +26,7 @@ import { MemberMinistriesFunctionsSection } from "@/components/dashboard/members
 import { MemberMinistriesSection } from "@/components/dashboard/members/member-ministries-section";
 import { MemberMinistryTagsSummary } from "@/components/dashboard/ministries/ministry-member-tags";
 import { Badge } from "@/components/ui/badge";
+import { BusyOverlay } from "@/components/ui/busy-overlay";
 import { Button } from "@/components/ui/button";
 import { FormAlert } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
@@ -244,6 +246,23 @@ export function MemberExpandedPanel({
 
   const canDelete = confirmName.trim() === member.name;
   const isPending = updateMember.isPending || deleteMember.isPending;
+  const mutationBusy = updateMember.isPending || receiveMember.isPending;
+  const creatingLogin =
+    receiveMember.isPending ||
+    (updateMember.isPending && editStatus === "active" && !member.userId);
+  const busySteps = receiveMember.isPending
+    ? ([
+        "Recebendo o visitante...",
+        "Criando o acesso ao painel...",
+        "Gerando as credenciais de login...",
+      ] as const)
+    : creatingLogin
+      ? ([
+          "Salvando as alterações...",
+          "Liberando o acesso ao painel...",
+          "Gerando as credenciais de login...",
+        ] as const)
+      : (["Salvando as alterações..."] as const);
 
   const onSubmit = form.handleSubmit(async (values) => {
     try {
@@ -375,7 +394,13 @@ export function MemberExpandedPanel({
   if (!isEditing) {
     return (
       <>
-        <div className="space-y-5">
+        <div className="relative space-y-5">
+          <BusyOverlay
+            active={mutationBusy}
+            icon={UserPlus}
+            steps={busySteps}
+          />
+
           <div className="flex flex-wrap gap-2">
             <Button type="button" onClick={() => setIsEditing(true)}>
               <Pencil className="size-4" />
@@ -486,6 +511,12 @@ export function MemberExpandedPanel({
 
   return (
     <>
+    <div className="relative">
+      <BusyOverlay
+        active={mutationBusy}
+        icon={UserPlus}
+        steps={busySteps}
+      />
     <FormProvider {...form}>
       <form onSubmit={onSubmit} className="space-y-6" noValidate>
         <div className="rounded-lg border border-border bg-muted/30 px-4 py-3 sm:px-5">
@@ -630,6 +661,7 @@ export function MemberExpandedPanel({
         )}
       </form>
     </FormProvider>
+    </div>
 
       {createdAccount && (
         <MemberAccountCreatedModal

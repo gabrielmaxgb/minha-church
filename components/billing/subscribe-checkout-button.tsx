@@ -1,8 +1,9 @@
 "use client";
 
 import { type ReactNode } from "react";
-import { Loader2 } from "lucide-react";
+import { CreditCard, Loader2 } from "lucide-react";
 
+import { BusyOverlay } from "@/components/ui/busy-overlay";
 import { Button } from "@/components/ui/button";
 import { useSubscribeCheckout } from "@/lib/billing/use-subscribe-checkout";
 import type { BillingPeriod } from "@/types";
@@ -36,6 +37,16 @@ export function SubscribeCheckoutButton({
 
   return (
     <div className="flex flex-col items-stretch gap-1">
+      <BusyOverlay
+        active={loading}
+        variant="fullscreen"
+        icon={CreditCard}
+        steps={[
+          "Abrindo o checkout seguro...",
+          "Redirecionando ao Stripe...",
+        ]}
+        hint="Você será levado à página de pagamento em instantes."
+      />
       <Button
         type="button"
         size={size}

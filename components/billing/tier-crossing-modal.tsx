@@ -3,6 +3,7 @@
 import { useEffect, useId } from "react";
 import { ArrowRight, TrendingUp, X } from "lucide-react";
 
+import { BusyOverlay } from "@/components/ui/busy-overlay";
 import { Button } from "@/components/ui/button";
 import type { TierCrossingPreview } from "@/lib/api/billing";
 import type { TierCrossingModalMode } from "@/lib/billing/use-tier-crossing-gate";
@@ -78,8 +79,21 @@ export function TierCrossingModal({
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={descriptionId}
-        className="relative z-10 flex w-full max-w-lg flex-col rounded-t-xl border border-border bg-background shadow-popover sm:rounded-xl"
+        className="relative z-10 flex w-full max-w-lg flex-col overflow-hidden rounded-t-xl border border-border bg-background shadow-popover sm:rounded-xl"
       >
+        <BusyOverlay
+          active={loading}
+          icon={TrendingUp}
+          steps={
+            isOwnerConfirm
+              ? ([
+                  "Autorizando a nova faixa...",
+                  "Concluindo o cadastro...",
+                  "Atualizando a cobrança...",
+                ] as const)
+              : (["Enviando o pedido ao proprietário..."] as const)
+          }
+        />
         <header className="flex items-start gap-4 px-6 pb-4 pt-6">
           <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-attention-mark text-attention-foreground">
             <TrendingUp className="size-5" aria-hidden />

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { KeyRound, Loader2, MousePointerClick } from "lucide-react";
 
+import { BusyOverlay } from "@/components/ui/busy-overlay";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { settingsSectionPath } from "@/constants/routes";
@@ -100,7 +101,16 @@ export function PasswordResetRequestsSettings() {
         description="Usuários sem e-mail cadastrado que pediram recuperação de senha. Gere uma nova senha temporária e repasse o acesso."
       />
 
-      <SettingsPanel>
+      <SettingsPanel className="relative">
+        <BusyOverlay
+          active={generatingUserId !== null}
+          icon={KeyRound}
+          steps={[
+            "Gerando nova senha temporária...",
+            "Atualizando o acesso...",
+          ]}
+          hint="A senha ficará disponível em Últimos usuários adicionados."
+        />
         <div className="border-b border-border/70 bg-muted/20 px-5 py-3">
           <div className="flex items-start gap-3">
             <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-background">

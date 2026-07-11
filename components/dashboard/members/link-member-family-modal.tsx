@@ -4,6 +4,7 @@ import { useEffect, useId, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Network, Plus } from "lucide-react";
 
+import { BusyOverlay } from "@/components/ui/busy-overlay";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,6 +43,14 @@ export function LinkMemberFamilyModal({
   const [error, setError] = useState<string | null>(null);
 
   const busy = createFamily.isPending || setFamily.isPending;
+  const busySteps =
+    mode === "new"
+      ? ([
+          "Criando a família...",
+          "Vinculando o membro...",
+          "Abrindo o grafo...",
+        ] as const)
+      : (["Vinculando o membro...", "Abrindo o grafo..."] as const);
 
   useEffect(() => {
     if (!open) {
@@ -120,6 +129,8 @@ export function LinkMemberFamilyModal({
         aria-labelledby={titleId}
         className="relative z-10 w-full max-w-md overflow-hidden rounded-t-xl border border-border bg-background shadow-popover sm:rounded-xl"
       >
+        <BusyOverlay active={busy} icon={Network} steps={busySteps} />
+
         <form onSubmit={(e) => void handleSubmit(e)} className="p-6">
           <div className="flex size-11 items-center justify-center rounded-xl bg-domain-members-subtle text-domain-members-foreground">
             <Network className="size-5" aria-hidden />

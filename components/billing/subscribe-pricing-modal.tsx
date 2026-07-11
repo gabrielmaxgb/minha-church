@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Check, Loader2, Sparkles, X } from "lucide-react";
+import { Check, CreditCard, Loader2, Sparkles, X } from "lucide-react";
 
+import { BusyOverlay } from "@/components/ui/busy-overlay";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -186,6 +187,15 @@ export function SubscribePricingModal({
         aria-labelledby="subscribe-pricing-title"
         className="relative z-10 flex max-h-[96vh] w-full max-w-6xl flex-col overflow-hidden rounded-t-xl border border-border bg-background shadow-popover sm:rounded-xl"
       >
+        <BusyOverlay
+          active={loading}
+          icon={CreditCard}
+          steps={[
+            "Abrindo o checkout seguro...",
+            "Redirecionando ao Stripe...",
+          ]}
+          hint="Você será levado à página de pagamento em instantes."
+        />
         <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-5 sm:px-8 sm:py-6">
           <div className="space-y-2 pr-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
