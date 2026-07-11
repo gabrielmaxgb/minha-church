@@ -3,6 +3,7 @@ import type { CSSProperties } from "react";
 export const DROPDOWN_GAP = 4;
 export const VIEWPORT_PADDING = 8;
 export const PREFERRED_DROPDOWN_MAX_HEIGHT = 320;
+export const POPOVER_Z_INDEX = 200;
 
 export interface DropdownPosition {
   left: number;
@@ -12,6 +13,12 @@ export interface DropdownPosition {
   maxHeight: number;
 }
 
+export function clampDropdownHorizontal(left: number, width: number): number {
+  const maxLeft = window.innerWidth - VIEWPORT_PADDING - width;
+
+  return Math.min(Math.max(VIEWPORT_PADDING, left), Math.max(VIEWPORT_PADDING, maxLeft));
+}
+
 export function getDropdownPosition(
   anchor: HTMLElement,
   preferredMaxHeight = PREFERRED_DROPDOWN_MAX_HEIGHT,
@@ -19,7 +26,8 @@ export function getDropdownPosition(
   const rect = anchor.getBoundingClientRect();
   const spaceBelow = window.innerHeight - rect.bottom - VIEWPORT_PADDING;
   const spaceAbove = rect.top - VIEWPORT_PADDING;
-  const openUpward = spaceBelow < 180 && spaceAbove > spaceBelow;
+  const needed = preferredMaxHeight + DROPDOWN_GAP;
+  const openUpward = spaceBelow < needed && spaceAbove > spaceBelow;
   const availableSpace = openUpward ? spaceAbove : spaceBelow;
 
   const maxHeight = Math.max(
@@ -27,18 +35,21 @@ export function getDropdownPosition(
     Math.min(preferredMaxHeight, availableSpace - DROPDOWN_GAP),
   );
 
+  const width = rect.width;
+  const left = clampDropdownHorizontal(rect.left, width);
+
   if (openUpward) {
     return {
-      left: rect.left,
-      width: rect.width,
+      left,
+      width,
       bottom: window.innerHeight - rect.top + DROPDOWN_GAP,
       maxHeight,
     };
   }
 
   return {
-    left: rect.left,
-    width: rect.width,
+    left,
+    width,
     top: rect.bottom + DROPDOWN_GAP,
     maxHeight,
   };
@@ -54,6 +65,6 @@ export function dropdownPositionToStyle(
     top: position.top,
     bottom: position.bottom,
     maxHeight: position.maxHeight,
-    zIndex: 100,
+    zIndex: POPOVER_Z_INDEX,
   };
 }

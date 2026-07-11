@@ -4,8 +4,8 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { AUTH_ROUTES } from "@/constants/routes";
 import {
+  getFirstAccessibleRoute,
   hasRoutePermission,
   type RoutePermission,
 } from "@/lib/permissions";
@@ -27,10 +27,10 @@ export function RequirePermission({
     permissions !== null && hasRoutePermission(permissions, permission);
 
   useEffect(() => {
-    if (!isLoading && isAuthenticated && !allowed) {
-      router.replace(AUTH_ROUTES.dashboard);
+    if (!isLoading && isAuthenticated && !allowed && permissions) {
+      router.replace(getFirstAccessibleRoute(permissions));
     }
-  }, [allowed, isAuthenticated, isLoading, router]);
+  }, [allowed, isAuthenticated, isLoading, permissions, router]);
 
   if (isLoading) {
     return (

@@ -1,17 +1,14 @@
 "use client";
 
 import { RequirePermission } from "@/components/auth/require-permission";
-import { DashboardPlaceholder } from "@/components/dashboard/dashboard-placeholder";
+import { CommunicationContent } from "@/components/dashboard/communication/communication-content";
 import { DashboardPage } from "@/components/dashboard/dashboard-shell";
 
 export default function ComunicacaoPage() {
   return (
     <RequirePermission permission="communication">
-      <DashboardPage title="Comunicação" subtitle="E-mails e avisos">
-        <DashboardPlaceholder
-          title="Comunicação em breve"
-          description="Centralize avisos e comunicações com os membros a partir da igreja selecionada."
-        />
+      <DashboardPage title="Comunicação" subtitle="Comunicados da igreja">
+        <CommunicationContent />
       </DashboardPage>
     </RequirePermission>
   );

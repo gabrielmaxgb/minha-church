@@ -8,28 +8,34 @@ import { useAuth, useTenant } from "@/providers/auth-provider";
 
 export function useChurchMemberships() {
   const { churchId } = useTenant();
+  const { permissions } = useAuth();
+  const canManage = canManageChurchMemberships(permissions);
 
   return useQuery({
     ...membershipsKeys.list(churchId ?? "unknown"),
-    enabled: Boolean(churchId),
+    enabled: Boolean(churchId) && canManage,
   });
 }
 
 export function useAssignableRoles() {
   const { churchId } = useTenant();
+  const { permissions } = useAuth();
+  const canManage = canManageChurchMemberships(permissions);
 
   return useQuery({
     ...membershipsKeys.assignableRoles(churchId ?? "unknown"),
-    enabled: Boolean(churchId),
+    enabled: Boolean(churchId) && canManage,
   });
 }
 
-export function usePendingAccessUsers() {
+export function usePendingAccessUsers(options?: { enabled?: boolean }) {
   const { churchId } = useTenant();
+  const { permissions } = useAuth();
+  const canManage = canManageChurchMemberships(permissions);
 
   return useQuery({
     ...membershipsKeys.pendingAccess(churchId ?? "unknown"),
-    enabled: Boolean(churchId),
+    enabled: Boolean(churchId) && canManage && (options?.enabled ?? true),
   });
 }
 

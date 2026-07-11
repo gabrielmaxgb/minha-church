@@ -34,7 +34,6 @@ export default async function Image() {
             gap: 24,
           }}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={iconSrc}
             width={72}

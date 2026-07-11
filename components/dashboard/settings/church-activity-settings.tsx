@@ -1,12 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { ChevronDown, History, Loader2 } from "lucide-react";
+import { useMemo } from "react";
+import { History, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuditLogs } from "@/lib/api/queries/use-audit-logs";
-import { cn } from "@/lib/utils";
 import type { AuditLogEntry } from "@/types/audit-logs";
 
 import {
@@ -98,7 +97,6 @@ export function ChurchActivitySettings() {
     hasNextPage,
     isFetchingNextPage,
   } = useAuditLogs();
-  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const entries = useMemo(
     () => data?.pages.flatMap((page) => page.items) ?? [],
@@ -138,55 +136,27 @@ export function ChurchActivitySettings() {
           </div>
         ) : (
           <ul className="divide-y divide-border/60">
-            {entries.map((entry) => {
-              const isExpanded = expandedId === entry.id;
-              const hasDetails = Boolean(entry.metadata);
-
-              return (
-                <li key={entry.id} className="px-4 py-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                          {formatActionLabel(entry.action)}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {formatWhen(entry.createdAt)}
-                        </span>
-                      </div>
-                      <p className="mt-1 text-sm">{entry.summary}</p>
-                      {entry.actor && (
-                        <p className="mt-0.5 text-xs text-muted-foreground">
-                          {entry.actor.name}
-                        </p>
-                      )}
-                      {isExpanded && <MetadataDetails entry={entry} />}
-                    </div>
-
-                    {hasDetails && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setExpandedId(isExpanded ? null : entry.id)
-                        }
-                        className="shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                        aria-expanded={isExpanded}
-                        aria-label={
-                          isExpanded ? "Ocultar detalhes" : "Ver detalhes"
-                        }
-                      >
-                        <ChevronDown
-                          className={cn(
-                            "size-4 transition-transform",
-                            isExpanded && "rotate-180",
-                          )}
-                        />
-                      </button>
-                    )}
+            {entries.map((entry) => (
+              <li key={entry.id} className="px-4 py-3">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      {formatActionLabel(entry.action)}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {formatWhen(entry.createdAt)}
+                    </span>
                   </div>
-                </li>
-              );
-            })}
+                  <p className="mt-1 text-sm">{entry.summary}</p>
+                  {entry.actor && (
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {entry.actor.name}
+                    </p>
+                  )}
+                  <MetadataDetails entry={entry} />
+                </div>
+              </li>
+            ))}
           </ul>
         )}
 

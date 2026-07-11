@@ -1,78 +1,92 @@
 "use client";
 
 import Link from "next/link";
-import { Check } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 import { resourceSections } from "@/constants/features";
 import { PUBLIC_ROUTES } from "@/constants/routes";
 import { Container } from "@/components/layout/container";
 import { CtaBanner } from "@/components/marketing/cta-banner";
-import { MotionSection } from "@/components/motion/motion-section";
-import { Button } from "@/components/ui/button";
-import { Heading, SectionLabel } from "@/components/ui/heading";
-import { fadeInUp, staggerContainer, staggerItem } from "@/lib/motion";
-import { motion } from "motion/react";
+import { MotionDiv, MotionSection } from "@/components/motion/motion-section";
+import { Heading } from "@/components/ui/heading";
+import { fadeInUp } from "@/lib/motion";
+import { domainMark, domainText } from "@/lib/ui/domain-theme";
+import { cn } from "@/lib/utils";
 
 export function RecursosContent() {
   return (
     <>
       <section className="border-b border-border">
-        <Container className="py-24 sm:py-32">
-          <motion.div
-            className="mx-auto max-w-3xl text-center"
-            initial="hidden"
-            animate="visible"
-            variants={fadeInUp}
-          >
-            <SectionLabel>Recursos</SectionLabel>
-            <Heading as="h1" className="mt-3">
-              Tudo para administrar sua igreja
+        <Container className="py-16 sm:py-20 lg:py-24">
+          <MotionDiv variants={fadeInUp} className="max-w-2xl">
+            <Heading as="h1" className="text-balance">
+              A rotina da igreja, organizada de ponta a ponta
             </Heading>
-            <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
-              Ferramentas específicas para cada área da gestão eclesiástica —
-              do cadastro de membros à prestação de contas financeira.
+            <p className="mt-5 text-base leading-relaxed text-muted-foreground sm:text-lg">
+              Do primeiro contato às escalas do culto e aos avisos da semana —
+              fluxos que a liderança usa de verdade.
             </p>
-          </motion.div>
+          </MotionDiv>
         </Container>
       </section>
 
-      <section className="py-24 sm:py-32">
+      <section className="border-b border-border py-16 sm:py-24">
         <Container>
-          <MotionSection className="space-y-20" variants={staggerContainer}>
+          <div className="divide-y divide-border border-y border-border">
             {resourceSections.map((section, index) => (
-              <motion.div
-                key={section.id}
-                id={section.id}
-                variants={staggerItem}
-                className="grid gap-8 lg:grid-cols-2 lg:items-start"
-              >
-                <div className={index % 2 === 1 ? "lg:order-2" : ""}>
-                  <Heading as="h2">{section.title}</Heading>
-                  <p className="mt-4 leading-relaxed text-muted-foreground">
-                    {section.description}
-                  </p>
-                </div>
-                <ul
-                  className={`space-y-3 rounded-lg border border-border p-6 ${index % 2 === 1 ? "lg:order-1" : ""}`}
+              <div key={section.id} id={section.id} className="scroll-mt-24">
+                <MotionSection
+                  variants={fadeInUp}
+                  className="grid gap-4 py-10 sm:grid-cols-[4rem_1fr] sm:gap-10"
                 >
-                  {section.items.map((item) => (
-                    <li
-                      key={item}
-                      className="flex items-start gap-2.5 text-sm text-muted-foreground"
+                  <div className="flex items-start gap-2 sm:flex-col sm:gap-3">
+                    <span
+                      className={cn(
+                        "mt-1.5 size-2 shrink-0 rounded-full",
+                        domainMark[section.domain],
+                      )}
+                      aria-hidden
+                    />
+                    <span
+                      className={cn(
+                        "font-mono text-sm",
+                        domainText[section.domain],
+                      )}
                     >
-                      <Check className="mt-0.5 size-4 shrink-0 text-foreground" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </motion.div>
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                  </div>
+                  <div className="max-w-2xl">
+                    <h2 className="text-base font-medium text-foreground">
+                      {section.title}
+                    </h2>
+                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                      {section.description}
+                    </p>
+                    <ul className="mt-4 space-y-2">
+                      {section.items.map((item) => (
+                        <li
+                          key={item}
+                          className="text-sm text-foreground/80 before:mr-2 before:text-muted-foreground before:content-['·']"
+                        >
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </MotionSection>
+              </div>
             ))}
-          </MotionSection>
+          </div>
 
-          <div className="mt-16 text-center">
-            <Button asChild>
-              <Link href={PUBLIC_ROUTES.pricing}>Começar grátis</Link>
-            </Button>
+          <div className="mt-10">
+            <Link
+              href={PUBLIC_ROUTES.register}
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground transition-colors hover:text-foreground/70"
+            >
+              Começar grátis
+              <ArrowRight className="size-3.5" aria-hidden />
+            </Link>
           </div>
         </Container>
       </section>

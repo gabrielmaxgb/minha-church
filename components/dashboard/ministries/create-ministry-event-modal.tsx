@@ -1,14 +1,24 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
-import { Calendar, Loader2, X } from "lucide-react";
+import { Calendar, Clock, Eye, FileText, Loader2, MapPin, Repeat, X } from "lucide-react";
 
+import { ActivityScheduleFields } from "@/components/dashboard/activities/activity-schedule-fields";
+import { EventFormSection } from "@/components/dashboard/activities/event-form-section";
+import { EventRecurrenceFields } from "@/components/dashboard/activities/event-recurrence-fields";
+import { EventVisibilityFields } from "@/components/dashboard/activities/event-visibility-fields";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateMinistryEvent } from "@/lib/api/queries";
+import {
+  buildRecurrencePayload,
+  defaultRecurrenceFormState,
+  syncRecurrenceDaysWithStart,
+  type EventRecurrenceFormState,
+} from "@/lib/events/recurrence";
 import type { CreateMinistryEventPayload } from "@/types/ministries";
 
 interface CreateMinistryEventModalProps {
@@ -16,6 +26,7 @@ interface CreateMinistryEventModalProps {
   ministryName: string;
   open: boolean;
   onClose: () => void;
+  defaultStartsAtValue?: string;
 }
 
 function defaultStartsAt(): string {
@@ -37,13 +48,19 @@ export function CreateMinistryEventModal({
   ministryName,
   open,
   onClose,
+  defaultStartsAtValue,
 }: CreateMinistryEventModalProps) {
   const titleId = useId();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [highlightNote, setHighlightNote] = useState("");
   const [location, setLocation] = useState("");
-  const [startsAt, setStartsAt] = useState(defaultStartsAt);
+  const [startsAt, setStartsAt] = useState(defaultStartsAtValue ?? defaultStartsAt);
   const [endsAt, setEndsAt] = useState("");
+  const [visibleToChurch, setVisibleToChurch] = useState(true);
+  const [recurrence, setRecurrence] = useState<EventRecurrenceFormState>(
+    defaultRecurrenceFormState(defaultStartsAtValue ?? defaultStartsAt()),
+  );
   const [error, setError] = useState<string | null>(null);
   const createEvent = useCreateMinistryEvent(ministryId);
 
@@ -51,12 +68,21 @@ export function CreateMinistryEventModal({
     if (!open) {
       setName("");
       setDescription("");
+      setHighlightNote("");
       setLocation("");
-      setStartsAt(defaultStartsAt());
+      setStartsAt(defaultStartsAtValue ?? defaultStartsAt());
       setEndsAt("");
+      setVisibleToChurch(true);
+      setRecurrence(
+        defaultRecurrenceFormState(defaultStartsAtValue ?? defaultStartsAt()),
+      );
       setError(null);
       return;
     }
+
+    const nextStartsAt = defaultStartsAtValue ?? defaultStartsAt();
+    setStartsAt(nextStartsAt);
+    setRecurrence(defaultRecurrenceFormState(nextStartsAt));
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -64,7 +90,11 @@ export function CreateMinistryEventModal({
     return () => {
       document.body.style.overflow = previousOverflow;
     };
-  }, [open]);
+  }, [open, defaultStartsAtValue]);
+
+  useEffect(() => {
+    setRecurrence((current) => syncRecurrenceDaysWithStart(current, startsAt));
+  }, [startsAt]);
 
   useEffect(() => {
     if (!open) {
@@ -95,12 +125,22 @@ export function CreateMinistryEventModal({
       return;
     }
 
+    const recurrencePayload = buildRecurrencePayload(recurrence);
+
+    if (recurrence.endType === "on_date" && recurrence.repeatMode !== "none" && !recurrence.endDate) {
+      setError("Informe a data final da repetição.");
+      return;
+    }
+
     const payload: CreateMinistryEventPayload = {
       name: name.trim(),
       description: description.trim() || undefined,
+      highlightNote: highlightNote.trim() || undefined,
       location: location.trim() || undefined,
       startsAt: new Date(startsAt).toISOString(),
       endsAt: endsAt ? new Date(endsAt).toISOString() : undefined,
+      recurrence: recurrencePayload,
+      visibleToChurch,
     };
 
     try {
@@ -119,7 +159,7 @@ export function CreateMinistryEventModal({
     <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
       <button
         type="button"
-        className="absolute inset-0 bg-black/45 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-black/45"
         aria-label="Fechar modal"
         disabled={createEvent.isPending}
         onClick={() => {
@@ -133,14 +173,14 @@ export function CreateMinistryEventModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative z-10 flex max-h-[min(92dvh,680px)] w-full max-w-lg flex-col rounded-t-2xl border border-border bg-background shadow-2xl sm:rounded-2xl"
+        className="relative z-10 flex max-h-[min(96dvh,920px)] w-full max-w-5xl flex-col rounded-t-xl border border-border bg-background shadow-popover sm:rounded-xl"
       >
         <header className="flex items-start gap-4 px-6 pb-4 pt-6">
           <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             <Calendar className="size-5" aria-hidden />
           </div>
           <div className="min-w-0 flex-1 pt-0.5">
-            <h2 id={titleId} className="font-display text-xl font-semibold tracking-tight">
+            <h2 id={titleId} className="text-xl font-semibold tracking-tight">
               Novo evento
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -161,74 +201,121 @@ export function CreateMinistryEventModal({
         <Separator />
 
         <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
-          <div className="space-y-4 overflow-y-auto px-6 py-5">
+          <div className="space-y-8 overflow-y-auto px-6 py-6">
             {error && (
               <div
                 role="alert"
-                className="rounded-lg border border-border bg-muted/60 px-3 py-2.5 text-sm"
+                className="rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2.5 text-sm text-destructive"
               >
                 {error}
               </div>
             )}
 
-            <div className="space-y-2">
-              <Label htmlFor="event-name">Nome do evento</Label>
-              <Input
-                id="event-name"
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                placeholder="Ex.: Ensaio, Culto de jovens"
-                disabled={createEvent.isPending}
-                autoFocus
-              />
-            </div>
+            <EventFormSection
+              title="Informações básicas"
+              description="Nome e detalhes que a equipe verá na agenda do ministério."
+              icon={FileText}
+            >
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="event-name">Nome do evento</Label>
+                  <Input
+                    id="event-name"
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    placeholder="Ex.: Ensaio, Culto de jovens"
+                    disabled={createEvent.isPending}
+                    autoFocus
+                    className="h-11 rounded-xl"
+                  />
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="event-description">Descrição</Label>
-              <Textarea
-                id="event-description"
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
-                placeholder="Detalhes opcionais"
-                rows={2}
-                disabled={createEvent.isPending}
-              />
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="event-description">Descrição</Label>
+                  <Textarea
+                    id="event-description"
+                    value={description}
+                    onChange={(event) => setDescription(event.target.value)}
+                    placeholder="Detalhes opcionais"
+                    rows={2}
+                    disabled={createEvent.isPending}
+                    className="min-h-[80px] resize-y rounded-xl"
+                  />
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="event-location">Local</Label>
-              <Input
-                id="event-location"
-                value={location}
-                onChange={(event) => setLocation(event.target.value)}
-                placeholder="Ex.: Templo principal"
-                disabled={createEvent.isPending}
-              />
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="event-highlight-note">Recado em destaque</Label>
+                  <Textarea
+                    id="event-highlight-note"
+                    value={highlightNote}
+                    onChange={(event) => setHighlightNote(event.target.value)}
+                    placeholder='Ex.: Tema da mensagem: "A fé que move montanhas" — Pr. João'
+                    rows={2}
+                    disabled={createEvent.isPending}
+                    className="min-h-[80px] resize-y rounded-xl"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Aparece em destaque na página do evento. Ideal para tema da
+                    palavra, pastorais ou avisos importantes.
+                  </p>
+                </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="event-starts-at">Início</Label>
-                <Input
-                  id="event-starts-at"
-                  type="datetime-local"
-                  value={startsAt}
-                  onChange={(event) => setStartsAt(event.target.value)}
-                  disabled={createEvent.isPending}
-                  required
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="event-location">Local</Label>
+                  <div className="relative">
+                    <MapPin className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="event-location"
+                      value={location}
+                      onChange={(event) => setLocation(event.target.value)}
+                      placeholder="Ex.: Templo principal"
+                      disabled={createEvent.isPending}
+                      className="h-11 rounded-xl pl-10"
+                    />
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="event-ends-at">Término (opcional)</Label>
-                <Input
-                  id="event-ends-at"
-                  type="datetime-local"
-                  value={endsAt}
-                  onChange={(event) => setEndsAt(event.target.value)}
-                  disabled={createEvent.isPending}
-                />
-              </div>
-            </div>
+            </EventFormSection>
+
+            <EventFormSection
+              title="Data e horário"
+              description="Quando o evento acontece e por quanto tempo."
+              icon={Clock}
+            >
+              <ActivityScheduleFields
+                idPrefix="event"
+                startsAt={startsAt}
+                endsAt={endsAt}
+                onStartsAtChange={setStartsAt}
+                onEndsAtChange={setEndsAt}
+                disabled={createEvent.isPending}
+              />
+            </EventFormSection>
+
+            <EventFormSection
+              title="Repetição"
+              description="Opcional. Crie uma série de ocorrências com a mesma configuração."
+              icon={Repeat}
+            >
+              <EventRecurrenceFields
+                value={recurrence}
+                onChange={setRecurrence}
+                startsAt={startsAt}
+                disabled={createEvent.isPending}
+              />
+            </EventFormSection>
+
+            <EventFormSection
+              title="Quem pode ver"
+              description="Controle se o evento aparece na agenda geral da igreja."
+              icon={Eye}
+            >
+              <EventVisibilityFields
+                visibleToChurch={visibleToChurch}
+                onVisibleToChurchChange={setVisibleToChurch}
+                disabled={createEvent.isPending}
+              />
+            </EventFormSection>
           </div>
 
           <Separator />

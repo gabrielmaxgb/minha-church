@@ -18,17 +18,17 @@ interface CtaBannerProps {
 
 export function CtaBanner({
   title = "Pronto para organizar sua igreja?",
-  description = "Comece grátis hoje — sem cartão de crédito, sem instalação.",
+  description = "30 dias grátis · Sem cartão · Sem instalação.",
   primaryLabel = "Começar grátis",
-  primaryHref = PUBLIC_ROUTES.pricing,
+  primaryHref = PUBLIC_ROUTES.register,
   secondaryLabel,
   secondaryHref,
   className,
 }: CtaBannerProps) {
   return (
-    <section className={cn("py-24 sm:py-32", className)}>
+    <section className={cn("py-16 sm:py-24", className)}>
       <Container>
-        <div className="rounded-xl bg-foreground px-8 py-16 text-center text-background sm:px-16">
+        <div className="rounded-2xl border border-border bg-foreground px-5 py-12 text-center text-background sm:px-12 sm:py-14 lg:px-16">
           <Heading as="h2" className="text-background">
             {title}
           </Heading>
@@ -42,14 +42,12 @@ export function CtaBanner({
               <Link href={primaryHref}>{primaryLabel}</Link>
             </Button>
             {secondaryLabel && secondaryHref && (
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-background/30 bg-transparent text-background hover:bg-background/10"
-                asChild
+              <Link
+                href={secondaryHref}
+                className="text-sm font-medium text-background/70 transition-colors hover:text-background"
               >
-                <Link href={secondaryHref}>{secondaryLabel}</Link>
-              </Button>
+                {secondaryLabel}
+              </Link>
             )}
           </div>
         </div>

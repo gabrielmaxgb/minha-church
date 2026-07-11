@@ -9,26 +9,59 @@ import {
   useRef,
   useState,
 } from "react";
+import { flushSync } from "react-dom";
+import { useQueryClient } from "@tanstack/react-query";
 
 import {
   changePasswordRequest,
   getSessionRequest,
   loginRequest,
+  registerChurchRequest,
   logoutRequest,
   refreshSessionDeduped,
   switchChurchRequest,
   updateProfileRequest,
 } from "@/lib/api/auth";
 import {
+  resetTenantQueryCache,
+  waitForActiveTenantQueries,
+} from "@/lib/api/queries/reset-tenant-cache";
+import {
   clearAuthSession,
   getStoredChurchId,
   persistActiveChurch,
 } from "@/lib/auth/cookies";
-import { PUBLIC_ROUTES } from "@/constants/routes";
-import type { AuthResponse, ChangePasswordPayload, Church, LoginCredentials, UpdateProfilePayload, User, UserPermissions } from "@/types/auth";
+import { terminateSession } from "@/lib/auth/session";
+import { isProtectedAreaPath, PUBLIC_ROUTES } from "@/constants/routes";
+import type { AuthResponse, ChangePasswordPayload, Church, LoginCredentials, RegisterChurchPayload, RegisterChurchResult, UpdateProfilePayload, User, UserPermissions } from "@/types/auth";
+import { isRegisterChurchPending } from "@/types/auth";
 
 function redirectToLogin() {
-  window.location.replace(PUBLIC_ROUTES.login);
+  window.location.replace(`${PUBLIC_ROUTES.login}?force=1`);
+}
+
+async function handleInvalidSession(
+  setters: {
+    setUser: (user: User | null) => void;
+    setChurch: (church: Church | null) => void;
+    setChurches: (churches: Church[]) => void;
+    setPermissions: (permissions: UserPermissions | null) => void;
+  },
+  options?: { hardRedirect?: boolean },
+) {
+  await terminateSession();
+  setters.setUser(null);
+  setters.setChurch(null);
+  setters.setChurches([]);
+  setters.setPermissions(null);
+
+  if (
+    options?.hardRedirect &&
+    typeof window !== "undefined" &&
+    isProtectedAreaPath(window.location.pathname)
+  ) {
+    window.location.replace(`${PUBLIC_ROUTES.login}?force=1`);
+  }
 }
 
 interface AuthContextValue {
@@ -38,12 +71,18 @@ interface AuthContextValue {
   permissions: UserPermissions | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isSwitchingChurch: boolean;
+  switchingToChurchName: string | null;
   login: (credentials: LoginCredentials) => Promise<AuthResponse>;
+  registerChurch: (payload: RegisterChurchPayload) => Promise<RegisterChurchResult>;
   logout: () => Promise<void>;
   switchChurch: (churchId: string) => Promise<void>;
   changePassword: (payload: ChangePasswordPayload) => Promise<void>;
   updateProfile: (payload: UpdateProfilePayload) => Promise<void>;
+  reloadSession: () => Promise<AuthResponse>;
 }
+
+const CHURCH_SWITCH_MIN_OVERLAY_MS = 400;
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
@@ -104,12 +143,19 @@ async function loadSession(): Promise<AuthResponse> {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const queryClient = useQueryClient();
   const [user, setUser] = useState<User | null>(null);
   const [church, setChurch] = useState<Church | null>(null);
   const [churches, setChurches] = useState<Church[]>([]);
   const [permissions, setPermissions] = useState<UserPermissions | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSwitchingChurch, setIsSwitchingChurch] = useState(false);
+  const [switchingToChurchName, setSwitchingToChurchName] = useState<string | null>(
+    null,
+  );
   const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isSwitchingChurchRef = useRef(false);
+  const scheduleTokenRefreshRef = useRef<(expiresIn: number) => void>(() => undefined);
 
   const sessionSetters = useMemo(
     () => ({
@@ -134,13 +180,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           try {
             const session = await refreshSessionDeduped();
             commitSession(session, undefined, sessionSetters);
-            scheduleTokenRefresh(session.tokens.expiresIn);
+            scheduleTokenRefreshRef.current(session.tokens.expiresIn);
           } catch {
-            clearAuthSession();
-            setUser(null);
-            setChurch(null);
-            setChurches([]);
-            setPermissions(null);
+            await handleInvalidSession(sessionSetters);
             redirectToLogin();
           }
         })();
@@ -148,6 +190,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     },
     [sessionSetters],
   );
+
+  useEffect(() => {
+    scheduleTokenRefreshRef.current = scheduleTokenRefresh;
+  }, [scheduleTokenRefresh]);
 
   useEffect(() => {
     let cancelled = false;
@@ -167,11 +213,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        clearAuthSession();
-        setUser(null);
-        setChurch(null);
-        setChurches([]);
-        setPermissions(null);
+        await handleInvalidSession(sessionSetters, { hardRedirect: true });
       } finally {
         if (!cancelled) {
           setIsLoading(false);
@@ -201,6 +243,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [scheduleTokenRefresh, sessionSetters],
   );
 
+  const registerChurch = useCallback(
+    async (payload: RegisterChurchPayload) => {
+      const result = await registerChurchRequest(payload);
+
+      if (isRegisterChurchPending(result)) {
+        return result;
+      }
+
+      const next = commitSession(result, undefined, sessionSetters);
+
+      scheduleTokenRefresh(next.expiresIn);
+      setIsLoading(false);
+
+      return result;
+    },
+    [scheduleTokenRefresh, sessionSetters],
+  );
+
   const changePassword = useCallback(
     async (payload: ChangePasswordPayload) => {
       const session = await changePasswordRequest(payload);
@@ -220,6 +280,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     },
     [scheduleTokenRefresh, sessionSetters],
   );
+
+  const reloadSession = useCallback(async () => {
+    const session = await loadSession();
+    const next = commitSession(session, church ?? undefined, sessionSetters);
+
+    scheduleTokenRefresh(next.expiresIn);
+
+    return session;
+  }, [church, scheduleTokenRefresh, sessionSetters]);
 
   const logout = useCallback(async () => {
     if (refreshTimerRef.current) {
@@ -242,18 +311,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const switchChurch = useCallback(
     async (churchId: string) => {
+      if (churchId === church?.id || isSwitchingChurchRef.current) {
+        return;
+      }
+
       const nextChurch = churches.find((item) => item.id === churchId);
 
       if (!nextChurch || !user) {
         return;
       }
 
-      const session = await switchChurchRequest(churchId);
-      const next = commitSession(session, nextChurch, sessionSetters);
+      isSwitchingChurchRef.current = true;
+      setSwitchingToChurchName(nextChurch.name);
+      setIsSwitchingChurch(true);
 
-      scheduleTokenRefresh(next.expiresIn);
+      const startedAt = Date.now();
+
+      try {
+        const session = await switchChurchRequest(churchId);
+
+        flushSync(() => {
+          commitSession(session, nextChurch, sessionSetters);
+        });
+
+        resetTenantQueryCache(queryClient);
+        await waitForActiveTenantQueries(queryClient);
+        scheduleTokenRefresh(
+          applySession(session, nextChurch).expiresIn,
+        );
+      } finally {
+        const elapsed = Date.now() - startedAt;
+
+        if (elapsed < CHURCH_SWITCH_MIN_OVERLAY_MS) {
+          await new Promise<void>((resolve) => {
+            setTimeout(resolve, CHURCH_SWITCH_MIN_OVERLAY_MS - elapsed);
+          });
+        }
+
+        isSwitchingChurchRef.current = false;
+        setIsSwitchingChurch(false);
+        setSwitchingToChurchName(null);
+      }
     },
-    [churches, sessionSetters, user, scheduleTokenRefresh],
+    [church?.id, churches, queryClient, scheduleTokenRefresh, sessionSetters, user],
   );
 
   const value = useMemo<AuthContextValue>(
@@ -264,13 +364,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       permissions,
       isAuthenticated: Boolean(user && church),
       isLoading,
+      isSwitchingChurch,
+      switchingToChurchName,
       login,
+      registerChurch,
       logout,
       switchChurch,
       changePassword,
       updateProfile,
+      reloadSession,
     }),
-    [changePassword, church, churches, isLoading, login, logout, permissions, switchChurch, updateProfile, user],
+    [
+      changePassword,
+      church,
+      churches,
+      isLoading,
+      isSwitchingChurch,
+      login,
+      registerChurch,
+      logout,
+      permissions,
+      reloadSession,
+      switchChurch,
+      switchingToChurchName,
+      updateProfile,
+      user,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -300,11 +419,18 @@ export function useTenant() {
 
 export function useRequireAuth() {
   const auth = useAuth();
+  const redirectingRef = useRef(false);
 
   useEffect(() => {
-    if (!auth.isLoading && !auth.isAuthenticated) {
-      redirectToLogin();
+    if (auth.isLoading || auth.isAuthenticated || redirectingRef.current) {
+      return;
     }
+
+    redirectingRef.current = true;
+
+    void terminateSession().finally(() => {
+      window.location.replace(`${PUBLIC_ROUTES.login}?force=1`);
+    });
   }, [auth.isAuthenticated, auth.isLoading]);
 
   return auth;

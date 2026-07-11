@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/providers/auth-provider";
 
 import { ProfileSettings } from "./profile-settings";
+import { ProfileMinistriesSettings } from "./profile-ministries-settings";
 import { PendingUsersSettings } from "./pending-users-settings";
 import { PasswordResetRequestsSettings } from "./password-reset-requests-settings";
 import { ChurchActivitySettings } from "./church-activity-settings";
@@ -19,6 +20,8 @@ import {
   type SettingsSection,
 } from "./settings-nav";
 import { SettingsGeneralPanel } from "./settings-general-panel";
+import { SubscriptionSettings } from "./subscription-settings";
+import { CheckoutCancelHandler } from "@/components/billing/checkout-cancel-handler";
 
 export function SettingsContent() {
   const searchParams = useSearchParams();
@@ -55,7 +58,10 @@ export function SettingsContent() {
       />
 
       <div className="min-w-0 flex-1">
+        <CheckoutCancelHandler />
         {active === "profile" && <ProfileSettings />}
+        {active === "subscription" && <SubscriptionSettings />}
+        {active === "ministries" && <ProfileMinistriesSettings />}
         {active === "pending-users" && <PendingUsersSettings />}
         {active === "password-reset-requests" && <PasswordResetRequestsSettings />}
         {active === "roles" && <ChurchRolesSettings />}

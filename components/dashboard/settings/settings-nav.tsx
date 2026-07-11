@@ -5,10 +5,13 @@ import { useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { canManageChurchMemberships } from "@/lib/church-memberships/constants";
 import { canManageChurchRoles } from "@/lib/permissions";
+import { useAuth } from "@/providers/auth-provider";
 import type { UserPermissions } from "@/types/auth";
 
 export type SettingsSection =
   | "profile"
+  | "subscription"
+  | "ministries"
   | "pending-users"
   | "password-reset-requests"
   | "roles"
@@ -29,6 +32,16 @@ const ALL_ITEMS: SettingsNavItem[] = [
     description: "Seus dados pessoais",
   },
   {
+    id: "subscription",
+    label: "Assinatura",
+    description: "Plano e cobrança",
+  },
+  {
+    id: "ministries",
+    label: "Ministérios e Grupos de serviço",
+    description: "Funções de serviço",
+  },
+  {
     id: "roles",
     label: "Cargos",
     description: "Permissões por cargo",
@@ -36,7 +49,7 @@ const ALL_ITEMS: SettingsNavItem[] = [
   {
     id: "members",
     label: "Usuários",
-    description: "Cargos e permissões",
+    description: "Acesso e cargos",
   },
   {
     id: "pending-users",
@@ -61,9 +74,20 @@ const ALL_ITEMS: SettingsNavItem[] = [
 ];
 
 export function useSettingsNav(permissions: UserPermissions | null) {
+  const { church, user } = useAuth();
+  const writesBlocked = Boolean(church?.featuresLocked);
+
   return useMemo(() => {
     return ALL_ITEMS.filter((item) => {
-      if (item.id === "profile") {
+      if (item.id === "subscription") {
+        return Boolean(user?.isOwner);
+      }
+
+      if (writesBlocked) {
+        return item.id === "profile";
+      }
+
+      if (item.id === "profile" || item.id === "ministries") {
         return true;
       }
 
@@ -81,15 +105,23 @@ export function useSettingsNav(permissions: UserPermissions | null) {
 
       return false;
     });
-  }, [permissions]);
+  }, [permissions, user?.isOwner, writesBlocked]);
 }
 
 const emptyPermissions: UserPermissions = {
-  members: { manage: false },
-  ministries: { manage: false },
-  activities: { createChurchWide: false, ministryIds: [] },
+  dashboard: { access: false },
+  members: { access: false, manage: false },
+  ministries: {
+    access: false,
+    manage: false,
+    rosterMinistryIds: [],
+    teamMinistryIds: [],
+    rolesMinistryIds: [],
+  },
+  activities: { access: false, createChurchWide: false, ministryIds: [] },
+  schedules: { access: false },
   finances: { access: false },
-  communication: { access: false },
+  communication: { access: false, manage: false },
   reports: { access: false },
   settings: { access: false },
   roles: { manage: false },

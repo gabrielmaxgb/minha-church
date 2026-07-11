@@ -5,25 +5,47 @@ export interface UserRoleSummary {
 }
 
 export interface UserPermissions {
-  members: { manage: boolean };
-  ministries: { manage: boolean };
+  dashboard: { access: boolean };
+  members: { access: boolean; manage: boolean };
+  ministries: {
+    access: boolean;
+    manage: boolean;
+    rosterMinistryIds: string[];
+    teamMinistryIds: string[];
+    rolesMinistryIds: string[];
+  };
   activities: {
+    access: boolean;
     createChurchWide: boolean;
     ministryIds: string[];
   };
+  schedules: { access: boolean };
   finances: { access: boolean };
-  communication: { access: boolean };
+  communication: { access: boolean; manage: boolean };
   reports: { access: boolean };
   settings: { access: boolean };
   roles: { manage: boolean };
   memberships: { manage: boolean };
 }
 
+export type SubscriptionStatus =
+  | "trialing"
+  | "active"
+  | "past_due"
+  | "canceled";
+
 export interface Church {
   id: string;
   name: string;
   slug: string;
   memberCount?: number;
+  subscriptionStatus?: SubscriptionStatus;
+  /** ISO date em que o trial termina (null quando não há trial). */
+  trialEndsAt?: string | null;
+  /** Dias restantes do trial (null fora de trial). */
+  trialDaysRemaining?: number | null;
+  /** true quando o trial expirou e recursos de gestão estão bloqueados. */
+  featuresLocked?: boolean;
 }
 
 export interface User {
@@ -36,6 +58,7 @@ export interface User {
   roles: UserRoleSummary[];
   avatarUrl?: string;
   mustChangePassword?: boolean;
+  emailVerified?: boolean;
 }
 
 export interface JwtPayload {
@@ -66,6 +89,33 @@ export interface LoginCredentials {
   password: string;
 }
 
+export interface RegisterChurchPayload {
+  churchName: string;
+  ownerName: string;
+  ownerEmail: string;
+  password: string;
+  acceptTerms: boolean;
+}
+
+export interface RegisterChurchPendingResponse {
+  requiresEmailVerification: true;
+  message: string;
+  email: string;
+}
+
+export type RegisterChurchResult =
+  | AuthResponse
+  | RegisterChurchPendingResponse;
+
+export function isRegisterChurchPending(
+  response: RegisterChurchResult,
+): response is RegisterChurchPendingResponse {
+  return (
+    "requiresEmailVerification" in response &&
+    response.requiresEmailVerification === true
+  );
+}
+
 export interface ChangePasswordPayload {
   currentPassword: string;
   newPassword: string;
@@ -86,11 +136,17 @@ export interface AuthResponse {
 }
 
 export type ChurchPermissionKey =
+  | "dashboard_access"
+  | "members_access"
+  | "ministries_access"
+  | "activities_access"
+  | "schedules_access"
   | "members_manage"
   | "ministries_manage"
   | "events_create_church_wide"
   | "finances_access"
   | "communication_access"
+  | "communication_manage"
   | "reports_access"
   | "settings_access"
   | "roles_manage"

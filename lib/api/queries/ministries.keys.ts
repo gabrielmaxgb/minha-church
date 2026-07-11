@@ -7,6 +7,8 @@ import type {
   MinistryEvent,
   MinistryMember,
   MinistryRole,
+  MinistryServiceFunction,
+  RosterProfile,
 } from "@/types/ministries";
 
 export interface CreateMinistryPayload {
@@ -24,12 +26,20 @@ export interface CreateMinistryRolePayload {
   name: string;
   sortOrder?: number;
   canManageEvents?: boolean;
+  canManageRoster?: boolean;
+  canManageTeam?: boolean;
+  canManageRoles?: boolean;
+  singleHolder?: boolean;
 }
 
 export interface UpdateMinistryRolePayload {
   name?: string;
   sortOrder?: number;
   canManageEvents?: boolean;
+  canManageRoster?: boolean;
+  canManageTeam?: boolean;
+  canManageRoles?: boolean;
+  singleHolder?: boolean;
 }
 
 async function fetchMinistries(churchId: string): Promise<Ministry[]> {
@@ -61,9 +71,20 @@ async function fetchMinistryMembers(
 async function fetchMinistryEvents(
   churchId: string,
   ministryId: string,
+  query?: { from?: string; to?: string },
 ): Promise<MinistryEvent[]> {
+  const params = new URLSearchParams();
+  if (query?.from) {
+    params.set("from", query.from);
+  }
+  if (query?.to) {
+    params.set("to", query.to);
+  }
+
+  const suffix = params.size > 0 ? `?${params.toString()}` : "";
+
   return apiClient<MinistryEvent[]>(
-    buildTenantPath(churchId, `/ministries/${ministryId}/events`),
+    buildTenantPath(churchId, `/ministries/${ministryId}/events${suffix}`),
     { churchId },
   );
 }
@@ -161,6 +182,125 @@ async function deleteMinistryRole(
   );
 }
 
+async function fetchRosterProfile(
+  churchId: string,
+  ministryId: string,
+): Promise<RosterProfile> {
+  return apiClient<RosterProfile>(
+    buildTenantPath(churchId, `/ministries/${ministryId}/roster/me`),
+    { churchId },
+  );
+}
+
+async function updateRosterProfile(
+  churchId: string,
+  ministryId: string,
+  instruments: string[],
+): Promise<RosterProfile> {
+  return apiClient<RosterProfile>(
+    buildTenantPath(churchId, `/ministries/${ministryId}/roster/me`),
+    {
+      churchId,
+      method: "PATCH",
+      body: JSON.stringify({ instruments }),
+    },
+  );
+}
+
+async function updateEventRoleProfile(
+  churchId: string,
+  ministryId: string,
+  profileKey: string,
+  roleLabels: string[],
+): Promise<RosterProfile> {
+  return apiClient<RosterProfile>(
+    buildTenantPath(
+      churchId,
+      `/ministries/${ministryId}/roster/event-profiles/${encodeURIComponent(profileKey)}`,
+    ),
+    {
+      churchId,
+      method: "PUT",
+      body: JSON.stringify({ roleLabels }),
+    },
+  );
+}
+
+async function updateEventAvailability(
+  churchId: string,
+  ministryId: string,
+  eventId: string,
+  payload: {
+    status: "available" | "unavailable" | "clear";
+    roleLabels?: string[];
+  },
+): Promise<RosterProfile> {
+  return apiClient<RosterProfile>(
+    buildTenantPath(
+      churchId,
+      `/ministries/${ministryId}/roster/events/${eventId}/availability`,
+    ),
+    {
+      churchId,
+      method: "PUT",
+      body: JSON.stringify(payload),
+    },
+  );
+}
+
+async function replaceMinistryServiceFunctions(
+  churchId: string,
+  ministryId: string,
+  labels: string[],
+): Promise<MinistryServiceFunction[]> {
+  return apiClient<MinistryServiceFunction[]>(
+    buildTenantPath(churchId, `/ministries/${ministryId}/service-functions`),
+    {
+      churchId,
+      method: "PUT",
+      body: JSON.stringify({ labels }),
+    },
+  );
+}
+
+async function updateMemberMinistryInstruments(
+  churchId: string,
+  ministryId: string,
+  memberId: string,
+  instruments: string[],
+): Promise<MinistryMember> {
+  return apiClient<MinistryMember>(
+    buildTenantPath(
+      churchId,
+      `/ministries/${ministryId}/members/${memberId}/instruments`,
+    ),
+    {
+      churchId,
+      method: "PATCH",
+      body: JSON.stringify({ instruments }),
+    },
+  );
+}
+
+async function setRosterCollection(
+  churchId: string,
+  ministryId: string,
+  payload: {
+    rosterOpen: boolean;
+    eventIds?: string[];
+    recurrenceSeriesId?: string;
+  },
+): Promise<{ updated: number }> {
+  return apiClient<{ updated: number }>(
+    buildTenantPath(churchId, `/ministries/${ministryId}/roster/collection`),
+    {
+      churchId,
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    },
+  );
+}
+
 export const ministriesKeys = createQueryKeys("ministries", {
   list: (churchId: string) => ({
     queryKey: [churchId],
@@ -170,13 +310,21 @@ export const ministriesKeys = createQueryKeys("ministries", {
     queryKey: [churchId, ministryId],
     queryFn: () => fetchMinistry(churchId, ministryId),
   }),
-  events: (churchId: string, ministryId: string) => ({
-    queryKey: [churchId, ministryId, "events"],
-    queryFn: () => fetchMinistryEvents(churchId, ministryId),
+  events: (
+    churchId: string,
+    ministryId: string,
+    params?: { from?: string; to?: string },
+  ) => ({
+    queryKey: [churchId, ministryId, "events", params],
+    queryFn: () => fetchMinistryEvents(churchId, ministryId, params),
   }),
   members: (churchId: string, ministryId: string) => ({
     queryKey: [churchId, ministryId, "members"],
     queryFn: () => fetchMinistryMembers(churchId, ministryId),
+  }),
+  rosterProfile: (churchId: string, ministryId: string) => ({
+    queryKey: [churchId, ministryId, "roster-profile"],
+    queryFn: () => fetchRosterProfile(churchId, ministryId),
   }),
 });
 
@@ -190,8 +338,15 @@ export {
   fetchMinistry,
   fetchMinistryEvents,
   fetchMinistryMembers,
+  fetchRosterProfile,
+  setRosterCollection,
+  updateEventAvailability,
+  updateEventRoleProfile,
   updateMinistry,
   updateMinistryRole,
+  updateRosterProfile,
+  replaceMinistryServiceFunctions,
+  updateMemberMinistryInstruments,
 };
 
 export type { CreateMinistryEventPayload };

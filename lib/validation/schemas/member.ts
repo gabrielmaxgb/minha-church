@@ -41,14 +41,15 @@ export const memberFormSchema = z.object({
 	visitorSince: z.string(),
 	baptismDate: z.string(),
 	membershipDate: z.string(),
+	familyId: z.string(),
 }) satisfies z.ZodType<MemberFormValues>;
 
 export function createMemberFormSchema(
-	options: { requireLogin?: boolean } = {},
+  options: { requireLogin?: boolean } = {},
 ) {
-	const requireLogin = options.requireLogin ?? true;
-
-	return memberFormSchema.superRefine((data, ctx) => {
+  return memberFormSchema.superRefine((data, ctx) => {
+    const requireLogin =
+      options.requireLogin ?? data.status === "active";
 		if (!data.name.trim()) {
 			ctx.addIssue({
 				code: z.ZodIssueCode.custom,
@@ -69,12 +70,12 @@ export function createMemberFormSchema(
 		if (requireLogin && !hasEmail && !hasCpf) {
 			ctx.addIssue({
 				code: z.ZodIssueCode.custom,
-				message: "Informe e-mail ou CPF para adicionar um novo usuário.",
+				message: "Informe e-mail ou CPF para liberar o acesso ao sistema.",
 				path: ["email"],
 			});
 			ctx.addIssue({
 				code: z.ZodIssueCode.custom,
-				message: "Informe e-mail ou CPF para adicionar um novo membro.",
+				message: "Informe e-mail ou CPF para liberar o acesso ao sistema.",
 				path: ["cpf"],
 			});
 		}

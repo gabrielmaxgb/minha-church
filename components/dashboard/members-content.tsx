@@ -2,15 +2,21 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ChevronRight, Loader2, Plus, Search } from "lucide-react";
+import { ChevronRight, Loader2, Network, Plus, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SelectField } from "@/components/ui/select-field";
 import { Skeleton } from "@/components/ui/skeleton";
-import { memberDetailPath, MEMBER_CREATE_ROUTE } from "@/constants/routes";
+import {
+  familyGraphPath,
+  memberDetailPath,
+  MEMBER_CREATE_ROUTE,
+} from "@/constants/routes";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
-import { useMembersInfinite } from "@/lib/api/queries";
+import { useMembersInfinite, useFamilies } from "@/lib/api/queries";
 import { canManageMembers } from "@/lib/permissions";
+import { memberStatusBadgeClass } from "@/lib/members/status-badge";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 import {
@@ -26,31 +32,22 @@ const STATUS_FILTERS: Array<{ value: MemberStatus | "all"; label: string }> = [
   { value: "inactive", label: "Inativos" },
 ];
 
-function statusBadgeClass(status: MemberStatus) {
-  switch (status) {
-    case "active":
-      return "border-emerald-200 bg-emerald-50 text-emerald-800";
-    case "visitor":
-      return "border-amber-200 bg-amber-50 text-amber-800";
-    case "inactive":
-      return "border-border bg-muted text-muted-foreground";
-  }
-}
-
 function memberSubtitle(member: Member): string | null {
+  const parts: string[] = [];
+
+  if (member.family?.name) {
+    parts.push(member.family.name);
+  }
+
   if (member.email) {
-    return member.email;
+    parts.push(member.email);
+  } else if (member.phone) {
+    parts.push(member.phone);
+  } else if (member.ministries.length > 0) {
+    parts.push(member.ministries.map((link) => link.ministryName).join(" · "));
   }
 
-  if (member.phone) {
-    return member.phone;
-  }
-
-  if (member.ministries.length > 0) {
-    return member.ministries.map((link) => link.ministryName).join(" · ");
-  }
-
-  return null;
+  return parts.length > 0 ? parts.join(" · ") : null;
 }
 
 function MemberListItem({ member }: { member: Member }) {
@@ -67,7 +64,7 @@ function MemberListItem({ member }: { member: Member }) {
           <span
             className={cn(
               "inline-flex shrink-0 rounded-md border px-2 py-0.5 text-[11px] font-medium",
-              statusBadgeClass(member.status),
+              memberStatusBadgeClass(member.status),
             )}
           >
             {MEMBER_STATUS_LABELS[member.status]}
@@ -89,15 +86,18 @@ export function MembersContent() {
   const { permissions } = useAuth();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<MemberStatus | "all">("all");
+  const [familyId, setFamilyId] = useState<string>("all");
   const debouncedSearch = useDebouncedValue(search.trim(), 300);
   const canManage = permissions ? canManageMembers(permissions) : false;
+  const { data: families = [] } = useFamilies();
 
   const params = useMemo(
     () => ({
       search: debouncedSearch || undefined,
       status: status === "all" ? undefined : status,
+      familyId: familyId === "all" ? undefined : familyId,
     }),
-    [debouncedSearch, status],
+    [debouncedSearch, status, familyId],
   );
 
   const {
@@ -158,6 +158,30 @@ export function MembersContent() {
               </button>
             ))}
           </div>
+
+          <SelectField
+            aria-label="Filtrar por família"
+            value={familyId}
+            onChange={(event) => setFamilyId(event.target.value)}
+            className="w-full sm:w-48"
+          >
+            <option value="all">Todas as famílias</option>
+            <option value="none">Sem família</option>
+            {families.map((family) => (
+              <option key={family.id} value={family.id}>
+                {family.name}
+              </option>
+            ))}
+          </SelectField>
+
+          {familyId !== "all" && familyId !== "none" && (
+            <Button size="sm" variant="outline" asChild className="shrink-0">
+              <Link href={familyGraphPath(familyId)}>
+                <Network className="size-4" />
+                Ver grafo
+              </Link>
+            </Button>
+          )}
 
           {canManage && (
             <Button size="sm" asChild className="shrink-0">

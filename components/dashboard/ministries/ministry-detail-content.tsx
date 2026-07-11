@@ -2,11 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
-  Calendar,
-  Plus,
-  Shield,
   Trash2,
 } from "lucide-react";
 
@@ -14,6 +12,12 @@ import {
   MinistryDashboardSection,
   MinistryMembersSection,
 } from "@/components/dashboard/ministries/ministry-dashboard-section";
+import { MinistryEventsSection } from "@/components/dashboard/ministries/ministry-events-section";
+import { MinistryOverviewSection } from "@/components/dashboard/ministries/ministry-overview-section";
+import { MinistryRolesSettingsSection } from "@/components/dashboard/ministries/ministry-roles-settings-section";
+import { MinistryServiceFunctionsSection } from "@/components/dashboard/ministries/ministry-service-functions-section";
+import { InactiveMinistryBanner } from "@/components/dashboard/ministries/inactive-ministry-banner";
+import { WorshipAvailabilitySection } from "@/components/dashboard/ministries/worship-availability-section";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,26 +28,22 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AUTH_ROUTES } from "@/constants/routes";
 import {
-  useCreateMinistryRole,
   useDeleteMinistry,
-  useDeleteMinistryRole,
   useMinistry,
   useUpdateMinistry,
-  useUpdateMinistryRole,
 } from "@/lib/api/queries";
 import {
   MINISTRY_SETTINGS_SECTIONS,
   type MinistrySettingsSection,
 } from "@/lib/ministries/constants";
-import { canManageMembers, canManageMinistries } from "@/lib/permissions";
+import { canManageMinistries, canManageMinistryRoles, canManageMinistryRoster, canManageMinistryTeam } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
-import type { Ministry, MinistryRole } from "@/types/ministries";
+import type { Ministry } from "@/types/ministries";
 
 interface MinistryDetailContentProps {
   ministryId: string;
@@ -76,306 +76,6 @@ function SettingsNav({
         </button>
       ))}
     </nav>
-  );
-}
-
-function OverviewSection({
-  ministry,
-  canManage,
-}: {
-  ministry: Ministry;
-  canManage: boolean;
-}) {
-  const updateMinistry = useUpdateMinistry(ministry.id);
-  const [name, setName] = useState(ministry.name);
-  const [description, setDescription] = useState(ministry.description ?? "");
-  const [isActive, setIsActive] = useState(ministry.isActive);
-
-  useEffect(() => {
-    setName(ministry.name);
-    setDescription(ministry.description ?? "");
-    setIsActive(ministry.isActive);
-  }, [ministry]);
-
-  const hasChanges =
-    name.trim() !== ministry.name ||
-    (description.trim() || null) !== (ministry.description ?? null) ||
-    isActive !== ministry.isActive;
-
-  async function handleSave(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    if (!name.trim()) {
-      return;
-    }
-
-    await updateMinistry.mutateAsync({
-      name: name.trim(),
-      description: description.trim() || null,
-      isActive,
-    });
-  }
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Visão geral</CardTitle>
-        <CardDescription>
-          Informações básicas exibidas na lista de ministérios.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSave} className="space-y-5">
-          <div className="space-y-2">
-            <Label htmlFor="ministry-name">Nome</Label>
-            <Input
-              id="ministry-name"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              disabled={!canManage || updateMinistry.isPending}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="ministry-description">Descrição</Label>
-            <Input
-              id="ministry-description"
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-              placeholder="Opcional"
-              disabled={!canManage || updateMinistry.isPending}
-            />
-          </div>
-
-          <div className="flex items-center justify-between rounded-lg border border-border px-4 py-3">
-            <div>
-              <p className="text-sm font-medium">Ministério ativo</p>
-              <p className="text-xs text-muted-foreground">
-                Ministérios inativos permanecem no histórico, mas ficam marcados na lista.
-              </p>
-            </div>
-            <label className="flex cursor-pointer items-center gap-2">
-              <input
-                type="checkbox"
-                className="size-4 rounded border-border"
-                checked={isActive}
-                disabled={!canManage || updateMinistry.isPending}
-                onChange={(event) => setIsActive(event.target.checked)}
-              />
-            </label>
-          </div>
-
-          {canManage && (
-            <div className="flex justify-end">
-              <Button
-                type="submit"
-                size="sm"
-                disabled={!hasChanges || updateMinistry.isPending || !name.trim()}
-              >
-                {updateMinistry.isPending ? "Salvando..." : "Salvar alterações"}
-              </Button>
-            </div>
-          )}
-        </form>
-      </CardContent>
-    </Card>
-  );
-}
-
-function RoleRow({
-  role,
-  ministryId,
-  canManage,
-}: {
-  role: MinistryRole;
-  ministryId: string;
-  canManage: boolean;
-}) {
-  const deleteRole = useDeleteMinistryRole(ministryId);
-
-  return (
-    <div className="flex items-center justify-between gap-3 rounded-lg border border-border px-4 py-3">
-      <div className="min-w-0">
-        <p className="font-medium">{role.name}</p>
-        <p className="text-xs text-muted-foreground">Ordem {role.sortOrder + 1}</p>
-      </div>
-
-      {canManage && (
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          className="text-muted-foreground hover:text-destructive"
-          disabled={deleteRole.isPending}
-          onClick={() => deleteRole.mutate(role.id)}
-        >
-          <Trash2 className="size-4" />
-        </Button>
-      )}
-    </div>
-  );
-}
-
-function RolesSection({
-  ministry,
-  canManage,
-}: {
-  ministry: Ministry;
-  canManage: boolean;
-}) {
-  const [name, setName] = useState("");
-  const createRole = useCreateMinistryRole(ministry.id);
-  const roles = [...ministry.roles].sort((a, b) => a.sortOrder - b.sortOrder);
-
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    if (!name.trim()) {
-      return;
-    }
-
-    await createRole.mutateAsync({ name: name.trim() });
-    setName("");
-  }
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Cargos</CardTitle>
-        <CardDescription>
-          Defina os papéis dentro deste ministério. As permissões são configuradas na seção ao lado.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {roles.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nenhum cargo cadastrado.</p>
-        ) : (
-          <div className="space-y-2">
-            {roles.map((role) => (
-              <RoleRow
-                key={role.id}
-                role={role}
-                ministryId={ministry.id}
-                canManage={canManage}
-              />
-            ))}
-          </div>
-        )}
-
-        {canManage && (
-          <form
-            onSubmit={handleSubmit}
-            className="space-y-3 rounded-lg border border-dashed border-border p-4"
-          >
-            <p className="text-sm font-medium">Adicionar cargo</p>
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Input
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                placeholder="Ex.: Regente, Líder, Vocalista"
-                disabled={createRole.isPending}
-              />
-              <Button
-                type="submit"
-                size="sm"
-                className="shrink-0"
-                disabled={createRole.isPending || !name.trim()}
-              >
-                <Plus className="size-4" />
-                Adicionar
-              </Button>
-            </div>
-          </form>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function PermissionRow({
-  role,
-  ministryId,
-  canManage,
-}: {
-  role: MinistryRole;
-  ministryId: string;
-  canManage: boolean;
-}) {
-  const updateRole = useUpdateMinistryRole(ministryId);
-
-  return (
-    <div className="flex flex-col gap-3 rounded-lg border border-border px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex min-w-0 items-start gap-3">
-        <div className="mt-0.5 rounded-md bg-muted p-2">
-          <Shield className="size-4 text-muted-foreground" />
-        </div>
-        <div className="min-w-0">
-          <p className="font-medium">{role.name}</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Membros com este cargo podem criar e gerenciar atividades do ministério.
-          </p>
-        </div>
-      </div>
-
-      <label
-        className={cn(
-          "flex shrink-0 items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm",
-          canManage ? "cursor-pointer" : "opacity-60",
-        )}
-      >
-        <Calendar className="size-4 text-muted-foreground" />
-        <span>Gerenciar eventos</span>
-        <input
-          type="checkbox"
-          className="size-4 rounded border-border"
-          checked={role.canManageEvents}
-          disabled={!canManage || updateRole.isPending}
-          onChange={(event) =>
-            updateRole.mutate({
-              roleId: role.id,
-              payload: { canManageEvents: event.target.checked },
-            })
-          }
-        />
-      </label>
-    </div>
-  );
-}
-
-function PermissionsSection({
-  ministry,
-  canManage,
-}: {
-  ministry: Ministry;
-  canManage: boolean;
-}) {
-  const roles = [...ministry.roles].sort((a, b) => a.sortOrder - b.sortOrder);
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Permissões</CardTitle>
-        <CardDescription>
-          Controle o que cada cargo pode fazer — estilo permissões de servidor.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {roles.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Crie cargos na seção &quot;Cargos&quot; antes de definir permissões.
-          </p>
-        ) : (
-          roles.map((role) => (
-            <PermissionRow
-              key={role.id}
-              role={role}
-              ministryId={ministry.id}
-              canManage={canManage}
-            />
-          ))
-        )}
-      </CardContent>
-    </Card>
   );
 }
 
@@ -450,10 +150,39 @@ function AdvancedSection({
 
 export function MinistryDetailContent({ ministryId }: MinistryDetailContentProps) {
   const { permissions } = useAuth();
+  const searchParams = useSearchParams();
   const { data: ministry, isLoading, isError } = useMinistry(ministryId);
   const [section, setSection] = useState<MinistrySettingsSection>("dashboard");
+  const updateMinistry = useUpdateMinistry(ministryId);
   const canManage = permissions ? canManageMinistries(permissions) : false;
-  const canManageTeam = permissions ? canManageMembers(permissions) : false;
+  const canManageTeam =
+    permissions && ministry
+      ? canManageMinistryTeam(permissions, ministry.id)
+      : false;
+  const canManageRoles =
+    permissions && ministry
+      ? canManageMinistryRoles(permissions, ministry.id)
+      : false;
+  const canManageRosters =
+    permissions && ministry
+      ? canManageMinistryRoster(permissions, ministry.id)
+      : false;
+
+  useEffect(() => {
+    const requested = searchParams.get("section");
+    if (requested === "availability") {
+      setSection("availability");
+    }
+    if (requested === "events") {
+      setSection("events");
+    }
+    if (requested === "service-functions") {
+      setSection("service-functions");
+    }
+    if (requested === "permissions" || requested === "roles") {
+      setSection("roles");
+    }
+  }, [searchParams]);
 
   if (isLoading) {
     return (
@@ -479,6 +208,7 @@ export function MinistryDetailContent({ ministryId }: MinistryDetailContentProps
   }
 
   const activeSection = MINISTRY_SETTINGS_SECTIONS.find((item) => item.id === section);
+  const inactive = !ministry.isActive;
 
   return (
     <div className="space-y-6">
@@ -487,25 +217,39 @@ export function MinistryDetailContent({ ministryId }: MinistryDetailContentProps
         className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
         <ArrowLeft className="size-4" />
-        Ministérios
+        Ministérios e Grupos de serviço
       </Link>
 
       <div className="flex flex-wrap items-center gap-2">
-        <h1 className="font-display text-2xl font-semibold">{ministry.name}</h1>
-        {!ministry.isActive && (
+        <h1 className="page-title">{ministry.name}</h1>
+        {inactive && (
           <Badge variant="outline">Inativo</Badge>
         )}
       </div>
 
-      {!canManage && !canManageTeam && (
-        <p className="rounded-xl border border-border bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
-          Você está em modo leitura. Pastores e administradores podem editar o ministério;
-          secretários podem gerenciar a equipe.
-        </p>
+      {inactive && (
+        <InactiveMinistryBanner
+          ministryName={ministry.name}
+          onActivate={
+            canManage
+              ? () => void updateMinistry.mutateAsync({ isActive: true })
+              : undefined
+          }
+          isActivating={updateMinistry.isPending}
+        />
       )}
 
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
-        <SettingsNav active={section} onChange={setSection} />
+      <div
+        className={cn(
+          "flex flex-col gap-6 lg:flex-row lg:items-start",
+          inactive && "pointer-events-none select-none opacity-60",
+        )}
+        aria-hidden={inactive || undefined}
+      >
+        <SettingsNav
+          active={section}
+          onChange={setSection}
+        />
 
         <Separator className="lg:hidden" />
 
@@ -522,19 +266,34 @@ export function MinistryDetailContent({ ministryId }: MinistryDetailContentProps
             <MinistryDashboardSection
               ministry={ministry}
               onGoToMembers={() => setSection("members")}
+              onGoToAvailability={() => setSection("availability")}
+              onGoToEvents={() => setSection("events")}
             />
           )}
+          {section === "availability" && (
+            <WorshipAvailabilitySection
+              ministryId={ministry.id}
+              canManageRosters={canManageRosters}
+            />
+          )}
+          {section === "events" && <MinistryEventsSection ministry={ministry} />}
           {section === "members" && (
             <MinistryMembersSection ministry={ministry} canManage={canManageTeam} />
           )}
+          {section === "service-functions" && (
+            <MinistryServiceFunctionsSection
+              ministry={ministry}
+              canManage={canManageRosters}
+            />
+          )}
           {section === "overview" && (
-            <OverviewSection ministry={ministry} canManage={canManage} />
+            <MinistryOverviewSection ministry={ministry} canManage={canManage} />
           )}
           {section === "roles" && (
-            <RolesSection ministry={ministry} canManage={canManage} />
-          )}
-          {section === "permissions" && (
-            <PermissionsSection ministry={ministry} canManage={canManage} />
+            <MinistryRolesSettingsSection
+              ministry={ministry}
+              canManage={canManageRoles}
+            />
           )}
           {section === "advanced" && (
             <AdvancedSection ministry={ministry} canManage={canManage} />

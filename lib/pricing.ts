@@ -1,5 +1,5 @@
 import type { BillingPeriod, PricingTier } from "@/types";
-import { formatCurrency } from "@/lib/utils";
+import { pricing } from "@/constants/pricing";
 
 export function getTierBillingComparison(tier: PricingTier) {
   const monthlyTotalYear = tier.monthlyPrice * 12;
@@ -38,21 +38,53 @@ export function getPricePerMember(
 }
 
 export function formatPricePerMember(value: number): string {
-  let display: number;
-  if (value >= 0.995 && value < 1.005) {
-    display = 1;
-  } else if (value < 1) {
-    display = Math.floor(value * 100) / 100;
-  } else {
-    display = Math.round(value);
+  let minimumFractionDigits = 0;
+  let maximumFractionDigits = 0;
+
+  if (value < 1) {
+    minimumFractionDigits = 2;
+    maximumFractionDigits = 2;
+  } else if (value < 10) {
+    minimumFractionDigits = 2;
+    maximumFractionDigits = 2;
   }
 
   const formatted = new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
-    minimumFractionDigits: display >= 1 ? 0 : 2,
-    maximumFractionDigits: display >= 1 ? 0 : 2,
-  }).format(display);
+    minimumFractionDigits,
+    maximumFractionDigits,
+  }).format(value);
 
   return `≈ ${formatted}`;
+}
+
+/** Faixa de preço sugerida com base na quantidade de membros cadastrados. */
+export function suggestTierByMemberCount(
+  memberCount: number,
+  tiers: readonly PricingTier[] = pricing.tiers,
+): PricingTier {
+  const list = tiers.length > 0 ? tiers : pricing.tiers;
+
+  if (memberCount <= 100) {
+    return list[0];
+  }
+
+  if (memberCount <= 300) {
+    return list[1];
+  }
+
+  if (memberCount <= 700) {
+    return list[2];
+  }
+
+  return list[3];
+}
+
+export function formatMemberCountLabel(memberCount: number): string {
+  if (memberCount >= 1000) {
+    return "1.000+ membros";
+  }
+
+  return `${memberCount} membros`;
 }

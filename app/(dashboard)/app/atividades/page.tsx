@@ -1,12 +1,18 @@
 "use client";
 
+import { RequirePermission } from "@/components/auth/require-permission";
 import { ActivitiesContent } from "@/components/dashboard/activities-content";
 import { DashboardPage } from "@/components/dashboard/dashboard-shell";
 
 export default function AtividadesPage() {
   return (
-    <DashboardPage title="Atividades" subtitle="Eventos e encontros por ministério">
-      <ActivitiesContent />
-    </DashboardPage>
+    <RequirePermission permission="activities">
+      <DashboardPage
+        title="Atividades"
+        subtitle="Calendário da igreja e agenda dos ministérios"
+      >
+        <ActivitiesContent />
+      </DashboardPage>
+    </RequirePermission>
   );
 }

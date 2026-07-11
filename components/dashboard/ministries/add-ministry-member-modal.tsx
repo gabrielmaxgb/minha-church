@@ -3,12 +3,17 @@
 import { useEffect, useId, useMemo, useState } from "react";
 import { Loader2, UserPlus, X } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { SelectField } from "@/components/ui/select-field";
 import { Separator } from "@/components/ui/separator";
-import { TypeaheadSelect } from "@/components/ui/typeahead-select";
-import { useAssignMemberToMinistry, useMembers } from "@/lib/api/queries";
+import { TypeaheadMultiSelect } from "@/components/ui/typeahead-multi-select";
+import {
+  useAssignMembersToMinistry,
+  useMembers,
+} from "@/lib/api/queries";
+import { canManageMinistryTeam } from "@/lib/permissions";
+import { useAuth } from "@/providers/auth-provider";
 import type { Ministry, MinistryMember } from "@/types/ministries";
 
 interface AddMinistryMemberModalProps {
@@ -25,12 +30,18 @@ export function AddMinistryMemberModal({
   onClose,
 }: AddMinistryMemberModalProps) {
   const titleId = useId();
-  const [memberId, setMemberId] = useState("");
-  const [roleId, setRoleId] = useState("");
+  const { permissions } = useAuth();
+  const canManage = permissions
+    ? canManageMinistryTeam(permissions, ministry.id)
+    : false;
+  const [memberIds, setMemberIds] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  const { data: membersData, isLoading } = useMembers({ limit: 100 });
-  const assignMember = useAssignMemberToMinistry(ministry.id);
+  const { data: membersData, isLoading } = useMembers(
+    { limit: 200 },
+    { enabled: open && canManage },
+  );
+  const assignMembers = useAssignMembersToMinistry(ministry.id);
 
   const assignedIds = useMemo(
     () => new Set(currentMembers.map((member) => member.memberId)),
@@ -56,12 +67,27 @@ export function AddMinistryMemberModal({
     [availableMembers],
   );
 
-  const roles = [...ministry.roles].sort((a, b) => a.sortOrder - b.sortOrder);
+  const memberCount = memberIds.length;
+  const hasRemainingMembers = memberOptions.some(
+    (option) => !memberIds.includes(option.value),
+  );
+  const membersEmptyMessage = isLoading
+    ? "Carregando membros..."
+    : memberOptions.length === 0
+      ? "Nenhum membro disponível para adicionar."
+      : !hasRemainingMembers
+        ? "Todos os membros disponíveis já foram selecionados."
+        : "Nenhum membro encontrado.";
+  const submitLabel =
+    memberCount === 0
+      ? "Adicionar ao ministério"
+      : memberCount === 1
+        ? "Adicionar 1 membro"
+        : `Adicionar ${memberCount} membros`;
 
   useEffect(() => {
     if (!open) {
-      setMemberId("");
-      setRoleId("");
+      setMemberIds([]);
       setError(null);
       return;
     }
@@ -80,7 +106,7 @@ export function AddMinistryMemberModal({
     }
 
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape" && !assignMember.isPending) {
+      if (event.key === "Escape" && !assignMembers.isPending) {
         onClose();
       }
     }
@@ -88,7 +114,7 @@ export function AddMinistryMemberModal({
     window.addEventListener("keydown", handleKeyDown);
 
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [open, onClose, assignMember.isPending]);
+  }, [open, onClose, assignMembers.isPending]);
 
   if (!open) {
     return null;
@@ -98,24 +124,39 @@ export function AddMinistryMemberModal({
     event.preventDefault();
     setError(null);
 
-    if (!memberId) {
-      setError("Selecione um membro.");
+    if (memberIds.length === 0) {
+      setError("Selecione ao menos um membro.");
       return;
     }
 
     try {
-      await assignMember.mutateAsync({
-        memberId,
+      const { succeeded, failed } = await assignMembers.mutateAsync({
+        memberIds,
         payload: {
-          ministryRoleId: roleId || undefined,
+          ministryRoleIds: [],
         },
       });
-      onClose();
+
+      if (failed.length === 0) {
+        onClose();
+        return;
+      }
+
+      setMemberIds(failed);
+
+      if (succeeded.length > 0) {
+        setError(
+          `${succeeded.length} membro${succeeded.length === 1 ? "" : "s"} adicionado${succeeded.length === 1 ? "" : "s"}. ${failed.length} não pôde${failed.length === 1 ? "" : "ram"} ser vinculado${failed.length === 1 ? "" : "s"}.`,
+        );
+        return;
+      }
+
+      setError("Não foi possível adicionar os membros selecionados.");
     } catch (submitError) {
       setError(
         submitError instanceof Error
           ? submitError.message
-          : "Não foi possível adicionar o membro.",
+          : "Não foi possível adicionar os membros.",
       );
     }
   }
@@ -124,11 +165,11 @@ export function AddMinistryMemberModal({
     <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
       <button
         type="button"
-        className="absolute inset-0 bg-black/45 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-black/45"
         aria-label="Fechar modal"
-        disabled={assignMember.isPending}
+        disabled={assignMembers.isPending}
         onClick={() => {
-          if (!assignMember.isPending) {
+          if (!assignMembers.isPending) {
             onClose();
           }
         }}
@@ -138,24 +179,25 @@ export function AddMinistryMemberModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative z-10 flex w-full max-w-3xl flex-col rounded-t-2xl border border-border bg-background shadow-2xl sm:max-h-[min(90dvh,720px)] sm:rounded-2xl"
+        className="relative z-10 flex w-full max-w-3xl flex-col rounded-t-xl border border-border bg-background shadow-popover sm:max-h-[min(90dvh,720px)] sm:rounded-xl"
       >
         <header className="flex items-start gap-4 px-8 pb-5 pt-8">
           <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             <UserPlus className="size-5" aria-hidden />
           </div>
           <div className="min-w-0 flex-1 pt-0.5">
-            <h2 id={titleId} className="font-display text-2xl font-semibold tracking-tight">
-              Adicionar membro
+            <h2 id={titleId} className="text-2xl font-semibold tracking-tight">
+              Adicionar membros
             </h2>
             <p className="mt-1.5 text-sm text-muted-foreground">
-              Vincule alguém ao ministério <span className="font-medium text-foreground">{ministry.name}</span>
+              Vincule uma ou mais pessoas ao ministério{" "}
+              <span className="font-medium text-foreground">{ministry.name}</span>
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            disabled={assignMember.isPending}
+            disabled={assignMembers.isPending}
             className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
             aria-label="Fechar"
           >
@@ -177,46 +219,29 @@ export function AddMinistryMemberModal({
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="member-typeahead">Membro</Label>
-              <TypeaheadSelect
+              <div className="flex flex-wrap items-center gap-2">
+                <Label htmlFor="member-typeahead">Membros</Label>
+                {memberCount > 0 && (
+                  <Badge variant="secondary" className="font-normal tabular-nums">
+                    {memberCount} selecionado{memberCount === 1 ? "" : "s"}
+                  </Badge>
+                )}
+              </div>
+              <TypeaheadMultiSelect
                 id="member-typeahead"
-                value={memberId}
-                onChange={setMemberId}
+                value={memberIds}
+                onChange={setMemberIds}
                 options={memberOptions}
                 placeholder="Nome, e-mail ou telefone"
                 listClassName="max-h-80"
-                emptyMessage={
-                  isLoading
-                    ? "Carregando membros..."
-                    : "Nenhum membro disponível para adicionar."
-                }
+                emptyMessage={membersEmptyMessage}
                 loading={isLoading}
-                disabled={assignMember.isPending}
-                required
-                aria-invalid={error === "Selecione um membro." ? true : undefined}
+                disabled={assignMembers.isPending}
+                aria-invalid={error === "Selecione ao menos um membro." ? true : undefined}
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="member-role">Cargo no ministério</Label>
-              <SelectField
-                id="member-role"
-                value={roleId}
-                onChange={(event) => setRoleId(event.target.value)}
-                disabled={assignMember.isPending || roles.length === 0}
-              >
-                <option value="">Sem cargo definido</option>
-                {roles.map((role) => (
-                  <option key={role.id} value={role.id}>
-                    {role.name}
-                  </option>
-                ))}
-              </SelectField>
-              {roles.length === 0 && (
-                <p className="text-xs text-muted-foreground">
-                  Crie cargos na aba &quot;Cargos&quot; antes de atribuir papéis.
-                </p>
-              )}
+              <p className="text-xs text-muted-foreground">
+                Busque e selecione várias pessoas para vincular ao ministério.
+              </p>
             </div>
           </div>
 
@@ -225,23 +250,23 @@ export function AddMinistryMemberModal({
               type="button"
               variant="outline"
               onClick={onClose}
-              disabled={assignMember.isPending}
+              disabled={assignMembers.isPending}
               className="w-full sm:w-auto"
             >
               Cancelar
             </Button>
             <Button
               type="submit"
-              disabled={assignMember.isPending || !memberId}
+              disabled={assignMembers.isPending || memberIds.length === 0}
               className="w-full sm:w-auto"
             >
-              {assignMember.isPending ? (
+              {assignMembers.isPending ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
                   Adicionando...
                 </>
               ) : (
-                "Adicionar ao ministério"
+                submitLabel
               )}
             </Button>
           </footer>

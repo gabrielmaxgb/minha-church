@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { Check, Copy, KeyRound, X } from "lucide-react";
+import { Check, Copy, KeyRound, Link2, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import type { MemberAccountCredentials } from "@/types/members";
@@ -47,7 +47,7 @@ function CopyField({
           aria-label={`Copiar ${label.toLowerCase()}`}
         >
           {copied ? (
-            <Check className="size-4 text-emerald-600" />
+            <Check className="size-4 text-success" />
           ) : (
             <Copy className="size-4" />
           )}
@@ -65,6 +65,7 @@ export function MemberAccountCreatedModal({
 }: MemberAccountCreatedModalProps) {
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
+  const isLinked = account.kind === "linked";
 
   useEffect(() => {
     if (!open) {
@@ -103,7 +104,7 @@ export function MemberAccountCreatedModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <button
         type="button"
-        className="absolute inset-0 bg-foreground/20 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-foreground/30"
         aria-label="Fechar"
         onClick={onClose}
       />
@@ -114,21 +115,26 @@ export function MemberAccountCreatedModal({
         aria-modal="true"
         aria-labelledby={titleId}
         className={cn(
-          "relative z-10 w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl",
+          "relative z-10 w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-popover",
         )}
       >
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-              <KeyRound className="size-5" aria-hidden />
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              {isLinked ? (
+                <Link2 className="size-5" aria-hidden />
+              ) : (
+                <KeyRound className="size-5" aria-hidden />
+              )}
             </div>
             <div>
-              <h2 id={titleId} className="font-display text-lg font-semibold">
-                Login criado
+              <h2 id={titleId} className="text-lg font-semibold tracking-tight">
+                {isLinked ? "Conta existente vinculada" : "Login criado"}
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Compartilhe as credenciais com {memberName}. No primeiro acesso,
-                será necessário definir uma nova senha.
+                {isLinked
+                  ? `${memberName} já tinha conta MinhaChurch. O acesso a esta igreja foi liberado com o login atual — sem senha nova.`
+                  : `Compartilhe as credenciais com ${memberName}. No primeiro acesso, será necessário definir uma nova senha.`}
               </p>
             </div>
           </div>
@@ -146,7 +152,12 @@ export function MemberAccountCreatedModal({
 
         <div className="mt-6 space-y-4">
           <CopyField label="Login (e-mail ou CPF)" value={account.login} />
-          <CopyField label="Senha temporária" value={account.temporaryPassword} />
+          {account.kind === "created" && (
+            <CopyField
+              label="Senha temporária"
+              value={account.temporaryPassword}
+            />
+          )}
         </div>
 
         <div className="mt-6 flex justify-end">

@@ -1,8 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
+import { CheckoutReturnHandler } from "@/components/billing/checkout-return-handler";
+import { TierCrossingOwnerHost } from "@/components/billing/tier-crossing-owner-host";
+import { ChurchSwitchOverlay } from "@/components/dashboard/church-switch-overlay";
+import { EmailVerificationBanner } from "@/components/dashboard/email-verification-banner";
+import { OnboardingChecklistProvider } from "@/components/dashboard/onboarding/onboarding-checklist-context";
+import { TrialStatusBanner } from "@/components/dashboard/trial-status-banner";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { DashboardContentMotion } from "@/components/motion/dashboard-motion";
@@ -23,28 +29,34 @@ export function DashboardShell({
 }: DashboardShellProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { isLoading, isAuthenticated, church, user } = useRequireAuth();
+  const {
+    isLoading,
+    isAuthenticated,
+    isSwitchingChurch,
+    switchingToChurchName,
+    church,
+    user,
+  } = useRequireAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const mustChangePassword =
+    Boolean(user?.mustChangePassword) && pathname !== AUTH_ROUTES.changePassword;
+
   useEffect(() => {
-    if (
-      !isLoading &&
-      user?.mustChangePassword &&
-      pathname !== AUTH_ROUTES.changePassword
-    ) {
+    if (!isLoading && mustChangePassword) {
       router.replace(AUTH_ROUTES.changePassword);
     }
-  }, [isLoading, pathname, router, user?.mustChangePassword]);
+  }, [isLoading, mustChangePassword, router]);
 
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <p className="animate-pulse text-sm text-muted-foreground">Carregando painel...</p>
+        <p className="animate-pulse text-sm text-muted-foreground">Carregando...</p>
       </div>
     );
   }
 
-  if (!isAuthenticated || !church) {
+  if (!isAuthenticated || !church || mustChangePassword) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <p className="text-sm text-muted-foreground">Redirecionando...</p>
@@ -53,39 +65,61 @@ export function DashboardShell({
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-surface">
-      <div className="hidden h-screen shrink-0 lg:block">
+    <OnboardingChecklistProvider>
+      <div className="relative flex h-screen overflow-hidden bg-background">
+      {isSwitchingChurch && switchingToChurchName && (
+        <ChurchSwitchOverlay churchName={switchingToChurchName} />
+      )}
+
+      <div
+        className={cn(
+          "hidden h-screen shrink-0 lg:block",
+          isSwitchingChurch && "pointer-events-none select-none",
+        )}
+      >
         <DashboardSidebar className="h-full" />
       </div>
 
       {sidebarOpen && (
-        <>
-          <button
-            type="button"
-            className="fixed inset-0 z-30 bg-[#141413]/40 backdrop-blur-sm lg:hidden"
-            aria-label="Fechar menu"
-            onClick={() => setSidebarOpen(false)}
+        <div className="fixed inset-0 z-40 h-full w-full lg:hidden">
+          <DashboardSidebar
+            onNavigate={() => setSidebarOpen(false)}
+            onClose={() => setSidebarOpen(false)}
+            className="h-full w-full border-r-0"
           />
-          <div className="fixed inset-y-0 left-0 z-40 h-full w-64 shadow-elevated lg:hidden">
-            <DashboardSidebar
-              onNavigate={() => setSidebarOpen(false)}
-              className="h-full"
-            />
-          </div>
-        </>
+        </div>
       )}
 
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+      <div
+        className={cn(
+          "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden",
+          isSwitchingChurch && "pointer-events-none select-none",
+        )}
+        aria-busy={isSwitchingChurch}
+      >
         <DashboardTopbar
           title={title}
           subtitle={subtitle ?? church?.name}
           onOpenSidebar={() => setSidebarOpen(true)}
         />
-        <main className="dashboard-canvas min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 sm:py-8">
+        <main
+          className={cn(
+            "dashboard-canvas min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 sm:py-8",
+            isSwitchingChurch && "opacity-60",
+          )}
+        >
+          <EmailVerificationBanner />
+          <TrialStatusBanner />
           <DashboardContentMotion>{children}</DashboardContentMotion>
         </main>
       </div>
-    </div>
+      </div>
+
+      <Suspense fallback={null}>
+        <CheckoutReturnHandler />
+      </Suspense>
+      <TierCrossingOwnerHost />
+    </OnboardingChecklistProvider>
   );
 }
 

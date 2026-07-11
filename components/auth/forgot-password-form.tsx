@@ -64,7 +64,7 @@ export function ForgotPasswordForm() {
   return (
     <Card className="w-full max-w-md border-border shadow-none">
       <CardHeader className="text-center">
-        <CardTitle className="font-display text-2xl">Recuperar senha</CardTitle>
+        <CardTitle className="text-2xl font-semibold tracking-tight">Recuperar senha</CardTitle>
         <CardDescription>
           Informe o e-mail ou CPF usado no login. Se você tem e-mail cadastrado,
           enviaremos um link. Caso contrário, sua igreja será notificada.

@@ -1,65 +1,70 @@
 import type { Pricing } from "@/types";
 
+import { apiClient } from "@/lib/api/client";
+
 const sharedBenefits = [
-	"Saiba quem está afastado e cuide no tempo certo",
-	"Organize escalas sem depender de mensagens no WhatsApp",
-	"Centralize membros, finanças e comunicação em um só lugar",
-	"Tenha histórico pastoral acessível para toda a liderança",
-	"Acompanhe cultos, eventos e voluntários com clareza",
-	"Gere relatórios e prestação de contas sem planilhas",
-	"Importe sua base de membros em minutos",
+	"Membros, ministérios e escalas no mesmo lugar — sem planilha paralela",
+	"Comunicados oficiais da liderança, sem virar grupo de WhatsApp",
+	"Agenda de cultos e eventos com coleta de disponibilidade da equipe",
+	"Permissões por cargo: cada líder vê e faz só o que precisa",
+	"Histórico pastoral e cadastro centralizado, acessível com segurança",
+	"Importação de membros por planilha em poucos minutos",
 ];
 
-// Mock — substituir por resposta da API quando o backend estiver pronto
+// Fallback offline — espelha GET /pricing (fonte: billing-plans.config.ts no backend).
 export const pricing: Pricing = {
 	name: "Minha Church",
 	description:
-		"Mesmas funcionalidades em todas as faixas — você paga de acordo com o tamanho da sua igreja.",
+		"Mesmas funcionalidades em todas as faixas. Você paga conforme o tamanho da sua igreja — não por pacote de recursos.",
 	benefits: sharedBenefits,
 	valueAnchor: {
 		headline:
-			"Menos do que o custo de um almoço por semana para manter toda a administração da sua igreja organizada.",
+			"Menos do que um turno de secretaria — e muito menos caos com planilhas, formulários soltos e grupos de WhatsApp.",
 		example:
-			"Para uma igreja de 200 membros, o custo é cerca de R$ 1 por membro por mês.",
+			"Para uma igreja com cerca de 200 membros cadastrados, o investimento fica em torno de R$ 1,45 por membro por mês no plano mensal.",
 	},
 	cta: "Começar grátis",
 	tiers: [
 		{
 			id: "ate-100",
 			name: "Pequena Igreja",
-			memberRange: "Até 100 membros",
+			memberRange: "Até 100 membros cadastrados",
 			memberCountForPricePerMember: 100,
-			monthlyPrice: 99.9,
-			yearlyPrice: 999,
+			monthlyPrice: 119,
+			yearlyPrice: 1190,
 		},
 		{
 			id: "101-300",
 			name: "Igreja em Crescimento",
-			memberRange: "101–300 membros",
-			memberCountForPricePerMember: 300,
-			monthlyPrice: 199.9,
-			yearlyPrice: 1999,
+			memberRange: "101 a 300 membros cadastrados",
+			memberCountForPricePerMember: 200,
+			monthlyPrice: 289,
+			yearlyPrice: 2890,
+			highlighted: true,
 		},
 		{
 			id: "301-700",
 			name: "Igreja Consolidada",
-			memberRange: "301–700 membros",
-			memberCountForPricePerMember: 700,
-			monthlyPrice: 299.9,
-			yearlyPrice: 2999,
+			memberRange: "301 a 700 membros cadastrados",
+			memberCountForPricePerMember: 500,
+			monthlyPrice: 489,
+			yearlyPrice: 4890,
 		},
 		{
 			id: "701-plus",
 			name: "Multi-Congregação",
-			memberRange: "701+ membros",
-			memberCountForPricePerMember: 701,
-			monthlyPrice: 399.9,
-			yearlyPrice: 3999,
+			memberRange: "701 membros cadastrados ou mais",
+			memberCountForPricePerMember: 1000,
+			monthlyPrice: 589,
+			yearlyPrice: 5890,
 		},
 	],
 };
 
 export async function fetchPricing(): Promise<Pricing> {
-	await new Promise((resolve) => setTimeout(resolve, 300));
-	return pricing;
+  try {
+    return await apiClient<Pricing>("/pricing", { skipAuth: true });
+  } catch {
+    return pricing;
+  }
 }

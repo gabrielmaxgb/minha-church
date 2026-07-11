@@ -1,17 +1,22 @@
 "use client";
 
-import { Calendar, MapPin, Pencil, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { Calendar, MapPin, Pencil, Repeat, Sparkles } from "lucide-react";
 
 import { HoverLift } from "@/components/motion/dashboard-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { activityDetailPath } from "@/constants/routes";
 import { cn, formatDateTime } from "@/lib/utils";
+import { formatRecurrenceSummary } from "@/lib/events/recurrence";
 import type { ChurchEvent } from "@/types/events";
 
 interface ActivityEventCardProps {
   event: ChurchEvent;
   highlighted?: boolean;
   canManage?: boolean;
+  manageActionsBlocked?: boolean;
+  manageBlockTitle?: string;
   onEdit?: (event: ChurchEvent) => void;
 }
 
@@ -19,18 +24,21 @@ export function ActivityEventCard({
   event,
   highlighted = event.isChurchWide,
   canManage = false,
+  manageActionsBlocked = false,
+  manageBlockTitle,
   onEdit,
 }: ActivityEventCardProps) {
   return (
     <HoverLift>
-      <article
-        className={cn(
-          "rounded-2xl border bg-card p-5 shadow-soft transition-shadow duration-300 hover:shadow-elevated",
-          highlighted
-            ? "border-primary/15 bg-gradient-to-br from-card to-muted/40"
-            : "border-border/70",
-        )}
-      >
+      <Link href={activityDetailPath(event.id)} className="block">
+        <article
+          className={cn(
+            "rounded-xl border bg-card p-5 transition-shadow duration-150 hover:shadow-elevated",
+            highlighted
+              ? "border-primary/15 bg-muted/20"
+              : "border-border/70",
+          )}
+        >
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
@@ -43,10 +51,21 @@ export function ActivityEventCard({
                   Igreja
                 </Badge>
               )}
+              {event.recurrence && (
+                <Badge variant="secondary" className="gap-1.5">
+                  <Repeat className="size-3" />
+                  Recorrente
+                </Badge>
+              )}
             </div>
             {event.description && (
               <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
                 {event.description}
+              </p>
+            )}
+            {event.recurrence && (
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                {formatRecurrenceSummary(event.recurrence, event.startsAt)}
               </p>
             )}
           </div>
@@ -61,7 +80,13 @@ export function ActivityEventCard({
                 size="sm"
                 variant="outline"
                 className="shrink-0"
-                onClick={() => onEdit(event)}
+                disabled={manageActionsBlocked}
+                title={manageActionsBlocked ? manageBlockTitle : undefined}
+                onClick={(clickEvent) => {
+                  clickEvent.preventDefault();
+                  clickEvent.stopPropagation();
+                  onEdit(event);
+                }}
               >
                 <Pencil className="size-4" />
                 Editar
@@ -75,8 +100,15 @@ export function ActivityEventCard({
             <span className="flex size-7 items-center justify-center rounded-lg bg-muted/80">
               <Calendar className="size-3.5 shrink-0 text-foreground/70" />
             </span>
-            {formatDateTime(event.startsAt)}
-            {event.endsAt && ` — ${formatDateTime(event.endsAt)}`}
+            <span>
+              {event.recurrence && (
+                <span className="mr-1.5 font-medium text-foreground">
+                  Próxima:
+                </span>
+              )}
+              {formatDateTime(event.startsAt)}
+              {event.endsAt && ` — ${formatDateTime(event.endsAt)}`}
+            </span>
           </span>
           {event.location && (
             <span className="inline-flex items-center gap-2">
@@ -88,6 +120,7 @@ export function ActivityEventCard({
           )}
         </div>
       </article>
+      </Link>
     </HoverLift>
   );
 }

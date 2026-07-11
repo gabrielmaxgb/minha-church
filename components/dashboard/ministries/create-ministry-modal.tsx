@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useId, useRef } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Layers, Loader2, X } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm, useWatch } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import { FormAlert, FormField } from "@/components/ui/form-field";
@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateMinistry } from "@/lib/api/queries";
+import { TrialExpiredWriteModal } from "@/components/dashboard/trial-expired-write-modal";
+import { useTrialWriteGuard } from "@/lib/subscription/use-trial-write-guard";
 import {
   createMinistrySchema,
   type CreateMinistryFormValues,
@@ -29,6 +31,7 @@ export function CreateMinistryModal({ open, onClose }: CreateMinistryModalProps)
   const descriptionId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
   const createMinistry = useCreateMinistry();
+  const { writesBlocked } = useTrialWriteGuard();
 
   const form = useForm<CreateMinistryFormValues>({
     resolver: zodResolver(createMinistrySchema),
@@ -42,11 +45,10 @@ export function CreateMinistryModal({ open, onClose }: CreateMinistryModalProps)
     reset,
     setError,
     clearErrors,
-    watch,
     formState: { errors },
   } = form;
 
-  const description = watch("description");
+  const description = useWatch({ control: form.control, name: "description" }) ?? "";
 
   useEffect(() => {
     if (!open) {
@@ -83,6 +85,16 @@ export function CreateMinistryModal({ open, onClose }: CreateMinistryModalProps)
     return null;
   }
 
+  if (writesBlocked) {
+    return (
+      <TrialExpiredWriteModal
+        open
+        onClose={onClose}
+        action="criar ministérios"
+      />
+    );
+  }
+
   const onSubmit = handleSubmit(async (values) => {
     clearErrors("root");
 
@@ -110,7 +122,7 @@ export function CreateMinistryModal({ open, onClose }: CreateMinistryModalProps)
     >
       <button
         type="button"
-        className="absolute inset-0 bg-black/45 backdrop-blur-[2px] transition-opacity"
+        className="absolute inset-0 bg-black/45 transition-opacity"
         aria-label="Fechar modal"
         disabled={createMinistry.isPending}
         onClick={() => {
@@ -128,7 +140,7 @@ export function CreateMinistryModal({ open, onClose }: CreateMinistryModalProps)
         aria-describedby={descriptionId}
         className={cn(
           "relative z-10 flex max-h-[min(92dvh,640px)] w-full max-w-lg flex-col",
-          "rounded-t-2xl border border-border bg-background shadow-2xl sm:rounded-2xl",
+          "rounded-t-xl border border-border bg-background shadow-popover sm:rounded-xl",
         )}
       >
         <header className="flex items-start gap-4 px-6 pb-4 pt-6">
@@ -139,7 +151,7 @@ export function CreateMinistryModal({ open, onClose }: CreateMinistryModalProps)
           <div className="min-w-0 flex-1 pt-0.5">
             <h2
               id={titleId}
-              className="font-display text-xl font-semibold tracking-tight"
+              className="text-xl font-semibold tracking-tight"
             >
               Novo ministério
             </h2>
@@ -148,7 +160,7 @@ export function CreateMinistryModal({ open, onClose }: CreateMinistryModalProps)
               className="mt-1 text-sm leading-relaxed text-muted-foreground"
             >
               Organize uma área de serviço com cargos, permissões e eventos
-              próprios.
+              próprios. A escala é configurada em cada evento.
             </p>
           </div>
 

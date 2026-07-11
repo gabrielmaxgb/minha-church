@@ -20,12 +20,57 @@
   --accent: #deded9;
   --accent-foreground: #1a1a18;
   --destructive: #8f4444;
+  --success: #3d6b4f;
+  --success-foreground: #1e3a28;
+  --success-subtle: color-mix(in srgb, var(--success) 10%, var(--card));
+  --attention: #c4a574;
+  --attention-foreground: #6a5735;
+  --attention-subtle: color-mix(in srgb, var(--attention) 11%, var(--card));
+  --attention-border: color-mix(in srgb, var(--attention) 18%, var(--border));
+  --attention-emphasis: color-mix(in srgb, var(--attention) 34%, transparent);
+  --attention-mark: color-mix(in srgb, var(--attention) 22%, var(--card));
+  /* Billing / assinatura — cor própria, distinta de attention (agenda) */
+  --billing: #4a5f9e;
+  --billing-foreground: #2f3f6e;
+  --billing-subtle: color-mix(in srgb, var(--billing) 14%, var(--card));
+  --billing-border: color-mix(in srgb, var(--billing) 32%, var(--border));
+  --billing-mark: color-mix(in srgb, var(--billing) 22%, var(--card));
+  --billing-emphasis: color-mix(in srgb, var(--billing) 42%, transparent);
   --border: #d8d8d3;
   --input: #d0d0cb;
   --ring: #5c5c58;
   --radius: 0.625rem;
-  --shadow-soft: 0 1px 2px rgb(20 20 19 / 0.04), 0 4px 16px rgb(20 20 19 / 0.06);
-  --shadow-elevated: 0 2px 4px rgb(20 20 19 / 0.05), 0 12px 32px rgb(20 20 19 / 0.08);
+  --shadow-xs: 0 1px 0 rgb(20 20 19 / 0.04);
+  --shadow-popover: 0 0 0 1px rgb(20 20 19 / 0.06), 0 8px 24px rgb(20 20 19 / 0.1);
+  /* Legacy aliases — prefer shadow-xs / shadow-popover */
+  --shadow-soft: var(--shadow-xs);
+  --shadow-elevated: var(--shadow-popover);
+
+  /* Domínios — accents suaves (pastoral / institutional quiet) */
+  --domain-home: #6a6a64;
+  --domain-home-foreground: #3f3f3b;
+  --domain-home-subtle: color-mix(in srgb, var(--domain-home) 9%, var(--card));
+  --domain-members: #5f6f5a;
+  --domain-members-foreground: #3a4638;
+  --domain-members-subtle: color-mix(in srgb, var(--domain-members) 10%, var(--card));
+  --domain-ministries: #9a6b52;
+  --domain-ministries-foreground: #5c3f30;
+  --domain-ministries-subtle: color-mix(in srgb, var(--domain-ministries) 10%, var(--card));
+  --domain-activities: #5c6b7a;
+  --domain-activities-foreground: #384552;
+  --domain-activities-subtle: color-mix(in srgb, var(--domain-activities) 10%, var(--card));
+  --domain-schedules: var(--attention);
+  --domain-schedules-foreground: var(--attention-foreground);
+  --domain-schedules-subtle: var(--attention-subtle);
+  --domain-communication: #4f6f68;
+  --domain-communication-foreground: #2f4540;
+  --domain-communication-subtle: color-mix(in srgb, var(--domain-communication) 10%, var(--card));
+  --domain-finances: var(--success);
+  --domain-finances-foreground: var(--success-foreground);
+  --domain-finances-subtle: var(--success-subtle);
+  --domain-reports: #6a6a64;
+  --domain-reports-foreground: #3f3f3b;
+  --domain-reports-subtle: color-mix(in srgb, var(--domain-reports) 9%, var(--card));
 }
 
 .dark {
@@ -46,11 +91,53 @@
   --accent: #32322f;
   --accent-foreground: #f0f0ec;
   --destructive: #d48484;
+  --success: #7aab8c;
+  --success-foreground: #c5e0cf;
+  --success-subtle: color-mix(in srgb, var(--success) 14%, var(--card));
+  --attention: #b89968;
+  --attention-foreground: #dcc9a8;
+  --attention-subtle: color-mix(in srgb, var(--attention) 14%, var(--card));
+  --attention-border: color-mix(in srgb, var(--attention) 22%, var(--border));
+  --attention-emphasis: color-mix(in srgb, var(--attention) 40%, transparent);
+  --attention-mark: color-mix(in srgb, var(--attention) 28%, var(--card));
+  --billing: #7b8fc4;
+  --billing-foreground: #c5d0ec;
+  --billing-subtle: color-mix(in srgb, var(--billing) 16%, var(--card));
+  --billing-border: color-mix(in srgb, var(--billing) 30%, var(--border));
+  --billing-mark: color-mix(in srgb, var(--billing) 26%, var(--card));
+  --billing-emphasis: color-mix(in srgb, var(--billing) 45%, transparent);
   --border: #2e2e2b;
   --input: #353532;
   --ring: #8a8a84;
-  --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.2), 0 4px 16px rgb(0 0 0 / 0.25);
-  --shadow-elevated: 0 2px 4px rgb(0 0 0 / 0.25), 0 12px 32px rgb(0 0 0 / 0.35);
+  --shadow-xs: 0 1px 0 rgb(0 0 0 / 0.35);
+  --shadow-popover: 0 0 0 1px rgb(0 0 0 / 0.4), 0 12px 32px rgb(0 0 0 / 0.45);
+  --shadow-soft: var(--shadow-xs);
+  --shadow-elevated: var(--shadow-popover);
+
+  --domain-home: #a3a39c;
+  --domain-home-foreground: #d4d4ce;
+  --domain-home-subtle: color-mix(in srgb, var(--domain-home) 12%, var(--card));
+  --domain-members: #8aa08a;
+  --domain-members-foreground: #c5d4c5;
+  --domain-members-subtle: color-mix(in srgb, var(--domain-members) 14%, var(--card));
+  --domain-ministries: #c49a7a;
+  --domain-ministries-foreground: #e0c4ae;
+  --domain-ministries-subtle: color-mix(in srgb, var(--domain-ministries) 14%, var(--card));
+  --domain-activities: #8a9aab;
+  --domain-activities-foreground: #c0ccd8;
+  --domain-activities-subtle: color-mix(in srgb, var(--domain-activities) 14%, var(--card));
+  --domain-schedules: var(--attention);
+  --domain-schedules-foreground: var(--attention-foreground);
+  --domain-schedules-subtle: var(--attention-subtle);
+  --domain-communication: #7a9a92;
+  --domain-communication-foreground: #b8d0ca;
+  --domain-communication-subtle: color-mix(in srgb, var(--domain-communication) 14%, var(--card));
+  --domain-finances: var(--success);
+  --domain-finances-foreground: var(--success-foreground);
+  --domain-finances-subtle: var(--success-subtle);
+  --domain-reports: #a3a39c;
+  --domain-reports-foreground: #d4d4ce;
+  --domain-reports-subtle: color-mix(in srgb, var(--domain-reports) 12%, var(--card));
 }
 
 @theme inline {
@@ -69,46 +156,133 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-subtle: var(--success-subtle);
+  --color-attention: var(--attention);
+  --color-attention-foreground: var(--attention-foreground);
+  --color-attention-subtle: var(--attention-subtle);
+  --color-attention-border: var(--attention-border);
+  --color-attention-emphasis: var(--attention-emphasis);
+  --color-attention-mark: var(--attention-mark);
+  --color-billing: var(--billing);
+  --color-billing-foreground: var(--billing-foreground);
+  --color-billing-subtle: var(--billing-subtle);
+  --color-billing-border: var(--billing-border);
+  --color-billing-mark: var(--billing-mark);
+  --color-billing-emphasis: var(--billing-emphasis);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-surface: var(--surface);
   --color-surface-elevated: var(--surface-elevated);
+  --color-domain-home: var(--domain-home);
+  --color-domain-home-foreground: var(--domain-home-foreground);
+  --color-domain-home-subtle: var(--domain-home-subtle);
+  --color-domain-members: var(--domain-members);
+  --color-domain-members-foreground: var(--domain-members-foreground);
+  --color-domain-members-subtle: var(--domain-members-subtle);
+  --color-domain-ministries: var(--domain-ministries);
+  --color-domain-ministries-foreground: var(--domain-ministries-foreground);
+  --color-domain-ministries-subtle: var(--domain-ministries-subtle);
+  --color-domain-activities: var(--domain-activities);
+  --color-domain-activities-foreground: var(--domain-activities-foreground);
+  --color-domain-activities-subtle: var(--domain-activities-subtle);
+  --color-domain-schedules: var(--domain-schedules);
+  --color-domain-schedules-foreground: var(--domain-schedules-foreground);
+  --color-domain-schedules-subtle: var(--domain-schedules-subtle);
+  --color-domain-communication: var(--domain-communication);
+  --color-domain-communication-foreground: var(--domain-communication-foreground);
+  --color-domain-communication-subtle: var(--domain-communication-subtle);
+  --color-domain-finances: var(--domain-finances);
+  --color-domain-finances-foreground: var(--domain-finances-foreground);
+  --color-domain-finances-subtle: var(--domain-finances-subtle);
+  --color-domain-reports: var(--domain-reports);
+  --color-domain-reports-foreground: var(--domain-reports-foreground);
+  --color-domain-reports-subtle: var(--domain-reports-subtle);
+  --shadow-xs: var(--shadow-xs);
+  --shadow-popover: var(--shadow-popover);
   --shadow-soft: var(--shadow-soft);
   --shadow-elevated: var(--shadow-elevated);
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) + 2px);
-  --radius-xl: calc(var(--radius) + 6px);
+  --radius-xl: calc(var(--radius) + 4px);
   --font-sans: var(--font-dm-sans);
   --font-mono: var(--font-geist-mono);
   --font-display: var(--font-syne);
 }
 
 @layer utilities {
+  /* Syne: wordmark do logo + H1 do hero marketing apenas */
   .font-display {
     font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
   }
 
+  .page-title {
+    font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  .hero-display {
+    font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+    font-size: clamp(1.75rem, 4vw, 2.75rem);
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1.12;
+  }
+
+  .shadow-xs {
+    box-shadow: var(--shadow-xs);
+  }
+
+  .shadow-popover {
+    box-shadow: var(--shadow-popover);
+  }
+
   .shadow-soft {
-    box-shadow: var(--shadow-soft);
+    box-shadow: var(--shadow-xs);
   }
 
   .shadow-elevated {
-    box-shadow: var(--shadow-elevated);
+    box-shadow: var(--shadow-popover);
   }
 
   .dashboard-canvas {
     background-color: var(--background);
     background-image:
-      radial-gradient(ellipse 80% 50% at 50% -20%, rgb(255 255 255 / 0.7), transparent),
-      radial-gradient(ellipse 60% 40% at 100% 0%, rgb(230 230 226 / 0.5), transparent);
+      radial-gradient(
+        ellipse 80% 50% at 0% -10%,
+        color-mix(in srgb, var(--domain-activities) 8%, transparent),
+        transparent 55%
+      ),
+      radial-gradient(
+        ellipse 60% 40% at 100% 0%,
+        color-mix(in srgb, var(--attention) 7%, transparent),
+        transparent 50%
+      );
   }
 
-  .dark .dashboard-canvas {
+  .marketing-atmosphere {
     background-image:
-      radial-gradient(ellipse 80% 50% at 50% -20%, rgb(40 40 38 / 0.5), transparent),
-      radial-gradient(ellipse 60% 40% at 100% 0%, rgb(30 30 28 / 0.4), transparent);
+      radial-gradient(
+        ellipse 70% 55% at 15% 0%,
+        color-mix(in srgb, var(--domain-activities) 12%, transparent),
+        transparent 60%
+      ),
+      radial-gradient(
+        ellipse 55% 45% at 90% 10%,
+        color-mix(in srgb, var(--domain-members) 10%, transparent),
+        transparent 55%
+      ),
+      radial-gradient(
+        ellipse 50% 40% at 50% 100%,
+        color-mix(in srgb, var(--attention) 8%, transparent),
+        transparent 50%
+      );
   }
 }
 

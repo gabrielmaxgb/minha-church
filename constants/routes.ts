@@ -6,8 +6,10 @@ export const PUBLIC_ROUTES = {
   faq: "/faq",
   security: "/seguranca",
   login: "/login",
+  register: "/cadastro",
   forgotPassword: "/recuperar-senha",
   resetPassword: "/redefinir-senha",
+  verifyEmail: "/verificar-email",
 } as const;
 
 export const AUTH_ROUTES = {
@@ -16,6 +18,9 @@ export const AUTH_ROUTES = {
   members: "/app/membros",
   ministries: "/app/ministerios",
   activities: "/app/atividades",
+  mySchedules: "/app/minhas-escalas",
+  /** @deprecated Use mySchedules */
+  mySchedule: "/app/minhas-escalas",
   finances: "/app/financas",
   communication: "/app/comunicacao",
   reports: "/app/relatorios",
@@ -23,16 +28,43 @@ export const AUTH_ROUTES = {
   changePassword: "/app/alterar-senha",
 } as const;
 
+export function myScheduleMinistryPath(ministryId: string): string {
+  return `${AUTH_ROUTES.mySchedules}/${ministryId}`;
+}
+
 export function ministryDetailPath(ministryId: string): string {
   return `${AUTH_ROUTES.ministries}/${ministryId}`;
+}
+
+export const ROSTER_PROFILE_SECTION_ID = "roster-profile";
+
+export function ministryAvailabilityPath(ministryId: string): string {
+  return `${ministryDetailPath(ministryId)}?section=availability#${ROSTER_PROFILE_SECTION_ID}`;
 }
 
 export function memberDetailPath(memberId: string): string {
   return `${AUTH_ROUTES.members}/${memberId}`;
 }
 
+export function familyGraphPath(familyId: string): string {
+  return `${AUTH_ROUTES.members}/familias/${familyId}`;
+}
+
+export function activityDetailPath(eventId: string): string {
+  return `${AUTH_ROUTES.activities}/${eventId}`;
+}
+
+/** Abre o calendário de atividades com um dia (`YYYY-MM-DD`) em foco. */
+export function activitiesCalendarPath(dateKey: string): string {
+  return `${AUTH_ROUTES.activities}?view=calendar&date=${dateKey}`;
+}
+
 export function settingsSectionPath(
-  section: "password-reset-requests" | "pending-users",
+  section:
+    | "password-reset-requests"
+    | "pending-users"
+    | "ministries"
+    | "profile",
 ): string {
   return `${AUTH_ROUTES.settings}?section=${section}`;
 }

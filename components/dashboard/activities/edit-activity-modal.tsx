@@ -3,14 +3,24 @@
 import { useEffect, useId, useMemo, useState } from "react";
 import {
   Calendar,
+  ClipboardList,
   Clock,
+  Eye,
+  FileText,
   Loader2,
   MapPin,
+  Repeat,
   Sparkles,
   Trash2,
   X,
 } from "lucide-react";
 
+import { ActivityScheduleFields } from "@/components/dashboard/activities/activity-schedule-fields";
+import { EventFormSection } from "@/components/dashboard/activities/event-form-section";
+import { EventMutationScopeFields } from "@/components/dashboard/activities/event-mutation-scope-fields";
+import { EventRecurrenceFields } from "@/components/dashboard/activities/event-recurrence-fields";
+import { EventRosterOptionsFields } from "@/components/dashboard/activities/event-roster-options-fields";
+import { EventVisibilityFields } from "@/components/dashboard/activities/event-visibility-fields";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,37 +31,27 @@ import {
   useUpdateChurchEvent,
 } from "@/lib/api/queries";
 import { toDatetimeLocalValue } from "@/lib/activities/datetime";
+import {
+  buildRecurrencePayload,
+  defaultRecurrenceFormState,
+  recurrenceFormStateFromEvent,
+  recurrenceFormStatesEqual,
+  syncRecurrenceDaysWithStart,
+  type EventRecurrenceFormState,
+} from "@/lib/events/recurrence";
+import {
+  rosterSlotPlanEqual,
+  rosterSlotsToPlan,
+  type RosterSlotPlanItem,
+} from "@/lib/ministries/roster";
 import { cn, formatDateTime } from "@/lib/utils";
-import type { ChurchEvent } from "@/types/events";
+import type { ChurchEvent, EventMutationScope } from "@/types/events";
 
 interface EditActivityModalProps {
   event: ChurchEvent | null;
   open: boolean;
   onClose: () => void;
-}
-
-function FormSection({
-  title,
-  description,
-  children,
-  className,
-}: {
-  title: string;
-  description?: string;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <section className={cn("space-y-5", className)}>
-      <div className="space-y-1">
-        <h3 className="text-sm font-semibold tracking-tight">{title}</h3>
-        {description && (
-          <p className="text-sm text-muted-foreground">{description}</p>
-        )}
-      </div>
-      {children}
-    </section>
-  );
+  onDeleted?: () => void;
 }
 
 function Field({
@@ -80,19 +80,41 @@ export function EditActivityModal({
   event,
   open,
   onClose,
+  onDeleted,
 }: EditActivityModalProps) {
   const titleId = useId();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [highlightNote, setHighlightNote] = useState("");
   const [location, setLocation] = useState("");
   const [startsAt, setStartsAt] = useState("");
   const [endsAt, setEndsAt] = useState("");
+  const [usesRoster, setUsesRoster] = useState(false);
+  const [rosterOpen, setRosterOpen] = useState(false);
+  const [rosterSlotPlan, setRosterSlotPlan] = useState<RosterSlotPlanItem[]>([]);
+  const [availabilityMessage, setAvailabilityMessage] = useState("");
+  const [visibleToChurch, setVisibleToChurch] = useState(true);
+  const [recurrence, setRecurrence] = useState<EventRecurrenceFormState>(
+    defaultRecurrenceFormState(new Date().toISOString()),
+  );
+  const [initialRecurrence, setInitialRecurrence] =
+    useState<EventRecurrenceFormState>(
+      defaultRecurrenceFormState(new Date().toISOString()),
+    );
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [editScope, setEditScope] = useState<EventMutationScope>("this");
+  const [deleteScope, setDeleteScope] = useState<EventMutationScope>("this");
 
   const updateEvent = useUpdateChurchEvent(event?.id ?? "");
   const deleteEvent = useDeleteChurchEvent(event?.id ?? "");
   const isPending = updateEvent.isPending || deleteEvent.isPending;
+  const isRecurring = Boolean(event?.recurrenceSeriesId && event?.recurrence);
+  const recurrenceChanged = !recurrenceFormStatesEqual(
+    recurrence,
+    initialRecurrence,
+  );
+  const recurrenceRequiresSeriesScope = recurrenceChanged && isRecurring;
 
   const hasChanges = useMemo(() => {
     if (!event) {
@@ -102,32 +124,82 @@ export function EditActivityModal({
     return (
       name.trim() !== event.name ||
       (description.trim() || "") !== (event.description ?? "") ||
+      (highlightNote.trim() || "") !== (event.highlightNote ?? "") ||
       (location.trim() || "") !== (event.location ?? "") ||
       startsAt !== toDatetimeLocalValue(event.startsAt) ||
       (endsAt || "") !==
-        (event.endsAt ? toDatetimeLocalValue(event.endsAt) : "")
+        (event.endsAt ? toDatetimeLocalValue(event.endsAt) : "") ||
+      usesRoster !== event.usesRoster ||
+      rosterOpen !== event.rosterOpen ||
+      visibleToChurch !== (event.visibleToChurch ?? true) ||
+      !rosterSlotPlanEqual(
+        rosterSlotPlan,
+        rosterSlotsToPlan(event.rosterSlots ?? []),
+      ) ||
+      (availabilityMessage.trim() || "") !== (event.availabilityMessage ?? "") ||
+      recurrenceChanged
     );
-  }, [event, name, description, location, startsAt, endsAt]);
+  }, [
+    event,
+    name,
+    description,
+    highlightNote,
+    location,
+    startsAt,
+    endsAt,
+    usesRoster,
+    rosterOpen,
+    rosterSlotPlan,
+    availabilityMessage,
+    visibleToChurch,
+    recurrenceChanged,
+  ]);
 
   useEffect(() => {
     if (!open || !event) {
       setName("");
       setDescription("");
+      setHighlightNote("");
       setLocation("");
       setStartsAt("");
       setEndsAt("");
+      setUsesRoster(false);
+      setRosterOpen(false);
+      setRosterSlotPlan([]);
+      setAvailabilityMessage("");
+      setVisibleToChurch(true);
+      setRecurrence(defaultRecurrenceFormState(new Date().toISOString()));
+      setInitialRecurrence(defaultRecurrenceFormState(new Date().toISOString()));
       setError(null);
       setConfirmDelete(false);
+      setEditScope("this");
+      setDeleteScope("this");
       return;
     }
 
+    const nextStarts = toDatetimeLocalValue(event.startsAt);
+    const nextRecurrence = recurrenceFormStateFromEvent(
+      event.recurrence,
+      nextStarts,
+    );
+
     setName(event.name);
     setDescription(event.description ?? "");
+    setHighlightNote(event.highlightNote ?? "");
     setLocation(event.location ?? "");
-    setStartsAt(toDatetimeLocalValue(event.startsAt));
+    setStartsAt(nextStarts);
     setEndsAt(event.endsAt ? toDatetimeLocalValue(event.endsAt) : "");
+    setUsesRoster(event.usesRoster);
+    setRosterOpen(event.rosterOpen);
+    setVisibleToChurch(event.visibleToChurch ?? true);
+    setRosterSlotPlan(rosterSlotsToPlan(event.rosterSlots ?? []));
+    setAvailabilityMessage(event.availabilityMessage ?? "");
+    setRecurrence(nextRecurrence);
+    setInitialRecurrence(nextRecurrence);
     setError(null);
     setConfirmDelete(false);
+    setEditScope("this");
+    setDeleteScope("this");
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -136,6 +208,16 @@ export function EditActivityModal({
       document.body.style.overflow = previousOverflow;
     };
   }, [open, event]);
+
+  useEffect(() => {
+    if (!recurrenceRequiresSeriesScope) {
+      return;
+    }
+
+    if (editScope === "this") {
+      setEditScope("this_and_following");
+    }
+  }, [recurrenceRequiresSeriesScope, editScope]);
 
   useEffect(() => {
     if (!open) {
@@ -161,18 +243,57 @@ export function EditActivityModal({
     submitEvent.preventDefault();
     setError(null);
 
+    if (!event) {
+      return;
+    }
+
     if (!name.trim()) {
       setError("Informe o nome da atividade.");
       return;
     }
 
+    if (
+      recurrence.endType === "on_date" &&
+      recurrence.repeatMode !== "none" &&
+      !recurrence.endDate
+    ) {
+      setError("Informe a data final da repetição.");
+      return;
+    }
+
     try {
+      const recurrencePayload = recurrenceChanged
+        ? recurrence.repeatMode === "none"
+          ? null
+          : buildRecurrencePayload(recurrence)
+        : undefined;
+
       await updateEvent.mutateAsync({
         name: name.trim(),
         description: description.trim() || null,
+        highlightNote: highlightNote.trim() || null,
         location: location.trim() || null,
         startsAt: new Date(startsAt).toISOString(),
         endsAt: endsAt ? new Date(endsAt).toISOString() : null,
+        usesRoster,
+        visibleToChurch: event.ministryId ? visibleToChurch : undefined,
+        rosterOpen: usesRoster ? rosterOpen : false,
+        rosterSlotPlan: usesRoster ? rosterSlotPlan : [],
+        availabilityMessage: usesRoster
+          ? availabilityMessage.trim() || null
+          : null,
+        ...(recurrencePayload !== undefined
+          ? { recurrence: recurrencePayload }
+          : {}),
+        ...(isRecurring
+          ? {
+              scope: recurrenceRequiresSeriesScope
+                ? editScope === "this"
+                  ? "this_and_following"
+                  : editScope
+                : editScope,
+            }
+          : {}),
       });
       onClose();
     } catch (submitError) {
@@ -188,8 +309,9 @@ export function EditActivityModal({
     setError(null);
 
     try {
-      await deleteEvent.mutateAsync();
+      await deleteEvent.mutateAsync(isRecurring ? deleteScope : "this");
       onClose();
+      onDeleted?.();
     } catch (deleteError) {
       setError(
         deleteError instanceof Error
@@ -203,7 +325,7 @@ export function EditActivityModal({
     <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-6">
       <button
         type="button"
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/45"
         aria-label="Fechar modal"
         disabled={isPending}
         onClick={() => {
@@ -217,7 +339,7 @@ export function EditActivityModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative z-10 flex max-h-[min(94dvh,860px)] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl border border-border/80 bg-background shadow-2xl sm:rounded-3xl"
+        className="relative z-10 flex max-h-[min(94dvh,860px)] w-full max-w-2xl flex-col overflow-hidden rounded-t-xl border border-border/80 bg-background shadow-popover sm:rounded-xl"
       >
         <header className="relative border-b border-border/80 bg-muted/20 px-6 pb-6 pt-7 sm:px-8 sm:pt-8">
           <button
@@ -231,7 +353,7 @@ export function EditActivityModal({
           </button>
 
           <div className="flex flex-col gap-5 pr-12 sm:flex-row sm:items-start sm:gap-6">
-            <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-foreground text-background shadow-sm">
+            <div className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-foreground text-background">
               <Calendar className="size-6" aria-hidden />
             </div>
 
@@ -247,8 +369,11 @@ export function EditActivityModal({
                     {event.ministryName ?? "Ministério"}
                   </Badge>
                 )}
+                {event.recurrence && (
+                  <Badge variant="secondary">Recorrente</Badge>
+                )}
                 {hasChanges && (
-                  <Badge variant="outline" className="border-amber-500/40 text-amber-700 dark:text-amber-300">
+                  <Badge variant="outline" className="border-attention-border text-attention-foreground">
                     Alterações não salvas
                   </Badge>
                 )}
@@ -257,7 +382,7 @@ export function EditActivityModal({
               <div className="space-y-1.5">
                 <h2
                   id={titleId}
-                  className="font-display text-2xl font-semibold tracking-tight sm:text-[1.75rem]"
+                  className="text-2xl font-semibold tracking-tight sm:text-[1.75rem]"
                 >
                   Editar atividade
                 </h2>
@@ -280,17 +405,18 @@ export function EditActivityModal({
             {error && (
               <div
                 role="alert"
-                className="rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3.5 text-sm text-destructive"
+                className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3.5 text-sm text-destructive"
               >
                 {error}
               </div>
             )}
 
-            <FormSection
+            <EventFormSection
               title="Informações principais"
               description="Nome, descrição e local onde a atividade acontece."
+              icon={FileText}
             >
-              <div className="space-y-6 rounded-2xl border border-border/80 bg-muted/10 p-5 sm:p-6">
+              <div className="space-y-6">
                 <Field label="Nome da atividade" htmlFor="edit-activity-name">
                   <Input
                     id="edit-activity-name"
@@ -304,7 +430,7 @@ export function EditActivityModal({
                 </Field>
 
                 <Field
-                  label="Descrição"
+                  label="Descrição do evento"
                   htmlFor="edit-activity-description"
                   hint="Opcional. Use para orientar a equipe ou os participantes."
                 >
@@ -316,6 +442,22 @@ export function EditActivityModal({
                     rows={4}
                     disabled={isPending}
                     className="min-h-[120px] resize-y rounded-xl border-border/80 bg-background px-4 py-3 text-base leading-relaxed"
+                  />
+                </Field>
+
+                <Field
+                  label="Recado em destaque"
+                  htmlFor="edit-activity-highlight-note"
+                  hint="Opcional. Aparece em destaque na página do evento para quem acessa — ideal para tema da palavra, pastorais ou avisos importantes."
+                >
+                  <Textarea
+                    id="edit-activity-highlight-note"
+                    value={highlightNote}
+                    onChange={(inputEvent) => setHighlightNote(inputEvent.target.value)}
+                    placeholder="Ex.: Tema da mensagem: “A fé que move montanhas” — Pr. João"
+                    rows={3}
+                    disabled={isPending}
+                    className="min-h-[92px] resize-y rounded-xl border-border/80 bg-background px-4 py-3 text-base leading-relaxed"
                   />
                 </Field>
 
@@ -333,58 +475,107 @@ export function EditActivityModal({
                   </div>
                 </Field>
               </div>
-            </FormSection>
+            </EventFormSection>
 
-            <FormSection
+            <EventFormSection
               title="Data e horário"
-              description="Defina quando a atividade começa e, se quiser, quando termina."
+              description="Defina o dia, o horário de início e a duração da atividade."
+              icon={Clock}
             >
-              <div className="grid gap-4 rounded-2xl border border-border/80 bg-muted/10 p-5 sm:grid-cols-2 sm:gap-5 sm:p-6">
-                <Field
-                  label="Início"
-                  htmlFor="edit-activity-starts-at"
-                  hint="Data e hora de começo."
-                >
-                  <div className="relative">
-                    <Clock className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="edit-activity-starts-at"
-                      type="datetime-local"
-                      value={startsAt}
-                      onChange={(inputEvent) => setStartsAt(inputEvent.target.value)}
-                      disabled={isPending}
-                      required
-                      className="h-12 rounded-xl border-border/80 bg-background pl-11 pr-4 text-base"
-                    />
-                  </div>
-                </Field>
+              <ActivityScheduleFields
+                  idPrefix="edit-activity"
+                  startsAt={startsAt}
+                  endsAt={endsAt}
+                  onStartsAtChange={(value) => {
+                    setStartsAt(value);
+                    setRecurrence((current) =>
+                      syncRecurrenceDaysWithStart(current, value),
+                    );
+                  }}
+                  onEndsAtChange={setEndsAt}
+                  disabled={isPending}
+                  elevated
+                />
+            </EventFormSection>
 
-                <Field
-                  label="Término"
-                  htmlFor="edit-activity-ends-at"
-                  hint="Deixe em branco se não houver horário de fim."
-                >
-                  <div className="relative">
-                    <Clock className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="edit-activity-ends-at"
-                      type="datetime-local"
-                      value={endsAt}
-                      onChange={(inputEvent) => setEndsAt(inputEvent.target.value)}
-                      disabled={isPending}
-                      className="h-12 rounded-xl border-border/80 bg-background pl-11 pr-4 text-base"
-                    />
-                  </div>
-                </Field>
-              </div>
-            </FormSection>
+            <EventFormSection
+              title="Repetição"
+              description="Trate a série como um único evento — altere a regra quando precisar, como no Google Agenda."
+              icon={Repeat}
+            >
+              <EventRecurrenceFields
+                value={recurrence}
+                onChange={setRecurrence}
+                startsAt={startsAt}
+                disabled={isPending}
+              />
+            </EventFormSection>
 
-            <FormSection
+            {event.ministryId && (
+              <EventFormSection
+                title="Quem pode ver"
+                description="Controle se o evento aparece na agenda geral da igreja."
+                icon={Eye}
+              >
+                <EventVisibilityFields
+                  visibleToChurch={visibleToChurch}
+                  onVisibleToChurchChange={setVisibleToChurch}
+                  disabled={isPending}
+                />
+              </EventFormSection>
+            )}
+
+            <EventFormSection
+              title="Escala da equipe"
+              description={
+                event.isChurchWide
+                  ? "Coleta de disponibilidade e funções opcionais para montar a escala."
+                  : "Disponibilidade, funções e montagem de escala neste evento."
+              }
+              icon={ClipboardList}
+            >
+              <EventRosterOptionsFields
+                usesRoster={usesRoster}
+                rosterOpen={rosterOpen}
+                rosterSlotPlan={rosterSlotPlan}
+                availabilityMessage={availabilityMessage}
+                onUsesRosterChange={setUsesRoster}
+                onRosterOpenChange={setRosterOpen}
+                onRosterSlotPlanChange={setRosterSlotPlan}
+                onAvailabilityMessageChange={setAvailabilityMessage}
+                disabled={isPending}
+                hideSlotPlan={Boolean(event.ministryId)}
+                optionalSlotPlan={event.isChurchWide}
+              />
+            </EventFormSection>
+
+            {isRecurring && (
+              <EventFormSection
+                title="Alcance das alterações"
+                description={
+                  recurrenceRequiresSeriesScope
+                    ? "A regra de repetição mudou — escolha se vale daqui pra frente ou para toda a série."
+                    : "Defina se a edição vale só para esta data ou para a série inteira."
+                }
+                icon={Repeat}
+              >
+                <EventMutationScopeFields
+                  name="edit-event-scope"
+                  value={editScope}
+                  onChange={setEditScope}
+                  disabled={isPending}
+                  actionLabel="edit"
+                  hideThisOption={recurrenceRequiresSeriesScope}
+                />
+              </EventFormSection>
+            )}
+
+            <EventFormSection
               title="Zona de perigo"
               description="A exclusão remove a atividade da agenda. Essa ação não pode ser desfeita."
               className="border-t border-border/80 pt-2"
+              contentClassName="border-destructive/15 bg-destructive/3"
             >
-              <div className="rounded-2xl border border-destructive/15 bg-destructive/3 p-5 sm:p-6">
                 {confirmDelete ? (
                   <div className="space-y-5">
                     <div className="space-y-1.5">
@@ -392,9 +583,22 @@ export function EditActivityModal({
                         Excluir &quot;{event.name}&quot;?
                       </p>
                       <p className="text-sm leading-relaxed text-muted-foreground">
-                        A atividade deixará de aparecer em Atividades e no painel do ministério.
+                        {isRecurring
+                          ? "Escolha se a exclusão vale só para esta ocorrência ou para mais eventos da série."
+                          : "A atividade deixará de aparecer em Atividades e no painel do ministério."}
                       </p>
                     </div>
+
+                    {isRecurring && (
+                      <EventMutationScopeFields
+                        name="delete-event-scope"
+                        value={deleteScope}
+                        onChange={setDeleteScope}
+                        disabled={isPending}
+                        actionLabel="delete"
+                      />
+                    )}
+
                     <div className="flex flex-col gap-2 sm:flex-row">
                       <Button
                         type="button"
@@ -438,8 +642,7 @@ export function EditActivityModal({
                     Excluir atividade
                   </Button>
                 )}
-              </div>
-            </FormSection>
+            </EventFormSection>
           </div>
 
           <footer className="flex flex-col-reverse gap-3 border-t border-border/80 bg-muted/20 px-6 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">

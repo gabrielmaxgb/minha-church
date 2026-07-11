@@ -8,23 +8,27 @@ import {
 } from "@tanstack/react-query";
 
 import {
-  fetchMember,
   fetchMembers,
   membersKeys,
   receiveMember,
+  ackMinistryCatalogNotifications,
 } from "@/lib/api/queries/members.keys";
 import { queries } from "@/lib/api/queries";
 import type { ListMembersParams } from "@/types/members";
-import { useTenant } from "@/providers/auth-provider";
+import { useAuth, useTenant } from "@/providers/auth-provider";
 
 export const MEMBERS_PAGE_SIZE = 50;
 
-export function useMembers(params: ListMembersParams = {}) {
+export function useMembers(
+  params: ListMembersParams = {},
+  options?: { enabled?: boolean },
+) {
   const { churchId } = useTenant();
 
   return useQuery({
     ...membersKeys.list(churchId ?? "unknown", params),
-    enabled: Boolean(churchId),
+    enabled: Boolean(churchId) && (options?.enabled ?? true),
+    retry: false,
   });
 }
 
@@ -72,9 +76,49 @@ export function useMember(memberId: string) {
   });
 }
 
+export function useMyMember(options?: { enabled?: boolean }) {
+  const { churchId } = useTenant();
+
+  return useQuery({
+    ...membersKeys.me(churchId ?? "unknown"),
+    enabled: Boolean(churchId) && (options?.enabled ?? true),
+    retry: false,
+  });
+}
+
+export function useMyMinistryNotifications(options?: { enabled?: boolean }) {
+  const { churchId } = useTenant();
+
+  return useQuery({
+    ...membersKeys.ministryNotifications(churchId ?? "unknown"),
+    enabled: Boolean(churchId) && (options?.enabled ?? true),
+    staleTime: 30_000,
+    retry: false,
+  });
+}
+
+export function useAckMinistryCatalogNotifications() {
+  const { churchId } = useTenant();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (ministryIds: string[]) => {
+      if (!churchId) {
+        throw new Error("Igreja não selecionada.");
+      }
+
+      return ackMinistryCatalogNotifications(churchId, ministryIds);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: membersKeys._def });
+    },
+  });
+}
+
 export function useReceiveMember() {
   const { churchId } = useTenant();
   const queryClient = useQueryClient();
+  const { reloadSession } = useAuth();
 
   return useMutation({
     mutationFn: (memberId: string) => {
@@ -87,6 +131,7 @@ export function useReceiveMember() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: membersKeys._def });
       await queryClient.invalidateQueries({ queryKey: queries.dashboard._def });
+      await reloadSession();
     },
   });
 }

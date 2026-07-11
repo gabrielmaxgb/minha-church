@@ -5,10 +5,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Loader2, UserPlus } from "lucide-react";
-import { FormProvider, useForm } from "react-hook-form";
+import { FormProvider, useForm, useWatch } from "react-hook-form";
 
 import { MemberAccountCreatedModal } from "@/components/dashboard/members/member-account-created-modal";
 import { MemberForm } from "@/components/dashboard/members/member-form";
+import { TierCrossingModal } from "@/components/billing/tier-crossing-modal";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -21,10 +22,16 @@ import { FormAlert } from "@/components/ui/form-field";
 import { AUTH_ROUTES } from "@/constants/routes";
 import { useCreateMember } from "@/lib/api/queries";
 import {
+  MEMBER_ACCESS_LOCKED_REASON,
+  useFeatureLock,
+} from "@/lib/subscription/use-feature-lock";
+import {
   emptyMemberFormValues,
   formValuesToCreatePayload,
   type MemberFormValues,
 } from "@/lib/members/form";
+import { applyMemberFormApiError } from "@/lib/members/form-api-errors";
+import { useTierCrossingGate } from "@/lib/billing/use-tier-crossing-gate";
 import { createMemberFormSchema } from "@/lib/validation/schemas";
 import type { MemberAccountCredentials } from "@/types/members";
 
@@ -35,27 +42,44 @@ export function CreateMemberContent() {
     account: MemberAccountCredentials;
   } | null>(null);
   const createMember = useCreateMember();
+  const { locked: memberAccessLocked } = useFeatureLock();
+  const tierCrossing = useTierCrossingGate();
 
   const form = useForm<MemberFormValues>({
-    resolver: zodResolver(createMemberFormSchema({ requireLogin: true })),
+    resolver: zodResolver(createMemberFormSchema()),
     defaultValues: emptyMemberFormValues("visitor"),
     mode: "onBlur",
   });
 
+  const status =
+    useWatch({ control: form.control, name: "status" }) ?? "visitor";
+
   const onSubmit = form.handleSubmit(async (values) => {
     try {
-      const result = await createMember.mutateAsync(formValuesToCreatePayload(values));
-      setCreatedAccount({
-        memberName: result.name,
-        account: result.account,
+      await tierCrossing.runWithTierCrossingCheck(values.status, async () => {
+        const result = await createMember.mutateAsync(
+          formValuesToCreatePayload(values),
+        );
+
+        if (result.account) {
+          setCreatedAccount({
+            memberName: result.name,
+            account: result.account,
+          });
+          return;
+        }
+
+        router.push(AUTH_ROUTES.members);
       });
     } catch (submitError) {
-      form.setError("root", {
-        message:
-          submitError instanceof Error
-            ? submitError.message
-            : "Não foi possível cadastrar o membro.",
-      });
+      applyMemberFormApiError(
+        form.setError,
+        form.clearErrors,
+        submitError,
+        submitError instanceof Error
+          ? submitError.message
+          : "Não foi possível cadastrar o membro.",
+      );
     }
   });
 
@@ -82,12 +106,12 @@ export function CreateMemberContent() {
                 <UserPlus className="size-5" aria-hidden />
               </div>
               <div>
-                <CardTitle className="font-display text-xl">
+                <CardTitle className="text-xl font-semibold tracking-tight">
                   Novo cadastro
                 </CardTitle>
                 <CardDescription className="mt-1">
-                  Preencha os dados da pessoa. Um login com senha temporária será
-                  criado automaticamente (e-mail ou CPF obrigatório).
+                  Cadastro pastoral para todos. O login no painel só é criado
+                  quando o status for membro ativo (ou ao receber um visitante).
                 </CardDescription>
               </div>
             </div>
@@ -100,8 +124,12 @@ export function CreateMemberContent() {
                   <FormAlert>{form.formState.errors.root.message}</FormAlert>
                 )}
 
+                {memberAccessLocked && status === "active" && (
+                  <FormAlert>{MEMBER_ACCESS_LOCKED_REASON}</FormAlert>
+                )}
+
                 <MemberForm
-                  requireLogin
+                  requireLogin={status === "active"}
                   disabled={createMember.isPending}
                 />
 
@@ -132,6 +160,20 @@ export function CreateMemberContent() {
           memberName={createdAccount.memberName}
           account={createdAccount.account}
           onClose={handleCloseAccountModal}
+        />
+      )}
+
+      {tierCrossing.preview && (
+        <TierCrossingModal
+          open
+          preview={tierCrossing.preview}
+          mode={tierCrossing.mode}
+          loading={tierCrossing.loading}
+          error={tierCrossing.error}
+          requestSent={tierCrossing.requestSent}
+          onConfirm={() => void tierCrossing.confirm()}
+          onRequestOwner={() => void tierCrossing.requestOwnerApproval()}
+          onClose={tierCrossing.close}
         />
       )}
     </>

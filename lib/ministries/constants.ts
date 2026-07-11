@@ -1,9 +1,11 @@
 export type MinistrySettingsSection =
   | "dashboard"
+  | "availability"
+  | "events"
   | "members"
+  | "service-functions"
   | "overview"
   | "roles"
-  | "permissions"
   | "advanced";
 
 export const MINISTRY_SETTINGS_SECTIONS: Array<{
@@ -17,9 +19,24 @@ export const MINISTRY_SETTINGS_SECTIONS: Array<{
     description: "Resumo e atalhos",
   },
   {
+    id: "availability",
+    label: "Escalas",
+    description: "Disponibilidade e montagem da equipe",
+  },
+  {
+    id: "events",
+    label: "Eventos e atividades",
+    description: "Cultos, ensaios e agendas",
+  },
+  {
     id: "members",
     label: "Membros",
-    description: "Equipe e cargos",
+    description: "Equipe, cargos e funções",
+  },
+  {
+    id: "service-functions",
+    label: "Funções na escala",
+    description: "Como a equipe serve neste grupo",
   },
   {
     id: "overview",
@@ -28,13 +45,8 @@ export const MINISTRY_SETTINGS_SECTIONS: Array<{
   },
   {
     id: "roles",
-    label: "Cargos",
-    description: "Estrutura de papéis",
-  },
-  {
-    id: "permissions",
-    label: "Permissões",
-    description: "Quem gerencia eventos",
+    label: "Cargos de liderança",
+    description: "Quem administra e suas permissões",
   },
   {
     id: "advanced",
