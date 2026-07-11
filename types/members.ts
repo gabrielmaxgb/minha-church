@@ -66,7 +66,14 @@ export interface Family {
   updatedAt: string;
 }
 
-export type MemberRelationType = "spouse" | "parent";
+export type MemberRelationType =
+  | "spouse"
+  | "parent"
+  | "sibling"
+  | "grandparent"
+  | "step_parent"
+  | "parent_in_law"
+  | "uncle";
 
 export interface MemberRelation {
   id: string;
@@ -94,7 +101,46 @@ export interface FamilyGraph {
 export const MEMBER_RELATION_LABELS: Record<MemberRelationType, string> = {
   spouse: "Cônjuges",
   parent: "Pai/mãe → filho(a)",
+  sibling: "Irmãos(ãs)",
+  grandparent: "Avô/avó → neto(a)",
+  step_parent: "Padrasto/madrasta → enteado(a)",
+  parent_in_law: "Sogro/sogra → genro/nora",
+  uncle: "Tio/tia → sobrinho(a)",
 };
+
+/** Undirected bonds are stored in canonical order on the backend. */
+export const UNDIRECTED_RELATION_TYPES: ReadonlySet<MemberRelationType> =
+  new Set(["spouse", "sibling"]);
+
+/** Ascendant edges place `from` above `to` in the auto-layout. */
+export const ASCENDANT_RELATION_TYPES: ReadonlySet<MemberRelationType> =
+  new Set(["parent", "grandparent", "step_parent", "parent_in_law", "uncle"]);
+
+export function relationChoiceLabel(
+  type: MemberRelationType,
+  fromName: string,
+  toName: string,
+): string {
+  const a = fromName.trim().split(/\s+/)[0] ?? fromName;
+  const b = toName.trim().split(/\s+/)[0] ?? toName;
+
+  switch (type) {
+    case "spouse":
+      return "São cônjuges";
+    case "sibling":
+      return "São irmãos(ãs)";
+    case "parent":
+      return `${a} é pai/mãe de ${b}`;
+    case "grandparent":
+      return `${a} é avô/avó de ${b}`;
+    case "step_parent":
+      return `${a} é padrasto/madrasta de ${b}`;
+    case "parent_in_law":
+      return `${a} é sogro/sogra de ${b}`;
+    case "uncle":
+      return `${a} é tio/tia de ${b}`;
+  }
+}
 
 export interface MembersListResponse {
   data: Member[];

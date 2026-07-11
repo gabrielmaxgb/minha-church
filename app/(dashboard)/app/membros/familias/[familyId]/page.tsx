@@ -4,7 +4,6 @@ import { use } from "react";
 
 import { RequirePermission } from "@/components/auth/require-permission";
 import { FamilyGraphContent } from "@/components/dashboard/members/family-graph-content";
-import { DashboardPage } from "@/components/dashboard/dashboard-shell";
 
 export default function FamilyGraphPage({
   params,
@@ -15,9 +14,7 @@ export default function FamilyGraphPage({
 
   return (
     <RequirePermission permission="members">
-      <DashboardPage title="Família" subtitle="Grafo de parentesco">
-        <FamilyGraphContent familyId={familyId} />
-      </DashboardPage>
+      <FamilyGraphContent familyId={familyId} />
     </RequirePermission>
   );
 }

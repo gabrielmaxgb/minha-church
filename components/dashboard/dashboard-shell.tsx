@@ -20,12 +20,15 @@ interface DashboardShellProps {
   title: string;
   subtitle?: string;
   children: React.ReactNode;
+  /** `full` removes the content padding/scroll so a page can own the viewport. */
+  variant?: "default" | "full";
 }
 
 export function DashboardShell({
   title,
   subtitle,
   children,
+  variant = "default",
 }: DashboardShellProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -102,16 +105,33 @@ export function DashboardShell({
           subtitle={subtitle ?? church?.name}
           onOpenSidebar={() => setSidebarOpen(true)}
         />
-        <main
-          className={cn(
-            "dashboard-canvas min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 sm:py-8",
-            isSwitchingChurch && "opacity-60",
-          )}
-        >
-          <EmailVerificationBanner />
-          <TrialStatusBanner />
-          <DashboardContentMotion>{children}</DashboardContentMotion>
-        </main>
+        {variant === "full" ? (
+          <main
+            className={cn(
+              "dashboard-canvas flex min-h-0 flex-1 flex-col overflow-hidden",
+              isSwitchingChurch && "opacity-60",
+            )}
+          >
+            <div className="px-4 pt-4 empty:hidden sm:px-6">
+              <EmailVerificationBanner />
+              <TrialStatusBanner />
+            </div>
+            <DashboardContentMotion className="flex min-h-0 flex-1 flex-col px-4 py-4 sm:px-6 sm:py-5">
+              {children}
+            </DashboardContentMotion>
+          </main>
+        ) : (
+          <main
+            className={cn(
+              "dashboard-canvas min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 sm:py-8",
+              isSwitchingChurch && "opacity-60",
+            )}
+          >
+            <EmailVerificationBanner />
+            <TrialStatusBanner />
+            <DashboardContentMotion>{children}</DashboardContentMotion>
+          </main>
+        )}
       </div>
       </div>
 
@@ -139,6 +159,25 @@ export function DashboardPage({
   return (
     <DashboardShell title={title} subtitle={subtitle}>
       <div className={cn("mx-auto max-w-6xl", className)}>{children}</div>
+    </DashboardShell>
+  );
+}
+
+/**
+ * Full-bleed page: content fills the viewport below the topbar with no
+ * max-width or page scroll — for canvas-style experiences (e.g. family graph).
+ */
+export function DashboardCanvasPage({
+  title,
+  subtitle,
+  children,
+  className,
+}: DashboardPageProps) {
+  return (
+    <DashboardShell title={title} subtitle={subtitle} variant="full">
+      <div className={cn("flex min-h-0 w-full flex-1 flex-col", className)}>
+        {children}
+      </div>
     </DashboardShell>
   );
 }
