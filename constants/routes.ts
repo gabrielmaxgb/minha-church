@@ -10,7 +10,27 @@ export const PUBLIC_ROUTES = {
   forgotPassword: "/recuperar-senha",
   resetPassword: "/redefinir-senha",
   verifyEmail: "/verificar-email",
+  /** Caixa de entrada: link de confirmação já foi enviado */
+  emailSent: "/email-enviado",
 } as const;
+
+export function emailSentPath(
+  email: string,
+  options?: { from?: "register" | "login" },
+): string {
+  const params = new URLSearchParams();
+  const normalized = email.trim().toLowerCase();
+  if (normalized) {
+    params.set("email", normalized);
+  }
+  if (options?.from) {
+    params.set("from", options.from);
+  }
+  const query = params.toString();
+  return query
+    ? `${PUBLIC_ROUTES.emailSent}?${query}`
+    : PUBLIC_ROUTES.emailSent;
+}
 
 export const AUTH_ROUTES = {
   root: "/app",

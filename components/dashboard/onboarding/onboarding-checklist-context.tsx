@@ -27,38 +27,6 @@ import {
 } from "@/lib/api/queries";
 import { useAuth } from "@/providers/auth-provider";
 
-function dismissedStorageKey(churchId: string): string {
-  return `mc:onboarding-checklist:dismissed:${churchId}`;
-}
-
-function autoShownStorageKey(churchId: string): string {
-  return `mc:onboarding-checklist:auto-shown:${churchId}`;
-}
-
-function readStorage(key: string): boolean {
-  if (typeof window === "undefined") {
-    return false;
-  }
-
-  try {
-    return window.localStorage.getItem(key) === "1";
-  } catch {
-    return false;
-  }
-}
-
-function writeStorage(key: string): void {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  try {
-    window.localStorage.setItem(key, "1");
-  } catch {
-    // Ignora falhas de storage (ex.: modo privado).
-  }
-}
-
 interface OnboardingChecklistContextValue {
   openOnboarding: () => void;
   showLauncher: boolean;
@@ -170,39 +138,13 @@ export function OnboardingChecklistProvider({
     hasMinistry,
   ]);
 
-  const allDone = steps.length > 0 && steps.every((step) => step.done);
   const completedCount = steps.filter((step) => step.done).length;
 
   const [open, setOpen] = useState(false);
-  const autoOpenAttemptedRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (!isOwner || !churchId || !isStatusReady || allDone) {
-      return;
-    }
-
-    if (autoOpenAttemptedRef.current === churchId) {
-      return;
-    }
-
-    autoOpenAttemptedRef.current = churchId;
-
-    const alreadyDismissed = readStorage(dismissedStorageKey(churchId));
-    const alreadyAutoShown = readStorage(autoShownStorageKey(churchId));
-
-    if (!alreadyDismissed && !alreadyAutoShown) {
-      writeStorage(autoShownStorageKey(churchId));
-      setOpen(true);
-    }
-  }, [allDone, churchId, isOwner, isStatusReady]);
 
   const handleClose = useCallback(() => {
     setOpen(false);
-
-    if (churchId) {
-      writeStorage(dismissedStorageKey(churchId));
-    }
-  }, [churchId]);
+  }, []);
 
   const openOnboarding = useCallback(() => {
     setOpen(true);

@@ -30,9 +30,9 @@ import {
 import {
   PUBLIC_ROUTES,
   AUTH_ROUTES,
+  emailSentPath,
   resolvePostLoginRedirect,
 } from "@/constants/routes";
-import { resendVerificationEmailRequest } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { loginSchema, type LoginFormValues } from "@/lib/validation/schemas";
 import { cn } from "@/lib/utils";
@@ -62,20 +62,8 @@ function LoginFormContent() {
   const [loadingIdentifier, setLoadingIdentifier] = useState<string | null>(
     null,
   );
-  const [isResendingVerification, setIsResendingVerification] = useState(false);
-  const [verificationFeedback, setVerificationFeedback] = useState<string | null>(
-    null,
-  );
-  const [loginVerificationEmail, setLoginVerificationEmail] = useState<
-    string | null
-  >(null);
   const [demoOpen, setDemoOpen] = useState(false);
   const passwordResetSuccess = searchParams.get("reset") === "success";
-  const verificationSent = searchParams.get("verify") === "sent";
-  const pendingVerificationEmail =
-    loginVerificationEmail ??
-    searchParams.get("email")?.trim().toLowerCase() ??
-    "";
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -104,30 +92,6 @@ function LoginFormContent() {
     window.location.replace(destination);
   }, [isAuthenticated, isAuthLoading, user, searchParams]);
 
-  async function handleResendVerification() {
-    if (!pendingVerificationEmail) {
-      return;
-    }
-
-    setIsResendingVerification(true);
-    setVerificationFeedback(null);
-
-    try {
-      const response = await resendVerificationEmailRequest(
-        pendingVerificationEmail,
-      );
-      setVerificationFeedback(response.message);
-    } catch (resendError) {
-      setVerificationFeedback(
-        resendError instanceof Error
-          ? resendError.message
-          : "Não foi possível reenviar o e-mail.",
-      );
-    } finally {
-      setIsResendingVerification(false);
-    }
-  }
-
   async function performLogin(
     loginIdentifierValue: string,
     loginPassword: string,
@@ -152,20 +116,21 @@ function LoginFormContent() {
         loginError instanceof ApiError &&
         loginError.code === "EMAIL_VERIFICATION_REQUIRED"
       ) {
-        setLoginVerificationEmail(
-          loginError.email?.trim().toLowerCase() ?? null,
-        );
-        setVerificationFeedback(null);
-        clearErrors("root");
-      } else {
-        setLoginVerificationEmail(null);
-        setError("root", {
-          message:
-            loginError instanceof Error
-              ? loginError.message
-              : "Não foi possível entrar. Tente novamente.",
-        });
+        const email =
+          loginError.email?.trim().toLowerCase() ||
+          (loginIdentifierValue.includes("@")
+            ? loginIdentifierValue.trim().toLowerCase()
+            : "");
+        window.location.replace(emailSentPath(email, { from: "login" }));
+        return;
       }
+
+      setError("root", {
+        message:
+          loginError instanceof Error
+            ? loginError.message
+            : "Não foi possível entrar. Tente novamente.",
+      });
       setIsLoading(false);
       setLoadingIdentifier(null);
     }
@@ -260,44 +225,7 @@ function LoginFormContent() {
               </FormAlert>
             )}
 
-            {(verificationSent || loginVerificationEmail) && (
-              <div className="space-y-3 rounded-xl border border-attention-border bg-attention-subtle px-4 py-3">
-                <p className="text-sm leading-relaxed text-foreground">
-                  {verificationSent
-                    ? "Enviamos um link de confirmação"
-                    : "Confirme seu e-mail"}
-                  {pendingVerificationEmail ? (
-                    <>
-                      {" "}
-                      para{" "}
-                      <span className="font-medium">
-                        {pendingVerificationEmail}
-                      </span>
-                    </>
-                  ) : null}
-                  . Confirme seu e-mail antes de entrar.
-                </p>
-                {verificationFeedback && (
-                  <p className="text-sm text-muted-foreground">
-                    {verificationFeedback}
-                  </p>
-                )}
-                {pendingVerificationEmail ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="border-attention-border bg-background"
-                    disabled={isResendingVerification}
-                    onClick={() => void handleResendVerification()}
-                  >
-                    {isResendingVerification ? "Reenviando..." : "Reenviar link"}
-                  </Button>
-                ) : null}
-              </div>
-            )}
-
-            {errors.root?.message && !loginVerificationEmail && (
+            {errors.root?.message && (
               <FormAlert>{errors.root.message}</FormAlert>
             )}
 

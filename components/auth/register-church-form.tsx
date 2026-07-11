@@ -19,7 +19,11 @@ import { motion, useReducedMotion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { FormAlert, FormField, FormMessage } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
-import { AUTH_ROUTES, PUBLIC_ROUTES } from "@/constants/routes";
+import {
+  AUTH_ROUTES,
+  PUBLIC_ROUTES,
+  emailSentPath,
+} from "@/constants/routes";
 import { isRegisterChurchPending } from "@/types/auth";
 import {
   registerChurchSchema,
@@ -100,11 +104,9 @@ export function RegisterChurchForm() {
       });
 
       if (isRegisterChurchPending(result)) {
-        const params = new URLSearchParams({
-          verify: "sent",
-          email: result.email,
-        });
-        window.location.replace(`${PUBLIC_ROUTES.login}?${params.toString()}`);
+        window.location.replace(
+          emailSentPath(result.email, { from: "register" }),
+        );
         return;
       }
 
