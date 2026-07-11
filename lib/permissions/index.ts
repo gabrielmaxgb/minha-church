@@ -237,7 +237,12 @@ export function canAccessNav(
 export function canAccessNavItem(
   permissions: UserPermissions,
   item: DashboardNavItem,
+  options?: { isActiveAdultMember?: boolean },
 ): boolean {
+  if (item.access === "activeAdultMember") {
+    return Boolean(options?.isActiveAdultMember);
+  }
+
   if (!item.permission) {
     return true;
   }
@@ -247,11 +252,12 @@ export function canAccessNavItem(
 
 export function getFirstAccessibleRoute(
   permissions: UserPermissions,
+  options?: { isActiveAdultMember?: boolean },
 ): string {
   const items = [...dashboardNavItems, ...dashboardSecondaryNavItems];
 
   for (const item of items) {
-    if (canAccessNavItem(permissions, item)) {
+    if (canAccessNavItem(permissions, item, options)) {
       return item.href;
     }
   }

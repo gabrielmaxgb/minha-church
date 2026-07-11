@@ -126,6 +126,7 @@ const emptyPermissions: UserPermissions = {
   settings: { access: false },
   roles: { manage: false },
   memberships: { manage: false },
+  counseling: { receive: false },
 };
 
 export function SettingsNav({

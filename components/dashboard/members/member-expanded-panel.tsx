@@ -6,7 +6,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Church,
   IdCard,
-  Loader2,
   MapPin,
   Network,
   Pencil,
@@ -28,6 +27,7 @@ import { MemberMinistryTagsSummary } from "@/components/dashboard/ministries/min
 import { Badge } from "@/components/ui/badge";
 import { BusyOverlay } from "@/components/ui/busy-overlay";
 import { Button } from "@/components/ui/button";
+import { FloatingSaveBar } from "@/components/ui/floating-save-bar";
 import { FormAlert } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { familyGraphPath } from "@/constants/routes";
@@ -518,15 +518,36 @@ export function MemberExpandedPanel({
         steps={busySteps}
       />
     <FormProvider {...form}>
-      <form onSubmit={onSubmit} className="space-y-6" noValidate>
-        <div className="rounded-lg border border-border bg-muted/30 px-4 py-3 sm:px-5">
-          <p className="text-sm font-medium text-foreground">
-            Editando cadastro
-          </p>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            Altere as seções abaixo e salve quando terminar. Campos opcionais
-            podem ficar em branco.
-          </p>
+      <form
+        id="member-edit-form"
+        onSubmit={onSubmit}
+        className="space-y-6"
+        noValidate
+      >
+        <div className="flex flex-col gap-3 rounded-lg border border-border bg-muted/30 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+          <div>
+            <p className="text-sm font-medium text-foreground">
+              Editando cadastro
+            </p>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              Altere as seções abaixo e salve quando terminar. Campos opcionais
+              podem ficar em branco.
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="shrink-0"
+            disabled={isPending}
+            onClick={() => {
+              form.reset(memberToFormValues(member));
+              setIsEditing(false);
+              form.clearErrors("root");
+            }}
+          >
+            Cancelar
+          </Button>
         </div>
 
         {form.formState.errors.root?.message && (
@@ -558,40 +579,6 @@ export function MemberExpandedPanel({
             />
           </div>
         </section>
-
-        <div
-          className={cn(
-            "sticky bottom-0 z-10 -mx-1 flex flex-col-reverse gap-2 rounded-lg border border-border bg-background p-4 sm:flex-row sm:items-center sm:justify-between",
-          )}
-        >
-          <p className="text-center text-xs text-muted-foreground sm:text-left">
-            As alterações só são aplicadas ao salvar.
-          </p>
-          <div className="flex flex-col-reverse gap-2 sm:flex-row">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={isPending}
-              onClick={() => {
-                form.reset(memberToFormValues(member));
-                setIsEditing(false);
-                form.clearErrors("root");
-              }}
-            >
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={updateMember.isPending}>
-              {updateMember.isPending ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" />
-                  Salvando...
-                </>
-              ) : (
-                "Salvar alterações"
-              )}
-            </Button>
-          </div>
-        </div>
 
         {member.status === "visitor" && (
           <div className="rounded-lg border border-border bg-muted/15 px-5 py-4">
@@ -660,6 +647,21 @@ export function MemberExpandedPanel({
         </section>
         )}
       </form>
+
+      <FloatingSaveBar
+        visible={form.formState.isDirty}
+        saving={updateMember.isPending}
+        onDiscard={() => {
+          form.reset(memberToFormValues(member));
+          form.clearErrors("root");
+        }}
+        onSave={() => {
+          const formEl = document.getElementById(
+            "member-edit-form",
+          ) as HTMLFormElement | null;
+          formEl?.requestSubmit();
+        }}
+      />
     </FormProvider>
     </div>
 

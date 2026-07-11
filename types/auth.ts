@@ -26,6 +26,7 @@ export interface UserPermissions {
   settings: { access: boolean };
   roles: { manage: boolean };
   memberships: { manage: boolean };
+  counseling: { receive: boolean };
 }
 
 export type SubscriptionStatus =
@@ -125,6 +126,18 @@ export interface UpdateProfilePayload {
   name?: string;
   email?: string | null;
   phone?: string | null;
+  phoneSecondary?: string | null;
+  birthDate?: string | null;
+  gender?: "male" | "female" | "other" | "prefer_not_to_say" | null;
+  maritalStatus?: "single" | "married" | "divorced" | "widowed" | null;
+  weddingAnniversary?: string | null;
+  street?: string | null;
+  number?: string | null;
+  complement?: string | null;
+  neighborhood?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zipCode?: string | null;
 }
 
 export interface AuthResponse {
@@ -150,4 +163,5 @@ export type ChurchPermissionKey =
   | "reports_access"
   | "settings_access"
   | "roles_manage"
-  | "memberships_manage";
+  | "memberships_manage"
+  | "counseling_receive";

@@ -2,6 +2,7 @@ import { mergeQueryKeys } from "@lukemorales/query-key-factory";
 
 import { announcementsKeys } from "@/lib/api/queries/announcements.keys";
 import { auditLogsKeys } from "@/lib/api/queries/audit-logs.keys";
+import { careRequestsKeys } from "@/lib/api/queries/care-requests.keys";
 import { churchRolesKeys } from "@/lib/api/queries/church-roles.keys";
 import { dashboardKeys } from "@/lib/api/queries/dashboard.keys";
 import { eventsKeys } from "@/lib/api/queries/events.keys";
@@ -24,6 +25,7 @@ export const queries = mergeQueryKeys(
   churchRolesKeys,
   auditLogsKeys,
   announcementsKeys,
+  careRequestsKeys,
 );
 
 export { dashboardKeys } from "@/lib/api/queries/dashboard.keys";
@@ -128,3 +130,12 @@ export {
   useRespondToRosterAvailability,
   useRespondToWorshipAvailability,
 } from "@/lib/api/queries/use-respond-worship-availability";
+export { careRequestsKeys } from "@/lib/api/queries/care-requests.keys";
+export {
+  useCareInbox,
+  useCareInboxPendingCount,
+  useCareRecipients,
+  useCreateCareRequest,
+  useMarkCareRequestViewed,
+  useMyCareRequests,
+} from "@/lib/api/queries/use-care-requests";

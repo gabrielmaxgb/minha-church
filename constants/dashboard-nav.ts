@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   BarChart3,
   Calendar,
+  HeartHandshake,
   Layers,
   LayoutDashboard,
   Mail,
@@ -21,8 +22,13 @@ export interface DashboardNavItem {
   icon: LucideIcon;
   description?: string;
   domain: ProductDomain;
-  /** Seção exige permissão de acesso configurada no cargo */
-  permission: NavPermissionKey;
+  /**
+   * Seção exige permissão de acesso configurada no cargo.
+   * Omitir quando `access` for `activeAdultMember`.
+   */
+  permission?: NavPermissionKey;
+  /** Gate alternativo: membro ativo com 18+ (ficha pastoral). */
+  access?: "activeAdultMember";
 }
 
 export const dashboardNavItems: DashboardNavItem[] = [
@@ -65,6 +71,14 @@ export const dashboardNavItems: DashboardNavItem[] = [
     description: "Convocações e disponibilidade",
     domain: "schedules",
     permission: "schedules",
+  },
+  {
+    label: "Aconselhamentos e visitas",
+    href: AUTH_ROUTES.careRequests,
+    icon: HeartHandshake,
+    description: "Pedir apoio pastoral e acompanhar solicitações",
+    domain: "members",
+    access: "activeAdultMember",
   },
   {
     label: "Finanças",

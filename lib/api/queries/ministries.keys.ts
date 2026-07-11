@@ -234,8 +234,8 @@ async function updateEventAvailability(
     status: "available" | "unavailable" | "clear";
     roleLabels?: string[];
   },
-): Promise<RosterProfile> {
-  return apiClient<RosterProfile>(
+): Promise<void> {
+  await apiClient<void>(
     buildTenantPath(
       churchId,
       `/ministries/${ministryId}/roster/events/${eventId}/availability`,

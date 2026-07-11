@@ -11,8 +11,14 @@ import {
   dashboardSecondaryNavItems,
 } from "@/constants/dashboard-nav";
 import { AUTH_ROUTES } from "@/constants/routes";
-import { useMySchedules, useAnnouncementsUnreadCount } from "@/lib/api/queries";
+import {
+  useCareInboxPendingCount,
+  useMyMember,
+  useMySchedules,
+  useAnnouncementsUnreadCount,
+} from "@/lib/api/queries";
 import { announcementsUnreadCount } from "@/lib/communication/announcement-notifications";
+import { isActiveAdultMember } from "@/lib/care-requests/eligibility";
 import { canAccessNavItem, canAccessSchedules } from "@/lib/permissions";
 import {
   domainNavActive,
@@ -85,11 +91,17 @@ export function DashboardSidebar({
   const { permissions } = useAuth();
   const canAccessSchedulesData = canAccessSchedules(permissions);
   const hasCommunicationAccess = Boolean(permissions?.communication.access);
+  const canReceiveCare = Boolean(permissions?.counseling?.receive);
+  const { data: myMember } = useMyMember();
+  const isAdultMember = isActiveAdultMember(myMember);
   const { data: schedule } = useMySchedules({
     enabled: canAccessSchedulesData,
   });
   const { data: unreadAnnouncements } = useAnnouncementsUnreadCount({
     enabled: hasCommunicationAccess,
+  });
+  const { data: carePending } = useCareInboxPendingCount({
+    enabled: canReceiveCare,
   });
 
   const visibleNavItems = useMemo(() => {
@@ -98,9 +110,11 @@ export function DashboardSidebar({
     }
 
     return dashboardNavItems.filter((item) =>
-      canAccessNavItem(permissions, item),
+      canAccessNavItem(permissions, item, {
+        isActiveAdultMember: isAdultMember,
+      }),
     );
-  }, [permissions]);
+  }, [permissions, isAdultMember]);
 
   const pendingCount =
     canAccessSchedulesData && schedule
@@ -110,6 +124,7 @@ export function DashboardSidebar({
     unreadAnnouncements,
     hasCommunicationAccess,
   );
+  const carePendingCount = canReceiveCare ? (carePending?.count ?? 0) : 0;
 
   const visibleSecondaryNavItems = useMemo(() => {
     if (!permissions) {
@@ -117,9 +132,11 @@ export function DashboardSidebar({
     }
 
     return dashboardSecondaryNavItems.filter((item) =>
-      canAccessNavItem(permissions, item),
+      canAccessNavItem(permissions, item, {
+        isActiveAdultMember: isAdultMember,
+      }),
     );
-  }, [permissions]);
+  }, [permissions, isAdultMember]);
 
   return (
     <aside
@@ -164,7 +181,9 @@ export function DashboardSidebar({
                   ? pendingCount
                   : item.href === AUTH_ROUTES.communication
                     ? communicationUnreadCount
-                    : undefined
+                    : item.href === AUTH_ROUTES.careRequests
+                      ? carePendingCount
+                      : undefined
               }
               onNavigate={onNavigate}
             />

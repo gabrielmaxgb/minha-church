@@ -43,6 +43,7 @@ export const AUTH_ROUTES = {
   mySchedule: "/app/minhas-escalas",
   finances: "/app/financas",
   communication: "/app/comunicacao",
+  careRequests: "/app/aconselhamentos",
   reports: "/app/relatorios",
   settings: "/app/configuracoes",
   changePassword: "/app/alterar-senha",

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { FloatingSaveBar } from "@/components/ui/floating-save-bar";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { AUTH_ROUTES } from "@/constants/routes";
 import {
@@ -361,6 +362,28 @@ export function ChurchMembershipsSettings() {
     ? `Aguarde ${Math.ceil(refreshCooldownRemainingMs / 1000)}s para atualizar de novo`
     : "Atualizar lista";
 
+  const dirtyMembership = useMemo(() => {
+    if (!filteredMemberships.length) {
+      return null;
+    }
+
+    const editableDirty = filteredMemberships.filter(
+      (membership) =>
+        canEditMembership(membership, user?.id, user?.isOwner) &&
+        isMembershipDirty(membership),
+    );
+
+    if (editableDirty.length === 0) {
+      return null;
+    }
+
+    return (
+      editableDirty.find((membership) =>
+        expandedUserIds.has(membership.userId),
+      ) ?? editableDirty[0]
+    );
+  }, [drafts, expandedUserIds, filteredMemberships, user?.id, user?.isOwner]);
+
   return (
     <div>
       <SettingsSectionHeader
@@ -578,28 +601,6 @@ export function ChurchMembershipsSettings() {
                       </p>
                     )}
 
-                    {canEdit && dirty && (
-                      <div className="mt-4 flex justify-end gap-2">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          disabled={isSaving}
-                          onClick={() => discardChanges(membership)}
-                        >
-                          Descartar
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          disabled={isSaving}
-                          onClick={() => void saveChanges(membership)}
-                        >
-                          {isSaving ? "Salvando..." : "Salvar alterações"}
-                        </Button>
-                      </div>
-                    )}
-
                   </SettingsExpandableRow>
                 );
               })
@@ -607,6 +608,30 @@ export function ChurchMembershipsSettings() {
           </div>
         </SettingsPanel>
       )}
+
+      <FloatingSaveBar
+        visible={Boolean(dirtyMembership)}
+        saving={
+          dirtyMembership
+            ? savingUserId === dirtyMembership.userId
+            : false
+        }
+        message={
+          dirtyMembership
+            ? `Alterações em ${dirtyMembership.user.name}`
+            : undefined
+        }
+        onDiscard={() => {
+          if (dirtyMembership) {
+            discardChanges(dirtyMembership);
+          }
+        }}
+        onSave={() => {
+          if (dirtyMembership) {
+            void saveChanges(dirtyMembership);
+          }
+        }}
+      />
 
       <TransferOwnershipDialog
         membership={transferTarget}

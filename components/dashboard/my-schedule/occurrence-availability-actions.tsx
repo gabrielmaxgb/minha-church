@@ -1,6 +1,7 @@
 "use client";
 
-import { Check, RotateCcw, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Check, Loader2, RotateCcw, X } from "lucide-react";
 
 import { RosterFunctionsReminder } from "@/components/dashboard/ministries/roster-functions-reminder";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ interface OccurrenceAvailabilityActionsProps {
   needsRosterFunctions?: boolean;
   ministryName?: string;
   busy?: boolean;
+  disabled?: boolean;
   layout?: "compact" | "default";
   className?: string;
   onRespond: (status: ScheduleAvailabilityAction) => void;
@@ -23,6 +25,7 @@ export function OccurrenceAvailabilityActions({
   needsRosterFunctions = false,
   ministryName = "este ministério",
   busy = false,
+  disabled = false,
   layout = "default",
   className,
   onRespond,
@@ -32,23 +35,42 @@ export function OccurrenceAvailabilityActions({
   );
   const isAvailable = availabilityStatus === "available";
   const isUnavailable = availabilityStatus === "unavailable";
+  const controlsDisabled = busy || disabled;
+  const [pendingAction, setPendingAction] =
+    useState<ScheduleAvailabilityAction | null>(null);
 
-  function submitAvailable() {
-    onRespond("available");
+  useEffect(() => {
+    if (!busy) {
+      setPendingAction(null);
+    }
+  }, [busy]);
+
+  function submit(status: ScheduleAvailabilityAction) {
+    setPendingAction(status);
+    onRespond(status);
   }
 
-  function submitUnavailable() {
-    onRespond("unavailable");
-  }
-
-  function submitClear() {
-    onRespond("clear");
-  }
+  const pendingAvailable =
+    pendingAction === "available" ||
+    (pendingAction === "clear" && isAvailable);
+  const pendingUnavailable =
+    pendingAction === "unavailable" ||
+    (pendingAction === "clear" && isUnavailable);
 
   const content = (
     <>
       <div className={cn("space-y-0.5", theme.statusTone)} role="status">
-        {needsRosterFunctions ? (
+        {busy ? (
+          <>
+            <p className="flex items-center gap-2 text-sm font-semibold">
+              <Loader2 className="size-3.5 shrink-0 animate-spin" aria-hidden />
+              Salvando resposta...
+            </p>
+            <p className={cn("text-xs", theme.statusHintTone)}>
+              Aguarde um instante.
+            </p>
+          </>
+        ) : needsRosterFunctions ? (
           <>
             <p className="text-sm font-semibold">Funções não configuradas</p>
             <p className={cn("text-xs", theme.statusHintTone)}>
@@ -77,33 +99,41 @@ export function OccurrenceAvailabilityActions({
             type="button"
             size="sm"
             variant={isAvailable ? "default" : "outline"}
-            disabled={busy}
+            disabled={controlsDisabled}
             className={cn(
               isAvailable && theme.primaryButton,
               isUnavailable && !isAvailable && theme.secondaryButton,
             )}
             aria-pressed={isAvailable}
-            onClick={() => (isAvailable ? submitClear() : submitAvailable())}
+            aria-busy={(busy && pendingAvailable) || undefined}
+            onClick={() => submit(isAvailable ? "clear" : "available")}
           >
-            <Check className="size-4" />
-            Posso
+            {busy && pendingAvailable ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+            ) : (
+              <Check className="size-4" aria-hidden />
+            )}
+            {busy && pendingAvailable ? "Salvando..." : "Posso"}
           </Button>
           <Button
             type="button"
             size="sm"
             variant={isUnavailable ? "destructive" : "outline"}
-            disabled={busy}
+            disabled={controlsDisabled}
             className={cn(
               isUnavailable && theme.primaryButton,
               isAvailable && !isUnavailable && theme.secondaryButton,
             )}
             aria-pressed={isUnavailable}
-            onClick={() =>
-              isUnavailable ? submitClear() : submitUnavailable()
-            }
+            aria-busy={(busy && pendingUnavailable) || undefined}
+            onClick={() => submit(isUnavailable ? "clear" : "unavailable")}
           >
-            <X className="size-4" />
-            Não posso
+            {busy && pendingUnavailable ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+            ) : (
+              <X className="size-4" aria-hidden />
+            )}
+            {busy && pendingUnavailable ? "Salvando..." : "Não posso"}
           </Button>
         </div>
       ) : (
@@ -113,35 +143,49 @@ export function OccurrenceAvailabilityActions({
               type="button"
               size="sm"
               variant={isAvailable ? "default" : "outline"}
-              disabled={busy}
+              disabled={controlsDisabled}
               className={cn(
                 "h-9",
                 isAvailable && theme.primaryButton,
                 isUnavailable && !isAvailable && theme.secondaryButton,
               )}
               aria-pressed={isAvailable}
-              onClick={() => (isAvailable ? submitClear() : submitAvailable())}
+              aria-busy={(busy && pendingAction === "available") || undefined}
+              onClick={() => submit(isAvailable ? "clear" : "available")}
             >
-              <Check className="size-3.5" />
-              Posso ir
+              {busy && pendingAction === "available" ? (
+                <Loader2 className="size-3.5 animate-spin" aria-hidden />
+              ) : (
+                <Check className="size-3.5" aria-hidden />
+              )}
+              {busy && pendingAction === "available"
+                ? "Salvando..."
+                : "Posso ir"}
             </Button>
             <Button
               type="button"
               size="sm"
               variant={isUnavailable ? "destructive" : "outline"}
-              disabled={busy}
+              disabled={controlsDisabled}
               className={cn(
                 "h-9",
                 isUnavailable && theme.primaryButton,
                 isAvailable && !isUnavailable && theme.secondaryButton,
               )}
               aria-pressed={isUnavailable}
-              onClick={() =>
-                isUnavailable ? submitClear() : submitUnavailable()
+              aria-busy={
+                (busy && pendingAction === "unavailable") || undefined
               }
+              onClick={() => submit(isUnavailable ? "clear" : "unavailable")}
             >
-              <X className="size-3.5" />
-              Não posso
+              {busy && pendingAction === "unavailable" ? (
+                <Loader2 className="size-3.5 animate-spin" aria-hidden />
+              ) : (
+                <X className="size-3.5" aria-hidden />
+              )}
+              {busy && pendingAction === "unavailable"
+                ? "Salvando..."
+                : "Não posso"}
             </Button>
           </div>
           {availabilityStatus ? (
@@ -149,12 +193,19 @@ export function OccurrenceAvailabilityActions({
               type="button"
               size="sm"
               variant="ghost"
-              disabled={busy}
+              disabled={controlsDisabled}
               className="w-full text-muted-foreground"
-              onClick={submitClear}
+              aria-busy={(busy && pendingAction === "clear") || undefined}
+              onClick={() => submit("clear")}
             >
-              <RotateCcw className="size-4" />
-              Limpar resposta
+              {busy && pendingAction === "clear" ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden />
+              ) : (
+                <RotateCcw className="size-4" aria-hidden />
+              )}
+              {busy && pendingAction === "clear"
+                ? "Limpando..."
+                : "Limpar resposta"}
             </Button>
           ) : null}
         </>
@@ -162,23 +213,15 @@ export function OccurrenceAvailabilityActions({
     </>
   );
 
-  if (layout === "compact") {
-    return (
-      <div
-        className={cn(
-          "space-y-2 rounded-xl border p-3",
-          theme.shell,
-          className,
-        )}
-      >
-        {content}
-      </div>
-    );
-  }
-
   return (
     <div
-      className={cn("space-y-2 rounded-xl border p-3", theme.shell, className)}
+      className={cn(
+        "space-y-2 rounded-xl border p-3",
+        theme.shell,
+        busy && "ring-1 ring-foreground/10",
+        className,
+      )}
+      aria-busy={busy || undefined}
     >
       {content}
     </div>

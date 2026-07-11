@@ -8,6 +8,7 @@ import {
   Bell,
   ClipboardList,
   CreditCard,
+  HeartHandshake,
   KeyRound,
   Mail,
   UserCheck,
@@ -26,6 +27,7 @@ import {
   useMySchedules,
   usePasswordResetRequests,
   useAnnouncementsUnreadCount,
+  useCareInboxPendingCount,
 } from "@/lib/api/queries";
 import { canManageChurchMemberships } from "@/lib/church-memberships/constants";
 import {
@@ -57,6 +59,7 @@ function useNotificationCount(): number {
   const isOwner = Boolean(user?.isOwner);
   const hasSchedulesAccess = Boolean(permissions?.schedules.access);
   const hasCommunicationAccess = Boolean(permissions?.communication.access);
+  const canReceiveCare = Boolean(permissions?.counseling?.receive);
 
   const { data: passwordResetRequests } = usePasswordResetRequests({
     poll: canManage,
@@ -65,6 +68,9 @@ function useNotificationCount(): number {
   const { data: ministryNotifications } = useMyMinistryNotifications();
   const { data: unreadAnnouncements } = useAnnouncementsUnreadCount({
     enabled: hasCommunicationAccess,
+  });
+  const { data: carePending } = useCareInboxPendingCount({
+    enabled: canReceiveCare,
   });
   const { data: pendingTier } = useQuery({
     ...billingKeys.tierCrossingPending(churchId ?? "unknown"),
@@ -87,6 +93,7 @@ function useNotificationCount(): number {
     unreadAnnouncements,
     hasCommunicationAccess,
   );
+  const carePendingCount = canReceiveCare ? (carePending?.count ?? 0) : 0;
   const tierPendingCount = isOwner && pendingTier ? 1 : 0;
   const tierNoticeCount = canMembers ? (staffNotices?.length ?? 0) : 0;
 
@@ -95,6 +102,7 @@ function useNotificationCount(): number {
     pendingScheduleCount +
     ministryCount +
     announcementCount +
+    carePendingCount +
     tierPendingCount +
     tierNoticeCount
   );
@@ -119,6 +127,7 @@ function NotificationsPanel({
   const isOwner = Boolean(user?.isOwner);
   const hasSchedulesAccess = Boolean(permissions?.schedules.access);
   const hasCommunicationAccess = Boolean(permissions?.communication.access);
+  const canReceiveCare = Boolean(permissions?.counseling?.receive);
 
   const {
     data: passwordResetRequests,
@@ -141,6 +150,13 @@ function NotificationsPanel({
     isError: announcementsError,
   } = useAnnouncementsUnreadCount({
     enabled: open && hasCommunicationAccess,
+  });
+  const {
+    data: carePending,
+    isLoading: carePendingLoading,
+    isError: carePendingError,
+  } = useCareInboxPendingCount({
+    enabled: open && canReceiveCare,
   });
   const { data: pendingTier } = useQuery({
     ...billingKeys.tierCrossingPending(churchId ?? "unknown"),
@@ -176,6 +192,7 @@ function NotificationsPanel({
     unreadAnnouncements,
     hasCommunicationAccess,
   );
+  const carePendingCount = canReceiveCare ? (carePending?.count ?? 0) : 0;
   const tierPendingCount = isOwner && pendingTier ? 1 : 0;
   const tierNoticeCount = canMembers ? (staffNotices?.length ?? 0) : 0;
   const count =
@@ -183,6 +200,7 @@ function NotificationsPanel({
     pendingScheduleCount +
     ministryCount +
     announcementCount +
+    carePendingCount +
     tierPendingCount +
     tierNoticeCount;
 
@@ -194,12 +212,14 @@ function NotificationsPanel({
     (canManage && passwordResetLoading) ||
     (hasSchedulesAccess && schedulesLoading) ||
     ministryNotificationsLoading ||
-    (hasCommunicationAccess && announcementsLoading);
+    (hasCommunicationAccess && announcementsLoading) ||
+    (canReceiveCare && carePendingLoading);
   const isError =
     (canManage && passwordResetError) ||
     (hasSchedulesAccess && schedulesError) ||
     ministryNotificationsError ||
-    (hasCommunicationAccess && announcementsError);
+    (hasCommunicationAccess && announcementsError) ||
+    (canReceiveCare && carePendingError);
 
   useEffect(() => {
     if (!open) {
@@ -313,6 +333,41 @@ function NotificationsPanel({
                 </div>
               </div>
             )}
+
+          {!isLoading && !isError && carePendingCount > 0 && (
+            <div className="border-b border-border/70 px-4 py-3 last:border-b-0">
+              <div className="flex items-start gap-3">
+                <div className={pendingNotificationStyles.icon.sm}>
+                  <HeartHandshake
+                    className={cn("size-3.5", pendingNotificationStyles.iconText)}
+                    aria-hidden
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className={pendingNotificationStyles.label}>
+                    Aconselhamentos e visitas
+                  </p>
+                  <p className="mt-1 text-sm font-medium leading-snug">
+                    {carePendingCount === 1
+                      ? "1 solicitação aguardando visualização"
+                      : `${carePendingCount} solicitações aguardando visualização`}
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Marque como visualizada para o solicitante saber que você viu o pedido.
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-2 h-8 text-xs"
+                    asChild
+                    onClick={onClose}
+                  >
+                    <Link href={AUTH_ROUTES.careRequests}>Ver recebidas</Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {!isLoading && !isError && tierPendingCount > 0 && pendingTier && (
             <div className="border-b border-border/70 px-4 py-3 last:border-b-0">

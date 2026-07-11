@@ -255,23 +255,16 @@ export function useUpdateEventAvailability(ministryId: string) {
         roleLabels,
       });
     },
-    onSuccess: async (profile, variables) => {
-      if (churchId) {
-        queryClient.setQueryData(
-          ministriesKeys.rosterProfile(churchId, ministryId).queryKey,
-          profile,
-        );
-        await queryClient.invalidateQueries({
-          queryKey: ministriesKeys.rosterProfile(churchId, ministryId).queryKey,
-        });
-        await queryClient.invalidateQueries({
-          queryKey: eventsKeys.detail(churchId, variables.eventId).queryKey,
-        });
-        await queryClient.invalidateQueries({ queryKey: eventsKeys._def });
-        await queryClient.invalidateQueries({ queryKey: queries.dashboard._def });
-      }
-
-      await queryClient.invalidateQueries({ queryKey: rosterKeys._def });
+    onSuccess: (_data, variables) => {
+      if (!churchId) return;
+      // Don't await — keep the confirm button snappy; calendar refetches in background.
+      void queryClient.invalidateQueries({
+        queryKey: ministriesKeys.rosterProfile(churchId, ministryId).queryKey,
+      });
+      void queryClient.invalidateQueries({
+        queryKey: eventsKeys.detail(churchId, variables.eventId).queryKey,
+      });
+      void queryClient.invalidateQueries({ queryKey: rosterKeys._def });
     },
   });
 }

@@ -46,6 +46,7 @@ export const CHURCH_PERMISSION_LABELS: Record<ChurchPermissionKey, string> = {
   communication_manage: "Publicar e editar comunicados",
   roles_manage: "Definir cargos da igreja",
   memberships_manage: "Atribuir cargos a usuários",
+  counseling_receive: "Receber pedidos de aconselhamento e visitas",
 };
 
 export const CHURCH_PERMISSION_DESCRIPTIONS: Record<ChurchPermissionKey, string> = {
@@ -79,6 +80,8 @@ export const CHURCH_PERMISSION_DESCRIPTIONS: Record<ChurchPermissionKey, string>
     "Criar, editar e excluir cargos e definir quais permissões cada um concede (esta tela). Não atribui os cargos às pessoas.",
   memberships_manage:
     "Atribuir e remover cargos dos usuários, definir proprietários, aprovar acessos pendentes e redefinir senhas de acesso.",
+  counseling_receive:
+    "Aparece na lista de Aconselhamentos e visitas e recebe solicitações de membros pelo app (notificação e e-mail).",
 };
 
 export const CHURCH_PERMISSION_GROUPS: Array<{
@@ -116,6 +119,7 @@ export const CHURCH_PERMISSION_GROUPS: Array<{
       "communication_manage",
       "roles_manage",
       "memberships_manage",
+      "counseling_receive",
     ],
   },
 ];
