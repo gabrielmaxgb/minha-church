@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 
+import { AuthPausedNotice } from "@/components/auth/auth-paused-notice";
 import { RegisterChurchForm } from "@/components/auth/register-church-form";
+import { AUTH_ACCESS_ENABLED } from "@/constants/auth-access";
 
 export const metadata: Metadata = {
   title: "Criar conta",
@@ -9,5 +11,9 @@ export const metadata: Metadata = {
 };
 
 export default function RegisterChurchPage() {
+  if (!AUTH_ACCESS_ENABLED) {
+    return <AuthPausedNotice />;
+  }
+
   return <RegisterChurchForm />;
 }
