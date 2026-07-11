@@ -11,6 +11,7 @@ export class ApiError extends Error {
 		public status: number,
 		public code?: string,
 		public email?: string,
+		public details?: unknown,
 	) {
 		super(message);
 		this.name = "ApiError";
@@ -34,10 +35,12 @@ async function parseErrorBody(response: Response): Promise<{
 	message: string;
 	code?: string;
 	email?: string;
+	details?: unknown;
 }> {
 	let raw = `API error: ${response.status}`;
 	let code: string | undefined;
 	let email: string | undefined;
+	let details: unknown;
 
 	try {
 		const body = (await response.json()) as {
@@ -45,6 +48,8 @@ async function parseErrorBody(response: Response): Promise<{
 			code?: string;
 			email?: string;
 		};
+
+		details = body;
 
 		if (Array.isArray(body.message)) {
 			raw = body.message.join(", ");
@@ -73,10 +78,11 @@ async function parseErrorBody(response: Response): Promise<{
 				"Muitas tentativas em pouco tempo. Aguarde um momento e tente novamente.",
 			code,
 			email,
+			details,
 		};
 	}
 
-	return { message: raw, code, email };
+	return { message: raw, code, email, details };
 }
 
 export async function apiClient<T>(
@@ -129,6 +135,7 @@ export async function apiClient<T>(
 			response.status,
 			error.code,
 			error.email,
+			error.details,
 		);
 	}
 

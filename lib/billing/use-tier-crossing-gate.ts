@@ -5,8 +5,8 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import {
   confirmTierCrossing,
-  fetchTierCrossingPreview,
   requestTierCrossing,
+  tierCrossingPreviewFromErrorDetails,
   type TierCrossingPreview,
 } from "@/lib/api/billing";
 import { ApiError } from "@/lib/api/client";
@@ -46,43 +46,39 @@ export function useTierCrossingGate() {
     async (
       memberStatus: string,
       action: () => Promise<void>,
-      options?: { projectedMemberCount?: number },
+      // Mantido por compatibilidade de assinatura; a checagem agora é feita
+      // pelo próprio backend na ação (sem preflight dedicado).
+      _options?: { projectedMemberCount?: number },
     ): Promise<void> => {
       if (!church?.id || !countsTowardBillingTier(memberStatus)) {
         await action();
         return;
       }
 
-      const projectedMemberCount =
-        options?.projectedMemberCount ?? (church.memberCount ?? 0) + 1;
-
       try {
-        const crossingPreview = await fetchTierCrossingPreview(
-          church.id,
-          projectedMemberCount,
-        );
+        // Otimista: dispara a ação direto. O backend valida a faixa antes de
+        // qualquer escrita e, se cruzar sem autorização, responde 409
+        // TIER_UPGRADE_REQUIRED (nada é gravado) com o preview no corpo.
+        await action();
+      } catch (err) {
+        if (err instanceof ApiError && err.code === "TIER_UPGRADE_REQUIRED") {
+          const crossingPreview = tierCrossingPreviewFromErrorDetails(
+            err.details,
+          );
 
-        if (
-          !crossingPreview.crossesTier ||
-          !crossingPreview.requiresConfirmation
-        ) {
-          await action();
-          return;
+          if (crossingPreview) {
+            setPreview(crossingPreview);
+            setMode(isOwner ? "owner-confirm" : "request-owner");
+            setRequestSent(false);
+            setPendingAction(() => action);
+            return;
+          }
         }
 
-        setPreview(crossingPreview);
-        setMode(isOwner ? "owner-confirm" : "request-owner");
-        setRequestSent(false);
-        setPendingAction(() => action);
-      } catch (err) {
-        const message =
-          err instanceof ApiError
-            ? err.message
-            : "Não foi possível verificar a faixa de cobrança.";
-        throw new Error(message);
+        throw err;
       }
     },
-    [church?.id, church?.memberCount, isOwner],
+    [church?.id, isOwner],
   );
 
   const confirm = useCallback(async () => {
