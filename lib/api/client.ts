@@ -157,7 +157,14 @@ export async function apiClient<T>(
 		return undefined as T;
 	}
 
-	return JSON.parse(raw) as T;
+	try {
+		return JSON.parse(raw) as T;
+	} catch {
+		throw new ApiError(
+			`Resposta inválida da API (${response.status}). Confira NEXT_PUBLIC_API_URL / API_PROXY_TARGET.`,
+			response.status,
+		);
+	}
 }
 
 export function buildTenantPath(churchId: string, path: string): string {

@@ -40,13 +40,16 @@ export default async function GivingCheckoutPage({ params }: PageProps) {
       notFound();
     }
 
+    const message =
+      error instanceof ApiError
+        ? error.message
+        : error instanceof Error
+          ? error.message
+          : "Não foi possível carregar esta página de contribuição.";
+
     return (
       <div className="mx-auto flex min-h-svh w-full max-w-lg items-center px-4 py-16">
-        <FormAlert>
-          {error instanceof ApiError
-            ? error.message
-            : "Não foi possível carregar esta página de contribuição."}
-        </FormAlert>
+        <FormAlert>{message}</FormAlert>
       </div>
     );
   }
