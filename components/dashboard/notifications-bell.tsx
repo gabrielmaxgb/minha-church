@@ -59,7 +59,8 @@ function useNotificationCount(): number {
   const isOwner = Boolean(user?.isOwner);
   const hasSchedulesAccess = Boolean(permissions?.schedules.access);
   const hasCommunicationAccess = Boolean(permissions?.communication.access);
-  const canReceiveCare = Boolean(permissions?.counseling?.receive);
+  const canReceiveCare =
+    isOwner || Boolean(permissions?.counseling?.receive);
 
   const { data: passwordResetRequests } = usePasswordResetRequests({
     poll: canManage,
@@ -127,7 +128,8 @@ function NotificationsPanel({
   const isOwner = Boolean(user?.isOwner);
   const hasSchedulesAccess = Boolean(permissions?.schedules.access);
   const hasCommunicationAccess = Boolean(permissions?.communication.access);
-  const canReceiveCare = Boolean(permissions?.counseling?.receive);
+  const canReceiveCare =
+    isOwner || Boolean(permissions?.counseling?.receive);
 
   const {
     data: passwordResetRequests,

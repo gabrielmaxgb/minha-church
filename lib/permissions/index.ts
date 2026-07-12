@@ -237,8 +237,13 @@ export function canAccessNav(
 export function canAccessNavItem(
   permissions: UserPermissions,
   item: DashboardNavItem,
-  options?: { isActiveAdultMember?: boolean },
+  options?: { isActiveAdultMember?: boolean; isOwner?: boolean },
 ): boolean {
+  // Owner always has full product access — never hide nav behind role/member gates.
+  if (options?.isOwner) {
+    return true;
+  }
+
   if (item.access === "activeAdultMember") {
     return Boolean(options?.isActiveAdultMember);
   }
@@ -252,7 +257,7 @@ export function canAccessNavItem(
 
 export function getFirstAccessibleRoute(
   permissions: UserPermissions,
-  options?: { isActiveAdultMember?: boolean },
+  options?: { isActiveAdultMember?: boolean; isOwner?: boolean },
 ): string {
   const items = [...dashboardNavItems, ...dashboardSecondaryNavItems];
 
@@ -280,7 +285,12 @@ export type RoutePermission =
 export function hasRoutePermission(
   permissions: UserPermissions,
   permission: RoutePermission,
+  options?: { isOwner?: boolean },
 ) {
+  if (options?.isOwner) {
+    return true;
+  }
+
   switch (permission) {
     case "dashboard":
       return permissions.dashboard.access;

@@ -9,7 +9,7 @@ import { useAuth } from "@/providers/auth-provider";
 
 export default function AppIndexPage() {
   const router = useRouter();
-  const { permissions, isLoading } = useAuth();
+  const { permissions, user, isLoading } = useAuth();
 
   useEffect(() => {
     if (isLoading) {
@@ -17,12 +17,16 @@ export default function AppIndexPage() {
     }
 
     if (permissions) {
-      router.replace(getFirstAccessibleRoute(permissions));
+      router.replace(
+        getFirstAccessibleRoute(permissions, {
+          isOwner: Boolean(user?.isOwner),
+        }),
+      );
       return;
     }
 
     router.replace(AUTH_ROUTES.dashboard);
-  }, [isLoading, permissions, router]);
+  }, [isLoading, permissions, router, user?.isOwner]);
 
   return null;
 }

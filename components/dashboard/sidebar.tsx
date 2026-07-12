@@ -88,12 +88,14 @@ export function DashboardSidebar({
   className,
 }: DashboardSidebarProps) {
   const pathname = usePathname();
-  const { permissions } = useAuth();
+  const { permissions, user } = useAuth();
+  const isOwner = Boolean(user?.isOwner);
   const canAccessSchedulesData = canAccessSchedules(permissions);
   const hasCommunicationAccess = Boolean(permissions?.communication.access);
-  const canReceiveCare = Boolean(permissions?.counseling?.receive);
+  const canReceiveCare =
+    isOwner || Boolean(permissions?.counseling?.receive);
   const { data: myMember } = useMyMember();
-  const isAdultMember = isActiveAdultMember(myMember);
+  const isAdultMember = isOwner || isActiveAdultMember(myMember);
   const { data: schedule } = useMySchedules({
     enabled: canAccessSchedulesData,
   });
@@ -112,9 +114,10 @@ export function DashboardSidebar({
     return dashboardNavItems.filter((item) =>
       canAccessNavItem(permissions, item, {
         isActiveAdultMember: isAdultMember,
+        isOwner,
       }),
     );
-  }, [permissions, isAdultMember]);
+  }, [permissions, isAdultMember, isOwner]);
 
   const pendingCount =
     canAccessSchedulesData && schedule
@@ -134,9 +137,10 @@ export function DashboardSidebar({
     return dashboardSecondaryNavItems.filter((item) =>
       canAccessNavItem(permissions, item, {
         isActiveAdultMember: isAdultMember,
+        isOwner,
       }),
     );
-  }, [permissions, isAdultMember]);
+  }, [permissions, isAdultMember, isOwner]);
 
   return (
     <aside

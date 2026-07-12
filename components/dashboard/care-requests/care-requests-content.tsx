@@ -46,8 +46,9 @@ function CareRequestStatusBadge({ request }: { request: CareRequest }) {
 }
 
 export function CareRequestsContent() {
-  const { permissions } = useAuth();
-  const canReceive = Boolean(permissions?.counseling?.receive);
+  const { permissions, user } = useAuth();
+  const canReceive =
+    Boolean(user?.isOwner) || Boolean(permissions?.counseling?.receive);
   const [selectedRecipient, setSelectedRecipient] =
     useState<CareRequestRecipient | null>(null);
 

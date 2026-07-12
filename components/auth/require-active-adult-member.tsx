@@ -6,6 +6,7 @@ import {
   type ActiveAdultGateReason,
 } from "@/lib/care-requests/eligibility";
 import { useMyMember } from "@/lib/api/queries";
+import { useAuth } from "@/providers/auth-provider";
 
 interface RequireActiveAdultMemberProps {
   children: React.ReactNode;
@@ -38,9 +39,15 @@ export function RequireActiveAdultMember({
   children,
   fallback,
 }: RequireActiveAdultMemberProps) {
+  const { user } = useAuth();
+  const isOwner = Boolean(user?.isOwner);
   const { data: member, isLoading, isError } = useMyMember({
-    enabled: true,
+    enabled: !isOwner,
   });
+
+  if (isOwner) {
+    return children;
+  }
 
   const reason = getActiveAdultGateReason(member, {
     isLoading,
