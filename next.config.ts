@@ -11,9 +11,28 @@ function buildSecurityHeaders() {
     ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com"
     : "script-src 'self' 'unsafe-inline' https://js.stripe.com";
 
-  const connectSrc = isDev
-    ? "connect-src 'self' ws://localhost:* ws://127.0.0.1:* http://localhost:* http://127.0.0.1:* https://api.stripe.com"
-    : "connect-src 'self' https://api.stripe.com";
+  // Browser chama Stripe e, se NEXT_PUBLIC_API_URL for absoluto, o BE no Railway.
+  // Com `/api/v1` (recomendado), as calls ficam em 'self' via rewrite.
+  const apiProxyOrigin = (process.env.API_PROXY_TARGET ?? "")
+    .trim()
+    .replace(/\/$/, "");
+  const connectSrcParts = [
+    "'self'",
+    "https://api.stripe.com",
+    "https://*.up.railway.app",
+  ];
+  if (apiProxyOrigin) {
+    connectSrcParts.push(apiProxyOrigin);
+  }
+  if (isDev) {
+    connectSrcParts.push(
+      "ws://localhost:*",
+      "ws://127.0.0.1:*",
+      "http://localhost:*",
+      "http://127.0.0.1:*",
+    );
+  }
+  const connectSrc = `connect-src ${connectSrcParts.join(" ")}`;
 
   const headers = [
     { key: "X-Frame-Options", value: "DENY" },
