@@ -17,13 +17,13 @@ const STATUS_LABEL: Record<string, string> = {
 
 function statusVariant(
   status: string,
-): "success" | "outline" | "destructive" | "secondary" {
+): "success" | "outline" | "danger" | "secondary" {
   switch (status) {
     case "succeeded":
       return "success";
     case "failed":
     case "canceled":
-      return "destructive";
+      return "danger";
     case "processing":
     case "pending":
       return "secondary";
