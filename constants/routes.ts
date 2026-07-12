@@ -42,6 +42,7 @@ export const AUTH_ROUTES = {
   /** @deprecated Use mySchedules */
   mySchedule: "/app/minhas-escalas",
   finances: "/app/financas",
+  financesContributions: "/app/financas#contribuicoes",
   communication: "/app/comunicacao",
   careRequests: "/app/aconselhamentos",
   reports: "/app/relatorios",
@@ -80,12 +81,18 @@ export function activitiesCalendarPath(dateKey: string): string {
   return `${AUTH_ROUTES.activities}?view=calendar&date=${dateKey}`;
 }
 
+export function givingFundPath(churchSlug: string, fundSlug: string): string {
+  return `/doar/${encodeURIComponent(churchSlug)}/${encodeURIComponent(fundSlug)}`;
+}
+
 export function settingsSectionPath(
   section:
     | "password-reset-requests"
     | "pending-users"
     | "ministries"
-    | "profile",
+    | "profile"
+    | "subscription"
+    | "recebimentos",
 ): string {
   return `${AUTH_ROUTES.settings}?section=${section}`;
 }

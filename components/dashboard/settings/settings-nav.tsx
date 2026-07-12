@@ -11,6 +11,7 @@ import type { UserPermissions } from "@/types/auth";
 export type SettingsSection =
   | "profile"
   | "subscription"
+  | "recebimentos"
   | "ministries"
   | "pending-users"
   | "password-reset-requests"
@@ -35,6 +36,11 @@ const ALL_ITEMS: SettingsNavItem[] = [
     id: "subscription",
     label: "Assinatura",
     description: "Plano e cobrança",
+  },
+  {
+    id: "recebimentos",
+    label: "Recebimentos",
+    description: "Dízimos, doações e eventos",
   },
   {
     id: "ministries",
@@ -79,7 +85,7 @@ export function useSettingsNav(permissions: UserPermissions | null) {
 
   return useMemo(() => {
     return ALL_ITEMS.filter((item) => {
-      if (item.id === "subscription") {
+      if (item.id === "subscription" || item.id === "recebimentos") {
         return Boolean(user?.isOwner);
       }
 

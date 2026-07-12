@@ -8,12 +8,12 @@ const isDev = process.env.NODE_ENV === "development";
 
 function buildSecurityHeaders() {
   const scriptSrc = isDev
-    ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
-    : "script-src 'self' 'unsafe-inline'";
+    ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com"
+    : "script-src 'self' 'unsafe-inline' https://js.stripe.com";
 
   const connectSrc = isDev
-    ? "connect-src 'self' ws://localhost:* ws://127.0.0.1:* http://localhost:* http://127.0.0.1:*"
-    : "connect-src 'self'";
+    ? "connect-src 'self' ws://localhost:* ws://127.0.0.1:* http://localhost:* http://127.0.0.1:* https://api.stripe.com"
+    : "connect-src 'self' https://api.stripe.com";
 
   const headers = [
     { key: "X-Frame-Options", value: "DENY" },
@@ -28,10 +28,11 @@ function buildSecurityHeaders() {
       value: [
         "default-src 'self'",
         scriptSrc,
-        "style-src 'self' 'unsafe-inline'",
-        "img-src 'self' data: blob:",
-        "font-src 'self'",
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+        "img-src 'self' data: blob: https://*.stripe.com",
+        "font-src 'self' https://fonts.gstatic.com data:",
         connectSrc,
+        "frame-src https://js.stripe.com https://hooks.stripe.com",
         "frame-ancestors 'none'",
         "base-uri 'self'",
         "form-action 'self'",

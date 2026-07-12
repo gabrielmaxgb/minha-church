@@ -19,8 +19,10 @@ import {
 import {
   AUTH_ROUTES,
   MEMBER_CREATE_ROUTE,
+  settingsSectionPath,
 } from "@/constants/routes";
 import {
+  useConnectStatus,
   useDashboardSummary,
   useManagedAnnouncements,
   useMinistries,
@@ -73,6 +75,7 @@ export function OnboardingChecklistProvider({
   const { data: ministries, isPending: ministriesPending } = useMinistries({
     enabled: isOwner,
   });
+  const { data: connectStatus } = useConnectStatus();
 
   const isStatusReady =
     !summaryPending && !announcementsPending && !ministriesPending;
@@ -81,6 +84,7 @@ export function OnboardingChecklistProvider({
   const hasExtraMember = (summary?.memberCount ?? 0) > 1;
   const hasAnnouncement = (announcements?.length ?? 0) > 0;
   const hasMinistry = (ministries?.length ?? 0) > 0;
+  const receivablesActive = Boolean(connectStatus?.canReceivePayments);
 
   const steps = useMemo<OnboardingStep[]>(() => {
     const list: OnboardingStep[] = [];
@@ -129,6 +133,19 @@ export function OnboardingChecklistProvider({
       optional: true,
     });
 
+    if (isOwner) {
+      list.push({
+        id: "activate-receivables",
+        title: "Ative os recebimentos",
+        description:
+          "Receba dízimos, doações e inscrições em eventos por Pix, cartão e boleto.",
+        actionLabel: "Ativar recebimentos",
+        href: settingsSectionPath("recebimentos"),
+        done: receivablesActive,
+        optional: true,
+      });
+    }
+
     return list;
   }, [
     emailStepRelevant,
@@ -136,6 +153,8 @@ export function OnboardingChecklistProvider({
     hasAnnouncement,
     hasExtraMember,
     hasMinistry,
+    isOwner,
+    receivablesActive,
   ]);
 
   const completedCount = steps.filter((step) => step.done).length;

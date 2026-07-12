@@ -28,6 +28,15 @@ function getApiBaseUrl(): string {
 		);
 	}
 
+	// No browser, `/api/v1` passa pelo rewrite do Next. No RSC/server,
+	// precisa ir direto ao Nest (API_PROXY_TARGET).
+	if (typeof window === "undefined" && baseURL.startsWith("/")) {
+		const apiOrigin = (
+			process.env.API_PROXY_TARGET ?? "http://localhost:3001"
+		).replace(/\/$/, "");
+		return `${apiOrigin}${baseURL}`;
+	}
+
 	return baseURL;
 }
 

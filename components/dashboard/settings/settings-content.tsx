@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
+import { AUTH_ROUTES } from "@/constants/routes";
 import { useAuth } from "@/providers/auth-provider";
 
 import { ProfileSettings } from "./profile-settings";
@@ -21,9 +22,12 @@ import {
 } from "./settings-nav";
 import { SettingsGeneralPanel } from "./settings-general-panel";
 import { SubscriptionSettings } from "./subscription-settings";
+import { ReceivablesSettings } from "./receivables-settings";
 import { CheckoutCancelHandler } from "@/components/billing/checkout-cancel-handler";
+import { ConnectReturnHandler } from "@/components/payments/connect-return-handler";
 
 export function SettingsContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const { permissions } = useAuth();
   const navItems = useSettingsNav(permissions);
@@ -49,18 +53,33 @@ export function SettingsContent() {
     }
   }, [active, navItems]);
 
+  // A URL é a fonte da verdade da seção ativa: manter só o estado local diverge
+  // do `?section=` e o efeito acima reverte a escolha do usuário (ex.: voltando
+  // do onboarding do Connect a URL fica em `section=recebimentos`).
+  const handleChangeSection = useCallback(
+    (section: SettingsSection) => {
+      setActive(section);
+      router.replace(`${AUTH_ROUTES.settings}?section=${section}`, {
+        scroll: false,
+      });
+    },
+    [router],
+  );
+
   return (
     <div className="flex flex-col gap-6 lg:flex-row lg:gap-10">
       <SettingsNav
         items={navItems}
         active={active}
-        onChange={setActive}
+        onChange={handleChangeSection}
       />
 
       <div className="min-w-0 flex-1">
         <CheckoutCancelHandler />
+        <ConnectReturnHandler />
         {active === "profile" && <ProfileSettings />}
         {active === "subscription" && <SubscriptionSettings />}
+        {active === "recebimentos" && <ReceivablesSettings />}
         {active === "ministries" && <ProfileMinistriesSettings />}
         {active === "pending-users" && <PendingUsersSettings />}
         {active === "password-reset-requests" && <PasswordResetRequestsSettings />}

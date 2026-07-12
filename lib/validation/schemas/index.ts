@@ -10,6 +10,10 @@ export {
   type RegisterChurchFormValues,
   type ResetPasswordFormValues,
 } from "./auth";
+export {
+  fiscalProfileSchema,
+  type FiscalProfileFormValues,
+} from "./fiscal-profile";
 export { createMemberFormSchema, memberFormSchema } from "./member";
 export { createMinistrySchema, type CreateMinistryFormValues } from "./ministry";
 export { createProfileSchema, type ProfileFormValues } from "./profile";

@@ -10,12 +10,14 @@ import { membersKeys } from "@/lib/api/queries/members.keys";
 import { membershipsKeys } from "@/lib/api/queries/memberships.keys";
 import { ministriesKeys } from "@/lib/api/queries/ministries.keys";
 import { billingKeys } from "@/lib/api/queries/billing.keys";
+import { paymentsKeys } from "@/lib/api/queries/payments.keys";
 import { pricingKeys } from "@/lib/api/queries/pricing.keys";
 import { rosterKeys } from "@/lib/api/queries/roster.keys";
 
 export const queries = mergeQueryKeys(
   pricingKeys,
   billingKeys,
+  paymentsKeys,
   dashboardKeys,
   eventsKeys,
   membersKeys,
@@ -124,6 +126,21 @@ export {
   useBillingPortal,
   useSubscriptionSummary,
 } from "@/lib/api/queries/use-billing";
+export { paymentsKeys } from "@/lib/api/queries/payments.keys";
+export {
+  resolvePaymentsError,
+  useConnectStatus,
+  useCreateGivingFund,
+  useDeleteGivingFund,
+  useFiscalProfile,
+  useGivingDonations,
+  useGivingFunds,
+  useResumeConnectOnboarding,
+  useStartConnectOnboarding,
+  useSyncConnectAccount,
+  useUpdateGivingFund,
+  useUpsertFiscalProfile,
+} from "@/lib/api/queries/use-payments";
 export { rosterKeys, worshipKeys } from "@/lib/api/queries/roster.keys";
 export { useMySchedules, useMyWorshipSchedule } from "@/lib/api/queries/use-my-schedules";
 export {
