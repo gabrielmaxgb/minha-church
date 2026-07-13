@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { Copy, ExternalLink, Loader2, Plus, Power, Trash2 } from "lucide-react";
 
@@ -8,20 +9,23 @@ import { Button } from "@/components/ui/button";
 import { FormAlert, FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { givingFundPath } from "@/constants/routes";
+import { givingFundPath, settingsSectionPath } from "@/constants/routes";
 import {
   resolvePaymentsError,
   useCreateGivingFund,
   useDeleteGivingFund,
+  useFiscalProfile,
   useGivingFunds,
   useUpdateGivingFund,
 } from "@/lib/api/queries";
 import type { GivingFund } from "@/lib/api/payments";
+import { isOwnerOnboardingMinimumComplete } from "@/lib/payments/fiscal-profile-completeness";
 import { useAuth } from "@/providers/auth-provider";
 
 export function GivingFundsPanel() {
   const { user, church } = useAuth();
   const fundsQuery = useGivingFunds();
+  const fiscalProfile = useFiscalProfile();
   const createFund = useCreateGivingFund();
   const deleteFund = useDeleteGivingFund();
   const updateFund = useUpdateGivingFund();
@@ -38,6 +42,9 @@ export function GivingFundsPanel() {
   const funds = fundsQuery.data ?? [];
   const isOwner = Boolean(user?.isOwner);
   const churchSlug = church?.slug;
+  const profileReady = isOwnerOnboardingMinimumComplete(
+    fiscalProfile.data ?? null,
+  );
 
   const fundHref = (fund: GivingFund) =>
     churchSlug ? givingFundPath(churchSlug, fund.slug) : null;
@@ -308,7 +315,22 @@ export function GivingFundsPanel() {
         )}
       </ul>
 
-      {isOwner && (
+      {isOwner && !profileReady && (
+        <FormAlert>
+          <span className="inline-flex flex-wrap items-center gap-x-1 gap-y-1">
+            Complete o perfil da igreja (contato, cidade/UF e dados fiscais)
+            antes de criar fundos.
+            <Link
+              href={settingsSectionPath("general")}
+              className="font-medium text-foreground underline underline-offset-2"
+            >
+              Ir para Geral
+            </Link>
+          </span>
+        </FormAlert>
+      )}
+
+      {isOwner && profileReady && (
         <div className="space-y-3 rounded-xl border border-border bg-muted/20 p-4">
           <p className="text-sm font-medium text-foreground">Novo fundo</p>
           <FormField label="Nome" htmlFor="fund-name" required>

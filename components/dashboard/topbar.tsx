@@ -175,12 +175,20 @@ export function DashboardTopbar({
                       </p>
                     </div>
                     <Link
-                      href={AUTH_ROUTES.settings}
+                      href={AUTH_ROUTES.settingsUser}
                       className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm transition-colors hover:bg-muted"
                       onClick={() => setMenuOpen(false)}
                     >
                       <User className="size-4" />
                       Configurações de perfil
+                    </Link>
+                    <Link
+                      href={AUTH_ROUTES.settingsChurch}
+                      className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm transition-colors hover:bg-muted"
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      <Church className="size-4" />
+                      Configurações da igreja
                     </Link>
                     <button
                       type="button"

@@ -582,7 +582,7 @@ export function ChurchMembershipsSettings() {
                               label={role.name}
                               description={
                                 isBaselineMember
-                                  ? "Atribuído automaticamente a quem tem acesso (membros active)."
+                                  ? "Atribuído automaticamente a quem tem login (Membro/todos)."
                                   : undefined
                               }
                               checked={getDraftRoleIds(membership).includes(

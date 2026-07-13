@@ -271,6 +271,7 @@ export function MemberForm({
                 value={field.value}
                 onChange={field.onChange}
                 disabled={disabled}
+                toYear={new Date().getFullYear()}
               />
             )}
           />

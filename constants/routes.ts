@@ -47,6 +47,8 @@ export const AUTH_ROUTES = {
   careRequests: "/app/aconselhamentos",
   reports: "/app/relatorios",
   settings: "/app/configuracoes",
+  settingsChurch: "/app/configuracoes/igreja",
+  settingsUser: "/app/configuracoes/usuario",
   changePassword: "/app/alterar-senha",
 } as const;
 
@@ -90,11 +92,21 @@ export function settingsSectionPath(
     | "password-reset-requests"
     | "pending-users"
     | "ministries"
+    | "my-roles"
     | "profile"
     | "subscription"
-    | "recebimentos",
+    | "recebimentos"
+    | "roles"
+    | "members"
+    | "activity"
+    | "general",
 ): string {
-  return `${AUTH_ROUTES.settings}?section=${section}`;
+  const userSections = new Set(["profile", "ministries", "my-roles"]);
+  const base = userSections.has(section)
+    ? AUTH_ROUTES.settingsUser
+    : AUTH_ROUTES.settingsChurch;
+
+  return `${base}?section=${section}`;
 }
 
 export const MEMBER_CREATE_ROUTE = `${AUTH_ROUTES.members}/novo` as const;

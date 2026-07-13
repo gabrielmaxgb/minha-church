@@ -24,9 +24,11 @@ import {
 import {
   useConnectStatus,
   useDashboardSummary,
+  useFiscalProfile,
   useManagedAnnouncements,
   useMinistries,
 } from "@/lib/api/queries";
+import { isOwnerOnboardingMinimumComplete } from "@/lib/payments/fiscal-profile-completeness";
 import { useAuth } from "@/providers/auth-provider";
 
 interface OnboardingChecklistContextValue {
@@ -76,15 +78,22 @@ export function OnboardingChecklistProvider({
     enabled: isOwner,
   });
   const { data: connectStatus } = useConnectStatus();
+  const { data: fiscalProfile, isPending: fiscalPending } = useFiscalProfile();
 
   const isStatusReady =
-    !summaryPending && !announcementsPending && !ministriesPending;
+    !summaryPending &&
+    !announcementsPending &&
+    !ministriesPending &&
+    (!isOwner || !fiscalPending);
 
   const emailVerified = user?.emailVerified !== false;
   const hasExtraMember = (summary?.memberCount ?? 0) > 1;
   const hasAnnouncement = (announcements?.length ?? 0) > 0;
   const hasMinistry = (ministries?.length ?? 0) > 0;
   const receivablesActive = Boolean(connectStatus?.canReceivePayments);
+  const churchProfileDone = isOwnerOnboardingMinimumComplete(
+    fiscalProfile ?? null,
+  );
 
   const steps = useMemo<OnboardingStep[]>(() => {
     const list: OnboardingStep[] = [];
@@ -100,6 +109,16 @@ export function OnboardingChecklistProvider({
         done: emailVerified,
       });
     }
+
+    list.push({
+      id: "church-profile",
+      title: "Complete o perfil da igreja",
+      description:
+        "WhatsApp, cidade/UF e documentos da igreja (CNPJ + CPF de quem responde, ou só CPF se não houver CNPJ).",
+      actionLabel: "Completar perfil",
+      href: settingsSectionPath("general"),
+      done: churchProfileDone,
+    });
 
     list.push({
       id: "first-member",
@@ -148,6 +167,7 @@ export function OnboardingChecklistProvider({
 
     return list;
   }, [
+    churchProfileDone,
     emailStepRelevant,
     emailVerified,
     hasAnnouncement,

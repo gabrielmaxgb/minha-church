@@ -672,8 +672,8 @@ export function ChurchRolesSettings() {
                     />
                     {selectedRole.systemKey === "member" ? (
                       <p className="mt-2 text-xs text-muted-foreground">
-                        O cargo Membro é compartilhado por todos e não pode ser
-                        titular único.
+                        O cargo Membro/todos é compartilhado por todos com login
+                        e não pode ser titular único.
                       </p>
                     ) : null}
                   </div>

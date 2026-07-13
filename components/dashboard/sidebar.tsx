@@ -2,14 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useMemo } from "react";
-import { X } from "lucide-react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type ComponentType,
+} from "react";
+import { ChevronDown, Settings, X } from "lucide-react";
 
 import { SidebarChurchBrand } from "@/components/dashboard/sidebar-church-brand";
-import {
-  dashboardNavItems,
-  dashboardSecondaryNavItems,
-} from "@/constants/dashboard-nav";
+import { dashboardNavItems } from "@/constants/dashboard-nav";
 import { AUTH_ROUTES } from "@/constants/routes";
 import {
   useCareInboxPendingCount,
@@ -44,7 +46,7 @@ function NavLink({
 }: {
   href: string;
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: ComponentType<{ className?: string }>;
   isActive: boolean;
   domain: ProductDomain;
   badge?: number;
@@ -79,6 +81,87 @@ function NavLink({
         </span>
       )}
     </Link>
+  );
+}
+
+function SettingsNavDropdown({ onNavigate }: { onNavigate?: () => void }) {
+  const pathname = usePathname();
+  const { user, permissions } = useAuth();
+  const isSettingsRoute = pathname.startsWith(AUTH_ROUTES.settings);
+  const [open, setOpen] = useState(isSettingsRoute);
+  const canAccessChurchSettings =
+    Boolean(user?.isOwner) || Boolean(permissions?.settings.access);
+
+  useEffect(() => {
+    if (isSettingsRoute) {
+      setOpen(true);
+    }
+  }, [isSettingsRoute]);
+
+  const userLabel = user?.name?.trim() || "Usuário";
+
+  return (
+    <div className="flex flex-col gap-0.5">
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        className={cn(
+          "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors duration-150",
+          isSettingsRoute
+            ? cn("font-medium", domainNavActive.settings)
+            : "font-normal text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+        )}
+        aria-expanded={open}
+      >
+        <Settings
+          className={cn(
+            "size-4 shrink-0",
+            isSettingsRoute ? "opacity-90" : "opacity-65",
+          )}
+          aria-hidden
+        />
+        <span className="flex-1 truncate text-left">Configurações</span>
+        <ChevronDown
+          className={cn(
+            "size-3.5 shrink-0 opacity-60 transition-transform",
+            open && "rotate-180",
+          )}
+          aria-hidden
+        />
+      </button>
+
+      {open && (
+        <div className="ml-2 flex flex-col gap-0.5 border-l border-border/80 pl-2">
+          {canAccessChurchSettings ? (
+            <Link
+              href={AUTH_ROUTES.settingsChurch}
+              onClick={onNavigate}
+              className={cn(
+                "rounded-lg px-2.5 py-2 text-sm transition-colors",
+                pathname.startsWith(AUTH_ROUTES.settingsChurch)
+                  ? cn("font-medium", domainNavActive.settings)
+                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+              )}
+            >
+              Igreja
+            </Link>
+          ) : null}
+          <Link
+            href={AUTH_ROUTES.settingsUser}
+            onClick={onNavigate}
+            className={cn(
+              "rounded-lg px-2.5 py-2 text-sm transition-colors",
+              pathname.startsWith(AUTH_ROUTES.settingsUser)
+                ? cn("font-medium", domainNavActive.settings)
+                : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+            )}
+          >
+            <span className="block truncate">{userLabel}</span>
+            <span className="block text-[11px] opacity-70">Usuário</span>
+          </Link>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -128,19 +211,6 @@ export function DashboardSidebar({
     hasCommunicationAccess,
   );
   const carePendingCount = canReceiveCare ? (carePending?.count ?? 0) : 0;
-
-  const visibleSecondaryNavItems = useMemo(() => {
-    if (!permissions) {
-      return dashboardSecondaryNavItems;
-    }
-
-    return dashboardSecondaryNavItems.filter((item) =>
-      canAccessNavItem(permissions, item, {
-        isActiveAdultMember: isAdultMember,
-        isOwner,
-      }),
-    );
-  }, [permissions, isAdultMember, isOwner]);
 
   return (
     <aside
@@ -194,27 +264,10 @@ export function DashboardSidebar({
           );
         })}
 
-        {visibleSecondaryNavItems.length > 0 && (
-          <>
-            <div className="my-3 border-t border-border/80" />
-            {visibleSecondaryNavItems.map((item) => {
-              const isActive =
-                pathname === item.href || pathname.startsWith(`${item.href}/`);
-
-              return (
-                <NavLink
-                  key={item.href}
-                  href={item.href}
-                  label={item.label}
-                  icon={item.icon}
-                  domain={item.domain}
-                  isActive={isActive}
-                  onNavigate={onNavigate}
-                />
-              );
-            })}
-          </>
-        )}
+        <>
+          <div className="my-3 border-t border-border/80" />
+          <SettingsNavDropdown onNavigate={onNavigate} />
+        </>
       </nav>
     </aside>
   );

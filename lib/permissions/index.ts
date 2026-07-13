@@ -267,7 +267,7 @@ export function getFirstAccessibleRoute(
     }
   }
 
-  return AUTH_ROUTES.settings;
+  return AUTH_ROUTES.settingsUser;
 }
 
 export type RoutePermission =

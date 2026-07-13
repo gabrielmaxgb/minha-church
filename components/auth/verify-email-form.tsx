@@ -232,7 +232,9 @@ function VerifyEmailFormContent() {
                 {status === "loading"
                   ? "Estamos validando o link que você recebeu."
                   : status === "success"
-                    ? "Sua conta está liberada. Entre e comece a organizar a semana da sua igreja com a gente."
+                    ? isAuthenticated
+                      ? "Sua conta está liberada. Entre e comece a organizar a semana da sua igreja com a gente."
+                      : "Sua conta está liberada. Na próxima tela, entre com o mesmo e-mail e a senha que você usou no cadastro."
                     : "O link pode ter expirado ou já ter sido usado. Volte ao login e peça um novo."}
               </p>
             </div>
@@ -249,6 +251,15 @@ function VerifyEmailFormContent() {
           )}
 
           <div className="flex flex-col gap-3">
+            {status === "success" && !isAuthenticated && (
+              <p className="rounded-xl border border-border/60 bg-muted/30 px-4 py-3 text-sm leading-relaxed text-muted-foreground">
+                <span className="font-medium text-foreground">
+                  Use seus dados de login do cadastro.
+                </span>{" "}
+                O mesmo e-mail e a mesma senha que você informou ao criar a conta
+                — não é preciso cadastrar de novo.
+              </p>
+            )}
             {status === "success" && (
               <Button className="w-full gap-2" size="lg" asChild>
                 <Link href={ctaHref}>

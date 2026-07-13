@@ -342,6 +342,7 @@ function ProfileSettingsForm({
                           value={field.value}
                           onChange={field.onChange}
                           disabled={isSaving}
+                          toYear={new Date().getFullYear()}
                         />
                       )}
                     />

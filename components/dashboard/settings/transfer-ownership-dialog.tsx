@@ -98,7 +98,7 @@ export function TransferOwnershipDialog({
               <strong className="text-foreground">{membership.user.name}</strong>{" "}
               passará a ser o proprietário da igreja. Você perderá esse papel e
               receberá o cargo de{" "}
-              <strong className="text-foreground">Membro</strong>, mantendo os
+              <strong className="text-foreground">Membro/todos</strong>, mantendo os
               demais cargos que já possui.
             </p>
             <p className="mt-2 text-sm text-muted-foreground">

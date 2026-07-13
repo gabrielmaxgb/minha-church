@@ -67,7 +67,7 @@ export const CHURCH_PERMISSION_DESCRIPTIONS: Record<ChurchPermissionKey, string>
   reports_access:
     "Abre os resumos e relatórios da igreja.",
   settings_access:
-    "Abre as configurações gerais da igreja. Algumas abas ainda pedem permissões próprias (cargos, usuários).",
+    "Abre as configurações da igreja (geral, cargos, usuários, atividade). Sem essa permissão, a pessoa só acessa as configurações da própria conta.",
   members_manage:
     "Cadastrar, editar e excluir membros, receber visitantes como membros e vincular ou desvincular pessoas de ministérios. Já inclui o acesso de leitura de “Membros”.",
   ministries_manage:

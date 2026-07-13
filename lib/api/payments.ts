@@ -53,6 +53,10 @@ export interface UpsertFiscalProfileInput {
   legalName: string;
   responsibleName: string;
   responsibleDocument?: string | null;
+  confirmNoCnpj?: boolean;
+  contactPhone: string;
+  city: string;
+  state: string;
 }
 
 export interface ConnectLinkResponse {
@@ -86,12 +90,15 @@ export interface UpdateGivingFundInput {
 
 function toFiscalPayload(
   input: UpsertFiscalProfileInput,
-): Record<string, string> {
-  const payload: Record<string, string> = {
+): Record<string, string | boolean> {
+  const payload: Record<string, string | boolean> = {
     documentType: input.documentType,
     documentNumber: input.documentNumber,
     legalName: input.legalName,
     responsibleName: input.responsibleName,
+    contactPhone: input.contactPhone,
+    city: input.city,
+    state: input.state,
   };
 
   if (
@@ -99,6 +106,10 @@ function toFiscalPayload(
     input.responsibleDocument.trim()
   ) {
     payload.responsibleDocument = input.responsibleDocument.trim();
+  }
+
+  if (input.documentType === "cpf") {
+    payload.confirmNoCnpj = input.confirmNoCnpj === true;
   }
 
   return payload;

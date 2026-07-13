@@ -24,6 +24,8 @@ export const domainFromHref: Record<string, ProductDomain> = {
   "/app/financas": "finances",
   "/app/relatorios": "reports",
   "/app/configuracoes": "settings",
+  "/app/configuracoes/igreja": "settings",
+  "/app/configuracoes/usuario": "settings",
 };
 
 /** Classes Tailwind para estado ativo na nav (fundo + texto + ícone). */

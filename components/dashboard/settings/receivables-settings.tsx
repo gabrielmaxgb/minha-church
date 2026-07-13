@@ -1,8 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Controller, useForm } from "react-hook-form";
+import { useMemo, useState } from "react";
+import Link from "next/link";
 import {
   AlertTriangle,
   Check,
@@ -16,10 +15,7 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { FormAlert, FormField } from "@/components/ui/form-field";
-import { FloatingSaveBar } from "@/components/ui/floating-save-bar";
-import { Input } from "@/components/ui/input";
-import { SelectField } from "@/components/ui/select-field";
+import { FormAlert } from "@/components/ui/form-field";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import {
@@ -29,7 +25,6 @@ import {
   useResumeConnectOnboarding,
   useStartConnectOnboarding,
   useSyncConnectAccount,
-  useUpsertFiscalProfile,
 } from "@/lib/api/queries";
 import type {
   ConnectCapabilityStatus,
@@ -37,19 +32,15 @@ import type {
   ConnectStatus,
   FiscalProfile,
 } from "@/lib/api/payments";
-import { formatCnpjInput, formatCpfInput } from "@/lib/validation/shared";
 import {
-  fiscalProfileSchema,
-  type FiscalProfileFormValues,
-} from "@/lib/validation/schemas";
-import {
-  isFiscalProfileReadyForConnect,
+  isOwnerOnboardingMinimumComplete,
   listFiscalFieldStatusForConnect,
 } from "@/lib/payments/fiscal-profile-completeness";
 import {
   buildReceivablesHelpHref,
   receivablesHelpChannelLabel,
 } from "@/lib/support/receivables-help";
+import { settingsSectionPath } from "@/constants/routes";
 import { useAuth } from "@/providers/auth-provider";
 import type { BadgeProps } from "@/components/ui/badge";
 
@@ -85,43 +76,18 @@ const CAPABILITY_LABELS: { key: "pix" | "card" | "boleto"; label: string }[] = [
   { key: "boleto", label: "Boleto" },
 ];
 
-function buildFiscalValues(
-  profile: FiscalProfile | null,
-): FiscalProfileFormValues {
-  return {
-    documentType: profile?.documentType ?? "cnpj",
-    documentNumber: profile
-      ? profile.documentType === "cnpj"
-        ? formatCnpjInput(profile.documentNumber)
-        : formatCpfInput(profile.documentNumber)
-      : "",
-    legalName: profile?.legalName ?? "",
-    responsibleName: profile?.responsibleName ?? "",
-    responsibleDocument: profile?.responsibleDocument
-      ? formatCpfInput(profile.responsibleDocument)
-      : "",
-  };
-}
-
 function ConnectOnboardingCard({
   status,
   fiscalProfile,
-  draftValues,
-  draftSaved,
 }: {
   status: ConnectStatus | undefined;
   fiscalProfile: FiscalProfile | null;
-  draftValues: FiscalProfileFormValues | null;
-  /** true quando o draft atual já está persistido (ou igual ao salvo). */
-  draftSaved: boolean;
 }) {
   const { user, church } = useAuth();
   const start = useStartConnectOnboarding();
   const resume = useResumeConnectOnboarding();
   const sync = useSyncConnectAccount();
   const [actionError, setActionError] = useState<string | null>(null);
-  // Fica true do clique até o unload do redirect — `isPending` zera antes do
-  // `location.assign` completar e o botão parecia "parado".
   const [leavingToStripe, setLeavingToStripe] = useState(false);
 
   const onboardingStatus = status?.onboardingStatus ?? "none";
@@ -132,15 +98,13 @@ function ConnectOnboardingCard({
     onboardingStatus === "none" ||
     (onboardingStatus === "created" && !status?.hasAccount);
 
-  const checklistSource = draftValues ?? fiscalProfile;
-  const fieldStatus = listFiscalFieldStatusForConnect(checklistSource);
-  const draftReady = isFiscalProfileReadyForConnect(checklistSource);
-  const savedReady = isFiscalProfileReadyForConnect(fiscalProfile);
-  // Backend exige perfil salvo; checklist acompanha o draft ao vivo.
-  const canStart = !needsFiscalGate || (savedReady && draftSaved);
+  const fieldStatus = listFiscalFieldStatusForConnect(fiscalProfile);
+  const savedReady = isOwnerOnboardingMinimumComplete(fiscalProfile);
+  const canStart = !needsFiscalGate || savedReady;
   const showChecklist = needsFiscalGate && !canStart;
   const showHelpCta = onboardingStatus !== "active";
   const helpChannel = receivablesHelpChannelLabel();
+  const generalHref = settingsSectionPath("general");
 
   const handleStart = async () => {
     setActionError(null);
@@ -231,11 +195,11 @@ function ConnectOnboardingCard({
         {showChecklist && (
           <div className="rounded-lg border border-border bg-muted/30 px-4 py-3 text-sm">
             <p className="font-medium text-foreground">
-              Preencha a identificação fiscal para liberar os recebimentos
+              Complete o perfil da igreja em Geral
             </p>
             <p className="mt-1 text-muted-foreground">
-              Marca em verde conforme você preenche o formulário abaixo. Depois
-              salve para liberar o botão.
+              Contato, cidade/UF e identificação fiscal ficam em Configurações
+              → Geral. Depois de salvar, volte aqui para ativar.
             </p>
             <ul className="mt-3 space-y-2" aria-label="Campos obrigatórios">
               {fieldStatus.map((item) => (
@@ -267,14 +231,12 @@ function ConnectOnboardingCard({
                 </li>
               ))}
             </ul>
-            {draftReady && !draftSaved && (
-              <p className="mt-3 text-xs font-medium text-foreground">
-                Tudo preenchido — salve o formulário abaixo para ativar.
-              </p>
-            )}
+            <Button asChild className="mt-3 w-full gap-2 sm:w-auto">
+              <Link href={generalHref}>Ir para Geral</Link>
+            </Button>
             <p className="mt-2 text-xs text-muted-foreground">
               Guardamos só a identidade fiscal da igreja no Minha Church.
-              Endereço e contato o Stripe coleta no cadastro.
+              Endereço completo o Stripe coleta no cadastro.
             </p>
           </div>
         )}
@@ -403,8 +365,8 @@ function ConnectOnboardingCard({
 
         {showChecklist && (
           <p className="text-xs text-muted-foreground">
-            O botão libera depois que você salvar documento, razão social e
-            responsável legal.
+            O botão libera depois que o perfil estiver completo e salvo em
+            Geral.
           </p>
         )}
 
@@ -420,296 +382,16 @@ function ConnectOnboardingCard({
   );
 }
 
-function FiscalProfileForm({
-  profile,
-  highlightRequiredForConnect,
-  onDraftChange,
-}: {
-  profile: FiscalProfile | null;
-  highlightRequiredForConnect: boolean;
-  onDraftChange?: (
-    values: FiscalProfileFormValues,
-    meta: { isDirty: boolean },
-  ) => void;
-}) {
-  const upsert = useUpsertFiscalProfile();
-  const [success, setSuccess] = useState<string | null>(null);
-
-  const form = useForm<FiscalProfileFormValues>({
-    resolver: zodResolver(fiscalProfileSchema),
-    defaultValues: buildFiscalValues(profile),
-    mode: "onChange",
-  });
-
-  const {
-    register,
-    control,
-    handleSubmit,
-    reset,
-    watch,
-    getValues,
-    setError,
-    clearErrors,
-    formState: { errors, isDirty },
-  } = form;
-
-  const documentType = watch("documentType");
-  const isDirtyRef = useRef(isDirty);
-  isDirtyRef.current = isDirty;
-
-  useEffect(() => {
-    reset(buildFiscalValues(profile));
-    setSuccess(null);
-  }, [profile, reset]);
-
-  useEffect(() => {
-    onDraftChange?.(getValues(), { isDirty: isDirtyRef.current });
-
-    const subscription = watch((value) => {
-      onDraftChange?.(value as FiscalProfileFormValues, {
-        isDirty: isDirtyRef.current,
-      });
-    });
-
-    return () => subscription.unsubscribe();
-  }, [watch, getValues, onDraftChange]);
-
-  // Garante que o card de cima saiba quando o form foi salvo (isDirty=false).
-  useEffect(() => {
-    onDraftChange?.(getValues(), { isDirty });
-  }, [isDirty, getValues, onDraftChange]);
-
-  const onSubmit = handleSubmit(async (values) => {
-    clearErrors("root");
-    setSuccess(null);
-
-    try {
-      await upsert.mutateAsync({
-        documentType: values.documentType,
-        documentNumber: values.documentNumber,
-        legalName: values.legalName,
-        responsibleName: values.responsibleName,
-        responsibleDocument:
-          values.documentType === "cnpj"
-            ? values.responsibleDocument || null
-            : null,
-      });
-
-      setSuccess("Dados fiscais salvos com sucesso.");
-    } catch (submitError) {
-      setError("root", {
-        message: resolvePaymentsError(
-          submitError,
-          "Não foi possível salvar os dados fiscais.",
-        ),
-      });
-    }
-  });
-
-  return (
-    <>
-      <form
-        id="fiscal-profile-form"
-        onSubmit={onSubmit}
-        className="space-y-4"
-        noValidate
-      >
-        {errors.root?.message && <FormAlert>{errors.root.message}</FormAlert>}
-        {success && <FormAlert variant="success">{success}</FormAlert>}
-
-        <SettingsPanel>
-          <div className="space-y-4 px-5 py-5">
-            <div>
-              <p className="text-sm font-medium text-foreground">
-                Identificação fiscal
-              </p>
-              <p className="mt-0.5 text-sm text-muted-foreground">
-                {highlightRequiredForConnect
-                  ? "Para ativar os recebimentos, salve documento, razão social e responsável legal. Endereço e contato ficam no cadastro do Stripe."
-                  : "Identifica a igreja como recebedora no Minha Church (comprovantes e relatórios). O Stripe coleta o restante no onboarding."}
-              </p>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <FormField label="Tipo de documento" htmlFor="fiscal-doc-type">
-                <Controller
-                  name="documentType"
-                  control={control}
-                  render={({ field }) => (
-                    <SelectField
-                      id="fiscal-doc-type"
-                      disabled={upsert.isPending}
-                      value={field.value}
-                      onChange={(event) =>
-                        field.onChange(event.target.value as "cnpj" | "cpf")
-                      }
-                      onBlur={field.onBlur}
-                    >
-                      <option value="cnpj">CNPJ</option>
-                      <option value="cpf">CPF</option>
-                    </SelectField>
-                  )}
-                />
-              </FormField>
-
-              <FormField
-                label={documentType === "cnpj" ? "CNPJ" : "CPF"}
-                htmlFor="fiscal-doc-number"
-                error={errors.documentNumber?.message}
-                required
-              >
-                <Controller
-                  name="documentNumber"
-                  control={control}
-                  render={({ field }) => (
-                    <Input
-                      id="fiscal-doc-number"
-                      inputMode="numeric"
-                      placeholder={
-                        documentType === "cnpj"
-                          ? "00.000.000/0000-00"
-                          : "000.000.000-00"
-                      }
-                      disabled={upsert.isPending}
-                      aria-invalid={errors.documentNumber ? true : undefined}
-                      value={field.value}
-                      onBlur={field.onBlur}
-                      onChange={(event) =>
-                        field.onChange(
-                          documentType === "cnpj"
-                            ? formatCnpjInput(event.target.value)
-                            : formatCpfInput(event.target.value),
-                        )
-                      }
-                    />
-                  )}
-                />
-              </FormField>
-            </div>
-
-            <FormField
-              label={
-                documentType === "cnpj"
-                  ? "Razão social"
-                  : "Nome da igreja / responsável"
-              }
-              htmlFor="fiscal-legal-name"
-              error={errors.legalName?.message}
-              required
-            >
-              <Input
-                id="fiscal-legal-name"
-                disabled={upsert.isPending}
-                aria-invalid={errors.legalName ? true : undefined}
-                {...register("legalName")}
-              />
-            </FormField>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <FormField
-                label="Responsável legal"
-                htmlFor="fiscal-responsible-name"
-                error={errors.responsibleName?.message}
-                required
-              >
-                <Input
-                  id="fiscal-responsible-name"
-                  disabled={upsert.isPending}
-                  aria-invalid={errors.responsibleName ? true : undefined}
-                  {...register("responsibleName")}
-                />
-              </FormField>
-
-              {documentType === "cnpj" && (
-                <FormField
-                  label="CPF do responsável"
-                  htmlFor="fiscal-responsible-doc"
-                  error={errors.responsibleDocument?.message}
-                  required
-                  hint="Identifica o representante legal da igreja."
-                >
-                  <Controller
-                    name="responsibleDocument"
-                    control={control}
-                    render={({ field }) => (
-                      <Input
-                        id="fiscal-responsible-doc"
-                        inputMode="numeric"
-                        placeholder="000.000.000-00"
-                        disabled={upsert.isPending}
-                        aria-invalid={
-                          errors.responsibleDocument ? true : undefined
-                        }
-                        value={field.value ?? ""}
-                        onBlur={field.onBlur}
-                        onChange={(event) =>
-                          field.onChange(formatCpfInput(event.target.value))
-                        }
-                      />
-                    )}
-                  />
-                </FormField>
-              )}
-            </div>
-          </div>
-        </SettingsPanel>
-
-        <div className="flex items-start gap-3 rounded-xl border border-border bg-muted/20 px-4 py-3 text-xs text-muted-foreground">
-          <ShieldCheck className="mt-0.5 size-4 shrink-0" aria-hidden />
-          <p>
-            Estes dados são usados exclusivamente para identificação fiscal da
-            igreja e para habilitar os recebimentos (LGPD, art. 7º). Não são
-            compartilhados com terceiros além do Stripe, responsável pelo
-            processamento.
-          </p>
-        </div>
-      </form>
-
-      <FloatingSaveBar
-        visible={isDirty}
-        saving={upsert.isPending}
-        onDiscard={() => {
-          reset(buildFiscalValues(profile));
-          setSuccess(null);
-          clearErrors("root");
-        }}
-        onSave={() => {
-          const formEl = document.getElementById(
-            "fiscal-profile-form",
-          ) as HTMLFormElement | null;
-          formEl?.requestSubmit();
-        }}
-      />
-    </>
-  );
-}
-
 export function ReceivablesSettings() {
   const { user } = useAuth();
   const connectStatus = useConnectStatus();
   const fiscalProfile = useFiscalProfile();
-  const [draftValues, setDraftValues] =
-    useState<FiscalProfileFormValues | null>(null);
-  const [draftDirty, setDraftDirty] = useState(false);
 
   const isLoading = connectStatus.isPending || fiscalProfile.isPending;
 
   const profile = useMemo(
     () => fiscalProfile.data ?? null,
     [fiscalProfile.data],
-  );
-
-  const onboardingStatus = connectStatus.data?.onboardingStatus ?? "none";
-  const needsFiscalBeforeConnect =
-    onboardingStatus === "none" ||
-    (onboardingStatus === "created" && !connectStatus.data?.hasAccount);
-
-  const handleDraftChange = useCallback(
-    (values: FiscalProfileFormValues, meta: { isDirty: boolean }) => {
-      setDraftValues(values);
-      setDraftDirty(meta.isDirty);
-    },
-    [],
   );
 
   if (!user?.isOwner) {
@@ -720,21 +402,16 @@ export function ReceivablesSettings() {
     <div>
       <SettingsSectionHeader
         title="Recebimentos"
-        description="Ative a conta que recebe dízimos, doações e inscrições em eventos, e mantenha os dados fiscais da igreja atualizados."
+        description="Ative e acompanhe a conta Stripe que recebe dízimos, doações e inscrições em eventos."
       />
 
       {isLoading ? (
-        <div className="space-y-4">
-          <Skeleton className="h-40 w-full rounded-xl" />
-          <Skeleton className="h-72 w-full rounded-xl" />
-        </div>
+        <Skeleton className="h-40 w-full rounded-xl" />
       ) : (
         <div className="space-y-6">
           <ConnectOnboardingCard
             status={connectStatus.data}
             fiscalProfile={profile}
-            draftValues={draftValues}
-            draftSaved={!draftDirty}
           />
 
           {connectStatus.isError && (
@@ -746,17 +423,11 @@ export function ReceivablesSettings() {
             </FormAlert>
           )}
 
-          {fiscalProfile.isError ? (
+          {fiscalProfile.isError && (
             <FormAlert>
-              Não foi possível carregar os dados fiscais. Recarregue a página e
-              tente novamente.
+              Não foi possível verificar o perfil da igreja. Recarregue a página
+              e tente novamente.
             </FormAlert>
-          ) : (
-            <FiscalProfileForm
-              profile={profile}
-              highlightRequiredForConnect={needsFiscalBeforeConnect}
-              onDraftChange={handleDraftChange}
-            />
           )}
         </div>
       )}
