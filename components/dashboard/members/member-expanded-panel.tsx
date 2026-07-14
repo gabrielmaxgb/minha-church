@@ -557,6 +557,7 @@ export function MemberExpandedPanel({
         <MemberForm
           disabled={isPending}
           requireLogin={editStatus === "active" && !member.userId}
+          blockActivePromotion={writesBlocked && member.status !== "active"}
         />
 
         <section className="overflow-hidden rounded-lg border border-border bg-card">

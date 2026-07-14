@@ -8,6 +8,7 @@ import { Building2, UserRound, X } from "lucide-react";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
+import { DashboardBanner } from "@/components/ui/dashboard-banner";
 import { DatePicker } from "@/components/ui/date-picker";
 import { FormAlert, FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
@@ -152,28 +153,30 @@ function OwnerSoftOnboarding() {
 
   return (
     <>
-      <div className="mb-4 rounded-xl border border-attention-border bg-attention-subtle px-4 py-3">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm font-medium text-attention-foreground">
-              Complete o perfil da igreja
-            </p>
-            <p className="mt-0.5 text-sm text-muted-foreground">
-              WhatsApp, cidade/UF e documentos da igreja (CNPJ + CPF de quem
-              responde, ou só CPF se a igreja não tiver CNPJ). Sem isso, não dá
-              para receber doações.
-            </p>
-          </div>
-          <div className="flex shrink-0 gap-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(true)}>
+      <DashboardBanner
+        tone="attention"
+        icon={Building2}
+        label="Perfil da igreja"
+        title="Complete o perfil da igreja"
+        description="WhatsApp, cidade/UF e documentos da igreja (CNPJ + CPF de quem responde, ou só CPF se a igreja não tiver CNPJ). Sem isso, não dá para receber doações."
+        action={
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="border-attention-border bg-card"
+              onClick={() => setOpen(true)}
+            >
               Ver o que falta
             </Button>
-            <Button asChild>
+            <Button asChild size="sm">
               <Link href={settingsSectionPath("general")}>Completar</Link>
             </Button>
-          </div>
-        </div>
-      </div>
+          </>
+        }
+        className="mb-4"
+      />
 
       <SoftModalShell
         open={open}
@@ -301,22 +304,19 @@ function MemberSoftOnboarding() {
 
   return (
     <>
-      <div className="mb-4 rounded-xl border border-attention-border bg-attention-subtle px-4 py-3">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm font-medium text-attention-foreground">
-              Complete seu perfil
-            </p>
-            <p className="mt-0.5 text-sm text-muted-foreground">
-              Informe WhatsApp e data de nascimento para a igreja conseguir
-              falar com você.
-            </p>
-          </div>
-          <Button type="button" onClick={() => setOpen(true)}>
+      <DashboardBanner
+        tone="attention"
+        icon={UserRound}
+        label="Seu perfil"
+        title="Complete seu perfil"
+        description="Informe WhatsApp e data de nascimento para a igreja conseguir falar com você."
+        action={
+          <Button type="button" size="sm" onClick={() => setOpen(true)}>
             Completar
           </Button>
-        </div>
-      </div>
+        }
+        className="mb-4"
+      />
 
       <SoftModalShell
         open={open}

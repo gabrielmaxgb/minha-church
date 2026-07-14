@@ -372,7 +372,7 @@ export function SubscribePricingModal({
               <Button
                 type="button"
                 size="lg"
-                className="min-w-[180px]"
+                className="min-w-[180px] font-semibold shadow-xs"
                 disabled={!canSubscribe || loading || !suggestedTier}
                 onClick={() => void subscribe(period)}
               >

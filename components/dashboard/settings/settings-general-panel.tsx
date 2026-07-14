@@ -3,6 +3,7 @@
 import { FormAlert } from "@/components/ui/form-field";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useFiscalProfile } from "@/lib/api/queries";
+import { useFeatureLock } from "@/lib/subscription/use-feature-lock";
 import { useAuth, useTenant } from "@/providers/auth-provider";
 
 import { ChurchFiscalProfileForm } from "./church-fiscal-profile-form";
@@ -15,6 +16,7 @@ export function SettingsGeneralPanel() {
   const { user } = useAuth();
   const { church, churchId, churches } = useTenant();
   const fiscalProfile = useFiscalProfile();
+  const { locked } = useFeatureLock();
 
   return (
     <div>
@@ -62,7 +64,10 @@ export function SettingsGeneralPanel() {
               e tente novamente.
             </FormAlert>
           ) : (
-            <ChurchFiscalProfileForm profile={fiscalProfile.data ?? null} />
+            <ChurchFiscalProfileForm
+              profile={fiscalProfile.data ?? null}
+              locked={locked}
+            />
           )
         ) : null}
       </div>

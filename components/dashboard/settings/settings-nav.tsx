@@ -136,10 +136,21 @@ export function useSettingsNav(
       }
 
       if (writesBlocked) {
-        return (
-          area === "user" &&
-          (item.id === "profile" || item.id === "my-roles")
-        );
+        if (area === "user") {
+          return item.id === "profile" || item.id === "my-roles";
+        }
+
+        // Conta travada: manter só Assinatura (para reativar) e Geral
+        // (leitura), e apenas para quem pode acessar as configs da igreja.
+        if (!canAccessChurchSettings) {
+          return false;
+        }
+
+        if (item.id === "subscription") {
+          return Boolean(user?.isOwner);
+        }
+
+        return item.id === "general";
       }
 
       if (area === "church" && !canAccessChurchSettings) {

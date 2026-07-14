@@ -130,13 +130,14 @@ export function CreateMemberContent() {
                   <FormAlert>{form.formState.errors.root.message}</FormAlert>
                 )}
 
-                {memberAccessLocked && status === "active" && (
+                {memberAccessLocked && (
                   <FormAlert>{MEMBER_ACCESS_LOCKED_REASON}</FormAlert>
                 )}
 
                 <MemberForm
                   requireLogin={status === "active"}
                   disabled={createMember.isPending}
+                  blockActivePromotion={memberAccessLocked}
                 />
 
                 <div className="flex flex-col-reverse gap-2 border-t border-border pt-6 sm:flex-row sm:justify-end">

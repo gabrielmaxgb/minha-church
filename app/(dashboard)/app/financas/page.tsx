@@ -1,17 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Landmark, Loader2 } from "lucide-react";
+import { ArrowRight, Landmark, Loader2, Lock } from "lucide-react";
 
 import { RequirePermission } from "@/components/auth/require-permission";
 import { DashboardPage } from "@/components/dashboard/dashboard-shell";
 import { GivingDonationsPanel } from "@/components/dashboard/finances/giving-donations-panel";
 import { GivingFundsPanel } from "@/components/dashboard/finances/giving-funds-panel";
+import { SubscribePricingTrigger } from "@/components/billing/subscribe-pricing-trigger";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { settingsSectionPath } from "@/constants/routes";
 import { useConnectStatus } from "@/lib/api/queries";
 import type { ConnectOnboardingStatus } from "@/lib/api/payments";
+import { useFeatureLock } from "@/lib/subscription/use-feature-lock";
 import { useAuth } from "@/providers/auth-provider";
 
 function ownerActivationCopy(status: ConnectOnboardingStatus): {
@@ -59,9 +61,39 @@ function ownerActivationCopy(status: ConnectOnboardingStatus): {
   }
 }
 
+function FinancesLockedCard({ isOwner }: { isOwner: boolean }) {
+  return (
+    <div className="rounded-2xl border border-border bg-card p-8 text-center shadow-xs">
+      <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-muted">
+        <Lock className="size-5" aria-hidden />
+      </div>
+      <h2 className="mt-4 text-xl font-semibold tracking-tight">
+        Recebimentos indisponíveis
+      </h2>
+      <p className="mx-auto mt-2 max-w-lg text-sm leading-relaxed text-muted-foreground">
+        {isOwner
+          ? "Os recebimentos fazem parte do plano. Reative sua assinatura para voltar a coletar dízimos, doações e inscrições em eventos."
+          : "Os recebimentos estão indisponíveis no momento. Fale com a liderança da igreja para reativar o plano."}
+      </p>
+      {isOwner && (
+        <div className="mt-6">
+          <SubscribePricingTrigger className="gap-2">
+            Reativar assinatura
+          </SubscribePricingTrigger>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function FinancesActivation() {
   const { user } = useAuth();
+  const { locked } = useFeatureLock();
   const { data, isPending } = useConnectStatus();
+
+  if (locked) {
+    return <FinancesLockedCard isOwner={Boolean(user?.isOwner)} />;
+  }
 
   if (!user?.isOwner) {
     return (

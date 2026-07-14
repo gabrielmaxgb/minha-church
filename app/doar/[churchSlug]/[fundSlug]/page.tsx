@@ -40,6 +40,24 @@ export default async function GivingCheckoutPage({ params }: PageProps) {
       notFound();
     }
 
+    // Igreja sem plano ativo (fora da janela de graça): recebimentos indisponíveis.
+    if (error instanceof ApiError && error.status === 403) {
+      return (
+        <div className="mx-auto flex min-h-svh w-full max-w-lg items-center px-4 py-16">
+          <div className="w-full rounded-2xl border border-border bg-card p-8 text-center shadow-xs">
+            <h1 className="text-xl font-semibold tracking-tight">
+              Contribuições indisponíveis no momento
+            </h1>
+            <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
+              Esta igreja não está recebendo contribuições online agora. Tente
+              novamente mais tarde ou fale diretamente com a liderança da
+              igreja.
+            </p>
+          </div>
+        </div>
+      );
+    }
+
     const message =
       error instanceof ApiError
         ? error.message

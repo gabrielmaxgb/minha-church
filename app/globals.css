@@ -29,13 +29,16 @@
   --attention-border: color-mix(in srgb, var(--attention) 18%, var(--border));
   --attention-emphasis: color-mix(in srgb, var(--attention) 34%, transparent);
   --attention-mark: color-mix(in srgb, var(--attention) 22%, var(--card));
-  /* Billing / assinatura — cor própria, distinta de attention (agenda) */
-  --billing: #4a5f9e;
-  --billing-foreground: #2f3f6e;
-  --billing-subtle: color-mix(in srgb, var(--billing) 14%, var(--card));
-  --billing-border: color-mix(in srgb, var(--billing) 32%, var(--border));
-  --billing-mark: color-mix(in srgb, var(--billing) 22%, var(--card));
-  --billing-emphasis: color-mix(in srgb, var(--billing) 42%, transparent);
+  /* Billing / assinatura — pedra da marca (alinha com primary / domain-home) */
+  --billing: #4a4a45;
+  --billing-foreground: #2c2c2a;
+  --billing-subtle: color-mix(in srgb, var(--billing) 10%, var(--card));
+  --billing-border: color-mix(in srgb, var(--billing) 22%, var(--border));
+  --billing-mark: color-mix(in srgb, var(--billing) 16%, var(--card));
+  --billing-emphasis: color-mix(in srgb, var(--billing) 36%, transparent);
+  /* Faixa escura de CTA de assinatura (estável em light/dark) */
+  --billing-banner: #1a1a18;
+  --billing-banner-foreground: #f4f4f1;
   --border: #d8d8d3;
   --input: #d0d0cb;
   --ring: #5c5c58;
@@ -100,12 +103,14 @@
   --attention-border: color-mix(in srgb, var(--attention) 22%, var(--border));
   --attention-emphasis: color-mix(in srgb, var(--attention) 40%, transparent);
   --attention-mark: color-mix(in srgb, var(--attention) 28%, var(--card));
-  --billing: #7b8fc4;
-  --billing-foreground: #c5d0ec;
-  --billing-subtle: color-mix(in srgb, var(--billing) 16%, var(--card));
-  --billing-border: color-mix(in srgb, var(--billing) 30%, var(--border));
-  --billing-mark: color-mix(in srgb, var(--billing) 26%, var(--card));
-  --billing-emphasis: color-mix(in srgb, var(--billing) 45%, transparent);
+  --billing: #a3a39c;
+  --billing-foreground: #d4d4ce;
+  --billing-subtle: color-mix(in srgb, var(--billing) 12%, var(--card));
+  --billing-border: color-mix(in srgb, var(--billing) 24%, var(--border));
+  --billing-mark: color-mix(in srgb, var(--billing) 18%, var(--card));
+  --billing-emphasis: color-mix(in srgb, var(--billing) 40%, transparent);
+  --billing-banner: #1a1a18;
+  --billing-banner-foreground: #f4f4f1;
   --border: #2e2e2b;
   --input: #353532;
   --ring: #8a8a84;
@@ -171,6 +176,8 @@
   --color-billing-border: var(--billing-border);
   --color-billing-mark: var(--billing-mark);
   --color-billing-emphasis: var(--billing-emphasis);
+  --color-billing-banner: var(--billing-banner);
+  --color-billing-banner-foreground: var(--billing-banner-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);

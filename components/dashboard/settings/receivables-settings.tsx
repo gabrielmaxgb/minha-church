@@ -13,10 +13,14 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
+import { Sparkles } from "lucide-react";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FormAlert } from "@/components/ui/form-field";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SubscribePricingTrigger } from "@/components/billing/subscribe-pricing-trigger";
+import { useFeatureLock } from "@/lib/subscription/use-feature-lock";
 import { cn } from "@/lib/utils";
 import {
   resolvePaymentsError,
@@ -384,6 +388,7 @@ function ConnectOnboardingCard({
 
 export function ReceivablesSettings() {
   const { user } = useAuth();
+  const { locked, isTrialing } = useFeatureLock();
   const connectStatus = useConnectStatus();
   const fiscalProfile = useFiscalProfile();
 
@@ -398,12 +403,50 @@ export function ReceivablesSettings() {
     return null;
   }
 
+  if (locked) {
+    return (
+      <div>
+        <SettingsSectionHeader
+          title="Recebimentos"
+          description="Ative e acompanhe a conta que recebe dízimos, doações e inscrições em eventos."
+        />
+        <SettingsPanel>
+          <div className="space-y-3 px-5 py-6 text-center">
+            <p className="text-sm font-medium text-foreground">
+              Recebimentos fazem parte do plano
+            </p>
+            <p className="mx-auto max-w-md text-sm text-muted-foreground">
+              Reative sua assinatura para voltar a receber contribuições e
+              gerenciar a conta de recebimentos.
+            </p>
+            <div className="pt-1">
+              <SubscribePricingTrigger className="gap-2">
+                Reativar assinatura
+              </SubscribePricingTrigger>
+            </div>
+          </div>
+        </SettingsPanel>
+      </div>
+    );
+  }
+
   return (
     <div>
       <SettingsSectionHeader
         title="Recebimentos"
         description="Ative e acompanhe a conta Stripe que recebe dízimos, doações e inscrições em eventos."
       />
+
+      {isTrialing && (
+        <div className="mb-4 flex items-start gap-3 rounded-xl border border-billing/30 bg-billing-subtle px-4 py-3 text-sm text-billing-foreground">
+          <Sparkles className="mt-0.5 size-4 shrink-0" aria-hidden />
+          <p>
+            Recurso premium — gratuito durante o período de teste. Ative e teste
+            os recebimentos à vontade; a cobrança do plano só começa se você
+            continuar após o teste.
+          </p>
+        </div>
+      )}
 
       {isLoading ? (
         <Skeleton className="h-40 w-full rounded-xl" />

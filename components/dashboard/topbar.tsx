@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { NotificationsBell } from "@/components/dashboard/notifications-bell";
 import { OnboardingHeaderButton } from "@/components/dashboard/onboarding/onboarding-header-button";
+import { TrialStatusHeaderChip } from "@/components/dashboard/trial-status-header-chip";
 import { formatUserAccessLabel } from "@/lib/user-display";
 import { getUserLoginLabel } from "@/lib/user-profile";
 import { formatMemberCountLabel } from "@/lib/pricing";
@@ -78,6 +79,7 @@ export function DashboardTopbar({
         </div>
 
         <div className="flex h-9 items-center gap-1.5 sm:gap-2">
+          <TrialStatusHeaderChip />
           <NotificationsBell />
           <OnboardingHeaderButton />
 

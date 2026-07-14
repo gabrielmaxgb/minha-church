@@ -35,6 +35,11 @@ export type SubscriptionStatus =
   | "past_due"
   | "canceled";
 
+export type SubscriptionLockReason =
+  | "trial_expired"
+  | "past_due"
+  | "canceled";
+
 export interface Church {
   id: string;
   name: string;
@@ -47,6 +52,8 @@ export interface Church {
   trialDaysRemaining?: number | null;
   /** true quando o trial expirou e recursos de gestão estão bloqueados. */
   featuresLocked?: boolean;
+  /** Motivo do bloqueio, para copy por status. */
+  lockReason?: SubscriptionLockReason | null;
 }
 
 export interface User {

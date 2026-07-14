@@ -51,13 +51,17 @@ function buildFiscalValues(
 
 export function ChurchFiscalProfileForm({
   profile,
+  locked = false,
 }: {
   profile: FiscalProfile | null;
+  /** Conta bloqueada: campos em leitura, sem salvar. */
+  locked?: boolean;
 }) {
   const { user, church } = useAuth();
   const upsert = useUpsertFiscalProfile();
   const [success, setSuccess] = useState<string | null>(null);
   const ownerCpfFormatted = user?.cpf ? formatCpfInput(user.cpf) : "";
+  const inputsDisabled = upsert.isPending || locked;
 
   const form = useForm<FiscalProfileFormValues>({
     resolver: zodResolver(fiscalProfileSchema),
@@ -132,6 +136,12 @@ export function ChurchFiscalProfileForm({
       >
         {errors.root?.message && <FormAlert>{errors.root.message}</FormAlert>}
         {success && <FormAlert variant="success">{success}</FormAlert>}
+        {locked && (
+          <FormAlert variant="info">
+            Sua conta está sem um plano ativo. Você pode consultar os dados da
+            igreja, mas para editá-los é preciso reativar a assinatura.
+          </FormAlert>
+        )}
 
         <SettingsPanel>
           <div className="space-y-4 px-5 py-5">
@@ -160,7 +170,7 @@ export function ChurchFiscalProfileForm({
                       id="fiscal-contact-phone"
                       inputMode="tel"
                       placeholder="(11) 99999-9999"
-                      disabled={upsert.isPending}
+                      disabled={inputsDisabled}
                       aria-invalid={errors.contactPhone ? true : undefined}
                       value={field.value}
                       onBlur={field.onBlur}
@@ -180,7 +190,7 @@ export function ChurchFiscalProfileForm({
               >
                 <Input
                   id="fiscal-city"
-                  disabled={upsert.isPending}
+                  disabled={inputsDisabled}
                   aria-invalid={errors.city ? true : undefined}
                   {...register("city")}
                 />
@@ -199,7 +209,7 @@ export function ChurchFiscalProfileForm({
                 render={({ field }) => (
                   <SelectField
                     id="fiscal-state"
-                    disabled={upsert.isPending}
+                    disabled={inputsDisabled}
                     value={field.value}
                     onChange={(event) =>
                       field.onChange(event.target.value.toUpperCase())
@@ -240,7 +250,7 @@ export function ChurchFiscalProfileForm({
                 documentType === "cpf"
                   ? "border-attention-border bg-attention-subtle"
                   : "border-border bg-muted/20",
-                (upsert.isPending ||
+                (inputsDisabled ||
                   (lockDocumentType && profile?.documentType === "cnpj")) &&
                   "cursor-not-allowed opacity-70",
               )}
@@ -261,7 +271,7 @@ export function ChurchFiscalProfileForm({
                 role="switch"
                 className="mt-1 size-4 shrink-0 rounded border-border"
                 disabled={
-                  upsert.isPending ||
+                  inputsDisabled ||
                   (lockDocumentType && profile?.documentType === "cnpj")
                 }
                 checked={documentType === "cpf"}
@@ -342,7 +352,7 @@ export function ChurchFiscalProfileForm({
                           : "000.000.000-00"
                       }
                       disabled={
-                        upsert.isPending ||
+                        inputsDisabled ||
                         (documentType === "cpf" && Boolean(ownerCpfFormatted))
                       }
                       aria-invalid={errors.documentNumber ? true : undefined}
@@ -376,7 +386,7 @@ export function ChurchFiscalProfileForm({
                         id="fiscal-responsible-doc"
                         inputMode="numeric"
                         placeholder="000.000.000-00"
-                        disabled={upsert.isPending}
+                        disabled={inputsDisabled}
                         aria-invalid={
                           errors.responsibleDocument ? true : undefined
                         }
@@ -406,7 +416,7 @@ export function ChurchFiscalProfileForm({
             >
               <Input
                 id="fiscal-legal-name"
-                disabled={upsert.isPending}
+                disabled={inputsDisabled}
                 aria-invalid={errors.legalName ? true : undefined}
                 {...register("legalName")}
               />
@@ -420,7 +430,7 @@ export function ChurchFiscalProfileForm({
             >
               <Input
                 id="fiscal-responsible-name"
-                disabled={upsert.isPending}
+                disabled={inputsDisabled}
                 aria-invalid={errors.responsibleName ? true : undefined}
                 {...register("responsibleName")}
               />
@@ -438,7 +448,7 @@ export function ChurchFiscalProfileForm({
       </form>
 
       <FloatingSaveBar
-        visible={isDirty}
+        visible={isDirty && !locked}
         saving={upsert.isPending}
         onDiscard={() => {
           reset(buildFiscalValues(profile));
