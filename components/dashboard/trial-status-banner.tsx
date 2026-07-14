@@ -94,7 +94,7 @@ export function TrialStatusBanner() {
 
     return (
       <BillingNotice
-        tone="billing"
+        tone="info"
         icon={isCanceled ? HeartHandshake : Sparkles}
         title={
           isCanceled
