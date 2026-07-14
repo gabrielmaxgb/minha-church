@@ -5,13 +5,14 @@ import { ArrowRight, Landmark, Loader2, Lock } from "lucide-react";
 
 import { RequirePermission } from "@/components/auth/require-permission";
 import { DashboardPage } from "@/components/dashboard/dashboard-shell";
+import { FinancesSummaryCards } from "@/components/dashboard/finances/finances-summary-cards";
 import { GivingDonationsPanel } from "@/components/dashboard/finances/giving-donations-panel";
 import { GivingFundsPanel } from "@/components/dashboard/finances/giving-funds-panel";
 import { SubscribePricingTrigger } from "@/components/billing/subscribe-pricing-trigger";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { settingsSectionPath } from "@/constants/routes";
-import { useConnectStatus } from "@/lib/api/queries";
+import { AUTH_ROUTES, settingsSectionPath } from "@/constants/routes";
+import { useConnectStatus, usePaymentsSummary } from "@/lib/api/queries";
 import type { ConnectOnboardingStatus } from "@/lib/api/payments";
 import { useFeatureLock } from "@/lib/subscription/use-feature-lock";
 import { useAuth } from "@/providers/auth-provider";
@@ -86,25 +87,19 @@ function FinancesLockedCard({ isOwner }: { isOwner: boolean }) {
   );
 }
 
-function FinancesActivation() {
-  const { user } = useAuth();
+function FinancesContent() {
+  const { user, permissions } = useAuth();
   const { locked } = useFeatureLock();
-  const { data, isPending } = useConnectStatus();
+  const isOwner = Boolean(user?.isOwner);
+  const canManage = isOwner || Boolean(permissions?.finances.manage);
+  const { data: connect, isPending: connectPending } = useConnectStatus();
+  const { data: summary, isPending: summaryPending } = usePaymentsSummary();
 
   if (locked) {
-    return <FinancesLockedCard isOwner={Boolean(user?.isOwner)} />;
+    return <FinancesLockedCard isOwner={isOwner} />;
   }
 
-  if (!user?.isOwner) {
-    return (
-      <div className="space-y-10">
-        <GivingDonationsPanel />
-        <GivingFundsPanel />
-      </div>
-    );
-  }
-
-  if (isPending) {
+  if (isOwner && connectPending) {
     return (
       <div className="flex items-center gap-2 rounded-lg border border-dashed border-border bg-muted/20 p-8 text-sm text-muted-foreground">
         <Loader2 className="size-4 animate-spin" />
@@ -113,43 +108,66 @@ function FinancesActivation() {
     );
   }
 
-  if (data?.canReceivePayments) {
+  if (isOwner && connect && !connect.canReceivePayments) {
+    const copy = ownerActivationCopy(connect.onboardingStatus);
+
     return (
-      <div className="space-y-10">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="success">Conta ativa</Badge>
-          <p className="text-sm text-muted-foreground">
-            Sua igreja já pode receber. Crie fundos e compartilhe o link de
-            contribuição.
-          </p>
+      <div className="rounded-2xl border border-border bg-card p-8 text-center shadow-xs">
+        <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-muted">
+          <Landmark className="size-5" aria-hidden />
         </div>
-        <GivingDonationsPanel />
-        <GivingFundsPanel />
+        <h2 className="mt-4 text-xl font-semibold tracking-tight">
+          {copy.title}
+        </h2>
+        <p className="mx-auto mt-2 max-w-lg text-sm leading-relaxed text-muted-foreground">
+          {copy.description}
+        </p>
+        <div className="mt-6">
+          <Button asChild className="gap-2">
+            <Link href={settingsSectionPath("recebimentos")}>
+              {copy.cta}
+              <ArrowRight className="size-4" />
+            </Link>
+          </Button>
+        </div>
       </div>
     );
   }
 
-  const copy = ownerActivationCopy(data?.onboardingStatus ?? "none");
-
   return (
-    <div className="rounded-2xl border border-border bg-card p-8 text-center shadow-xs">
-      <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-muted">
-        <Landmark className="size-5" aria-hidden />
-      </div>
-      <h2 className="mt-4 text-xl font-semibold tracking-tight">
-        {copy.title}
-      </h2>
-      <p className="mx-auto mt-2 max-w-lg text-sm leading-relaxed text-muted-foreground">
-        {copy.description}
-      </p>
-      <div className="mt-6">
-        <Button asChild className="gap-2">
-          <Link href={settingsSectionPath("recebimentos")}>
-            {copy.cta}
-            <ArrowRight className="size-4" />
+    <div className="space-y-10">
+      <div className="flex flex-wrap items-center gap-2">
+        {summary?.canReceivePayments ? (
+          <Badge variant="success">Conta ativa</Badge>
+        ) : (
+          <Badge variant="outline">Recebimentos indisponíveis</Badge>
+        )}
+        <p className="text-sm text-muted-foreground">
+          Resumo dos fundos e contribuições. Membros doam em{" "}
+          <Link
+            href={AUTH_ROUTES.tithesOfferings}
+            className="font-medium text-foreground underline underline-offset-2"
+          >
+            Dízimos e ofertas
           </Link>
-        </Button>
+          .
+        </p>
       </div>
+
+      <FinancesSummaryCards summary={summary} isPending={summaryPending} />
+
+      {canManage ? (
+        <>
+          <GivingDonationsPanel />
+          <GivingFundsPanel />
+        </>
+      ) : (
+        <div className="rounded-xl border border-dashed border-border bg-muted/20 p-6 text-sm text-muted-foreground">
+          Você tem acesso ao resumo financeiro. Para criar fundos e ver o
+          histórico detalhado de contribuições, é necessária a permissão
+          “Gerenciar recebimentos”.
+        </div>
+      )}
     </div>
   );
 }
@@ -159,9 +177,9 @@ export default function FinancasPage() {
     <RequirePermission permission="finances">
       <DashboardPage
         title="Finanças"
-        subtitle="Entradas, saídas e prestação de contas"
+        subtitle="Resumo dos recebimentos e gestão de fundos"
       >
-        <FinancesActivation />
+        <FinancesContent />
       </DashboardPage>
     </RequirePermission>
   );

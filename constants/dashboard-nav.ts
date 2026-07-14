@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   Mail,
   CalendarDays,
+  PiggyBank,
   Settings,
   Users,
   Wallet,
@@ -100,6 +101,14 @@ export const dashboardNavItems: DashboardNavItem[] = [
     description: "Entradas, saídas e prestação de contas",
     domain: "finances",
     permission: "finances",
+  },
+  {
+    label: "Dízimos e ofertas",
+    href: AUTH_ROUTES.tithesOfferings,
+    icon: PiggyBank,
+    description: "Contribuir com os fundos da igreja",
+    domain: "finances",
+    access: "activeMember",
   },
   {
     label: "Comunicação",

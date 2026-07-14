@@ -49,6 +49,7 @@ const PERMISSION_ICONS: Record<ChurchPermissionKey, LucideIcon> = {
   roles_manage: Shield,
   memberships_manage: UserPlus,
   counseling_receive: HeartHandshake,
+  receivables_manage: Wallet,
 };
 
 const GROUP_STYLES = {

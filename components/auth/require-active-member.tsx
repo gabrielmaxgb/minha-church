@@ -21,11 +21,11 @@ const DEFAULT_MESSAGES: Record<
 > = {
   no_member: {
     title: "Cadastro pastoral necessário",
-    body: "É preciso ter uma ficha pastoral vinculada à sua conta para usar o quadro de oração.",
+    body: "É preciso ter uma ficha pastoral vinculada à sua conta para usar esta área.",
   },
   inactive: {
     title: "Disponível para membros ativos",
-    body: "Somente membros com status ativo podem participar do quadro de oração.",
+    body: "Somente membros com status ativo podem acessar esta área.",
   },
 };
 

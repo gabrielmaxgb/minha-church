@@ -20,7 +20,7 @@ export interface UserPermissions {
     ministryIds: string[];
   };
   schedules: { access: boolean };
-  finances: { access: boolean };
+  finances: { access: boolean; manage: boolean };
   communication: { access: boolean; manage: boolean };
   reports: { access: boolean };
   settings: { access: boolean };
@@ -171,4 +171,5 @@ export type ChurchPermissionKey =
   | "settings_access"
   | "roles_manage"
   | "memberships_manage"
-  | "counseling_receive";
+  | "counseling_receive"
+  | "receivables_manage";

@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "@/lib/api/client";
 import {
   createGivingFund,
+  createMemberGivingCheckout,
   deleteGivingFund,
   resumeConnectOnboarding,
   startConnectOnboarding,
@@ -19,10 +20,16 @@ import {
 import { paymentsKeys } from "@/lib/api/queries/payments.keys";
 import { useAuth } from "@/providers/auth-provider";
 
-export function useConnectStatus() {
-  const { church, user } = useAuth();
+export function useConnectStatus(options?: { enabled?: boolean }) {
+  const { church, permissions, user } = useAuth();
   const churchId = church?.id;
-  const enabled = Boolean(user?.isOwner && churchId);
+  const canAccess = Boolean(
+    churchId &&
+      (user?.isOwner ||
+        permissions?.finances.access ||
+        permissions?.finances.manage),
+  );
+  const enabled = (options?.enabled ?? true) && canAccess;
 
   return useQuery({
     ...paymentsKeys.connectStatus(churchId ?? ""),
@@ -44,11 +51,31 @@ export function useFiscalProfile() {
   });
 }
 
-export function useGivingFunds(options?: { enabled?: boolean }) {
-  const { church, permissions } = useAuth();
+export function usePaymentsSummary(options?: { enabled?: boolean }) {
+  const { church, permissions, user } = useAuth();
   const churchId = church?.id;
-  const canAccess = Boolean(permissions?.finances.access && churchId);
+  const canAccess = Boolean(
+    churchId &&
+      (user?.isOwner ||
+        permissions?.finances.access ||
+        permissions?.finances.manage),
+  );
   const enabled = (options?.enabled ?? true) && canAccess;
+
+  return useQuery({
+    ...paymentsKeys.paymentsSummary(churchId ?? ""),
+    enabled,
+    staleTime: 15_000,
+  });
+}
+
+export function useGivingFunds(options?: { enabled?: boolean }) {
+  const { church, permissions, user } = useAuth();
+  const churchId = church?.id;
+  const canManage = Boolean(
+    churchId && (user?.isOwner || permissions?.finances.manage),
+  );
+  const enabled = (options?.enabled ?? true) && canManage;
 
   return useQuery({
     ...paymentsKeys.givingFunds(churchId ?? ""),
@@ -57,11 +84,26 @@ export function useGivingFunds(options?: { enabled?: boolean }) {
   });
 }
 
-export function useGivingDonations(options?: { enabled?: boolean }) {
-  const { church, permissions } = useAuth();
+export function useMemberGivingFunds(options?: { enabled?: boolean }) {
+  const { church } = useAuth();
   const churchId = church?.id;
-  const canAccess = Boolean(permissions?.finances.access && churchId);
-  const enabled = (options?.enabled ?? true) && canAccess;
+  const enabled = (options?.enabled ?? true) && Boolean(churchId);
+
+  return useQuery({
+    ...paymentsKeys.memberGivingFunds(churchId ?? ""),
+    enabled,
+    staleTime: 15_000,
+    retry: false,
+  });
+}
+
+export function useGivingDonations(options?: { enabled?: boolean }) {
+  const { church, permissions, user } = useAuth();
+  const churchId = church?.id;
+  const canManage = Boolean(
+    churchId && (user?.isOwner || permissions?.finances.manage),
+  );
+  const enabled = (options?.enabled ?? true) && canManage;
 
   return useQuery({
     ...paymentsKeys.givingDonations(churchId ?? ""),
@@ -116,6 +158,12 @@ export function useCreateGivingFund() {
       void queryClient.invalidateQueries({
         queryKey: paymentsKeys.givingFunds(church.id).queryKey,
       });
+      void queryClient.invalidateQueries({
+        queryKey: paymentsKeys.memberGivingFunds(church.id).queryKey,
+      });
+      void queryClient.invalidateQueries({
+        queryKey: paymentsKeys.paymentsSummary(church.id).queryKey,
+      });
     },
   });
 }
@@ -146,6 +194,12 @@ export function useUpdateGivingFund() {
       void queryClient.invalidateQueries({
         queryKey: paymentsKeys.givingFunds(church.id).queryKey,
       });
+      void queryClient.invalidateQueries({
+        queryKey: paymentsKeys.memberGivingFunds(church.id).queryKey,
+      });
+      void queryClient.invalidateQueries({
+        queryKey: paymentsKeys.paymentsSummary(church.id).queryKey,
+      });
     },
   });
 }
@@ -170,6 +224,32 @@ export function useDeleteGivingFund() {
       void queryClient.invalidateQueries({
         queryKey: paymentsKeys.givingFunds(church.id).queryKey,
       });
+      void queryClient.invalidateQueries({
+        queryKey: paymentsKeys.memberGivingFunds(church.id).queryKey,
+      });
+      void queryClient.invalidateQueries({
+        queryKey: paymentsKeys.paymentsSummary(church.id).queryKey,
+      });
+    },
+  });
+}
+
+export function useCreateMemberGivingCheckout() {
+  const { church } = useAuth();
+
+  return useMutation({
+    mutationFn: async ({
+      fundId,
+      amountCents,
+    }: {
+      fundId: string;
+      amountCents: number;
+    }) => {
+      if (!church?.id) {
+        throw new Error("Igreja não encontrada.");
+      }
+
+      return createMemberGivingCheckout(church.id, fundId, { amountCents });
     },
   });
 }

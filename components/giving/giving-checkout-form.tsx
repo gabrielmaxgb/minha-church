@@ -1,16 +1,25 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState } from "react";
 import {
   Elements,
   PaymentElement,
   useElements,
   useStripe,
 } from "@stripe/react-stripe-js";
-import { loadStripe, type Stripe } from "@stripe/stripe-js";
-import { Loader2, Lock, ShieldCheck } from "lucide-react";
-import { motion, useReducedMotion } from "motion/react";
+import { Loader2, ShieldCheck } from "lucide-react";
 
+import {
+  GivingShell,
+  GivingTrustFooter,
+} from "@/components/giving/giving-shell";
+import {
+  formatBrlFromCents,
+  getGivingStripe,
+  GIVING_PRESET_REAIS,
+  STRIPE_ELEMENTS_APPEARANCE,
+  STRIPE_ELEMENTS_FONTS,
+} from "@/components/giving/giving-stripe";
 import { Button } from "@/components/ui/button";
 import { FormAlert, FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
@@ -26,152 +35,7 @@ import {
   formatBrlCentsMask,
   parseBrlMaskToCents,
 } from "@/lib/utils";
-
-const PRESET_REAIS = [20, 50, 100, 200, 500] as const;
-
-/** Stripe iframes não herdam next/font — carrega DM Sans igual ao app. */
-const STRIPE_ELEMENTS_FONTS = [
-  {
-    cssSrc:
-      "https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap",
-  },
-] as const;
-
-const STRIPE_ELEMENTS_APPEARANCE = {
-  theme: "stripe" as const,
-  variables: {
-    colorPrimary: "#2f5a43",
-    colorBackground: "#ffffff",
-    colorText: "#141413",
-    colorTextSecondary: "#6f6f6a",
-    colorTextPlaceholder: "#6f6f6a",
-    colorDanger: "#8f4444",
-    borderRadius: "8px",
-    fontFamily: '"DM Sans", ui-sans-serif, system-ui, sans-serif',
-    fontSizeBase: "14px",
-    fontWeightNormal: "400",
-    fontWeightMedium: "500",
-    fontWeightBold: "600",
-  },
-  rules: {
-    ".Label": {
-      fontFamily: '"DM Sans", ui-sans-serif, system-ui, sans-serif',
-      fontSize: "14px",
-      fontWeight: "500",
-    },
-    ".Input": {
-      fontFamily: '"DM Sans", ui-sans-serif, system-ui, sans-serif',
-    },
-    ".Tab": {
-      fontFamily: '"DM Sans", ui-sans-serif, system-ui, sans-serif',
-    },
-    ".TabLabel": {
-      fontFamily: '"DM Sans", ui-sans-serif, system-ui, sans-serif',
-    },
-  },
-};
-
-function formatBrlFromCents(cents: number): string {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(cents / 100);
-}
-
-type StripeCacheKey = string;
-const stripePromises = new Map<StripeCacheKey, Promise<Stripe | null>>();
-
-function getStripe(
-  publishableKey: string,
-  stripeAccountId: string,
-): Promise<Stripe | null> {
-  const key = `${publishableKey}:${stripeAccountId}`;
-  let promise = stripePromises.get(key);
-  if (!promise) {
-    promise = loadStripe(publishableKey, { stripeAccount: stripeAccountId });
-    stripePromises.set(key, promise);
-  }
-  return promise;
-}
-
-function GivingTrustFooter() {
-  return (
-    <div className="mt-8 flex flex-col gap-3 border-t border-border pt-5 text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex items-center gap-2 text-xs">
-        <Lock className="size-3.5 shrink-0" aria-hidden />
-        <span>Pagamento criptografado · processado pelo Stripe</span>
-      </div>
-      <p className="text-xs text-muted-foreground">Minha Church</p>
-    </div>
-  );
-}
-
-function GivingShell({
-  fund,
-  children,
-  brandExtra,
-}: {
-  fund: PublicGivingFund;
-  children: ReactNode;
-  brandExtra?: ReactNode;
-}) {
-  const reduceMotion = useReducedMotion();
-
-  return (
-    <motion.div
-      initial={reduceMotion ? false : { opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-      className="mx-auto grid w-full max-w-5xl overflow-hidden rounded-2xl border border-border bg-card shadow-xs lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]"
-    >
-      <section className="relative overflow-hidden bg-[var(--giving-ink)] px-7 py-10 text-[var(--giving-paper)] sm:px-10 sm:py-14 lg:min-h-144 lg:py-16">
-        <div className="giving-grain" aria-hidden />
-        <div
-          className="pointer-events-none absolute -right-16 top-1/4 size-64 rounded-full bg-[var(--giving-trust)]/25 blur-3xl"
-          aria-hidden
-        />
-        <div className="relative flex h-full flex-col">
-          <p className="text-xs font-medium tracking-wide text-[var(--giving-paper)]/55 uppercase">
-            Contribuição segura
-          </p>
-          <h1 className="font-display mt-6 max-w-md text-3xl leading-tight font-bold tracking-tight sm:text-4xl">
-            {fund.churchName}
-          </h1>
-          <div className="mt-6 h-px w-14 bg-[var(--giving-trust)]" />
-          <p className="mt-6 text-lg font-medium tracking-tight">
-            {fund.fundName}
-          </p>
-          {fund.fundDescription ? (
-            <p className="mt-2 max-w-sm text-sm leading-relaxed text-[var(--giving-paper)]/65">
-              {fund.fundDescription}
-            </p>
-          ) : (
-            <p className="mt-2 max-w-sm text-sm leading-relaxed text-[var(--giving-paper)]/65">
-              Sua contribuição chega diretamente à igreja, com registro e
-              comprovante.
-            </p>
-          )}
-
-          {brandExtra}
-
-          <div className="mt-auto hidden pt-16 lg:block">
-            <div className="flex items-start gap-3 text-[var(--giving-paper)]/70">
-              <ShieldCheck className="mt-0.5 size-4 shrink-0 text-[var(--giving-trust)]" />
-              <p className="text-sm leading-relaxed">
-                Os dados do cartão não passam pelo Minha Church. A cobrança é
-                feita na conta Stripe da própria igreja.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="relative px-7 py-10 sm:px-10 sm:py-14 lg:py-16">
-        {children}
-      </section>
-    </motion.div>
-  );
-}
+import { resolveGivingStripeError } from "@/lib/payments/giving-stripe-errors";
 
 export function GivingCheckoutForm({ fund }: { fund: PublicGivingFund }) {
   const [amountMasked, setAmountMasked] = useState(() =>
@@ -186,6 +50,20 @@ export function GivingCheckoutForm({ fund }: { fund: PublicGivingFund }) {
   const amountCents = parseBrlMaskToCents(amountMasked);
   const amountValid =
     amountCents >= fund.minAmountCents && amountCents <= fund.maxAmountCents;
+
+  const brand = {
+    churchName: fund.churchName,
+    fundName: fund.fundName,
+    fundDescription: fund.fundDescription,
+  };
+
+  const methodsLabel = [
+    fund.paymentMethods.pix ? "Pix" : null,
+    fund.paymentMethods.card ? "Cartão" : null,
+    fund.paymentMethods.boleto ? "Boleto" : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   const handleStartCheckout = async () => {
     if (!amountValid) {
@@ -227,7 +105,16 @@ export function GivingCheckoutForm({ fund }: { fund: PublicGivingFund }) {
   }
 
   return (
-    <GivingShell fund={fund}>
+    <GivingShell
+      brand={brand}
+      brandExtra={
+        methodsLabel ? (
+          <p className="mt-8 text-xs tracking-wide text-[var(--giving-paper)]/55 uppercase">
+            Aceita {methodsLabel}
+          </p>
+        ) : undefined
+      }
+    >
       <div className="space-y-6">
         <div>
           <h2 className="text-lg font-semibold tracking-tight">
@@ -239,7 +126,7 @@ export function GivingCheckoutForm({ fund }: { fund: PublicGivingFund }) {
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {PRESET_REAIS.map((reais) => {
+          {GIVING_PRESET_REAIS.map((reais) => {
             const presetCents = reais * 100;
             const selected = amountCents === presetCents;
             return (
@@ -337,13 +224,17 @@ function CheckoutPaymentStep({
   onBack: () => void;
 }) {
   const stripePromise = useMemo(
-    () => getStripe(session.publishableKey, session.stripeAccountId),
+    () => getGivingStripe(session.publishableKey, session.stripeAccountId),
     [session.publishableKey, session.stripeAccountId],
   );
 
   return (
     <GivingShell
-      fund={fund}
+      brand={{
+        churchName: fund.churchName,
+        fundName: fund.fundName,
+        fundDescription: fund.fundDescription,
+      }}
       brandExtra={
         <div className="mt-8 rounded-xl border border-[var(--giving-paper)]/15 bg-[var(--giving-paper)]/5 px-4 py-3">
           <p className="text-xs tracking-wide text-[var(--giving-paper)]/55 uppercase">
@@ -381,7 +272,7 @@ function CheckoutPaymentStep({
             locale: "pt-BR",
           }}
         >
-          <ConfirmPaymentForm fund={fund} />
+          <ConfirmPaymentForm fund={fund} donationId={session.donationId} />
         </Elements>
 
         <div className="flex items-start gap-3 text-muted-foreground lg:hidden">
@@ -398,7 +289,13 @@ function CheckoutPaymentStep({
   );
 }
 
-function ConfirmPaymentForm({ fund }: { fund: PublicGivingFund }) {
+function ConfirmPaymentForm({
+  fund,
+  donationId,
+}: {
+  fund: PublicGivingFund;
+  donationId: string;
+}) {
   const stripe = useStripe();
   const elements = useElements();
   const [submitting, setSubmitting] = useState(false);
@@ -412,7 +309,7 @@ function ConfirmPaymentForm({ fund }: { fund: PublicGivingFund }) {
     setSubmitting(true);
     setError(null);
 
-    const returnUrl = `${window.location.origin}${givingFundPath(fund.churchSlug, fund.fundSlug)}/obrigado`;
+    const returnUrl = `${window.location.origin}${givingFundPath(fund.churchSlug, fund.fundSlug)}/obrigado?donationId=${encodeURIComponent(donationId)}`;
 
     const result = await stripe.confirmPayment({
       elements,
@@ -422,12 +319,12 @@ function ConfirmPaymentForm({ fund }: { fund: PublicGivingFund }) {
     });
 
     if (result.error) {
-      setError(
-        result.error.message ??
-          "Não foi possível confirmar o pagamento. Tente novamente.",
-      );
+      setError(resolveGivingStripeError(result.error));
       setSubmitting(false);
+      return;
     }
+
+    window.location.assign(returnUrl);
   };
 
   return (

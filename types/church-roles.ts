@@ -47,6 +47,7 @@ export const CHURCH_PERMISSION_LABELS: Record<ChurchPermissionKey, string> = {
   roles_manage: "Definir cargos da igreja",
   memberships_manage: "Atribuir cargos a usuários",
   counseling_receive: "Receber pedidos de aconselhamento e visitas",
+  receivables_manage: "Gerenciar recebimentos",
 };
 
 export const CHURCH_PERMISSION_DESCRIPTIONS: Record<ChurchPermissionKey, string> = {
@@ -61,7 +62,7 @@ export const CHURCH_PERMISSION_DESCRIPTIONS: Record<ChurchPermissionKey, string>
   schedules_access:
     "Abre “Minhas escalas”, onde a pessoa acompanha as próprias convocações e marca disponibilidade.",
   finances_access:
-    "Abre a área financeira da igreja (entradas, saídas e relatórios).",
+    "Abre a área financeira da igreja (resumo de entradas e fundos).",
   communication_access:
     "Abre a área de comunicação, com avisos e mensagens da igreja.",
   reports_access:
@@ -82,6 +83,8 @@ export const CHURCH_PERMISSION_DESCRIPTIONS: Record<ChurchPermissionKey, string>
     "Atribuir e remover cargos dos usuários, definir proprietários, aprovar acessos pendentes e redefinir senhas de acesso.",
   counseling_receive:
     "Aparece na lista de Aconselhamentos e visitas e recebe solicitações de membros pelo app (notificação e e-mail).",
+  receivables_manage:
+    "Criar e gerenciar fundos de cobrança e ver o histórico de contribuições. Não inclui ativar o Stripe Connect (somente o proprietário). Já inclui o menu Finanças.",
 };
 
 export const CHURCH_PERMISSION_GROUPS: Array<{
@@ -120,6 +123,7 @@ export const CHURCH_PERMISSION_GROUPS: Array<{
       "roles_manage",
       "memberships_manage",
       "counseling_receive",
+      "receivables_manage",
     ],
   },
 ];

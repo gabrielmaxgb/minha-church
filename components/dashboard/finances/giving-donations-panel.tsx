@@ -59,7 +59,7 @@ export function GivingDonationsPanel() {
       <div>
         <h2 className="text-lg font-semibold tracking-tight">Contribuições</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Entradas recentes pelos links de cobrança.
+          Entradas recentes por membros logados e links públicos.
         </p>
       </div>
 
@@ -85,7 +85,12 @@ export function GivingDonationsPanel() {
                 </div>
                 <p className="mt-0.5 text-sm text-muted-foreground">
                   {donation.fundName}
-                  {donation.payerName ? ` · ${donation.payerName}` : ""}
+                  {donation.donorMemberName
+                    ? ` · ${donation.donorMemberName}`
+                    : donation.payerName
+                      ? ` · ${donation.payerName}`
+                      : ""}
+                  {donation.donorMemberId ? " · membro" : ""}
                 </p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
                   {new Intl.DateTimeFormat("pt-BR", {

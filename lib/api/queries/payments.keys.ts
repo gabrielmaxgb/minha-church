@@ -5,6 +5,8 @@ import {
   fetchFiscalProfile,
   fetchGivingDonations,
   fetchGivingFunds,
+  fetchMemberGivingFunds,
+  fetchPaymentsSummary,
 } from "@/lib/api/payments";
 
 export const paymentsKeys = createQueryKeys("payments", {
@@ -16,9 +18,17 @@ export const paymentsKeys = createQueryKeys("payments", {
     queryKey: [churchId, "fiscal-profile"],
     queryFn: () => fetchFiscalProfile(churchId),
   }),
+  paymentsSummary: (churchId: string) => ({
+    queryKey: [churchId, "payments-summary"],
+    queryFn: () => fetchPaymentsSummary(churchId),
+  }),
   givingFunds: (churchId: string) => ({
     queryKey: [churchId, "giving-funds"],
     queryFn: () => fetchGivingFunds(churchId, { includeInactive: true }),
+  }),
+  memberGivingFunds: (churchId: string) => ({
+    queryKey: [churchId, "member-giving-funds"],
+    queryFn: () => fetchMemberGivingFunds(churchId),
   }),
   givingDonations: (churchId: string) => ({
     queryKey: [churchId, "giving-donations"],

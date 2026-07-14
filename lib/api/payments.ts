@@ -63,11 +63,21 @@ export interface ConnectLinkResponse {
   url: string;
 }
 
+export type GivingFundAudience = "members" | "public";
+
+export interface GivingFundPaymentMethods {
+  pix: boolean;
+  card: boolean;
+  boleto: boolean;
+}
+
 export interface GivingFund {
   id: string;
   name: string;
   slug: string;
   description: string | null;
+  audience: GivingFundAudience;
+  paymentMethods: GivingFundPaymentMethods;
   isActive: boolean;
   canDelete: boolean;
   sortOrder: number;
@@ -78,6 +88,10 @@ export interface GivingFund {
 export interface CreateGivingFundInput {
   name: string;
   description?: string;
+  audience: GivingFundAudience;
+  allowPix: boolean;
+  allowCard: boolean;
+  allowBoleto: boolean;
   sortOrder?: number;
 }
 
@@ -85,7 +99,30 @@ export interface UpdateGivingFundInput {
   name?: string;
   description?: string | null;
   isActive?: boolean;
+  allowPix?: boolean;
+  allowCard?: boolean;
+  allowBoleto?: boolean;
   sortOrder?: number;
+}
+
+export interface MemberGivingFund {
+  id: string;
+  name: string;
+  description: string | null;
+  paymentMethods: GivingFundPaymentMethods;
+  currency: "brl";
+  minAmountCents: number;
+  maxAmountCents: number;
+}
+
+export interface PaymentsSummary {
+  canReceivePayments: boolean;
+  onboardingStatus: ConnectOnboardingStatus | "none";
+  activeFundsCount: number;
+  memberFundsCount: number;
+  publicFundsCount: number;
+  succeededDonationsCount: number;
+  succeededAmountCentsLast30Days: number;
 }
 
 function toFiscalPayload(
@@ -199,6 +236,24 @@ export async function fetchGivingFunds(
   );
 }
 
+export async function fetchMemberGivingFunds(
+  churchId: string,
+): Promise<MemberGivingFund[]> {
+  return apiClient<MemberGivingFund[]>(
+    `/churches/${churchId}/payments/funds/for-members`,
+    { churchId },
+  );
+}
+
+export async function fetchPaymentsSummary(
+  churchId: string,
+): Promise<PaymentsSummary> {
+  return apiClient<PaymentsSummary>(
+    `/churches/${churchId}/payments/summary`,
+    { churchId },
+  );
+}
+
 export async function createGivingFund(
   churchId: string,
   input: CreateGivingFundInput,
@@ -238,12 +293,28 @@ export async function deleteGivingFund(
   );
 }
 
+export async function createMemberGivingCheckout(
+  churchId: string,
+  fundId: string,
+  input: { amountCents: number },
+): Promise<GivingCheckoutSession> {
+  return apiClient<GivingCheckoutSession>(
+    `/churches/${churchId}/payments/funds/${fundId}/checkout`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+      churchId,
+    },
+  );
+}
+
 export interface PublicGivingFund {
   churchName: string;
   churchSlug: string;
   fundName: string;
   fundSlug: string;
   fundDescription: string | null;
+  paymentMethods: GivingFundPaymentMethods;
   currency: "brl";
   minAmountCents: number;
   maxAmountCents: number;
@@ -289,6 +360,30 @@ export async function createGivingCheckout(
   );
 }
 
+export type GivingDonationOutcome =
+  | "succeeded"
+  | "processing"
+  | "incomplete"
+  | "failed";
+
+export interface GivingDonationReceipt {
+  donationId: string;
+  status: string;
+  outcome: GivingDonationOutcome;
+  amountCents: number;
+  currency: string;
+  fundName: string;
+}
+
+export async function fetchGivingDonationReceipt(
+  donationId: string,
+): Promise<GivingDonationReceipt> {
+  return apiClient<GivingDonationReceipt>(
+    `/public/giving/donations/${encodeURIComponent(donationId)}/receipt`,
+    { skipAuth: true },
+  );
+}
+
 export interface GivingDonation {
   id: string;
   fundId: string;
@@ -298,6 +393,8 @@ export interface GivingDonation {
   status: string;
   payerName: string | null;
   payerEmail: string | null;
+  donorMemberId: string | null;
+  donorMemberName: string | null;
   createdAt: string;
 }
 

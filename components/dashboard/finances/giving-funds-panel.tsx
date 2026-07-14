@@ -4,33 +4,58 @@ import Link from "next/link";
 import { useState } from "react";
 import { Copy, ExternalLink, Loader2, Plus, Power, Trash2 } from "lucide-react";
 
+import {
+  FundPaymentMethodsField,
+  PaymentMethodBadges,
+  fundPaymentMethodsSelected,
+} from "@/components/dashboard/finances/fund-payment-methods-field";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FormAlert, FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { givingFundPath, settingsSectionPath } from "@/constants/routes";
+import { AUTH_ROUTES, givingFundPath, settingsSectionPath } from "@/constants/routes";
 import {
   resolvePaymentsError,
+  useConnectStatus,
   useCreateGivingFund,
   useDeleteGivingFund,
   useFiscalProfile,
   useGivingFunds,
   useUpdateGivingFund,
 } from "@/lib/api/queries";
-import type { GivingFund } from "@/lib/api/payments";
+import type {
+  GivingFund,
+  GivingFundAudience,
+  GivingFundPaymentMethods,
+} from "@/lib/api/payments";
 import { isOwnerOnboardingMinimumComplete } from "@/lib/payments/fiscal-profile-completeness";
 import { useAuth } from "@/providers/auth-provider";
 
+function audienceLabel(audience: GivingFundAudience): string {
+  return audience === "public" ? "Link público" : "Membros logados";
+}
+
+const EMPTY_METHODS: GivingFundPaymentMethods = {
+  pix: false,
+  card: false,
+  boleto: false,
+};
+
 export function GivingFundsPanel() {
-  const { user, church } = useAuth();
+  const { user, church, permissions } = useAuth();
   const fundsQuery = useGivingFunds();
   const fiscalProfile = useFiscalProfile();
+  const connectQuery = useConnectStatus({ enabled: true });
   const createFund = useCreateGivingFund();
   const deleteFund = useDeleteGivingFund();
   const updateFund = useUpdateGivingFund();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [audience, setAudience] = useState<GivingFundAudience>("members");
+  const [paymentMethods, setPaymentMethods] =
+    useState<GivingFundPaymentMethods>(EMPTY_METHODS);
+  const [methodsFormKey, setMethodsFormKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [fundToDelete, setFundToDelete] = useState<GivingFund | null>(null);
@@ -41,13 +66,20 @@ export function GivingFundsPanel() {
 
   const funds = fundsQuery.data ?? [];
   const isOwner = Boolean(user?.isOwner);
+  const canManage = isOwner || Boolean(permissions?.finances.manage);
   const churchSlug = church?.slug;
-  const profileReady = isOwnerOnboardingMinimumComplete(
-    fiscalProfile.data ?? null,
+  const profileReady =
+    !isOwner ||
+    isOwnerOnboardingMinimumComplete(fiscalProfile.data ?? null);
+  const methodsReady = fundPaymentMethodsSelected(
+    paymentMethods,
+    connectQuery.data,
   );
 
   const fundHref = (fund: GivingFund) =>
-    churchSlug ? givingFundPath(churchSlug, fund.slug) : null;
+    fund.audience === "public" && churchSlug
+      ? givingFundPath(churchSlug, fund.slug)
+      : null;
 
   const handleCopyLink = async (fund: GivingFund) => {
     const path = fundHref(fund);
@@ -70,13 +102,25 @@ export function GivingFundsPanel() {
     setError(null);
     setSuccess(null);
 
+    if (!methodsReady) {
+      setError("Selecione pelo menos um meio de pagamento disponível.");
+      return;
+    }
+
     try {
       await createFund.mutateAsync({
         name: name.trim(),
         description: description.trim() || undefined,
+        audience,
+        allowPix: paymentMethods.pix,
+        allowCard: paymentMethods.card,
+        allowBoleto: paymentMethods.boleto,
       });
       setName("");
       setDescription("");
+      setAudience("members");
+      setPaymentMethods(EMPTY_METHODS);
+      setMethodsFormKey((key) => key + 1);
       setSuccess("Fundo criado.");
     } catch (createError) {
       setError(
@@ -180,8 +224,8 @@ export function GivingFundsPanel() {
           Fundos de cobrança
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Categorias em que a igreja recebe. Cada fundo ativo tem um link
-          público de contribuição (Pix, cartão, boleto conforme a conta).
+          Fundos para membros aparecem em Dízimos e ofertas. Fundos públicos
+          geram link externo (sem vínculo de ficha pastoral).
         </p>
       </div>
 
@@ -192,9 +236,9 @@ export function GivingFundsPanel() {
         {funds.length === 0 ? (
           <li className="px-4 py-6 text-sm text-muted-foreground">
             Nenhum fundo ainda.
-            {isOwner
+            {canManage
               ? " Crie o primeiro abaixo (ex.: Dízimo, Oferta, Missões)."
-              : " Peça ao proprietário para cadastrar."}
+              : " Peça a quem gerencia recebimentos para cadastrar."}
           </li>
         ) : (
           funds.map((fund) => (
@@ -205,6 +249,7 @@ export function GivingFundsPanel() {
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="font-medium text-foreground">{fund.name}</p>
+                  <Badge variant="outline">{audienceLabel(fund.audience)}</Badge>
                   {!fund.isActive && (
                     <Badge variant="outline">Desativado</Badge>
                   )}
@@ -214,15 +259,18 @@ export function GivingFundsPanel() {
                     {fund.description}
                   </p>
                 ) : null}
+                <div className="mt-2">
+                  <PaymentMethodBadges methods={fund.paymentMethods} />
+                </div>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {churchSlug
+                  {fund.audience === "public" && churchSlug
                     ? `/doar/${churchSlug}/${fund.slug}`
-                    : `/${fund.slug}`}
+                    : AUTH_ROUTES.tithesOfferings}
                   {!fund.canDelete ? " · Já recebeu contribuições" : null}
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
-                {fund.isActive && fundHref(fund) && (
+                {fund.isActive && fund.audience === "public" && fundHref(fund) ? (
                   <>
                     <Button
                       type="button"
@@ -251,71 +299,71 @@ export function GivingFundsPanel() {
                       </a>
                     </Button>
                   </>
-                )}
-                {isOwner && (
+                ) : null}
+                {canManage ? (
                   <>
-                  {fund.canDelete ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="gap-1.5 text-destructive hover:bg-destructive/5 hover:text-destructive"
-                      disabled={deleteFund.isPending || updateFund.isPending}
-                      onClick={() => {
-                        setError(null);
-                        setSuccess(null);
-                        setFundToDelete(fund);
-                      }}
-                    >
-                      <Trash2 className="size-3.5" />
-                      Excluir
-                    </Button>
-                  ) : fund.isActive ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="gap-1.5"
-                      disabled={deleteFund.isPending || updateFund.isPending}
-                      onClick={() => {
-                        setError(null);
-                        setSuccess(null);
-                        setFundToDeactivate(fund);
-                      }}
-                    >
-                      <Power className="size-3.5" />
-                      Desativar
-                    </Button>
-                  ) : (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="gap-1.5"
-                      disabled={
-                        deleteFund.isPending ||
-                        updateFund.isPending ||
-                        togglingId === fund.id
-                      }
-                      onClick={() => void handleReactivate(fund)}
-                    >
-                      {togglingId === fund.id ? (
-                        <Loader2 className="size-3.5 animate-spin" />
-                      ) : (
+                    {fund.canDelete ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="gap-1.5 text-destructive hover:bg-destructive/5 hover:text-destructive"
+                        disabled={deleteFund.isPending || updateFund.isPending}
+                        onClick={() => {
+                          setError(null);
+                          setSuccess(null);
+                          setFundToDelete(fund);
+                        }}
+                      >
+                        <Trash2 className="size-3.5" />
+                        Excluir
+                      </Button>
+                    ) : fund.isActive ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="gap-1.5"
+                        disabled={deleteFund.isPending || updateFund.isPending}
+                        onClick={() => {
+                          setError(null);
+                          setSuccess(null);
+                          setFundToDeactivate(fund);
+                        }}
+                      >
                         <Power className="size-3.5" />
-                      )}
-                      Reativar
-                    </Button>
-                  )}
+                        Desativar
+                      </Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="gap-1.5"
+                        disabled={
+                          deleteFund.isPending ||
+                          updateFund.isPending ||
+                          togglingId === fund.id
+                        }
+                        onClick={() => void handleReactivate(fund)}
+                      >
+                        {togglingId === fund.id ? (
+                          <Loader2 className="size-3.5 animate-spin" />
+                        ) : (
+                          <Power className="size-3.5" />
+                        )}
+                        Reativar
+                      </Button>
+                    )}
                   </>
-                )}
+                ) : null}
               </div>
             </li>
           ))
         )}
       </ul>
 
-      {isOwner && !profileReady && (
+      {canManage && isOwner && !profileReady && (
         <FormAlert>
           <span className="inline-flex flex-wrap items-center gap-x-1 gap-y-1">
             Complete o perfil da igreja (contato, cidade/UF e dados fiscais)
@@ -330,8 +378,8 @@ export function GivingFundsPanel() {
         </FormAlert>
       )}
 
-      {isOwner && profileReady && (
-        <div className="space-y-3 rounded-xl border border-border bg-muted/20 p-4">
+      {canManage && profileReady && (
+        <div className="space-y-4 rounded-xl border border-border bg-muted/20 p-4">
           <p className="text-sm font-medium text-foreground">Novo fundo</p>
           <FormField label="Nome" htmlFor="fund-name" required>
             <Input
@@ -351,10 +399,73 @@ export function GivingFundsPanel() {
               disabled={createFund.isPending}
             />
           </FormField>
+
+          <fieldset className="space-y-3">
+            <legend className="text-sm font-medium text-foreground">
+              Quem pode contribuir?
+            </legend>
+            <div className="space-y-3">
+              {(
+                [
+                  {
+                    value: "members" as const,
+                    title: "Membros logados",
+                    body: "Aparece em Dízimos e ofertas. O pagamento fica ligado à ficha do membro.",
+                  },
+                  {
+                    value: "public" as const,
+                    title: "Link público",
+                    body: "Qualquer pessoa pode pagar sem login. Não há vínculo com membro cadastrado.",
+                  },
+                ] as const
+              ).map((option) => {
+                const inputId = `fund-audience-${option.value}`;
+                return (
+                  <label
+                    key={option.value}
+                    htmlFor={inputId}
+                    className="flex cursor-pointer gap-3"
+                  >
+                    <input
+                      id={inputId}
+                      type="radio"
+                      name="fund-audience"
+                      value={option.value}
+                      checked={audience === option.value}
+                      onChange={() => setAudience(option.value)}
+                      disabled={createFund.isPending}
+                      className="mt-1 size-4 shrink-0 accent-foreground"
+                    />
+                    <span className="min-w-0">
+                      <span className="block text-sm font-medium text-foreground">
+                        {option.title}
+                      </span>
+                      <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
+                        {option.body}
+                      </span>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </fieldset>
+
+          <FundPaymentMethodsField
+            key={methodsFormKey}
+            value={paymentMethods}
+            onChange={setPaymentMethods}
+            connect={connectQuery.data}
+            disabled={createFund.isPending}
+          />
+
           <Button
             type="button"
             className="gap-2"
-            disabled={createFund.isPending || name.trim().length < 2}
+            disabled={
+              createFund.isPending ||
+              name.trim().length < 2 ||
+              !methodsReady
+            }
             onClick={() => void handleCreate()}
           >
             {createFund.isPending ? (
@@ -401,8 +512,7 @@ export function GivingFundsPanel() {
               <span className="font-medium text-foreground">
                 {fundToDeactivate.name}
               </span>{" "}
-              deixa de aparecer em novos links de pagamento. O histórico de
-              contribuições é preservado.
+              deixa de receber novas contribuições. O histórico é preservado.
             </>
           }
           confirmLabel="Desativar fundo"
