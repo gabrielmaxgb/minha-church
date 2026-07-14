@@ -1,3 +1,5 @@
+export type PrayerRequestBoardStatus = "active" | "archived";
+
 export interface PrayerRequestAuthor {
   id: string;
   name: string;
@@ -12,6 +14,9 @@ export interface PrayerRequest {
   prayerCount: number;
   prayedByMe: boolean;
   canDelete: boolean;
+  canArchive: boolean;
+  isArchived: boolean;
+  archivedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }

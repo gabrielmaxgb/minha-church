@@ -10,6 +10,7 @@ import { EmailVerificationBanner } from "@/components/dashboard/email-verificati
 import { SoftOnboardingHost } from "@/components/dashboard/onboarding/soft-onboarding-host";
 import { OnboardingChecklistProvider } from "@/components/dashboard/onboarding/onboarding-checklist-context";
 import { TrialStatusBanner } from "@/components/dashboard/trial-status-banner";
+import { RolePreviewBanner } from "@/components/dashboard/role-preview-banner";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { DashboardContentMotion } from "@/components/motion/dashboard-motion";
@@ -142,6 +143,7 @@ export function DashboardShell({
         <CheckoutReturnHandler />
       </Suspense>
       <TierCrossingOwnerHost />
+      <RolePreviewBanner />
     </OnboardingChecklistProvider>
   );
 }

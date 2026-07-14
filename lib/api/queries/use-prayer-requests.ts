@@ -3,21 +3,34 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
+  archivePrayerRequest,
   createPrayerRequest,
   deletePrayerRequest,
   prayerRequestsKeys,
   togglePrayerRequestPray,
 } from "@/lib/api/queries/prayer-requests.keys";
 import { useTenant } from "@/providers/auth-provider";
-import type { CreatePrayerRequestPayload } from "@/types/prayer-requests";
+import type {
+  CreatePrayerRequestPayload,
+  PrayerRequestBoardStatus,
+} from "@/types/prayer-requests";
 
-export function usePrayerRequests(options?: { enabled?: boolean }) {
+export function usePrayerRequests(
+  status: PrayerRequestBoardStatus = "active",
+  options?: { enabled?: boolean },
+) {
   const { churchId } = useTenant();
 
   return useQuery({
-    ...prayerRequestsKeys.list(churchId ?? "unknown"),
+    ...prayerRequestsKeys.list(churchId ?? "unknown", status),
     enabled: Boolean(churchId) && (options?.enabled ?? true),
     retry: false,
+  });
+}
+
+function invalidateBoard(queryClient: ReturnType<typeof useQueryClient>, churchId: string | null) {
+  return queryClient.invalidateQueries({
+    queryKey: prayerRequestsKeys._def,
   });
 }
 
@@ -34,9 +47,7 @@ export function useCreatePrayerRequest() {
       return createPrayerRequest(churchId, payload);
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: prayerRequestsKeys.list(churchId ?? "unknown").queryKey,
-      });
+      await invalidateBoard(queryClient, churchId);
     },
   });
 }
@@ -54,14 +65,32 @@ export function useDeletePrayerRequest() {
       return deletePrayerRequest(churchId, requestId);
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: prayerRequestsKeys.list(churchId ?? "unknown").queryKey,
-      });
+      await invalidateBoard(queryClient, churchId);
     },
   });
 }
 
-export function useTogglePrayerRequestPray() {
+export function useArchivePrayerRequest() {
+  const { churchId } = useTenant();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (requestId: string) => {
+      if (!churchId) {
+        throw new Error("Igreja não selecionada.");
+      }
+
+      return archivePrayerRequest(churchId, requestId);
+    },
+    onSuccess: async () => {
+      await invalidateBoard(queryClient, churchId);
+    },
+  });
+}
+
+export function useTogglePrayerRequestPray(
+  status: PrayerRequestBoardStatus = "active",
+) {
   const { churchId } = useTenant();
   const queryClient = useQueryClient();
 
@@ -75,7 +104,7 @@ export function useTogglePrayerRequestPray() {
     },
     onSuccess: async (updated) => {
       queryClient.setQueryData(
-        prayerRequestsKeys.list(churchId ?? "unknown").queryKey,
+        prayerRequestsKeys.list(churchId ?? "unknown", status).queryKey,
         (current: unknown) => {
           if (!Array.isArray(current)) {
             return current;

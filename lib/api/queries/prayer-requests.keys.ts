@@ -4,13 +4,16 @@ import { apiClient, buildTenantPath } from "@/lib/api/client";
 import type {
   CreatePrayerRequestPayload,
   PrayerRequest,
+  PrayerRequestBoardStatus,
 } from "@/types/prayer-requests";
 
 async function fetchPrayerRequests(
   churchId: string,
+  status: PrayerRequestBoardStatus = "active",
 ): Promise<PrayerRequest[]> {
+  const query = status === "archived" ? "?status=archived" : "?status=active";
   return apiClient<PrayerRequest[]>(
-    buildTenantPath(churchId, "/prayer-requests"),
+    `${buildTenantPath(churchId, "/prayer-requests")}${query}`,
     { churchId },
   );
 }
@@ -42,6 +45,19 @@ async function deletePrayerRequest(
   );
 }
 
+async function archivePrayerRequest(
+  churchId: string,
+  requestId: string,
+): Promise<PrayerRequest> {
+  return apiClient<PrayerRequest>(
+    buildTenantPath(churchId, `/prayer-requests/${requestId}/archive`),
+    {
+      churchId,
+      method: "POST",
+    },
+  );
+}
+
 async function togglePrayerRequestPray(
   churchId: string,
   requestId: string,
@@ -56,13 +72,14 @@ async function togglePrayerRequestPray(
 }
 
 export const prayerRequestsKeys = createQueryKeys("prayerRequests", {
-  list: (churchId: string) => ({
-    queryKey: [churchId, "list"],
-    queryFn: () => fetchPrayerRequests(churchId),
+  list: (churchId: string, status: PrayerRequestBoardStatus = "active") => ({
+    queryKey: [churchId, "list", status],
+    queryFn: () => fetchPrayerRequests(churchId, status),
   }),
 });
 
 export {
+  archivePrayerRequest,
   createPrayerRequest,
   deletePrayerRequest,
   fetchPrayerRequests,

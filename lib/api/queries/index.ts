@@ -164,6 +164,7 @@ export {
 } from "@/lib/api/queries/use-care-requests";
 export { prayerRequestsKeys } from "@/lib/api/queries/prayer-requests.keys";
 export {
+  useArchivePrayerRequest,
   useCreatePrayerRequest,
   useDeletePrayerRequest,
   usePrayerRequests,
