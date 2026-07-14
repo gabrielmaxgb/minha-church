@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ChevronDown,
   ChevronRight,
@@ -9,14 +10,17 @@ import {
   Network,
   Plus,
   Search,
+  Upload,
   UsersRound,
 } from "lucide-react";
 
+import { ImportMembersDialog } from "@/components/dashboard/members/import-members-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SelectField } from "@/components/ui/select-field";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  AUTH_ROUTES,
   familyGraphPath,
   memberDetailPath,
   MEMBER_CREATE_ROUTE,
@@ -232,6 +236,9 @@ function FamilyGroupItem({
 
 export function MembersContent() {
   const { permissions } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [importOpen, setImportOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<MemberStatus | "all">("all");
   const [familyId, setFamilyId] = useState<string>("all");
@@ -242,6 +249,14 @@ export function MembersContent() {
   const debouncedSearch = useDebouncedValue(search.trim(), 300);
   const canManage = permissions ? canManageMembers(permissions) : false;
   const { data: families = [] } = useFamilies();
+
+  // Abre o assistente automaticamente quando chega via onboarding (?importar=1).
+  useEffect(() => {
+    if (canManage && searchParams.get("importar") === "1") {
+      setImportOpen(true);
+      router.replace(AUTH_ROUTES.members);
+    }
+  }, [canManage, searchParams, router]);
 
   const params = useMemo(
     () => ({
@@ -311,12 +326,23 @@ export function MembersContent() {
           </div>
 
           {canManage && (
-            <Button size="sm" asChild className="shrink-0 self-start sm:self-auto">
-              <Link href={MEMBER_CREATE_ROUTE}>
-                <Plus className="size-4" />
-                Adicionar membro
-              </Link>
-            </Button>
+            <div className="flex shrink-0 flex-wrap gap-2 self-start sm:self-auto">
+              <Button
+                size="sm"
+                variant="outline"
+                type="button"
+                onClick={() => setImportOpen(true)}
+              >
+                <Upload className="size-4" />
+                Importar planilha
+              </Button>
+              <Button size="sm" asChild>
+                <Link href={MEMBER_CREATE_ROUTE}>
+                  <Plus className="size-4" />
+                  Adicionar membro
+                </Link>
+              </Button>
+            </div>
           )}
         </div>
 
@@ -411,12 +437,23 @@ export function MembersContent() {
             Nenhum membro encontrado com os filtros atuais.
           </p>
           {canManage && (
-            <Button className="mt-4" size="sm" asChild>
-              <Link href={MEMBER_CREATE_ROUTE}>
-                <Plus className="size-4" />
-                Adicionar primeiro membro
-              </Link>
-            </Button>
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              <Button size="sm" asChild>
+                <Link href={MEMBER_CREATE_ROUTE}>
+                  <Plus className="size-4" />
+                  Adicionar primeiro membro
+                </Link>
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                type="button"
+                onClick={() => setImportOpen(true)}
+              >
+                <Upload className="size-4" />
+                Importar planilha
+              </Button>
+            </div>
           )}
         </div>
       )}
@@ -486,6 +523,13 @@ export function MembersContent() {
             </div>
           )}
         </div>
+      )}
+
+      {canManage && (
+        <ImportMembersDialog
+          open={importOpen}
+          onClose={() => setImportOpen(false)}
+        />
       )}
     </div>
   );

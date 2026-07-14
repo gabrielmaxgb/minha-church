@@ -131,6 +131,17 @@ export function OnboardingChecklistProvider({
     });
 
     list.push({
+      id: "import-members",
+      title: "Importe sua lista de membros",
+      description:
+        "Já tem uma planilha? Traga todo mundo de uma vez em poucos cliques.",
+      actionLabel: "Importar planilha",
+      href: `${AUTH_ROUTES.members}?importar=1`,
+      done: hasExtraMember,
+      optional: true,
+    });
+
+    list.push({
       id: "first-announcement",
       title: "Publique um comunicado",
       description:
