@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   BarChart3,
   Calendar,
+  HandHeart,
   HeartHandshake,
   Layers,
   LayoutDashboard,
@@ -27,8 +28,12 @@ export interface DashboardNavItem {
    * Omitir quando `access` for `activeAdultMember`.
    */
   permission?: NavPermissionKey;
-  /** Gate alternativo: membro ativo com 18+ (ficha pastoral). */
-  access?: "activeAdultMember";
+  /**
+   * Gate alternativo à permissão de seção:
+   * - `activeAdultMember`: membro ativo com 18+ (ficha pastoral)
+   * - `activeMember`: membro ativo (sem restrição de idade)
+   */
+  access?: "activeAdultMember" | "activeMember";
 }
 
 export const dashboardNavItems: DashboardNavItem[] = [
@@ -79,6 +84,14 @@ export const dashboardNavItems: DashboardNavItem[] = [
     description: "Pedir apoio pastoral e acompanhar solicitações",
     domain: "members",
     access: "activeAdultMember",
+  },
+  {
+    label: "Pedidos de oração",
+    href: AUTH_ROUTES.prayerRequests,
+    icon: HandHeart,
+    description: "Quadro aberto para a igreja orar junta",
+    domain: "communication",
+    access: "activeMember",
   },
   {
     label: "Finanças",

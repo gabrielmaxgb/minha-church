@@ -1,34 +1,39 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 
 import { CreateActivityModal } from "@/components/dashboard/activities/create-activity-modal";
-import { DashboardActionsPanel } from "@/components/dashboard/home/dashboard-actions-panel";
+import { DashboardQuickActions } from "@/components/dashboard/home/dashboard-actions-panel";
+import { DashboardAnnouncementsPanel } from "@/components/dashboard/home/dashboard-announcements-panel";
 import { DashboardEventsPanel } from "@/components/dashboard/home/dashboard-events-panel";
 import { DashboardHero } from "@/components/dashboard/home/dashboard-hero";
+import { DashboardPriorities } from "@/components/dashboard/home/dashboard-priorities";
 import { DashboardWeekPulse } from "@/components/dashboard/home/dashboard-week-pulse";
 import { WorshipScheduleBanner } from "@/components/dashboard/my-schedule/worship-schedule-banner";
 import {
   StaggerItem,
   StaggerList,
 } from "@/components/motion/dashboard-motion";
-import { AUTH_ROUTES } from "@/constants/routes";
 import {
   useAnnouncements,
+  useAnnouncementsUnreadCount,
+  useCareInboxPendingCount,
   useChurchEvents,
   useMySchedules,
   usePasswordResetRequests,
   usePendingAccessUsers,
 } from "@/lib/api/queries";
 import { canManageChurchMemberships } from "@/lib/church-memberships/constants";
+import { resolveDashboardHomeProfile } from "@/lib/dashboard/home-profile";
+import { buildDashboardPriorities } from "@/lib/dashboard/priority-items";
 import { collapseRecurringEventsForList } from "@/lib/events/list";
 import {
   canAccessActivities,
   canAccessMembers,
   canAccessSchedules,
   canCreateAnyActivity,
-  canManageMinistries,
+  canListMinistries,
+  canManageCommunication,
 } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
@@ -42,14 +47,25 @@ export function DashboardHomeContent() {
   const { user, church, permissions } = useAuth();
   const [createActivityOpen, setCreateActivityOpen] = useState(false);
 
+  const profile = resolveDashboardHomeProfile({
+    isOwner: Boolean(user?.isOwner),
+    permissions,
+  });
+
   const canAccessMembersData = canAccessMembers(permissions);
   const canAccessActivitiesData = canAccessActivities(permissions);
   const canAccessSchedulesData = canAccessSchedules(permissions);
   const canManageMemberships = canManageChurchMemberships(permissions);
   const hasCommunicationAccess = Boolean(permissions?.communication.access);
+  const canPublishCommunication = canManageCommunication(
+    permissions,
+    Boolean(user?.isOwner),
+  );
   const canCreateActivity = permissions
     ? canCreateAnyActivity(permissions)
     : false;
+  const canReceiveCare =
+    Boolean(user?.isOwner) || Boolean(permissions?.counseling?.receive);
 
   const { data: events, isLoading: eventsLoading } = useChurchEvents(
     {},
@@ -64,8 +80,14 @@ export function DashboardHomeContent() {
   const { data: announcements } = useAnnouncements({
     enabled: hasCommunicationAccess,
   });
+  const { data: announcementsUnread } = useAnnouncementsUnreadCount({
+    enabled: hasCommunicationAccess,
+  });
   const { data: schedule } = useMySchedules({
     enabled: canAccessSchedulesData,
+  });
+  const { data: carePending } = useCareInboxPendingCount({
+    enabled: canReceiveCare,
   });
 
   const upcomingEvents = useMemo(
@@ -88,28 +110,72 @@ export function DashboardHomeContent() {
   }, [events]);
 
   const recentAnnouncements = useMemo(
-    () => (announcements ?? []).slice(0, 4),
-    [announcements],
+    () => (announcements ?? []).slice(0, profile === "member" ? 3 : 4),
+    [announcements, profile],
   );
 
-  const pendingAttentionCount =
-    (pendingAccess?.length ?? 0) + (passwordResets?.length ?? 0);
   const schedulePendingCount = schedule?.summary.pendingAvailabilityCount ?? 0;
+  const carePendingCount = canReceiveCare ? (carePending?.count ?? 0) : 0;
+  const announcementsUnreadCount =
+    typeof announcementsUnread === "number" ? announcementsUnread : 0;
 
-  const showActionsPanel = Boolean(
+  const priorities = useMemo(
+    () =>
+      buildDashboardPriorities({
+        profile,
+        pendingAccessCount: pendingAccess?.length ?? 0,
+        passwordResetCount: passwordResets?.length ?? 0,
+        schedulePendingCount,
+        carePendingCount,
+        announcementsUnreadCount,
+        nextEvent,
+        canManageMemberships,
+        canAccessSchedules: canAccessSchedulesData,
+        canReceiveCare,
+        hasCommunicationAccess,
+        canAccessActivities: canAccessActivitiesData,
+      }),
+    [
+      profile,
+      pendingAccess?.length,
+      passwordResets?.length,
+      schedulePendingCount,
+      carePendingCount,
+      announcementsUnreadCount,
+      nextEvent,
+      canManageMemberships,
+      canAccessSchedulesData,
+      canReceiveCare,
+      hasCommunicationAccess,
+      canAccessActivitiesData,
+    ],
+  );
+
+  const showQuickActions = Boolean(
     permissions &&
       (canManageMemberships ||
         canCreateActivity ||
         canAccessMembersData ||
-        canManageMinistries(permissions) ||
-        permissions.finances.access),
+        canListMinistries(permissions) ||
+        permissions.finances.access ||
+        hasCommunicationAccess ||
+        canReceiveCare ||
+        canAccessSchedulesData),
   );
 
   const showWeekPulse =
-    canAccessActivitiesData ||
-    canAccessMembersData ||
-    pendingAttentionCount > 0 ||
-    schedulePendingCount > 0;
+    (profile === "owner" || profile === "leader") && canAccessActivitiesData;
+
+  const showEventsPanel =
+    canAccessActivitiesData && (profile === "owner" || profile === "leader");
+
+  const showAnnouncementsPanel = hasCommunicationAccess;
+
+  const showMainGrid = showEventsPanel || showAnnouncementsPanel;
+
+  const showScheduleBanner =
+    canAccessSchedulesData &&
+    (profile === "member" || schedulePendingCount > 0);
 
   if (!user || !church) {
     return null;
@@ -117,118 +183,76 @@ export function DashboardHomeContent() {
 
   return (
     <>
-      <StaggerList className="space-y-8">
+      <StaggerList className="space-y-7">
         <StaggerItem>
           <DashboardHero
             userName={user.name}
             churchName={church.name}
-            nextEvent={nextEvent}
-            canCreateActivity={canCreateActivity}
-            canAccessMembers={canAccessMembersData}
-            canAccessActivities={canAccessActivitiesData}
-            onCreateActivity={() => setCreateActivityOpen(true)}
+            profile={profile}
           />
         </StaggerItem>
-
-        {showWeekPulse ? (
-          <StaggerItem>
-            <DashboardWeekPulse
-              events={canAccessActivitiesData ? upcomingEvents : []}
-              memberCount={church.memberCount}
-              pendingAttentionCount={pendingAttentionCount}
-              schedulePendingCount={schedulePendingCount}
-              canAccessMembers={canAccessMembersData}
-              canAccessSchedules={canAccessSchedulesData}
-              canAccessActivities={canAccessActivitiesData}
-            />
-          </StaggerItem>
-        ) : null}
-
-        {canAccessSchedulesData ? (
-          <StaggerItem>
-            <WorshipScheduleBanner />
-          </StaggerItem>
-        ) : null}
 
         <StaggerItem>
           <div
             className={cn(
-              "grid gap-6",
-              canAccessActivitiesData && showActionsPanel
-                ? "xl:grid-cols-[minmax(0,1fr)_17rem]"
-                : undefined,
+              "grid gap-4",
+              showWeekPulse ? "xl:grid-cols-2 xl:items-stretch" : undefined,
             )}
           >
-            {canAccessActivitiesData ? (
-              <DashboardEventsPanel
+            <DashboardPriorities items={priorities} />
+            {showWeekPulse ? (
+              <DashboardWeekPulse
+                variant="chart"
                 events={upcomingEvents}
-                isLoading={eventsLoading}
-                canCreateActivity={canCreateActivity}
-                onCreateActivity={() => setCreateActivityOpen(true)}
-              />
-            ) : null}
-
-            {showActionsPanel ? (
-              <DashboardActionsPanel
-                pendingAccessCount={pendingAccess?.length ?? 0}
-                passwordResetCount={passwordResets?.length ?? 0}
-                onCreateActivity={() => setCreateActivityOpen(true)}
+                canAccessActivities
               />
             ) : null}
           </div>
         </StaggerItem>
 
-        {hasCommunicationAccess ? (
+        {showQuickActions ? (
           <StaggerItem>
-            <section className="rounded-xl border border-domain-communication/20 bg-gradient-to-br from-domain-communication-subtle/70 via-card to-card">
-              <div className="flex flex-col gap-2 border-b border-domain-communication/15 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
-                  <h2 className="text-sm font-medium text-domain-communication-foreground">
-                    Comunicação recente
-                  </h2>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    Avisos publicados para a igreja
-                  </p>
-                </div>
-                <Link
-                  href={AUTH_ROUTES.communication}
-                  className="shrink-0 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  Ver tudo
-                </Link>
-              </div>
-              {recentAnnouncements.length === 0 ? (
-                <div className="px-4 py-6">
-                  <p className="text-sm text-muted-foreground">
-                    Nenhum comunicado recente.
-                  </p>
-                  <Link
-                    href={AUTH_ROUTES.communication}
-                    className="mt-2 inline-flex text-sm font-medium text-foreground transition-colors hover:text-foreground/70"
-                  >
-                    Publicar aviso
-                  </Link>
-                </div>
-              ) : (
-                <ul className="divide-y divide-border/70">
-                  {recentAnnouncements.map((item) => (
-                    <li key={item.id}>
-                      <Link
-                        href={AUTH_ROUTES.communication}
-                        className="block px-4 py-3 transition-colors hover:bg-domain-communication-subtle/40"
-                      >
-                        <p className="truncate text-sm font-medium text-foreground">
-                          {item.title}
-                        </p>
-                        <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                          {item.body}
-                        </p>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
+            <DashboardQuickActions
+              profile={profile}
+              onCreateActivity={() => setCreateActivityOpen(true)}
+              carePendingCount={carePendingCount}
+              schedulePendingCount={schedulePendingCount}
+            />
+          </StaggerItem>
+        ) : null}
+
+        {showMainGrid ? (
+          <StaggerItem>
+            <div
+              className={cn(
+                "grid gap-6",
+                showEventsPanel && showAnnouncementsPanel
+                  ? "xl:grid-cols-2"
+                  : undefined,
               )}
-            </section>
+            >
+              {showEventsPanel ? (
+                <DashboardEventsPanel
+                  events={upcomingEvents}
+                  isLoading={eventsLoading}
+                  canCreateActivity={canCreateActivity}
+                  onCreateActivity={() => setCreateActivityOpen(true)}
+                />
+              ) : null}
+
+              {showAnnouncementsPanel ? (
+                <DashboardAnnouncementsPanel
+                  announcements={recentAnnouncements}
+                  canPublish={canPublishCommunication}
+                />
+              ) : null}
+            </div>
+          </StaggerItem>
+        ) : null}
+
+        {showScheduleBanner ? (
+          <StaggerItem>
+            <WorshipScheduleBanner />
           </StaggerItem>
         ) : null}
       </StaggerList>

@@ -21,6 +21,7 @@ import {
 } from "@/lib/api/queries";
 import { announcementsUnreadCount } from "@/lib/communication/announcement-notifications";
 import { isActiveAdultMember } from "@/lib/care-requests/eligibility";
+import { isActiveMember } from "@/lib/members/active-member-eligibility";
 import { canAccessNavItem, canAccessSchedules } from "@/lib/permissions";
 import {
   domainNavActive,
@@ -179,6 +180,7 @@ export function DashboardSidebar({
     isOwner || Boolean(permissions?.counseling?.receive);
   const { data: myMember } = useMyMember();
   const isAdultMember = isOwner || isActiveAdultMember(myMember);
+  const isMemberActive = isOwner || isActiveMember(myMember);
   const { data: schedule } = useMySchedules({
     enabled: canAccessSchedulesData,
   });
@@ -197,10 +199,11 @@ export function DashboardSidebar({
     return dashboardNavItems.filter((item) =>
       canAccessNavItem(permissions, item, {
         isActiveAdultMember: isAdultMember,
+        isActiveMember: isMemberActive,
         isOwner,
       }),
     );
-  }, [permissions, isAdultMember, isOwner]);
+  }, [permissions, isAdultMember, isMemberActive, isOwner]);
 
   const pendingCount =
     canAccessSchedulesData && schedule

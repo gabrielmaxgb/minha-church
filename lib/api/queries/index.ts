@@ -11,6 +11,7 @@ import { membershipsKeys } from "@/lib/api/queries/memberships.keys";
 import { ministriesKeys } from "@/lib/api/queries/ministries.keys";
 import { billingKeys } from "@/lib/api/queries/billing.keys";
 import { paymentsKeys } from "@/lib/api/queries/payments.keys";
+import { prayerRequestsKeys } from "@/lib/api/queries/prayer-requests.keys";
 import { pricingKeys } from "@/lib/api/queries/pricing.keys";
 import { rosterKeys } from "@/lib/api/queries/roster.keys";
 
@@ -28,6 +29,7 @@ export const queries = mergeQueryKeys(
   auditLogsKeys,
   announcementsKeys,
   careRequestsKeys,
+  prayerRequestsKeys,
 );
 
 export { dashboardKeys } from "@/lib/api/queries/dashboard.keys";
@@ -156,3 +158,10 @@ export {
   useMarkCareRequestViewed,
   useMyCareRequests,
 } from "@/lib/api/queries/use-care-requests";
+export { prayerRequestsKeys } from "@/lib/api/queries/prayer-requests.keys";
+export {
+  useCreatePrayerRequest,
+  useDeletePrayerRequest,
+  usePrayerRequests,
+  useTogglePrayerRequestPray,
+} from "@/lib/api/queries/use-prayer-requests";

@@ -21,6 +21,7 @@ export const domainFromHref: Record<string, ProductDomain> = {
   "/app/minhas-escalas": "schedules",
   "/app/comunicacao": "communication",
   "/app/aconselhamentos": "members",
+  "/app/pedidos-de-oracao": "communication",
   "/app/financas": "finances",
   "/app/relatorios": "reports",
   "/app/configuracoes": "settings",

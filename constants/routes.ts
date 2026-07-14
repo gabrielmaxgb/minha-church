@@ -45,6 +45,7 @@ export const AUTH_ROUTES = {
   financesContributions: "/app/financas#contribuicoes",
   communication: "/app/comunicacao",
   careRequests: "/app/aconselhamentos",
+  prayerRequests: "/app/pedidos-de-oracao",
   reports: "/app/relatorios",
   settings: "/app/configuracoes",
   settingsChurch: "/app/configuracoes/igreja",
