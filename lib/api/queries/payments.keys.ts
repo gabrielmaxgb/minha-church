@@ -6,6 +6,7 @@ import {
   fetchGivingDonations,
   fetchGivingFunds,
   fetchMemberGivingFunds,
+  fetchMyGivingDonations,
   fetchPaymentsSummary,
 } from "@/lib/api/payments";
 
@@ -33,5 +34,9 @@ export const paymentsKeys = createQueryKeys("payments", {
   givingDonations: (churchId: string) => ({
     queryKey: [churchId, "giving-donations"],
     queryFn: () => fetchGivingDonations(churchId),
+  }),
+  myGivingDonations: (churchId: string) => ({
+    queryKey: [churchId, "my-giving-donations"],
+    queryFn: () => fetchMyGivingDonations(churchId),
   }),
 });

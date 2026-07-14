@@ -97,9 +97,9 @@ export function buildDashboardPriorities(
       id: "care-pending",
       title:
         input.carePendingCount === 1
-          ? "1 pedido de cuidado aguarda você"
-          : `${input.carePendingCount} pedidos de cuidado aguardam você`,
-      description: "Aconselhamento ou visita pastoral",
+          ? "1 pedido pastoral aguarda você"
+          : `${input.carePendingCount} pedidos pastorais aguardam você`,
+      description: "Alguém pediu aconselhamento ou visita",
       href: AUTH_ROUTES.careRequests,
       icon: HeartHandshake,
       tone: "care",

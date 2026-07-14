@@ -1,8 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { Copy, ExternalLink, Loader2, Plus, Power, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import {
+  ChevronDown,
+  Copy,
+  ExternalLink,
+  Loader2,
+  Plus,
+  Power,
+  Trash2,
+} from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
 import {
   FundPaymentMethodsField,
@@ -14,7 +23,7 @@ import { Button } from "@/components/ui/button";
 import { FormAlert, FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AUTH_ROUTES, givingFundPath, settingsSectionPath } from "@/constants/routes";
+import { givingFundPath, settingsSectionPath } from "@/constants/routes";
 import {
   resolvePaymentsError,
   useConnectStatus,
@@ -30,6 +39,7 @@ import type {
   GivingFundPaymentMethods,
 } from "@/lib/api/payments";
 import { isOwnerOnboardingMinimumComplete } from "@/lib/payments/fiscal-profile-completeness";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 
 function audienceLabel(audience: GivingFundAudience): string {
@@ -44,6 +54,7 @@ const EMPTY_METHODS: GivingFundPaymentMethods = {
 
 export function GivingFundsPanel() {
   const { user, church, permissions } = useAuth();
+  const shouldReduceMotion = useReducedMotion();
   const fundsQuery = useGivingFunds();
   const fiscalProfile = useFiscalProfile();
   const connectQuery = useConnectStatus({ enabled: true });
@@ -56,6 +67,7 @@ export function GivingFundsPanel() {
   const [paymentMethods, setPaymentMethods] =
     useState<GivingFundPaymentMethods>(EMPTY_METHODS);
   const [methodsFormKey, setMethodsFormKey] = useState(0);
+  const [createOpen, setCreateOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [fundToDelete, setFundToDelete] = useState<GivingFund | null>(null);
@@ -63,6 +75,12 @@ export function GivingFundsPanel() {
     null,
   );
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [didAutoOpenCreate, setDidAutoOpenCreate] = useState(false);
+  const [origin, setOrigin] = useState("");
+
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
 
   const funds = fundsQuery.data ?? [];
   const isOwner = Boolean(user?.isOwner);
@@ -75,11 +93,35 @@ export function GivingFundsPanel() {
     paymentMethods,
     connectQuery.data,
   );
+  const canShowCreate = canManage && profileReady;
+
+  useEffect(() => {
+    if (didAutoOpenCreate || fundsQuery.isPending || !canShowCreate) {
+      return;
+    }
+    if (funds.length === 0) {
+      setCreateOpen(true);
+      setDidAutoOpenCreate(true);
+    }
+  }, [
+    canShowCreate,
+    didAutoOpenCreate,
+    funds.length,
+    fundsQuery.isPending,
+  ]);
 
   const fundHref = (fund: GivingFund) =>
     fund.audience === "public" && churchSlug
       ? givingFundPath(churchSlug, fund.slug)
       : null;
+
+  const resetCreateForm = () => {
+    setName("");
+    setDescription("");
+    setAudience("members");
+    setPaymentMethods(EMPTY_METHODS);
+    setMethodsFormKey((key) => key + 1);
+  };
 
   const handleCopyLink = async (fund: GivingFund) => {
     const path = fundHref(fund);
@@ -116,11 +158,8 @@ export function GivingFundsPanel() {
         allowCard: paymentMethods.card,
         allowBoleto: paymentMethods.boleto,
       });
-      setName("");
-      setDescription("");
-      setAudience("members");
-      setPaymentMethods(EMPTY_METHODS);
-      setMethodsFormKey((key) => key + 1);
+      resetCreateForm();
+      setCreateOpen(false);
       setSuccess("Fundo criado.");
     } catch (createError) {
       setError(
@@ -202,7 +241,7 @@ export function GivingFundsPanel() {
   if (fundsQuery.isPending) {
     return (
       <div className="space-y-3">
-        <Skeleton className="h-10 w-48" />
+        <Skeleton className="h-12 w-full rounded-xl" />
         <Skeleton className="h-24 w-full rounded-xl" />
         <Skeleton className="h-24 w-full rounded-xl" />
       </div>
@@ -218,41 +257,220 @@ export function GivingFundsPanel() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-lg font-semibold tracking-tight">
-          Fundos de cobrança
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Fundos para membros aparecem em Dízimos e ofertas. Fundos públicos
-          geram link externo (sem vínculo de ficha pastoral).
-        </p>
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-base font-semibold tracking-tight text-foreground">
+            Fundos cadastrados
+          </h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            Membros doam em Dízimos e ofertas; fundos públicos geram link
+            externo.
+          </p>
+        </div>
       </div>
 
-      {error && <FormAlert>{error}</FormAlert>}
-      {success && <FormAlert variant="success">{success}</FormAlert>}
+      {error ? <FormAlert>{error}</FormAlert> : null}
+      {success ? <FormAlert variant="success">{success}</FormAlert> : null}
 
-      <ul className="divide-y divide-border rounded-xl border border-border">
+      {canManage && isOwner && !profileReady ? (
+        <FormAlert>
+          <span className="inline-flex flex-wrap items-center gap-x-1 gap-y-1">
+            Complete o perfil da igreja (contato, cidade/UF e dados fiscais)
+            antes de criar fundos.
+            <Link
+              href={settingsSectionPath("general")}
+              className="font-medium text-foreground underline underline-offset-2"
+            >
+              Ir para Geral
+            </Link>
+          </span>
+        </FormAlert>
+      ) : null}
+
+      {canShowCreate ? (
+        <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
+          <button
+            type="button"
+            aria-expanded={createOpen}
+            onClick={() => {
+              setCreateOpen((open) => !open);
+              setError(null);
+            }}
+            className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-muted/35"
+          >
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-domain-finances-subtle text-domain-finances-foreground">
+              <Plus className="size-4" aria-hidden />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-semibold text-foreground">
+                Novo fundo
+              </span>
+              <span className="mt-0.5 block text-xs text-muted-foreground">
+                Defina nome, público e meios de pagamento
+              </span>
+            </span>
+            <ChevronDown
+              className={cn(
+                "size-4 shrink-0 text-muted-foreground transition-transform duration-200",
+                createOpen && "rotate-180",
+              )}
+              aria-hidden
+            />
+          </button>
+
+          <AnimatePresence initial={false}>
+            {createOpen ? (
+              <motion.div
+                key="create-fund"
+                initial={
+                  shouldReduceMotion
+                    ? false
+                    : { height: 0, opacity: 0 }
+                }
+                animate={{ height: "auto", opacity: 1 }}
+                exit={
+                  shouldReduceMotion
+                    ? undefined
+                    : { height: 0, opacity: 0 }
+                }
+                transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                className="overflow-hidden"
+              >
+                <div className="space-y-4 border-t border-border px-4 py-4 sm:px-5">
+                  <FormField label="Nome" htmlFor="fund-name" required>
+                    <Input
+                      id="fund-name"
+                      value={name}
+                      onChange={(event) => setName(event.target.value)}
+                      placeholder="Ex.: Missões"
+                      disabled={createFund.isPending}
+                      autoFocus
+                    />
+                  </FormField>
+                  <FormField label="Descrição" htmlFor="fund-description">
+                    <Input
+                      id="fund-description"
+                      value={description}
+                      onChange={(event) => setDescription(event.target.value)}
+                      placeholder="Opcional"
+                      disabled={createFund.isPending}
+                    />
+                  </FormField>
+
+                  <fieldset className="space-y-2.5">
+                    <legend className="text-sm font-medium text-foreground">
+                      Quem pode contribuir?
+                    </legend>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {(
+                        [
+                          {
+                            value: "members" as const,
+                            title: "Membros logados",
+                            body: "Aparece em Dízimos e ofertas, com vínculo à ficha.",
+                          },
+                          {
+                            value: "public" as const,
+                            title: "Link público",
+                            body: "Qualquer pessoa paga sem login, sem vínculo de membro.",
+                          },
+                        ] as const
+                      ).map((option) => {
+                        const selected = audience === option.value;
+                        return (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => setAudience(option.value)}
+                            disabled={createFund.isPending}
+                            className={cn(
+                              "rounded-xl border px-3.5 py-3 text-left transition-colors",
+                              selected
+                                ? "border-foreground/20 bg-domain-finances-subtle shadow-xs"
+                                : "border-border bg-surface-elevated/50 hover:border-foreground/12",
+                            )}
+                          >
+                            <span className="block text-sm font-medium text-foreground">
+                              {option.title}
+                            </span>
+                            <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
+                              {option.body}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </fieldset>
+
+                  <FundPaymentMethodsField
+                    key={methodsFormKey}
+                    value={paymentMethods}
+                    onChange={setPaymentMethods}
+                    connect={connectQuery.data}
+                    disabled={createFund.isPending}
+                  />
+
+                  <div className="flex flex-col-reverse gap-2 border-t border-border/80 pt-4 sm:flex-row sm:justify-end">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      disabled={createFund.isPending}
+                      onClick={() => {
+                        setCreateOpen(false);
+                        resetCreateForm();
+                      }}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      type="button"
+                      className="gap-2"
+                      disabled={
+                        createFund.isPending ||
+                        name.trim().length < 2 ||
+                        !methodsReady
+                      }
+                      onClick={() => void handleCreate()}
+                    >
+                      {createFund.isPending ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <Plus className="size-4" />
+                      )}
+                      Criar fundo
+                    </Button>
+                  </div>
+                </div>
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
+        </div>
+      ) : null}
+
+      <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
         {funds.length === 0 ? (
-          <li className="px-4 py-6 text-sm text-muted-foreground">
+          <li className="px-4 py-8 text-center text-sm leading-relaxed text-muted-foreground">
             Nenhum fundo ainda.
-            {canManage
-              ? " Crie o primeiro abaixo (ex.: Dízimo, Oferta, Missões)."
-              : " Peça a quem gerencia recebimentos para cadastrar."}
+            {canShowCreate
+              ? " Abra “Novo fundo” acima para cadastrar o primeiro."
+              : canManage
+                ? " Complete o perfil da igreja para cadastrar."
+                : " Peça a quem gerencia recebimentos para cadastrar."}
           </li>
         ) : (
           funds.map((fund) => (
             <li
               key={fund.id}
-              className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+              className="flex flex-col gap-3 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between"
             >
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="font-medium text-foreground">{fund.name}</p>
                   <Badge variant="outline">{audienceLabel(fund.audience)}</Badge>
-                  {!fund.isActive && (
+                  {!fund.isActive ? (
                     <Badge variant="outline">Desativado</Badge>
-                  )}
+                  ) : null}
                 </div>
                 {fund.description ? (
                   <p className="mt-0.5 text-sm text-muted-foreground">
@@ -262,11 +480,31 @@ export function GivingFundsPanel() {
                 <div className="mt-2">
                   <PaymentMethodBadges methods={fund.paymentMethods} />
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {fund.audience === "public" && churchSlug
-                    ? `/doar/${churchSlug}/${fund.slug}`
-                    : AUTH_ROUTES.tithesOfferings}
-                  {!fund.canDelete ? " · Já recebeu contribuições" : null}
+                <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                  {fund.audience === "public" && fundHref(fund) ? (
+                    <>
+                      <a
+                        href={fundHref(fund)!}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="break-all underline decoration-dotted underline-offset-2 hover:text-foreground"
+                      >
+                        {`${origin}${fundHref(fund)}`}
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => void handleCopyLink(fund)}
+                        title="Copiar link"
+                        aria-label="Copiar link"
+                        className="shrink-0 rounded p-0.5 hover:bg-muted hover:text-foreground"
+                      >
+                        <Copy className="size-3.5" />
+                      </button>
+                    </>
+                  ) : (
+                    "Disponível em Dízimos e ofertas"
+                  )}
+                  {!fund.canDelete ? <span>· Já recebeu contribuições</span> : null}
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -363,122 +601,7 @@ export function GivingFundsPanel() {
         )}
       </ul>
 
-      {canManage && isOwner && !profileReady && (
-        <FormAlert>
-          <span className="inline-flex flex-wrap items-center gap-x-1 gap-y-1">
-            Complete o perfil da igreja (contato, cidade/UF e dados fiscais)
-            antes de criar fundos.
-            <Link
-              href={settingsSectionPath("general")}
-              className="font-medium text-foreground underline underline-offset-2"
-            >
-              Ir para Geral
-            </Link>
-          </span>
-        </FormAlert>
-      )}
-
-      {canManage && profileReady && (
-        <div className="space-y-4 rounded-xl border border-border bg-muted/20 p-4">
-          <p className="text-sm font-medium text-foreground">Novo fundo</p>
-          <FormField label="Nome" htmlFor="fund-name" required>
-            <Input
-              id="fund-name"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="Ex.: Missões"
-              disabled={createFund.isPending}
-            />
-          </FormField>
-          <FormField label="Descrição" htmlFor="fund-description">
-            <Input
-              id="fund-description"
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-              placeholder="Opcional"
-              disabled={createFund.isPending}
-            />
-          </FormField>
-
-          <fieldset className="space-y-3">
-            <legend className="text-sm font-medium text-foreground">
-              Quem pode contribuir?
-            </legend>
-            <div className="space-y-3">
-              {(
-                [
-                  {
-                    value: "members" as const,
-                    title: "Membros logados",
-                    body: "Aparece em Dízimos e ofertas. O pagamento fica ligado à ficha do membro.",
-                  },
-                  {
-                    value: "public" as const,
-                    title: "Link público",
-                    body: "Qualquer pessoa pode pagar sem login. Não há vínculo com membro cadastrado.",
-                  },
-                ] as const
-              ).map((option) => {
-                const inputId = `fund-audience-${option.value}`;
-                return (
-                  <label
-                    key={option.value}
-                    htmlFor={inputId}
-                    className="flex cursor-pointer gap-3"
-                  >
-                    <input
-                      id={inputId}
-                      type="radio"
-                      name="fund-audience"
-                      value={option.value}
-                      checked={audience === option.value}
-                      onChange={() => setAudience(option.value)}
-                      disabled={createFund.isPending}
-                      className="mt-1 size-4 shrink-0 accent-foreground"
-                    />
-                    <span className="min-w-0">
-                      <span className="block text-sm font-medium text-foreground">
-                        {option.title}
-                      </span>
-                      <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
-                        {option.body}
-                      </span>
-                    </span>
-                  </label>
-                );
-              })}
-            </div>
-          </fieldset>
-
-          <FundPaymentMethodsField
-            key={methodsFormKey}
-            value={paymentMethods}
-            onChange={setPaymentMethods}
-            connect={connectQuery.data}
-            disabled={createFund.isPending}
-          />
-
-          <Button
-            type="button"
-            className="gap-2"
-            disabled={
-              createFund.isPending ||
-              name.trim().length < 2 ||
-              !methodsReady
-            }
-            onClick={() => void handleCreate()}
-          >
-            {createFund.isPending ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Plus className="size-4" />
-            )}
-            Criar fundo
-          </Button>
-        </div>
-      )}
-
-      {fundToDelete && (
+      {fundToDelete ? (
         <FundConfirmDialog
           title="Excluir fundo?"
           description={
@@ -501,9 +624,9 @@ export function GivingFundsPanel() {
           }}
           onConfirm={() => void handleConfirmDelete()}
         />
-      )}
+      ) : null}
 
-      {fundToDeactivate && (
+      {fundToDeactivate ? (
         <FundConfirmDialog
           title="Desativar fundo?"
           description={
@@ -525,7 +648,7 @@ export function GivingFundsPanel() {
           }}
           onConfirm={() => void handleConfirmDeactivate()}
         />
-      )}
+      ) : null}
     </div>
   );
 }

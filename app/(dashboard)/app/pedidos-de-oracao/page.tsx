@@ -8,7 +8,7 @@ export default function PrayerRequestsPage() {
   return (
     <DashboardPage
       title="Pedidos de oração"
-      subtitle="Compartilhe e una a igreja em intercessão"
+      subtitle="Uma o coração da igreja em intercessão"
       className="max-w-3xl"
     >
       <RequireActiveMember>

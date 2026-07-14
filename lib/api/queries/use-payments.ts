@@ -113,6 +113,19 @@ export function useGivingDonations(options?: { enabled?: boolean }) {
   });
 }
 
+export function useMyGivingDonations(options?: { enabled?: boolean }) {
+  const { church } = useAuth();
+  const churchId = church?.id;
+  const enabled = (options?.enabled ?? true) && Boolean(churchId);
+
+  return useQuery({
+    ...paymentsKeys.myGivingDonations(churchId ?? ""),
+    enabled,
+    staleTime: 15_000,
+    refetchOnWindowFocus: true,
+  });
+}
+
 export function useUpsertFiscalProfile() {
   const { church } = useAuth();
   const queryClient = useQueryClient();

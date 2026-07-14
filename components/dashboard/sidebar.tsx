@@ -11,7 +11,12 @@ import {
 import { ChevronDown, Settings, X } from "lucide-react";
 
 import { SidebarChurchBrand } from "@/components/dashboard/sidebar-church-brand";
-import { dashboardNavItems } from "@/constants/dashboard-nav";
+import {
+  dashboardNavGroups,
+  dashboardNavItems,
+  type DashboardNavGroup,
+  type DashboardNavItem,
+} from "@/constants/dashboard-nav";
 import { AUTH_ROUTES } from "@/constants/routes";
 import {
   useCareInboxPendingCount,
@@ -27,6 +32,7 @@ import {
   domainNavActive,
   type ProductDomain,
 } from "@/lib/ui/domain-theme";
+import { pendingNotificationStyles } from "@/lib/ui/notification-styles";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 
@@ -34,6 +40,29 @@ interface DashboardSidebarProps {
   onNavigate?: () => void;
   onClose?: () => void;
   className?: string;
+}
+
+function pathMatches(pathname: string, href: string): boolean {
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function NavBadge({ value }: { value: number }) {
+  if (value <= 0) {
+    return null;
+  }
+
+  // Cor única de notificação (âmbar sólido), independente de estado ativo —
+  // treina o usuário: "âmbar preenchido = há algo pendente aqui".
+  return (
+    <span
+      className={cn(
+        "mt-0.5 flex h-5 min-w-5 shrink-0 items-center justify-center rounded-md px-1 text-[10px] tabular-nums",
+        pendingNotificationStyles.countBadge,
+      )}
+    >
+      {value > 9 ? "9+" : value}
+    </span>
+  );
 }
 
 function NavLink({
@@ -44,44 +73,140 @@ function NavLink({
   domain,
   badge,
   onNavigate,
+  nested = false,
 }: {
   href: string;
   label: string;
-  icon: ComponentType<{ className?: string }>;
+  icon?: ComponentType<{ className?: string }>;
   isActive: boolean;
   domain: ProductDomain;
   badge?: number;
   onNavigate?: () => void;
+  nested?: boolean;
 }) {
   return (
     <Link
       href={href}
       onClick={onNavigate}
       className={cn(
-        "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors duration-150",
+        "flex items-start gap-3 rounded-lg text-sm leading-snug transition-colors duration-150",
+        nested ? "px-2.5 py-2" : "px-2.5 py-2.5",
         isActive
           ? cn("font-medium", domainNavActive[domain])
           : "font-normal text-muted-foreground hover:bg-muted/50 hover:text-foreground",
       )}
     >
-      <Icon
-        className={cn("size-4 shrink-0", isActive ? "opacity-90" : "opacity-65")}
-        aria-hidden
-      />
-      <span className="flex-1 truncate">{label}</span>
-      {badge !== undefined && badge > 0 && (
-        <span
+      {Icon ? (
+        <Icon
           className={cn(
-            "flex h-5 min-w-5 items-center justify-center rounded-md px-1 text-[10px] font-semibold tabular-nums",
-            isActive
-              ? "bg-foreground/90 text-background"
-              : "bg-attention-subtle text-attention-foreground",
+            "mt-0.5 size-5 shrink-0",
+            isActive ? "opacity-90" : "opacity-65",
           )}
-        >
-          {badge > 9 ? "9+" : badge}
-        </span>
-      )}
+          aria-hidden
+        />
+      ) : null}
+      <span className="min-w-0 flex-1 text-pretty wrap-break-word">{label}</span>
+      <NavBadge value={badge ?? 0} />
     </Link>
+  );
+}
+
+function NavGroupDropdown({
+  group,
+  items,
+  badges,
+  onNavigate,
+}: {
+  group: DashboardNavGroup;
+  items: DashboardNavItem[];
+  badges: Record<string, number>;
+  onNavigate?: () => void;
+}) {
+  const pathname = usePathname();
+  const groupActive = items.some((item) => pathMatches(pathname, item.href));
+  const [open, setOpen] = useState(groupActive);
+  const groupBadge = items.reduce(
+    (sum, item) => sum + (badges[item.href] ?? 0),
+    0,
+  );
+
+  useEffect(() => {
+    if (groupActive) {
+      setOpen(true);
+    }
+  }, [groupActive]);
+
+  if (items.length === 0) {
+    return null;
+  }
+
+  const GroupIcon = group.icon;
+
+  return (
+    <div className="flex flex-col gap-0.5">
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        className={cn(
+          "group flex w-full items-start gap-3 rounded-lg px-2.5 py-2.5 text-left text-sm leading-snug transition-colors duration-150",
+          groupActive
+            ? cn("font-medium", domainNavActive[group.domain])
+            : "font-normal text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+        )}
+        aria-expanded={open}
+      >
+        <GroupIcon
+          className={cn(
+            "mt-0.5 size-5 shrink-0",
+            groupActive ? "opacity-90" : "opacity-65",
+          )}
+          aria-hidden
+        />
+        <span className="min-w-0 flex-1 text-pretty wrap-break-word">
+          {group.label}
+        </span>
+        <NavBadge value={groupBadge} />
+        <ChevronDown
+          className={cn(
+            "mt-1 size-3.5 shrink-0 opacity-50 transition-transform duration-200",
+            open && "rotate-180",
+            groupActive && "opacity-70",
+          )}
+          aria-hidden
+        />
+      </button>
+
+      <div
+        className={cn(
+          "grid transition-[grid-template-rows,opacity] duration-200 ease-out",
+          open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
+        )}
+        aria-hidden={!open}
+      >
+        <div className="overflow-hidden">
+          <div
+            className="ml-2.5 mt-0.5 flex flex-col gap-0.5 border-l border-border/80 py-0.5 pl-2.5"
+            inert={open ? undefined : true}
+          >
+            {items.map((item) => {
+              const isActive = pathMatches(pathname, item.href);
+              return (
+                <NavLink
+                  key={item.href}
+                  href={item.href}
+                  label={item.shortLabel ?? item.label}
+                  isActive={isActive}
+                  domain={item.domain}
+                  badge={badges[item.href]}
+                  onNavigate={onNavigate}
+                  nested
+                />
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -107,7 +232,7 @@ function SettingsNavDropdown({ onNavigate }: { onNavigate?: () => void }) {
         type="button"
         onClick={() => setOpen((value) => !value)}
         className={cn(
-          "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors duration-150",
+          "flex w-full items-start gap-3 rounded-lg px-2.5 py-2.5 text-left text-sm leading-snug transition-colors duration-150",
           isSettingsRoute
             ? cn("font-medium", domainNavActive.settings)
             : "font-normal text-muted-foreground hover:bg-muted/50 hover:text-foreground",
@@ -116,52 +241,66 @@ function SettingsNavDropdown({ onNavigate }: { onNavigate?: () => void }) {
       >
         <Settings
           className={cn(
-            "size-4 shrink-0",
+            "mt-0.5 size-5 shrink-0",
             isSettingsRoute ? "opacity-90" : "opacity-65",
           )}
           aria-hidden
         />
-        <span className="flex-1 truncate text-left">Configurações</span>
+        <span className="min-w-0 flex-1 text-pretty">Configurações</span>
         <ChevronDown
           className={cn(
-            "size-3.5 shrink-0 opacity-60 transition-transform",
+            "mt-1 size-3.5 shrink-0 opacity-50 transition-transform duration-200",
             open && "rotate-180",
+            isSettingsRoute && "opacity-70",
           )}
           aria-hidden
         />
       </button>
 
-      {open && (
-        <div className="ml-2 flex flex-col gap-0.5 border-l border-border/80 pl-2">
-          {canAccessChurchSettings ? (
+      <div
+        className={cn(
+          "grid transition-[grid-template-rows,opacity] duration-200 ease-out",
+          open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
+        )}
+        aria-hidden={!open}
+      >
+        <div className="overflow-hidden">
+          <div
+            className="ml-2.5 mt-0.5 flex flex-col gap-0.5 border-l border-border/80 py-0.5 pl-2.5"
+            inert={open ? undefined : true}
+          >
+            {canAccessChurchSettings ? (
+              <Link
+                href={AUTH_ROUTES.settingsChurch}
+                onClick={onNavigate}
+                className={cn(
+                  "rounded-lg px-2.5 py-2 text-sm transition-colors",
+                  pathname.startsWith(AUTH_ROUTES.settingsChurch)
+                    ? cn("font-medium", domainNavActive.settings)
+                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+                )}
+              >
+                Igreja
+              </Link>
+            ) : null}
             <Link
-              href={AUTH_ROUTES.settingsChurch}
+              href={AUTH_ROUTES.settingsUser}
               onClick={onNavigate}
               className={cn(
                 "rounded-lg px-2.5 py-2 text-sm transition-colors",
-                pathname.startsWith(AUTH_ROUTES.settingsChurch)
+                pathname.startsWith(AUTH_ROUTES.settingsUser)
                   ? cn("font-medium", domainNavActive.settings)
                   : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
               )}
             >
-              Igreja
+              <span className="block truncate">{userLabel}</span>
+              <span className="block text-[11px] leading-tight opacity-70">
+                Usuário
+              </span>
             </Link>
-          ) : null}
-          <Link
-            href={AUTH_ROUTES.settingsUser}
-            onClick={onNavigate}
-            className={cn(
-              "rounded-lg px-2.5 py-2 text-sm transition-colors",
-              pathname.startsWith(AUTH_ROUTES.settingsUser)
-                ? cn("font-medium", domainNavActive.settings)
-                : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
-            )}
-          >
-            <span className="block truncate">{userLabel}</span>
-            <span className="block text-[11px] opacity-70">Usuário</span>
-          </Link>
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -205,6 +344,14 @@ export function DashboardSidebar({
     );
   }, [permissions, isAdultMember, isMemberActive, isOwner]);
 
+  const itemsByHref = useMemo(() => {
+    const map = new Map<string, DashboardNavItem>();
+    for (const item of visibleNavItems) {
+      map.set(item.href, item);
+    }
+    return map;
+  }, [visibleNavItems]);
+
   const pendingCount =
     canAccessSchedulesData && schedule
       ? schedule.summary.pendingAvailabilityCount
@@ -215,10 +362,45 @@ export function DashboardSidebar({
   );
   const carePendingCount = canReceiveCare ? (carePending?.count ?? 0) : 0;
 
+  const badges: Record<string, number> = {
+    [AUTH_ROUTES.mySchedules]: pendingCount,
+    [AUTH_ROUTES.communication]: communicationUnreadCount,
+    [AUTH_ROUTES.careRequests]: carePendingCount,
+  };
+
+  const groupedHrefs = useMemo(
+    () => new Set(dashboardNavGroups.flatMap((group) => group.itemHrefs)),
+    [],
+  );
+
+  const inicio = itemsByHref.get(AUTH_ROUTES.dashboard);
+  const relatorios = itemsByHref.get(AUTH_ROUTES.reports);
+
+  const resolvedGroups = useMemo(
+    () =>
+      dashboardNavGroups
+        .map((group) => ({
+          group,
+          items: group.itemHrefs
+            .map((href) => itemsByHref.get(href))
+            .filter((item): item is DashboardNavItem => Boolean(item)),
+        }))
+        .filter((entry) => entry.items.length > 0),
+    [itemsByHref],
+  );
+
+  // Itens visíveis que não estão em grupo nem nos solos conhecidos (defesa).
+  const orphanItems = visibleNavItems.filter(
+    (item) =>
+      !groupedHrefs.has(item.href) &&
+      item.href !== AUTH_ROUTES.dashboard &&
+      item.href !== AUTH_ROUTES.reports,
+  );
+
   return (
     <aside
       className={cn(
-        "flex h-full w-full shrink-0 flex-col border-r border-border/80 bg-surface lg:w-56",
+        "flex h-full w-full shrink-0 flex-col border-r border-border/80 bg-surface lg:w-60",
         className,
       )}
     >
@@ -240,37 +422,60 @@ export function DashboardSidebar({
         </div>
       </div>
 
-      <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2 py-3">
-        {visibleNavItems.map((item) => {
-          const isActive =
-            pathname === item.href || pathname.startsWith(`${item.href}/`);
+      <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-2 py-3.5">
+        {inicio ? (
+          <NavLink
+            href={inicio.href}
+            label={inicio.label}
+            icon={inicio.icon}
+            domain={inicio.domain}
+            isActive={pathMatches(pathname, inicio.href)}
+            onNavigate={onNavigate}
+          />
+        ) : null}
 
-          return (
+        {resolvedGroups.length > 0 ? (
+          <div className="mt-1 flex flex-col gap-1">
+            {resolvedGroups.map(({ group, items }) => (
+              <NavGroupDropdown
+                key={group.id}
+                group={group}
+                items={items}
+                badges={badges}
+                onNavigate={onNavigate}
+              />
+            ))}
+          </div>
+        ) : null}
+
+        {relatorios ? (
+          <div className="mt-1">
             <NavLink
-              key={item.href}
-              href={item.href}
-              label={item.label}
-              icon={item.icon}
-              domain={item.domain}
-              isActive={isActive}
-              badge={
-                item.href === AUTH_ROUTES.mySchedules
-                  ? pendingCount
-                  : item.href === AUTH_ROUTES.communication
-                    ? communicationUnreadCount
-                    : item.href === AUTH_ROUTES.careRequests
-                      ? carePendingCount
-                      : undefined
-              }
+              href={relatorios.href}
+              label={relatorios.label}
+              icon={relatorios.icon}
+              domain={relatorios.domain}
+              isActive={pathMatches(pathname, relatorios.href)}
               onNavigate={onNavigate}
             />
-          );
-        })}
+          </div>
+        ) : null}
 
-        <>
-          <div className="my-3 border-t border-border/80" />
-          <SettingsNavDropdown onNavigate={onNavigate} />
-        </>
+        {orphanItems.map((item) => (
+          <NavLink
+            key={item.href}
+            href={item.href}
+            label={item.label}
+            icon={item.icon}
+            domain={item.domain}
+            isActive={pathMatches(pathname, item.href)}
+            badge={badges[item.href]}
+            onNavigate={onNavigate}
+          />
+        ))}
+
+        <div className="my-3 border-t border-border/80" />
+        <SettingsNavDropdown onNavigate={onNavigate} />
       </nav>
     </aside>
   );

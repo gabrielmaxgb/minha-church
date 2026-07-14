@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, ChevronRight, Loader2 } from "lucide-react";
+import { CheckCircle2, ChevronRight, Clock3, Loader2 } from "lucide-react";
 
 import { CreateCareRequestModal } from "@/components/dashboard/care-requests/create-care-request-modal";
 import { Button } from "@/components/ui/button";
@@ -33,15 +33,18 @@ function formatRequestDate(value: string): string {
 function CareRequestStatusBadge({ request }: { request: CareRequest }) {
   if (request.status === "viewed") {
     return (
-      <span className="inline-flex items-center gap-1 text-sm font-medium text-emerald-700">
-        <CheckCircle2 className="size-4" aria-hidden />
-        Visualizada — aguarde o contato
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-success-subtle px-2.5 py-1 text-xs font-medium text-success-foreground">
+        <CheckCircle2 className="size-3.5 shrink-0" aria-hidden />
+        Visto — alguém entra em contato
       </span>
     );
   }
 
   return (
-    <span className="text-sm text-muted-foreground">Aguardando visualização</span>
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-muted/70 px-2.5 py-1 text-xs font-medium text-muted-foreground">
+      <Clock3 className="size-3.5 shrink-0" aria-hidden />
+      Enviado — aguardando leitura
+    </span>
   );
 }
 
@@ -79,9 +82,11 @@ export function CareRequestsContent() {
     <div className="space-y-8">
       <section className="space-y-3">
         <div>
-          <h2 className="text-base font-semibold text-foreground">Pedir ajuda</h2>
+          <h2 className="text-base font-semibold text-foreground">
+            Pedir um olhar pastoral
+          </h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            Escolha alguém habilitado a receber pedidos de aconselhamento ou visita.
+            Escolha alguém que possa te ouvir — aconselhamento ou visita.
           </p>
         </div>
 
@@ -105,20 +110,34 @@ export function CareRequestsContent() {
         )}
 
         {!loadingRecipients && !recipientsError && recipients.length === 0 && (
-          <div className="rounded-xl border border-dashed border-border bg-muted/20 p-6 text-sm text-muted-foreground">
-            Ninguém com permissão para receber pedidos está disponível no momento.
+          <div className="rounded-xl border border-dashed border-border bg-muted/20 p-6 text-sm leading-relaxed text-muted-foreground">
+            No momento não há ninguém disponível para receber pedidos. Vale
+            tentar de novo em breve.
           </div>
         )}
 
         {!loadingRecipients && recipients.length > 0 && (
-          <div className="overflow-hidden rounded-xl border border-border bg-background">
+          <div className="overflow-hidden rounded-xl border border-border bg-card">
             {recipients.map((recipient) => (
               <button
                 key={recipient.id}
                 type="button"
                 onClick={() => setSelectedRecipient(recipient)}
-                className="flex w-full items-center gap-3 border-b border-border px-4 py-3 text-left transition-colors last:border-b-0 hover:bg-muted/40"
+                className="group flex w-full items-center gap-3 border-b border-border px-4 py-3.5 text-left transition-colors last:border-b-0 hover:bg-muted/40"
               >
+                <div
+                  className="flex size-10 shrink-0 items-center justify-center rounded-full bg-domain-communication-subtle text-xs font-semibold tracking-wide text-domain-communication-foreground"
+                  aria-hidden
+                >
+                  {recipient.name
+                    .trim()
+                    .split(/\s+/)
+                    .filter(Boolean)
+                    .slice(0, 2)
+                    .map((part) => part[0] ?? "")
+                    .join("")
+                    .toUpperCase() || "?"}
+                </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-medium text-foreground">
                     {recipient.name}
@@ -129,7 +148,10 @@ export function CareRequestsContent() {
                     </p>
                   )}
                 </div>
-                <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                <span className="hidden text-sm text-muted-foreground transition-colors group-hover:text-foreground sm:inline">
+                  Pedir
+                </span>
+                <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
               </button>
             ))}
           </div>
@@ -139,10 +161,10 @@ export function CareRequestsContent() {
       <section className="space-y-3">
         <div>
           <h2 className="text-base font-semibold text-foreground">
-            Minhas solicitações
+            Meus pedidos
           </h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            Acompanhe se o pedido já foi visualizado.
+            Veja se já leram — e fique tranquilo enquanto o contato chega.
           </p>
         </div>
 
@@ -161,13 +183,14 @@ export function CareRequestsContent() {
           <div className="rounded-xl border border-border bg-muted/20 p-4 text-sm text-muted-foreground">
             {mineErr instanceof Error
               ? mineErr.message
-              : "Não foi possível carregar suas solicitações."}
+              : "Não foi possível carregar seus pedidos."}
           </div>
         )}
 
         {!loadingMine && !mineError && myRequests.length === 0 && (
-          <div className="rounded-xl border border-dashed border-border bg-muted/20 p-6 text-sm text-muted-foreground">
-            Você ainda não enviou nenhuma solicitação.
+          <div className="rounded-xl border border-dashed border-border bg-muted/20 p-6 text-sm leading-relaxed text-muted-foreground">
+            Você ainda não enviou nenhum pedido. Quando precisar, a lista acima
+            está pronta.
           </div>
         )}
 
@@ -176,22 +199,25 @@ export function CareRequestsContent() {
             {myRequests.map((request) => (
               <li
                 key={request.id}
-                className="rounded-xl border border-border bg-background px-4 py-3"
+                className="rounded-xl border border-border bg-card px-4 py-3.5"
               >
-                <div className="flex flex-wrap items-start justify-between gap-2">
+                <div className="flex flex-wrap items-start justify-between gap-2.5">
                   <div className="min-w-0">
                     <p className="font-medium text-foreground">
-                      {CARE_REQUEST_TYPE_LABELS[request.type]} ·{" "}
-                      {request.recipient.name}
+                      {CARE_REQUEST_TYPE_LABELS[request.type]}
+                      <span className="font-normal text-muted-foreground">
+                        {" "}
+                        com {request.recipient.name}
+                      </span>
                     </p>
                     <p className="mt-0.5 text-xs text-muted-foreground">
                       {formatRequestDate(request.createdAt)}
                     </p>
-                    {request.message && (
-                      <p className="mt-2 text-sm text-muted-foreground">
+                    {request.message ? (
+                      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                         {request.message}
                       </p>
-                    )}
+                    ) : null}
                   </div>
                   <CareRequestStatusBadge request={request} />
                 </div>
@@ -204,9 +230,11 @@ export function CareRequestsContent() {
       {canReceive && (
         <section className="space-y-3">
           <div>
-            <h2 className="text-base font-semibold text-foreground">Recebidas</h2>
+            <h2 className="text-base font-semibold text-foreground">
+              Pedidos recebidos
+            </h2>
             <p className="mt-0.5 text-sm text-muted-foreground">
-              Marque como visualizada para o solicitante saber que você viu o pedido.
+              Confirme a leitura quando puder — isso tranquiliza quem pediu.
             </p>
           </div>
 
@@ -225,13 +253,13 @@ export function CareRequestsContent() {
             <div className="rounded-xl border border-border bg-muted/20 p-4 text-sm text-muted-foreground">
               {inboxErr instanceof Error
                 ? inboxErr.message
-                : "Não foi possível carregar a caixa de entrada."}
+                : "Não foi possível carregar os pedidos recebidos."}
             </div>
           )}
 
           {!loadingInbox && !inboxError && inbox.length === 0 && (
-            <div className="rounded-xl border border-dashed border-border bg-muted/20 p-6 text-sm text-muted-foreground">
-              Nenhuma solicitação recebida ainda.
+            <div className="rounded-xl border border-dashed border-border bg-muted/20 p-6 text-sm leading-relaxed text-muted-foreground">
+              Nenhum pedido por aqui ainda. Quando chegarem, aparecem nesta lista.
             </div>
           )}
 
@@ -247,33 +275,38 @@ export function CareRequestsContent() {
                   <li
                     key={request.id}
                     className={cn(
-                      "rounded-xl border border-border bg-background px-4 py-3",
-                      isPending && "border-foreground/20",
+                      "rounded-xl border bg-card px-4 py-3.5",
+                      isPending
+                        ? "border-domain-communication/25"
+                        : "border-border",
                     )}
                   >
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div className="min-w-0">
                         <p className="font-medium text-foreground">
-                          {CARE_REQUEST_TYPE_LABELS[request.type]} ·{" "}
-                          {request.requester.name}
+                          {CARE_REQUEST_TYPE_LABELS[request.type]}
+                          <span className="font-normal text-muted-foreground">
+                            {" "}
+                            de {request.requester.name}
+                          </span>
                         </p>
                         <p className="mt-0.5 text-xs text-muted-foreground">
                           {formatRequestDate(request.createdAt)}
                         </p>
-                        {request.message && (
-                          <p className="mt-2 text-sm text-muted-foreground">
+                        {request.message ? (
+                          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                             {request.message}
                           </p>
-                        )}
-                        {!isPending && (
-                          <p className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-emerald-700">
-                            <CheckCircle2 className="size-4" aria-hidden />
-                            Visualizada
+                        ) : null}
+                        {!isPending ? (
+                          <p className="mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-success-subtle px-2.5 py-1 text-xs font-medium text-success-foreground">
+                            <CheckCircle2 className="size-3.5" aria-hidden />
+                            Leitura confirmada
                           </p>
-                        )}
+                        ) : null}
                       </div>
 
-                      {isPending && (
+                      {isPending ? (
                         <Button
                           type="button"
                           size="sm"
@@ -284,13 +317,13 @@ export function CareRequestsContent() {
                           {marking ? (
                             <>
                               <Loader2 className="size-4 animate-spin" />
-                              Salvando...
+                              Confirmando…
                             </>
                           ) : (
-                            "Marcar como visualizada"
+                            "Confirmar leitura"
                           )}
                         </Button>
-                      )}
+                      ) : null}
                     </div>
                   </li>
                 );

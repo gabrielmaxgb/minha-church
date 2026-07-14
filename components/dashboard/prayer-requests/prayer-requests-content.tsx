@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
-import { HandHeart, Loader2, Trash2 } from "lucide-react";
+import { Check, HandHeart, Heart, Loader2, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,6 +14,8 @@ import {
 } from "@/lib/api/queries";
 import { cn } from "@/lib/utils";
 import type { PrayerRequest } from "@/types/prayer-requests";
+
+const BODY_MAX = 1000;
 
 function formatRequestDate(value: string): string {
   return new Intl.DateTimeFormat("pt-BR", {
@@ -37,6 +39,43 @@ function authorLabel(request: PrayerRequest): string {
   return request.author?.name ?? "Membro";
 }
 
+function authorInitials(request: PrayerRequest): string {
+  const name = request.author?.name?.trim();
+  if (!name || (request.isAnonymous && !request.author)) {
+    return "";
+  }
+
+  const parts = name.split(/\s+/).filter(Boolean);
+  if (parts.length === 1) {
+    return parts[0]!.slice(0, 2).toUpperCase();
+  }
+
+  return `${parts[0]![0] ?? ""}${parts[parts.length - 1]![0] ?? ""}`.toUpperCase();
+}
+
+function AuthorMark({ request }: { request: PrayerRequest }) {
+  const anonymousToOthers = request.isAnonymous && !request.author;
+  const initials = authorInitials(request);
+
+  return (
+    <span
+      className={cn(
+        "flex size-10 shrink-0 items-center justify-center rounded-full text-xs font-semibold tracking-wide",
+        anonymousToOthers
+          ? "bg-domain-communication-subtle text-domain-communication-foreground"
+          : "bg-muted text-foreground",
+      )}
+      aria-hidden
+    >
+      {anonymousToOthers || !initials ? (
+        <HandHeart className="size-4" strokeWidth={2} />
+      ) : (
+        initials
+      )}
+    </span>
+  );
+}
+
 function PrayerRequestCard({
   request,
   onPray,
@@ -51,69 +90,91 @@ function PrayerRequestCard({
   deleting: boolean;
 }) {
   return (
-    <article className="space-y-3 border-b border-border/70 pb-5 last:border-b-0 last:pb-0">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 space-y-1">
-          <p className="text-sm font-medium text-foreground">
-            {authorLabel(request)}
+    <article
+      className={cn(
+        "rounded-2xl border border-border/80 bg-card p-4 shadow-xs sm:p-5",
+        "transition-colors",
+      )}
+    >
+      <div className="flex items-start gap-3">
+        <AuthorMark request={request} />
+
+        <div className="min-w-0 flex-1 space-y-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold tracking-tight text-foreground">
+                {authorLabel(request)}
+              </p>
+              <time
+                dateTime={request.createdAt}
+                className="mt-0.5 block text-xs text-muted-foreground"
+              >
+                {formatRequestDate(request.createdAt)}
+              </time>
+            </div>
+
+            {request.canDelete ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-8 shrink-0 text-muted-foreground hover:bg-destructive/8 hover:text-destructive"
+                onClick={onDelete}
+                disabled={deleting}
+                aria-label="Remover pedido"
+              >
+                {deleting ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Trash2 className="size-4" />
+                )}
+              </Button>
+            ) : null}
+          </div>
+
+          <p className="whitespace-pre-wrap text-[0.95rem] leading-relaxed text-foreground">
+            {request.body}
           </p>
-          <p className="text-xs text-muted-foreground">
-            {formatRequestDate(request.createdAt)}
-          </p>
-        </div>
-        {request.canDelete ? (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="shrink-0 text-muted-foreground hover:text-destructive"
-            onClick={onDelete}
-            disabled={deleting}
-            aria-label="Remover pedido"
-          >
-            {deleting ? (
-              <Loader2 className="size-4 animate-spin" />
+
+          <div className="flex flex-wrap items-center gap-2 pt-0.5">
+            <Button
+              type="button"
+              size="sm"
+              variant={request.prayedByMe ? "secondary" : "outline"}
+              className={cn(
+                "h-9 gap-2 rounded-lg px-3 font-medium shadow-xs transition-[transform,background-color,border-color] active:scale-[0.98]",
+                request.prayedByMe
+                  ? "border-destructive/25 bg-destructive/8 text-destructive hover:bg-destructive/12 hover:text-destructive"
+                  : "hover:border-domain-communication/40 hover:bg-domain-communication-subtle/60 hover:text-domain-communication-foreground",
+              )}
+              onClick={onPray}
+              disabled={praying}
+              aria-pressed={request.prayedByMe}
+            >
+              {praying ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : request.prayedByMe ? (
+                <Heart className="size-4 fill-current" aria-hidden />
+              ) : (
+                <HandHeart className="size-4" aria-hidden />
+              )}
+              {request.prayedByMe ? "Estou orando" : "Orar"}
+            </Button>
+
+            {request.prayerCount > 0 ? (
+              <span className="text-xs text-muted-foreground tabular-nums">
+                {request.prayerCount === 1
+                  ? "1 pessoa orando"
+                  : `${request.prayerCount} pessoas orando`}
+              </span>
             ) : (
-              <Trash2 className="size-4" />
+              <span className="text-xs text-muted-foreground">
+                Seja o primeiro a orar
+              </span>
             )}
-          </Button>
-        ) : null}
+          </div>
+        </div>
       </div>
-
-      <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
-        {request.body}
-      </p>
-
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        className={cn(
-          "gap-2 px-2",
-          request.prayedByMe
-            ? "text-domain-members-foreground"
-            : "text-muted-foreground",
-        )}
-        onClick={onPray}
-        disabled={praying}
-        aria-pressed={request.prayedByMe}
-      >
-        {praying ? (
-          <Loader2 className="size-4 animate-spin" />
-        ) : (
-          <HandHeart
-            className={cn(
-              "size-4",
-              request.prayedByMe && "fill-current opacity-90",
-            )}
-            aria-hidden
-          />
-        )}
-        <span>
-          {request.prayedByMe ? "Estou orando" : "Orar"}
-          {request.prayerCount > 0 ? ` · ${request.prayerCount}` : ""}
-        </span>
-      </Button>
     </article>
   );
 }
@@ -136,6 +197,9 @@ export function PrayerRequestsContent() {
   const createRequest = useCreatePrayerRequest();
   const togglePray = useTogglePrayerRequestPray();
   const deleteRequest = useDeletePrayerRequest();
+
+  const trimmedLength = body.trim().length;
+  const canPublish = trimmedLength > 0 && !createRequest.isPending;
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -164,42 +228,82 @@ export function PrayerRequestsContent() {
   }
 
   return (
-    <div className="space-y-8">
-      <section className="space-y-3">
-        <div>
-          <h2 className="text-base font-semibold text-foreground">
-            Compartilhar pedido
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            A igreja pode se unir em oração. Use com cuidado e respeito.
-          </p>
+    <div className="space-y-10">
+      <section className="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-xs">
+        <div className="border-b border-border/70 px-4 py-4 sm:px-5">
+          <div className="flex items-start gap-3">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-domain-communication-subtle text-domain-communication-foreground">
+              <HandHeart className="size-4" aria-hidden />
+            </span>
+            <div className="min-w-0">
+              <h2 className="text-base font-semibold tracking-tight text-foreground">
+                Compartilhar pedido
+              </h2>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                A igreja pode se unir em oração. Escreva com cuidado e respeito.
+              </p>
+            </div>
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <Textarea
-            value={body}
-            onChange={(event) => setBody(event.target.value)}
-            placeholder="Pelo que você gostaria de oração?"
-            maxLength={1000}
-            rows={4}
-            disabled={createRequest.isPending}
-          />
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <label
-              htmlFor={anonymousId}
-              className="inline-flex cursor-pointer items-center gap-2 text-sm text-muted-foreground"
+        <form onSubmit={handleSubmit} className="space-y-4 px-4 py-4 sm:px-5 sm:py-5">
+          <div className="space-y-2">
+            <Textarea
+              value={body}
+              onChange={(event) => setBody(event.target.value)}
+              placeholder="Pelo que você gostaria de oração?"
+              maxLength={BODY_MAX}
+              rows={4}
+              disabled={createRequest.isPending}
+              className="min-h-28 resize-y rounded-xl border-border/80 bg-background text-[0.95rem] leading-relaxed shadow-none focus-visible:ring-domain-communication/30"
+            />
+            <div className="flex justify-end">
+              <span
+                className={cn(
+                  "text-[11px] tabular-nums text-muted-foreground",
+                  body.length > BODY_MAX * 0.9 && "text-attention-foreground",
+                )}
+              >
+                {body.length}/{BODY_MAX}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <button
+              id={anonymousId}
+              type="button"
+              role="switch"
+              aria-checked={isAnonymous}
+              onClick={() => setIsAnonymous((value) => !value)}
+              disabled={createRequest.isPending}
+              className={cn(
+                "inline-flex h-9 w-fit items-center gap-2.5 rounded-lg border px-3 text-sm transition-colors",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                isAnonymous
+                  ? "border-domain-communication/35 bg-domain-communication-subtle text-domain-communication-foreground"
+                  : "border-border bg-background text-muted-foreground hover:bg-muted/40 hover:text-foreground",
+              )}
             >
-              <input
-                id={anonymousId}
-                type="checkbox"
-                checked={isAnonymous}
-                onChange={(event) => setIsAnonymous(event.target.checked)}
-                className="size-4 rounded border-border"
-                disabled={createRequest.isPending}
-              />
+              <span
+                className={cn(
+                  "relative flex size-4 shrink-0 items-center justify-center rounded border transition-colors",
+                  isAnonymous
+                    ? "border-domain-communication bg-domain-communication text-white"
+                    : "border-muted-foreground/40 bg-background",
+                )}
+                aria-hidden
+              >
+                {isAnonymous ? <Check className="size-3 stroke-[3]" /> : null}
+              </span>
               Publicar de forma anônima
-            </label>
-            <Button type="submit" disabled={createRequest.isPending}>
+            </button>
+
+            <Button
+              type="submit"
+              disabled={!canPublish}
+              className="h-9 min-w-28 gap-2 shadow-xs active:scale-[0.98]"
+            >
               {createRequest.isPending ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
@@ -210,39 +314,60 @@ export function PrayerRequestsContent() {
               )}
             </Button>
           </div>
+
           {formError ? (
-            <p className="text-sm text-destructive">{formError}</p>
+            <p className="text-sm text-destructive" role="alert">
+              {formError}
+            </p>
           ) : null}
         </form>
       </section>
 
       <section className="space-y-4">
-        <div>
-          <h2 className="text-base font-semibold text-foreground">
-            Quadro de oração
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Toque em “Orar” para marcar que você está intercedendo.
-          </p>
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <h2 className="text-base font-semibold tracking-tight text-foreground">
+              Quadro de oração
+            </h2>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              Toque em Orar para marcar que você está intercedendo.
+            </p>
+          </div>
+          {!isLoading && !isError && requests.length > 0 ? (
+            <p className="shrink-0 text-xs tabular-nums text-muted-foreground">
+              {requests.length === 1
+                ? "1 pedido"
+                : `${requests.length} pedidos`}
+            </p>
+          ) : null}
         </div>
 
         {isLoading ? (
-          <div className="space-y-4">
-            <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-24 w-full" />
+          <div className="space-y-3">
+            <Skeleton className="h-32 w-full rounded-2xl" />
+            <Skeleton className="h-32 w-full rounded-2xl" />
           </div>
         ) : isError ? (
-          <p className="text-sm text-destructive">
+          <p className="rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-6 text-sm text-destructive">
             {error instanceof Error
               ? error.message
               : "Não foi possível carregar os pedidos."}
           </p>
         ) : requests.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-border bg-muted/20 p-8 text-center text-sm text-muted-foreground">
-            Ainda não há pedidos publicados. Seja o primeiro a compartilhar.
-          </p>
+          <div className="flex flex-col items-center rounded-2xl border border-dashed border-border bg-muted/15 px-6 py-12 text-center">
+            <span className="flex size-12 items-center justify-center rounded-2xl bg-domain-communication-subtle text-domain-communication-foreground">
+              <HandHeart className="size-5" aria-hidden />
+            </span>
+            <p className="mt-4 text-sm font-medium text-foreground">
+              Ainda não há pedidos no quadro
+            </p>
+            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+              Seja o primeiro a compartilhar. A igreja se une em oração a partir
+              daqui.
+            </p>
+          </div>
         ) : (
-          <div className="space-y-5">
+          <div className="space-y-3">
             {requests.map((request) => (
               <PrayerRequestCard
                 key={request.id}

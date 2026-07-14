@@ -351,11 +351,11 @@ function NotificationsPanel({
                   </p>
                   <p className="mt-1 text-sm font-medium leading-snug">
                     {carePendingCount === 1
-                      ? "1 solicitação aguardando visualização"
-                      : `${carePendingCount} solicitações aguardando visualização`}
+                      ? "1 pedido esperando sua leitura"
+                      : `${carePendingCount} pedidos esperando sua leitura`}
                   </p>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    Marque como visualizada para o solicitante saber que você viu o pedido.
+                    Confirmar a leitura tranquiliza quem pediu.
                   </p>
                   <Button
                     variant="outline"
@@ -364,7 +364,7 @@ function NotificationsPanel({
                     asChild
                     onClick={onClose}
                   >
-                    <Link href={AUTH_ROUTES.careRequests}>Ver recebidas</Link>
+                    <Link href={AUTH_ROUTES.careRequests}>Ver pedidos</Link>
                   </Button>
                 </div>
               </div>

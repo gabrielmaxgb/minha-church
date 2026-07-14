@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Landmark, Loader2, Lock } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowRight, Landmark, Loader2, Lock, PiggyBank, Receipt } from "lucide-react";
 
 import { RequirePermission } from "@/components/auth/require-permission";
 import { DashboardPage } from "@/components/dashboard/dashboard-shell";
@@ -15,7 +16,10 @@ import { AUTH_ROUTES, settingsSectionPath } from "@/constants/routes";
 import { useConnectStatus, usePaymentsSummary } from "@/lib/api/queries";
 import type { ConnectOnboardingStatus } from "@/lib/api/payments";
 import { useFeatureLock } from "@/lib/subscription/use-feature-lock";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
+
+type FinancesManageTab = "fundos" | "contribuicoes";
 
 function ownerActivationCopy(status: ConnectOnboardingStatus): {
   title: string;
@@ -84,6 +88,108 @@ function FinancesLockedCard({ isOwner }: { isOwner: boolean }) {
         </div>
       )}
     </div>
+  );
+}
+
+function FinancesManageTabs({
+  value,
+  onChange,
+}: {
+  value: FinancesManageTab;
+  onChange: (tab: FinancesManageTab) => void;
+}) {
+  const tabs: Array<{
+    id: FinancesManageTab;
+    label: string;
+    icon: typeof PiggyBank;
+  }> = [
+    { id: "fundos", label: "Fundos", icon: PiggyBank },
+    { id: "contribuicoes", label: "Contribuições", icon: Receipt },
+  ];
+
+  return (
+    <div
+      role="tablist"
+      aria-label="Gestão financeira"
+      className="inline-flex w-full rounded-xl border border-border bg-muted/35 p-1 sm:w-auto"
+    >
+      {tabs.map((tab) => {
+        const Icon = tab.icon;
+        const selected = value === tab.id;
+        return (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            aria-selected={selected}
+            id={`financas-tab-${tab.id}`}
+            onClick={() => onChange(tab.id)}
+            className={cn(
+              "inline-flex flex-1 items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm transition-colors sm:flex-none sm:min-w-36",
+              selected
+                ? "bg-card font-medium text-foreground shadow-xs"
+                : "font-normal text-muted-foreground hover:text-foreground",
+            )}
+          >
+            <Icon className="size-4 opacity-80" aria-hidden />
+            {tab.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function FinancesManageSection() {
+  const [tab, setTab] = useState<FinancesManageTab>("fundos");
+
+  useEffect(() => {
+    const readHash = () => {
+      if (window.location.hash === "#contribuicoes") {
+        setTab("contribuicoes");
+      }
+    };
+
+    readHash();
+    window.addEventListener("hashchange", readHash);
+    return () => window.removeEventListener("hashchange", readHash);
+  }, []);
+
+  const selectTab = (next: FinancesManageTab) => {
+    setTab(next);
+    const url = new URL(window.location.href);
+    if (next === "contribuicoes") {
+      url.hash = "contribuicoes";
+    } else {
+      url.hash = "";
+    }
+    window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+  };
+
+  return (
+    <section className="space-y-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-lg font-semibold tracking-tight">Gestão</h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            Fundos de cobrança e histórico de entradas.
+          </p>
+        </div>
+        <FinancesManageTabs value={tab} onChange={selectTab} />
+      </div>
+
+      <div
+        role="tabpanel"
+        aria-labelledby={`financas-tab-${tab}`}
+        className="min-h-48"
+      >
+        {tab === "fundos" ? (
+          <GivingFundsPanel />
+        ) : (
+          <GivingDonationsPanel embedded />
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -157,10 +263,7 @@ function FinancesContent() {
       <FinancesSummaryCards summary={summary} isPending={summaryPending} />
 
       {canManage ? (
-        <>
-          <GivingDonationsPanel />
-          <GivingFundsPanel />
-        </>
+        <FinancesManageSection />
       ) : (
         <div className="rounded-xl border border-dashed border-border bg-muted/20 p-6 text-sm text-muted-foreground">
           Você tem acesso ao resumo financeiro. Para criar fundos e ver o

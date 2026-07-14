@@ -13,6 +13,7 @@ export type SettingsArea = "church" | "user";
 export type SettingsSection =
   | "profile"
   | "my-roles"
+  | "my-contributions"
   | "subscription"
   | "recebimentos"
   | "ministries"
@@ -92,6 +93,12 @@ const ALL_ITEMS: SettingsNavItem[] = [
     area: "user",
   },
   {
+    id: "my-contributions",
+    label: "Minhas contribuições",
+    description: "Ofertas e doações que você fez",
+    area: "user",
+  },
+  {
     id: "ministries",
     label: "Funções de serviço",
     description: "Onde você pode servir na escala",
@@ -137,7 +144,11 @@ export function useSettingsNav(
 
       if (writesBlocked) {
         if (area === "user") {
-          return item.id === "profile" || item.id === "my-roles";
+          return (
+            item.id === "profile" ||
+            item.id === "my-roles" ||
+            item.id === "my-contributions"
+          );
         }
 
         // Conta travada: manter só Assinatura (para reativar) e Geral
@@ -161,7 +172,12 @@ export function useSettingsNav(
         return Boolean(user?.isOwner);
       }
 
-      if (item.id === "profile" || item.id === "ministries" || item.id === "my-roles") {
+      if (
+        item.id === "profile" ||
+        item.id === "ministries" ||
+        item.id === "my-roles" ||
+        item.id === "my-contributions"
+      ) {
         return true;
       }
 

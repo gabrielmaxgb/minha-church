@@ -39,12 +39,15 @@ export function DashboardTopbar({
     user,
     church,
     churches,
+    permissions,
     logout,
     switchChurch,
     isSwitchingChurch,
   } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [churchMenuOpen, setChurchMenuOpen] = useState(false);
+  const canAccessChurchSettings =
+    Boolean(user?.isOwner) || Boolean(permissions?.settings.access);
 
   const churchLabel =
     church?.memberCount != null
@@ -184,14 +187,16 @@ export function DashboardTopbar({
                       <User className="size-4" />
                       Configurações de perfil
                     </Link>
-                    <Link
-                      href={AUTH_ROUTES.settingsChurch}
-                      className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm transition-colors hover:bg-muted"
-                      onClick={() => setMenuOpen(false)}
-                    >
-                      <Church className="size-4" />
-                      Configurações da igreja
-                    </Link>
+                    {canAccessChurchSettings ? (
+                      <Link
+                        href={AUTH_ROUTES.settingsChurch}
+                        className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm transition-colors hover:bg-muted"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        <Church className="size-4" />
+                        Configurações da igreja
+                      </Link>
+                    ) : null}
                     <button
                       type="button"
                       onClick={() => {

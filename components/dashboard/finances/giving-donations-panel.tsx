@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { FormAlert } from "@/components/ui/form-field";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGivingDonations } from "@/lib/api/queries";
-import { formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 
 const STATUS_LABEL: Record<string, string> = {
   pending: "Pendente",
@@ -32,14 +32,18 @@ function statusVariant(
   }
 }
 
-export function GivingDonationsPanel() {
+export function GivingDonationsPanel({
+  embedded = false,
+}: {
+  embedded?: boolean;
+}) {
   const donationsQuery = useGivingDonations();
   const donations = donationsQuery.data ?? [];
 
   if (donationsQuery.isPending) {
     return (
       <div className="space-y-3">
-        <Skeleton className="h-8 w-40" />
+        {!embedded ? <Skeleton className="h-8 w-40" /> : null}
         <Skeleton className="h-20 w-full rounded-xl" />
         <Skeleton className="h-20 w-full rounded-xl" />
       </div>
@@ -55,24 +59,34 @@ export function GivingDonationsPanel() {
   }
 
   return (
-    <div id="contribuicoes" className="scroll-mt-24 space-y-4">
-      <div>
-        <h2 className="text-lg font-semibold tracking-tight">Contribuições</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Entradas recentes por membros logados e links públicos.
+    <div
+      id="contribuicoes"
+      className={cn("scroll-mt-24 space-y-4", embedded && "space-y-3")}
+    >
+      {!embedded ? (
+        <div>
+          <h2 className="text-lg font-semibold tracking-tight">Contribuições</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Entradas recentes por membros logados e links públicos.
+          </p>
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          Entradas recentes — membros logados e links públicos.
         </p>
-      </div>
+      )}
 
-      <ul className="divide-y divide-border rounded-xl border border-border">
+      <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
         {donations.length === 0 ? (
-          <li className="px-4 py-6 text-sm text-muted-foreground">
-            Nenhuma contribuição ainda.
+          <li className="px-4 py-8 text-center text-sm leading-relaxed text-muted-foreground">
+            Nenhuma contribuição ainda. Quando entrarem pagamentos, aparecem
+            aqui.
           </li>
         ) : (
           donations.map((donation) => (
             <li
               key={donation.id}
-              className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+              className="flex flex-col gap-2 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between"
             >
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">

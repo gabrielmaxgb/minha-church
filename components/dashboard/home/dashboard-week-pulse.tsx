@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { useMemo } from "react";
 
+import { Button } from "@/components/ui/button";
 import { AUTH_ROUTES } from "@/constants/routes";
 import { buildWeekDensity } from "@/lib/dashboard/week-density";
 import { cn } from "@/lib/utils";
@@ -90,19 +92,32 @@ export function DashboardWeekPulse({
       )}
     >
       <div className="flex items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <h2 className="text-sm font-medium text-domain-activities-foreground">
             Ritmo da semana
           </h2>
           <p className="mt-0.5 text-xs text-muted-foreground">
             {chartOnly
-              ? "Atividades por dia na agenda"
+              ? "Eventos por dia na agenda"
               : "Quantas atividades em cada dia — com base na agenda real."}
           </p>
         </div>
-        <p className="shrink-0 rounded-md bg-domain-activities/15 px-2 py-1 text-xs font-medium tabular-nums text-domain-activities-foreground">
-          {weekTotal} no total
-        </p>
+        <div className="flex shrink-0 flex-col items-end gap-2">
+          <p className="rounded-md bg-domain-activities/15 px-2 py-1 text-xs font-medium tabular-nums text-domain-activities-foreground">
+            {weekTotal} no total
+          </p>
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1.5 border-domain-activities/25 bg-card/80 text-domain-activities-foreground hover:bg-domain-activities-subtle"
+          >
+            <Link href={AUTH_ROUTES.activities}>
+              Ver agenda
+              <ArrowRight className="size-3.5 opacity-80" aria-hidden />
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="mt-5 flex h-28 items-end gap-1.5 sm:gap-2">

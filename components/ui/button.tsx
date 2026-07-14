@@ -5,13 +5,20 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-[color,background-color,border-color,box-shadow,transform] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        // Ação primária — ganha física (sombra + leve elevação no hover) para
+        // ler como "apertável", não como texto escuro.
+        default:
+          "bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 hover:-translate-y-px hover:shadow-sm active:translate-y-0 active:shadow-xs",
+        // CTA de destaque (nível 4) — âmbar sólido. Reserve para os momentos
+        // "de dinheiro": ativar recebimentos, responder escala, publicar.
+        cta:
+          "bg-signal text-attention-solid-foreground shadow-xs hover:brightness-[1.04] hover:-translate-y-px hover:shadow-sm active:translate-y-0 active:shadow-xs",
         destructive:
-          "bg-destructive text-white hover:bg-destructive/90",
+          "bg-destructive text-white shadow-xs hover:bg-destructive/90 hover:shadow-sm",
         outline:
           "border border-border bg-card hover:bg-muted",
         secondary:

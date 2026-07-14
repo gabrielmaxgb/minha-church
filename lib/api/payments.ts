@@ -406,3 +406,12 @@ export async function fetchGivingDonations(
     { churchId },
   );
 }
+
+export async function fetchMyGivingDonations(
+  churchId: string,
+): Promise<GivingDonation[]> {
+  return apiClient<GivingDonation[]>(
+    `/churches/${churchId}/payments/donations/mine`,
+    { churchId },
+  );
+}

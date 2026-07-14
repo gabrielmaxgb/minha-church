@@ -60,7 +60,7 @@ export function ScheduleBanner() {
               </p>
             </div>
           </div>
-          <Button size="lg" className="shrink-0" asChild>
+          <Button variant="cta" size="lg" className="shrink-0" asChild>
             <span className="inline-flex items-center gap-2">
               Responder agora
               <ChevronRight className="size-4 transition-transform group-hover:translate-x-0.5" />

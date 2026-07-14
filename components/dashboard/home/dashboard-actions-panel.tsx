@@ -5,6 +5,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   AlertCircle,
   Calendar,
+  ChevronRight,
   HeartHandshake,
   KeyRound,
   Layers,
@@ -54,46 +55,59 @@ interface QuickAction {
 
 const toneStyles: Record<
   QuickAction["tone"],
-  { shell: string; icon: string }
+  { shell: string; icon: string; chevron: string }
 > = {
   members: {
     shell:
-      "border-domain-members/20 bg-gradient-to-br from-domain-members-subtle/80 via-card to-card hover:border-domain-members/35",
-    icon: "bg-domain-members/15 text-domain-members-foreground",
+      "border-domain-members/25 bg-domain-members-subtle/70 hover:border-domain-members/45 hover:bg-domain-members-subtle",
+    icon: "bg-domain-members/20 text-domain-members-foreground group-hover:bg-domain-members/30",
+    chevron: "text-domain-members-foreground/55 group-hover:text-domain-members-foreground",
   },
   activities: {
     shell:
-      "border-domain-activities/20 bg-gradient-to-br from-domain-activities-subtle/80 via-card to-card hover:border-domain-activities/35",
-    icon: "bg-domain-activities/15 text-domain-activities-foreground",
+      "border-domain-activities/25 bg-domain-activities-subtle/70 hover:border-domain-activities/45 hover:bg-domain-activities-subtle",
+    icon: "bg-domain-activities/20 text-domain-activities-foreground group-hover:bg-domain-activities/30",
+    chevron:
+      "text-domain-activities-foreground/55 group-hover:text-domain-activities-foreground",
   },
   communication: {
     shell:
-      "border-domain-communication/20 bg-gradient-to-br from-domain-communication-subtle/80 via-card to-card hover:border-domain-communication/35",
-    icon: "bg-domain-communication/15 text-domain-communication-foreground",
+      "border-domain-communication/25 bg-domain-communication-subtle/70 hover:border-domain-communication/45 hover:bg-domain-communication-subtle",
+    icon: "bg-domain-communication/20 text-domain-communication-foreground group-hover:bg-domain-communication/30",
+    chevron:
+      "text-domain-communication-foreground/55 group-hover:text-domain-communication-foreground",
   },
   ministries: {
     shell:
-      "border-domain-ministries/20 bg-gradient-to-br from-domain-ministries-subtle/80 via-card to-card hover:border-domain-ministries/35",
-    icon: "bg-domain-ministries/15 text-domain-ministries-foreground",
+      "border-domain-ministries/25 bg-domain-ministries-subtle/70 hover:border-domain-ministries/45 hover:bg-domain-ministries-subtle",
+    icon: "bg-domain-ministries/20 text-domain-ministries-foreground group-hover:bg-domain-ministries/30",
+    chevron:
+      "text-domain-ministries-foreground/55 group-hover:text-domain-ministries-foreground",
   },
   finances: {
     shell:
-      "border-domain-finances/20 bg-gradient-to-br from-domain-finances-subtle/80 via-card to-card hover:border-domain-finances/35",
-    icon: "bg-domain-finances/15 text-domain-finances-foreground",
+      "border-domain-finances/25 bg-domain-finances-subtle/70 hover:border-domain-finances/45 hover:bg-domain-finances-subtle",
+    icon: "bg-domain-finances/20 text-domain-finances-foreground group-hover:bg-domain-finances/30",
+    chevron:
+      "text-domain-finances-foreground/55 group-hover:text-domain-finances-foreground",
   },
   care: {
     shell:
-      "border-border/80 bg-card hover:border-border hover:bg-muted/40",
-    icon: "bg-muted text-foreground",
+      "border-border bg-card hover:border-foreground/20 hover:bg-muted/50",
+    icon: "bg-muted text-foreground group-hover:bg-muted/80",
+    chevron: "text-muted-foreground/60 group-hover:text-foreground",
   },
   schedules: {
     shell:
-      "border-attention-border bg-gradient-to-br from-attention-subtle/80 via-card to-card hover:border-attention/40",
-    icon: "bg-attention-mark text-attention-foreground",
+      "border-attention-border bg-attention-subtle/80 hover:border-attention/50 hover:bg-attention-subtle",
+    icon: "bg-attention-mark text-attention-foreground group-hover:bg-attention/25",
+    chevron: "text-attention-foreground/55 group-hover:text-attention-foreground",
   },
   neutral: {
-    shell: "border-border/80 bg-card hover:bg-muted/40",
-    icon: "bg-muted text-foreground",
+    shell:
+      "border-border bg-card hover:border-foreground/20 hover:bg-muted/50",
+    icon: "bg-muted text-foreground group-hover:bg-muted/80",
+    chevron: "text-muted-foreground/60 group-hover:text-foreground",
   },
 };
 
@@ -233,39 +247,51 @@ export function DashboardQuickActions({
             : "Atalhos do dia a dia da igreja"}
         </p>
       </div>
-      <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+      <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
         {visibleActions.map((action) => {
           const styles = toneStyles[action.tone];
           const content = (
             <>
               <span
                 className={cn(
-                  "relative flex size-9 shrink-0 items-center justify-center rounded-lg",
+                  "relative flex size-9 shrink-0 items-center justify-center rounded-lg transition-colors",
                   styles.icon,
                 )}
               >
-                <action.icon className="size-4" aria-hidden />
+                <action.icon className="size-4" aria-hidden strokeWidth={2.25} />
                 {action.badge != null ? (
                   <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-attention px-1 text-[10px] font-semibold text-white">
                     {action.badge > 9 ? "9+" : action.badge}
                   </span>
                 ) : null}
               </span>
-              <span className="min-w-0 text-left">
-                <span className="block truncate text-sm font-medium text-foreground">
+              <span className="min-w-0 flex-1 text-left">
+                <span className="block truncate text-sm font-semibold tracking-tight text-foreground">
                   {action.label}
                 </span>
-                <span className="block truncate text-xs text-muted-foreground">
+                <span className="mt-0.5 block truncate text-xs text-muted-foreground">
                   {action.description}
                 </span>
               </span>
+              <ChevronRight
+                className={cn(
+                  "size-4 shrink-0 transition-transform duration-200 group-hover:translate-x-0.5",
+                  styles.chevron,
+                )}
+                aria-hidden
+              />
             </>
           );
 
           const className = cn(
-            "flex w-full items-center gap-3 rounded-xl border px-3 py-3 transition-colors",
+            "group flex w-full cursor-pointer items-center gap-3 rounded-xl border px-3 py-3 text-left shadow-xs",
+            "transition-[transform,background-color,border-color,box-shadow] duration-200 ease-out",
+            "hover:-translate-y-px hover:shadow-sm",
+            "active:translate-y-0 active:scale-[0.98] active:shadow-xs",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
             styles.shell,
-            action.disabled && "pointer-events-none opacity-50",
+            action.disabled &&
+              "pointer-events-none cursor-not-allowed opacity-50 shadow-none",
           );
 
           if (action.href) {

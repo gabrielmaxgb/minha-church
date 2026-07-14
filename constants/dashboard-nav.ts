@@ -2,12 +2,13 @@ import type { LucideIcon } from "lucide-react";
 import {
   BarChart3,
   Calendar,
+  CalendarDays,
   HandHeart,
   HeartHandshake,
   Layers,
   LayoutDashboard,
   Mail,
-  CalendarDays,
+  MessagesSquare,
   PiggyBank,
   Settings,
   Users,
@@ -20,6 +21,8 @@ import type { ProductDomain } from "@/lib/ui/domain-theme";
 
 export interface DashboardNavItem {
   label: string;
+  /** Rótulo curto no dropdown da sidebar (opcional). */
+  shortLabel?: string;
   href: string;
   icon: LucideIcon;
   description?: string;
@@ -35,6 +38,21 @@ export interface DashboardNavItem {
    * - `activeMember`: membro ativo (sem restrição de idade)
    */
   access?: "activeAdultMember" | "activeMember";
+}
+
+export type DashboardNavGroupId =
+  | "pessoas"
+  | "servico"
+  | "comunidade"
+  | "financeiro";
+
+export interface DashboardNavGroup {
+  id: DashboardNavGroupId;
+  label: string;
+  icon: LucideIcon;
+  domain: ProductDomain;
+  /** Hrefs dos itens filhos, na ordem de exibição. */
+  itemHrefs: string[];
 }
 
 export const dashboardNavItems: DashboardNavItem[] = [
@@ -56,6 +74,7 @@ export const dashboardNavItems: DashboardNavItem[] = [
   },
   {
     label: "Ministérios e Grupos de serviço",
+    shortLabel: "Ministérios",
     href: AUTH_ROUTES.ministries,
     icon: Layers,
     description: "Áreas de serviço, cargos e equipes",
@@ -63,7 +82,8 @@ export const dashboardNavItems: DashboardNavItem[] = [
     permission: "ministries",
   },
   {
-    label: "Atividades",
+    label: "Eventos e Atividades",
+    shortLabel: "Eventos",
     href: AUTH_ROUTES.activities,
     icon: Calendar,
     description: "Cultos e encontros da semana",
@@ -80,6 +100,7 @@ export const dashboardNavItems: DashboardNavItem[] = [
   },
   {
     label: "Aconselhamentos e visitas",
+    shortLabel: "Aconselhamentos",
     href: AUTH_ROUTES.careRequests,
     icon: HeartHandshake,
     description: "Pedir apoio pastoral e acompanhar solicitações",
@@ -111,7 +132,7 @@ export const dashboardNavItems: DashboardNavItem[] = [
     access: "activeMember",
   },
   {
-    label: "Comunicação",
+    label: "Quadro de avisos",
     href: AUTH_ROUTES.communication,
     icon: Mail,
     description: "Avisos para a igreja e ministérios",
@@ -127,6 +148,51 @@ export const dashboardNavItems: DashboardNavItem[] = [
     permission: "reports",
   },
 ];
+
+/**
+ * Agrupamentos da sidebar (ordem de render).
+ * Itens sem grupo (`Início`, `Relatórios`) ficam soltos.
+ */
+export const dashboardNavGroups: DashboardNavGroup[] = [
+  {
+    id: "pessoas",
+    label: "Pessoas",
+    icon: Users,
+    domain: "members",
+    itemHrefs: [AUTH_ROUTES.members, AUTH_ROUTES.careRequests],
+  },
+  {
+    id: "servico",
+    label: "Serviço",
+    icon: Layers,
+    domain: "ministries",
+    itemHrefs: [
+      AUTH_ROUTES.ministries,
+      AUTH_ROUTES.activities,
+      AUTH_ROUTES.mySchedules,
+    ],
+  },
+  {
+    id: "comunidade",
+    label: "Comunidade",
+    icon: MessagesSquare,
+    domain: "communication",
+    itemHrefs: [AUTH_ROUTES.communication, AUTH_ROUTES.prayerRequests],
+  },
+  {
+    id: "financeiro",
+    label: "Financeiro",
+    icon: Wallet,
+    domain: "finances",
+    itemHrefs: [AUTH_ROUTES.finances, AUTH_ROUTES.tithesOfferings],
+  },
+];
+
+/** Hrefs que ficam no primeiro nível (fora de grupos). */
+export const dashboardNavSoloHrefs = [
+  AUTH_ROUTES.dashboard,
+  AUTH_ROUTES.reports,
+] as const;
 
 export const dashboardSecondaryNavItems: DashboardNavItem[] = [
   {

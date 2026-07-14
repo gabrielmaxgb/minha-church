@@ -29,6 +29,13 @@
   --attention-border: color-mix(in srgb, var(--attention) 18%, var(--border));
   --attention-emphasis: color-mix(in srgb, var(--attention) 34%, transparent);
   --attention-mark: color-mix(in srgb, var(--attention) 22%, var(--card));
+  /* Ênfase — degrau "sinal" (nível 4): âmbar sólido para dots/badges/CTA vivos.
+     Não substitui os -subtle acima; é reservado para os poucos momentos que
+     precisam saltar. Escolhido para ≥4.5:1 (texto) / ≥3:1 (gráfico). */
+  --attention-solid: #c9922f;
+  --attention-solid-foreground: #3a2b0e;
+  --signal: var(--attention-solid);
+  --signal-ring: color-mix(in srgb, var(--attention-solid) 28%, transparent);
   /* Billing / assinatura — pedra da marca (alinha com primary / domain-home) */
   --billing: #4a4a45;
   --billing-foreground: #2c2c2a;
@@ -103,6 +110,10 @@
   --attention-border: color-mix(in srgb, var(--attention) 22%, var(--border));
   --attention-emphasis: color-mix(in srgb, var(--attention) 40%, transparent);
   --attention-mark: color-mix(in srgb, var(--attention) 28%, var(--card));
+  --attention-solid: #dca63f;
+  --attention-solid-foreground: #221a08;
+  --signal: var(--attention-solid);
+  --signal-ring: color-mix(in srgb, var(--attention-solid) 35%, transparent);
   --billing: #a3a39c;
   --billing-foreground: #d4d4ce;
   --billing-subtle: color-mix(in srgb, var(--billing) 12%, var(--card));
@@ -170,6 +181,10 @@
   --color-attention-border: var(--attention-border);
   --color-attention-emphasis: var(--attention-emphasis);
   --color-attention-mark: var(--attention-mark);
+  --color-attention-solid: var(--attention-solid);
+  --color-attention-solid-foreground: var(--attention-solid-foreground);
+  --color-signal: var(--signal);
+  --color-signal-ring: var(--signal-ring);
   --color-billing: var(--billing);
   --color-billing-foreground: var(--billing-foreground);
   --color-billing-subtle: var(--billing-subtle);
@@ -256,6 +271,29 @@
 
   .shadow-elevated {
     box-shadow: var(--shadow-popover);
+  }
+
+  /* Sinal "vivo" — halo pulsante para itens genuinamente novos/urgentes.
+     Reservado ao nível 4 da escala de ênfase; use com parcimônia. */
+  .signal-pulse::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: 0 0 0 0 var(--signal-ring);
+    animation: signal-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes signal-pulse {
+    0% {
+      box-shadow: 0 0 0 0 var(--signal-ring);
+    }
+    70% {
+      box-shadow: 0 0 0 6px transparent;
+    }
+    100% {
+      box-shadow: 0 0 0 0 transparent;
+    }
   }
 
   .dashboard-canvas {

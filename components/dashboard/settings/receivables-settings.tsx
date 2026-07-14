@@ -171,8 +171,8 @@ function ConnectOnboardingCard({
             </div>
             <p className="mt-1 text-sm text-muted-foreground">
               {onboardingStatus === "active"
-                ? "Sua igreja já pode receber pagamentos de membros pelo Minha Church."
-                : "Ative os recebimentos para coletar dízimos, doações e inscrições em eventos."}
+                ? "As contribuições dos membros já podem cair na conta bancária da igreja."
+                : "Conecte a conta bancária da igreja pelo Stripe para receber dízimos, ofertas e doações."}
             </p>
           </div>
         </div>
@@ -278,6 +278,7 @@ function ConnectOnboardingCard({
           {(onboardingStatus === "none" || onboardingStatus === "created") && (
             <Button
               type="button"
+              variant="cta"
               className="w-full gap-2 sm:w-auto"
               disabled={redirecting || !canStart}
               aria-busy={redirecting}
@@ -301,6 +302,7 @@ function ConnectOnboardingCard({
             onboardingStatus === "restricted") && (
             <Button
               type="button"
+              variant="cta"
               className="w-full gap-2 sm:w-auto"
               disabled={redirecting}
               aria-busy={redirecting}
@@ -408,7 +410,7 @@ export function ReceivablesSettings() {
       <div>
         <SettingsSectionHeader
           title="Recebimentos"
-          description="Ative e acompanhe a conta que recebe dízimos, doações e inscrições em eventos."
+          description="Conecte a conta bancária da igreja ao Stripe para receber dízimos, ofertas e doações."
         />
         <SettingsPanel>
           <div className="space-y-3 px-5 py-6 text-center">
@@ -434,7 +436,7 @@ export function ReceivablesSettings() {
     <div>
       <SettingsSectionHeader
         title="Recebimentos"
-        description="Ative e acompanhe a conta Stripe que recebe dízimos, doações e inscrições em eventos."
+        description="Conecte a conta bancária da igreja ao Stripe para receber dízimos, ofertas e doações."
       />
 
       {isTrialing && (

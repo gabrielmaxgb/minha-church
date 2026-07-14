@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { useAuth } from "@/providers/auth-provider";
 
+import { MyContributionsSettings } from "./my-contributions-settings";
 import { MyRolesSettings } from "./my-roles-settings";
 import { ProfileSettings } from "./profile-settings";
 import { ProfileMinistriesSettings } from "./profile-ministries-settings";
@@ -82,6 +83,7 @@ export function SettingsContent({ area }: { area: SettingsArea }) {
         )}
         {active === "profile" && <ProfileSettings />}
         {active === "my-roles" && <MyRolesSettings />}
+        {active === "my-contributions" && <MyContributionsSettings />}
         {active === "subscription" && <SubscriptionSettings />}
         {active === "recebimentos" && <ReceivablesSettings />}
         {active === "ministries" && <ProfileMinistriesSettings />}

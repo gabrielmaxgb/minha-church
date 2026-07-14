@@ -34,10 +34,10 @@ export const CHURCH_PERMISSION_LABELS: Record<ChurchPermissionKey, string> = {
   dashboard_access: "Início",
   members_access: "Membros",
   ministries_access: "Ministérios",
-  activities_access: "Atividades",
+  activities_access: "Eventos e Atividades",
   schedules_access: "Minhas escalas",
   finances_access: "Finanças",
-  communication_access: "Comunicação",
+  communication_access: "Quadro de avisos",
   reports_access: "Relatórios",
   settings_access: "Configurações",
   members_manage: "Cadastrar e editar membros",
@@ -58,13 +58,13 @@ export const CHURCH_PERMISSION_DESCRIPTIONS: Record<ChurchPermissionKey, string>
   ministries_access:
     "Ver os ministérios, suas equipes e cargos. Somente leitura — criar ou editar exige “Cadastrar e editar ministérios”.",
   activities_access:
-    "Ver a agenda e os detalhes das atividades e eventos da igreja. Criar atividades exige a permissão correspondente.",
+    "Ver a agenda e os detalhes em Eventos e Atividades. Criar itens exige a permissão correspondente.",
   schedules_access:
     "Abre “Minhas escalas”, onde a pessoa acompanha as próprias convocações e marca disponibilidade.",
   finances_access:
     "Abre a área financeira da igreja (resumo de entradas e fundos).",
   communication_access:
-    "Abre a área de comunicação, com avisos e mensagens da igreja.",
+    "Abre o Quadro de avisos, com comunicados da igreja e dos ministérios.",
   reports_access:
     "Abre os resumos e relatórios da igreja.",
   settings_access:

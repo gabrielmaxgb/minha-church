@@ -585,7 +585,7 @@ export function EditActivityModal({
                       <p className="text-sm leading-relaxed text-muted-foreground">
                         {isRecurring
                           ? "Escolha se a exclusão vale só para esta ocorrência ou para mais eventos da série."
-                          : "A atividade deixará de aparecer em Atividades e no painel do ministério."}
+                          : "A atividade deixará de aparecer em Eventos e Atividades e no painel do ministério."}
                       </p>
                     </div>
 

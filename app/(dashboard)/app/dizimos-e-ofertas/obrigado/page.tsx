@@ -4,7 +4,7 @@ import { use } from "react";
 
 import { DashboardPage } from "@/components/dashboard/dashboard-shell";
 import { GivingThanksPanel } from "@/components/giving/giving-thanks-panel";
-import { AUTH_ROUTES } from "@/constants/routes";
+import { AUTH_ROUTES, settingsSectionPath } from "@/constants/routes";
 
 import "@/app/doar/giving.css";
 
@@ -24,6 +24,8 @@ export default function TithesOfferingsThanksPage({ searchParams }: PageProps) {
           backLabel="Voltar aos fundos"
           retryHref={AUTH_ROUTES.tithesOfferings}
           retryLabel="Tentar novamente"
+          primaryHref={settingsSectionPath("my-contributions")}
+          primaryLabel="Ver minhas contribuições"
         />
       </div>
     </DashboardPage>

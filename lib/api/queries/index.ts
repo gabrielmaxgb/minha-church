@@ -137,6 +137,7 @@ export {
   useDeleteGivingFund,
   useFiscalProfile,
   useGivingDonations,
+  useMyGivingDonations,
   useGivingFunds,
   useMemberGivingFunds,
   usePaymentsSummary,

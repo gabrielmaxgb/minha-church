@@ -95,6 +95,7 @@ export function settingsSectionPath(
     | "pending-users"
     | "ministries"
     | "my-roles"
+    | "my-contributions"
     | "profile"
     | "subscription"
     | "recebimentos"
@@ -103,7 +104,12 @@ export function settingsSectionPath(
     | "activity"
     | "general",
 ): string {
-  const userSections = new Set(["profile", "ministries", "my-roles"]);
+  const userSections = new Set([
+    "profile",
+    "ministries",
+    "my-roles",
+    "my-contributions",
+  ]);
   const base = userSections.has(section)
     ? AUTH_ROUTES.settingsUser
     : AUTH_ROUTES.settingsChurch;
