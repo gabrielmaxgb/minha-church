@@ -14,6 +14,7 @@ import { SidebarChurchBrand } from "@/components/dashboard/sidebar-church-brand"
 import {
   dashboardNavGroups,
   dashboardNavItems,
+  dashboardNavOrder,
   type DashboardNavGroup,
   type DashboardNavItem,
 } from "@/constants/dashboard-nav";
@@ -56,7 +57,7 @@ function NavBadge({ value }: { value: number }) {
   return (
     <span
       className={cn(
-        "mt-0.5 flex h-5 min-w-5 shrink-0 items-center justify-center rounded-md px-1 text-[10px] tabular-nums",
+        "mt-0.5 flex h-5 min-w-5 shrink-0 items-center justify-center rounded-md px-1 text-xs tabular-nums",
         pendingNotificationStyles.countBadge,
       )}
     >
@@ -93,7 +94,7 @@ function NavLink({
         nested ? "px-2.5 py-2" : "px-2.5 py-2.5",
         isActive
           ? cn("font-medium", domainNavActive[domain])
-          : "font-normal text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+          : "border border-transparent font-normal text-muted-foreground hover:bg-muted/50 hover:text-foreground",
       )}
     >
       {Icon ? (
@@ -151,7 +152,7 @@ function NavGroupDropdown({
           "group flex w-full items-start gap-3 rounded-lg px-2.5 py-2.5 text-left text-sm leading-snug transition-colors duration-150",
           groupActive
             ? cn("font-medium", domainNavActive[group.domain])
-            : "font-normal text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+            : "border border-transparent font-normal text-muted-foreground hover:bg-muted/50 hover:text-foreground",
         )}
         aria-expanded={open}
       >
@@ -235,7 +236,7 @@ function SettingsNavDropdown({ onNavigate }: { onNavigate?: () => void }) {
           "flex w-full items-start gap-3 rounded-lg px-2.5 py-2.5 text-left text-sm leading-snug transition-colors duration-150",
           isSettingsRoute
             ? cn("font-medium", domainNavActive.settings)
-            : "font-normal text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+            : "border border-transparent font-normal text-muted-foreground hover:bg-muted/50 hover:text-foreground",
         )}
         aria-expanded={open}
       >
@@ -277,7 +278,7 @@ function SettingsNavDropdown({ onNavigate }: { onNavigate?: () => void }) {
                   "rounded-lg px-2.5 py-2 text-sm transition-colors",
                   pathname.startsWith(AUTH_ROUTES.settingsChurch)
                     ? cn("font-medium", domainNavActive.settings)
-                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+                    : "border border-transparent text-muted-foreground hover:bg-muted/50 hover:text-foreground",
                 )}
               >
                 Igreja
@@ -290,11 +291,11 @@ function SettingsNavDropdown({ onNavigate }: { onNavigate?: () => void }) {
                 "rounded-lg px-2.5 py-2 text-sm transition-colors",
                 pathname.startsWith(AUTH_ROUTES.settingsUser)
                   ? cn("font-medium", domainNavActive.settings)
-                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+                  : "border border-transparent text-muted-foreground hover:bg-muted/50 hover:text-foreground",
               )}
             >
               <span className="block truncate">{userLabel}</span>
-              <span className="block text-[11px] leading-tight opacity-70">
+              <span className="block text-xs leading-tight opacity-70">
                 Usuário
               </span>
             </Link>
@@ -368,33 +369,95 @@ export function DashboardSidebar({
     [AUTH_ROUTES.careRequests]: carePendingCount,
   };
 
-  const groupedHrefs = useMemo(
-    () => new Set(dashboardNavGroups.flatMap((group) => group.itemHrefs)),
-    [],
-  );
+  const groupsById = useMemo(() => {
+    const map = new Map<string, DashboardNavGroup>();
+    for (const group of dashboardNavGroups) {
+      map.set(group.id, group);
+    }
+    return map;
+  }, []);
 
-  const inicio = itemsByHref.get(AUTH_ROUTES.dashboard);
-  const relatorios = itemsByHref.get(AUTH_ROUTES.reports);
+  const orderedHrefs = useMemo(() => {
+    const hrefs = new Set<string>();
+    for (const entry of dashboardNavOrder) {
+      if (entry.type === "item") {
+        hrefs.add(entry.href);
+      } else {
+        const group = groupsById.get(entry.id);
+        for (const href of group?.itemHrefs ?? []) {
+          hrefs.add(href);
+        }
+      }
+    }
+    return hrefs;
+  }, [groupsById]);
 
-  const resolvedGroups = useMemo(
-    () =>
-      dashboardNavGroups
-        .map((group) => ({
-          group,
-          items: group.itemHrefs
-            .map((href) => itemsByHref.get(href))
-            .filter((item): item is DashboardNavItem => Boolean(item)),
-        }))
-        .filter((entry) => entry.items.length > 0),
-    [itemsByHref],
-  );
+  type ResolvedNavEntry =
+    | {
+        kind: "item";
+        key: string;
+        item: DashboardNavItem;
+        sectionStart?: boolean;
+      }
+    | {
+        kind: "group";
+        key: string;
+        group: DashboardNavGroup;
+        items: DashboardNavItem[];
+        sectionStart?: boolean;
+      };
 
-  // Itens visíveis que não estão em grupo nem nos solos conhecidos (defesa).
+  const resolvedEntries = useMemo(() => {
+    const entries: ResolvedNavEntry[] = [];
+
+    for (const entry of dashboardNavOrder) {
+      if (entry.type === "item") {
+        const item = itemsByHref.get(entry.href);
+        if (!item) continue;
+        entries.push({
+          kind: "item",
+          key: item.href,
+          item,
+          sectionStart: entry.sectionStart,
+        });
+        continue;
+      }
+
+      const group = groupsById.get(entry.id);
+      if (!group) continue;
+
+      const items = group.itemHrefs
+        .map((href) => itemsByHref.get(href))
+        .filter((item): item is DashboardNavItem => Boolean(item));
+
+      if (items.length === 0) continue;
+
+      // Grupo com uma só opção visível → link de 1º nível.
+      if (items.length === 1) {
+        entries.push({
+          kind: "item",
+          key: items[0].href,
+          item: items[0],
+          sectionStart: entry.sectionStart,
+        });
+        continue;
+      }
+
+      entries.push({
+        kind: "group",
+        key: group.id,
+        group,
+        items,
+        sectionStart: entry.sectionStart,
+      });
+    }
+
+    return entries;
+  }, [groupsById, itemsByHref]);
+
+  // Itens visíveis que não estão na ordem canônica (defesa).
   const orphanItems = visibleNavItems.filter(
-    (item) =>
-      !groupedHrefs.has(item.href) &&
-      item.href !== AUTH_ROUTES.dashboard &&
-      item.href !== AUTH_ROUTES.reports,
+    (item) => !orderedHrefs.has(item.href),
   );
 
   return (
@@ -423,49 +486,42 @@ export function DashboardSidebar({
       </div>
 
       <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-2 py-3.5">
-        {inicio ? (
-          <NavLink
-            href={inicio.href}
-            label={inicio.label}
-            icon={inicio.icon}
-            domain={inicio.domain}
-            isActive={pathMatches(pathname, inicio.href)}
-            onNavigate={onNavigate}
-          />
-        ) : null}
+        {resolvedEntries.map((entry) => {
+          const sectionClass = entry.sectionStart ? "mt-2" : undefined;
 
-        {resolvedGroups.length > 0 ? (
-          <div className="mt-1 flex flex-col gap-1">
-            {resolvedGroups.map(({ group, items }) => (
+          if (entry.kind === "item") {
+            return (
+              <div key={entry.key} className={sectionClass}>
+                <NavLink
+                  href={entry.item.href}
+                  label={entry.item.shortLabel ?? entry.item.label}
+                  icon={entry.item.icon}
+                  domain={entry.item.domain}
+                  isActive={pathMatches(pathname, entry.item.href)}
+                  badge={badges[entry.item.href]}
+                  onNavigate={onNavigate}
+                />
+              </div>
+            );
+          }
+
+          return (
+            <div key={entry.key} className={sectionClass}>
               <NavGroupDropdown
-                key={group.id}
-                group={group}
-                items={items}
+                group={entry.group}
+                items={entry.items}
                 badges={badges}
                 onNavigate={onNavigate}
               />
-            ))}
-          </div>
-        ) : null}
-
-        {relatorios ? (
-          <div className="mt-1">
-            <NavLink
-              href={relatorios.href}
-              label={relatorios.label}
-              icon={relatorios.icon}
-              domain={relatorios.domain}
-              isActive={pathMatches(pathname, relatorios.href)}
-              onNavigate={onNavigate}
-            />
-          </div>
-        ) : null}
+            </div>
+          );
+        })}
 
         {orphanItems.map((item) => (
           <NavLink
             key={item.href}
             href={item.href}
-            label={item.label}
+            label={item.shortLabel ?? item.label}
             icon={item.icon}
             domain={item.domain}
             isActive={pathMatches(pathname, item.href)}

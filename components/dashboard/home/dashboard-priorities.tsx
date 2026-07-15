@@ -16,7 +16,7 @@ const toneStyles: Record<
   },
   schedules: {
     shell:
-      "border-attention-border/70 bg-gradient-to-br from-attention-subtle/70 via-card to-card hover:border-attention/40",
+      "border-attention-border bg-gradient-to-br from-attention-subtle via-card to-card hover:border-attention/40",
     icon: "bg-attention-mark text-attention-foreground",
   },
   care: {
@@ -25,13 +25,13 @@ const toneStyles: Record<
   },
   communication: {
     shell:
-      "border-domain-communication/25 bg-gradient-to-br from-domain-communication-subtle/70 via-card to-card hover:border-domain-communication/40",
-    icon: "bg-domain-communication/15 text-domain-communication-foreground",
+      "border-domain-communication/30 bg-gradient-to-br from-domain-communication-subtle via-card to-card hover:border-domain-communication/45",
+    icon: "bg-domain-communication/20 text-domain-communication-foreground",
   },
   activities: {
     shell:
-      "border-domain-activities/25 bg-gradient-to-br from-domain-activities-subtle/70 via-card to-card hover:border-domain-activities/40",
-    icon: "bg-domain-activities/15 text-domain-activities-foreground",
+      "border-domain-activities/30 bg-gradient-to-br from-domain-activities-subtle via-card to-card hover:border-domain-activities/45",
+    icon: "bg-domain-activities/20 text-domain-activities-foreground",
   },
 };
 
@@ -69,7 +69,7 @@ export function DashboardPriorities({ items }: DashboardPrioritiesProps) {
     <section className="flex h-full flex-col justify-start rounded-xl border border-border bg-card p-4 sm:p-5">
       <div className="shrink-0">
         <h2 className="text-sm font-medium text-foreground">{heading}</h2>
-        <p className="mt-0.5 text-xs text-muted-foreground">
+        <p className="mt-0.5 text-sm text-muted-foreground">
           Resolva estas primeiro — o restante pode esperar
         </p>
       </div>

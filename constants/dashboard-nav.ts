@@ -8,7 +8,6 @@ import {
   Layers,
   LayoutDashboard,
   Mail,
-  MessagesSquare,
   PiggyBank,
   Settings,
   Users,
@@ -40,11 +39,7 @@ export interface DashboardNavItem {
   access?: "activeAdultMember" | "activeMember";
 }
 
-export type DashboardNavGroupId =
-  | "pessoas"
-  | "servico"
-  | "comunidade"
-  | "financeiro";
+export type DashboardNavGroupId = "financeiro";
 
 export interface DashboardNavGroup {
   id: DashboardNavGroupId;
@@ -65,6 +60,30 @@ export const dashboardNavItems: DashboardNavItem[] = [
     permission: "dashboard",
   },
   {
+    label: "Eventos",
+    href: AUTH_ROUTES.activities,
+    icon: Calendar,
+    description: "Cultos e encontros da semana",
+    domain: "activities",
+    permission: "activities",
+  },
+  {
+    label: "Avisos",
+    href: AUTH_ROUTES.communication,
+    icon: Mail,
+    description: "Comunicados para a igreja",
+    domain: "communication",
+    permission: "communication",
+  },
+  {
+    label: "Minha escala",
+    href: AUTH_ROUTES.mySchedules,
+    icon: CalendarDays,
+    description: "Convocações e disponibilidade",
+    domain: "schedules",
+    permission: "schedules",
+  },
+  {
     label: "Membros",
     href: AUTH_ROUTES.members,
     icon: Users,
@@ -73,39 +92,12 @@ export const dashboardNavItems: DashboardNavItem[] = [
     permission: "members",
   },
   {
-    label: "Ministérios e Grupos de serviço",
-    shortLabel: "Ministérios",
+    label: "Ministérios",
     href: AUTH_ROUTES.ministries,
     icon: Layers,
     description: "Áreas de serviço, cargos e equipes",
     domain: "ministries",
     permission: "ministries",
-  },
-  {
-    label: "Eventos e Atividades",
-    shortLabel: "Eventos",
-    href: AUTH_ROUTES.activities,
-    icon: Calendar,
-    description: "Cultos e encontros da semana",
-    domain: "activities",
-    permission: "activities",
-  },
-  {
-    label: "Minhas escalas",
-    href: AUTH_ROUTES.mySchedules,
-    icon: CalendarDays,
-    description: "Convocações e disponibilidade",
-    domain: "schedules",
-    permission: "schedules",
-  },
-  {
-    label: "Aconselhamentos e visitas",
-    shortLabel: "Aconselhamentos",
-    href: AUTH_ROUTES.careRequests,
-    icon: HeartHandshake,
-    description: "Pedir apoio pastoral e acompanhar solicitações",
-    domain: "members",
-    access: "activeAdultMember",
   },
   {
     label: "Pedidos de oração",
@@ -116,10 +108,18 @@ export const dashboardNavItems: DashboardNavItem[] = [
     access: "activeMember",
   },
   {
+    label: "Aconselhamentos",
+    href: AUTH_ROUTES.careRequests,
+    icon: HeartHandshake,
+    description: "Pedir apoio pastoral e acompanhar solicitações",
+    domain: "members",
+    access: "activeAdultMember",
+  },
+  {
     label: "Finanças",
     href: AUTH_ROUTES.finances,
     icon: Wallet,
-    description: "Recebimentos, saídas e exportação",
+    description: "Contribuições, saídas e exportação",
     domain: "finances",
     permission: "finances",
   },
@@ -132,14 +132,6 @@ export const dashboardNavItems: DashboardNavItem[] = [
     access: "activeMember",
   },
   {
-    label: "Quadro de avisos",
-    href: AUTH_ROUTES.communication,
-    icon: Mail,
-    description: "Avisos para a igreja e ministérios",
-    domain: "communication",
-    permission: "communication",
-  },
-  {
     label: "Relatórios",
     href: AUTH_ROUTES.reports,
     icon: BarChart3,
@@ -150,35 +142,10 @@ export const dashboardNavItems: DashboardNavItem[] = [
 ];
 
 /**
- * Agrupamentos da sidebar (ordem de render).
- * Itens sem grupo (`Início`, `Relatórios`) ficam soltos.
+ * Agrupamentos com 2+ destinos. Grupos que restarem com 1 item
+ * visível (ex.: por permissão) são promovidos a link no sidebar.
  */
 export const dashboardNavGroups: DashboardNavGroup[] = [
-  {
-    id: "pessoas",
-    label: "Pessoas",
-    icon: Users,
-    domain: "members",
-    itemHrefs: [AUTH_ROUTES.members, AUTH_ROUTES.careRequests],
-  },
-  {
-    id: "servico",
-    label: "Serviço",
-    icon: Layers,
-    domain: "ministries",
-    itemHrefs: [
-      AUTH_ROUTES.ministries,
-      AUTH_ROUTES.activities,
-      AUTH_ROUTES.mySchedules,
-    ],
-  },
-  {
-    id: "comunidade",
-    label: "Comunidade",
-    icon: MessagesSquare,
-    domain: "communication",
-    itemHrefs: [AUTH_ROUTES.communication, AUTH_ROUTES.prayerRequests],
-  },
   {
     id: "financeiro",
     label: "Financeiro",
@@ -188,11 +155,31 @@ export const dashboardNavGroups: DashboardNavGroup[] = [
   },
 ];
 
-/** Hrefs que ficam no primeiro nível (fora de grupos). */
-export const dashboardNavSoloHrefs = [
-  AUTH_ROUTES.dashboard,
-  AUTH_ROUTES.reports,
-] as const;
+/**
+ * Ordem canônica do menu — frequência de uso + afins mentais:
+ * semana → pessoas/serviço → cuidado → gestão.
+ * `sectionStart` adiciona respiro visual no início de um bloco novo.
+ */
+export type DashboardNavEntry =
+  | { type: "item"; href: string; sectionStart?: boolean }
+  | { type: "group"; id: DashboardNavGroupId; sectionStart?: boolean };
+
+export const dashboardNavOrder: DashboardNavEntry[] = [
+  { type: "item", href: AUTH_ROUTES.dashboard },
+  // Semana (alto uso diário)
+  { type: "item", href: AUTH_ROUTES.activities, sectionStart: true },
+  { type: "item", href: AUTH_ROUTES.communication },
+  { type: "item", href: AUTH_ROUTES.mySchedules },
+  // Pessoas e quem serve
+  { type: "item", href: AUTH_ROUTES.members, sectionStart: true },
+  { type: "item", href: AUTH_ROUTES.ministries },
+  // Cuidado da comunidade
+  { type: "item", href: AUTH_ROUTES.prayerRequests, sectionStart: true },
+  { type: "item", href: AUTH_ROUTES.careRequests },
+  // Gestão e olhar da liderança
+  { type: "group", id: "financeiro", sectionStart: true },
+  { type: "item", href: AUTH_ROUTES.reports },
+];
 
 export const dashboardSecondaryNavItems: DashboardNavItem[] = [
   {

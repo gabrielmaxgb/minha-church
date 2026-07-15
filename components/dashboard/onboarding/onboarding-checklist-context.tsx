@@ -143,7 +143,7 @@ export function OnboardingChecklistProvider({
 
     list.push({
       id: "first-announcement",
-      title: "Publique um comunicado",
+      title: "Publique um aviso",
       description:
         "Envie um aviso para a igreja e veja como a comunicação funciona.",
       actionLabel: "Ir para comunicação",

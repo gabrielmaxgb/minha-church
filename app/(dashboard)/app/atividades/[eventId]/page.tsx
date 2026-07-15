@@ -24,8 +24,9 @@ export default function ActivityDetailPage() {
                   : event.ministryName,
                 new Date(event.startsAt).toLocaleDateString("pt-BR", {
                   weekday: "short",
-                  day: "numeric",
-                  month: "short",
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
                 }),
               ]
                 .filter(Boolean)

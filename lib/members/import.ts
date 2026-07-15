@@ -77,7 +77,7 @@ export const IMPORT_FIELDS: ImportField[] = [
     key: "birthDate",
     label: "Nascimento",
     aliases: ["data de nascimento", "aniversario", "dt nascimento", "nasc"],
-    example: "1990-05-20",
+    example: "20/05/1990",
   },
   { key: "gender", label: "Sexo", aliases: ["genero"], example: "feminino" },
   {
@@ -127,13 +127,13 @@ export const IMPORT_FIELDS: ImportField[] = [
     key: "baptismDate",
     label: "Batismo",
     aliases: ["data de batismo", "batizado em", "batismo"],
-    example: "2015-12-01",
+    example: "01/12/2015",
   },
   {
     key: "membershipDate",
     label: "Membro desde",
     aliases: ["data de membresia", "membresia", "data de admissao", "membro desde"],
-    example: "2016-01-10",
+    example: "10/01/2016",
   },
 ];
 
@@ -192,7 +192,7 @@ function formatDateCell(date: Date): string {
   const year = date.getUTCFullYear();
   const month = String(date.getUTCMonth() + 1).padStart(2, "0");
   const day = String(date.getUTCDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+  return `${day}/${month}/${year}`;
 }
 
 function rowsToSheet(data: unknown[][]): ParsedSheet {
@@ -341,9 +341,9 @@ const TEMPLATE_HELP_ROWS: string[][] = [
   ["E-mail", "Não*", "exemplo@email.com"],
   ["CPF", "Não*", "000.000.000-00"],
   ["Situação", "Não (padrão: visitante)", "visitante, ativo ou inativo"],
-  ["Sexo", "Não", "masculino, feminino ou outro"],
+  ["Sexo", "Não", "masculino ou feminino"],
   ["Estado civil", "Não", "solteiro, casado, divorciado ou viúvo"],
-  ["Datas", "Não", "AAAA-MM-DD (ex.: 1990-05-20) ou DD/MM/AAAA"],
+  ["Datas", "Não", "DD/MM/AAAA (ex.: 20/05/1990). Também aceita AAAA-MM-DD"],
   ["UF", "Não", "2 letras (ex.: SP)"],
   ["CEP", "Não", "8 dígitos"],
   ["", "", ""],

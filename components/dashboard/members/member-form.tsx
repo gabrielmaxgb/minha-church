@@ -112,6 +112,7 @@ export function MemberForm({
   const createFamily = useCreateFamily();
   const [newFamilyName, setNewFamilyName] = useState("");
   const [showNewFamily, setShowNewFamily] = useState(false);
+  const [showMoreDetails, setShowMoreDetails] = useState(false);
 
   useEffect(() => {
     if (blockActivePromotion && status === "active") {
@@ -266,16 +267,36 @@ export function MemberForm({
             {...register("phone")}
           />
         </FormField>
-
-        <FormField label="Telefone secundário" htmlFor="member-phone-secondary">
-          <Input
-            id="member-phone-secondary"
-            placeholder="Opcional"
-            disabled={disabled}
-            {...register("phoneSecondary")}
-          />
-        </FormField>
       </FormSection>
+
+      <div className="rounded-lg border border-border bg-card">
+        <button
+          type="button"
+          className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left sm:px-6"
+          aria-expanded={showMoreDetails}
+          onClick={() => setShowMoreDetails((current) => !current)}
+        >
+          <div className="min-w-0">
+            <p className="text-sm font-medium tracking-tight">Mais detalhes</p>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              Família, endereço, dados pessoais e histórico na igreja
+            </p>
+          </div>
+          <span className="shrink-0 text-sm text-muted-foreground">
+            {showMoreDetails ? "Ocultar" : "Mostrar"}
+          </span>
+        </button>
+
+        {showMoreDetails ? (
+          <div className="space-y-5 border-t border-border p-5 sm:p-6">
+            <FormField label="Telefone secundário" htmlFor="member-phone-secondary">
+              <Input
+                id="member-phone-secondary"
+                placeholder="Opcional"
+                disabled={disabled}
+                {...register("phoneSecondary")}
+              />
+            </FormField>
 
       <FormSection
         icon={IdCard}
@@ -623,6 +644,9 @@ export function MemberForm({
           />
         </FormField>
       </FormSection>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

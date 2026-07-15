@@ -170,7 +170,7 @@ function ConnectOnboardingCard({
             <p className="mt-1 text-sm text-muted-foreground">
               {onboardingStatus === "active"
                 ? "As contribuições dos membros já podem cair na conta bancária da igreja."
-                : "Conecte a conta bancária da igreja pelo Stripe para receber dízimos, ofertas, doações e habilitar a criação de eventos com o recurso de inscrição paga."}
+                : "Três passos para a igreja receber contribuições: complete o perfil, conecte a conta bancária e pronto."}
             </p>
           </div>
         </div>
@@ -197,11 +197,12 @@ function ConnectOnboardingCard({
         {showChecklist && (
           <div className="rounded-lg border border-border bg-muted/30 px-4 py-3 text-sm">
             <p className="font-medium text-foreground">
-              Complete o perfil da igreja em Geral
+              Passo 1 — Complete o perfil da igreja
             </p>
             <p className="mt-1 text-muted-foreground">
-              Contato, cidade/UF e identificação fiscal ficam em Configurações
-              → Geral. Depois de salvar, volte aqui para ativar.
+              Contato, cidade/UF e identificação fiscal ficam em Configurações →
+              Geral. Depois de salvar, volte aqui para o passo 2 (conectar a
+              conta bancária).
             </p>
             <ul className="mt-3 space-y-2" aria-label="Campos obrigatórios">
               {fieldStatus.map((item) => (
@@ -247,8 +248,8 @@ function ConnectOnboardingCard({
           onboardingStatus === "restricted") && (
           <div className="rounded-lg border border-attention-border bg-attention-subtle px-4 py-3 text-sm text-attention-foreground">
             {onboardingStatus === "verifying"
-              ? "O Stripe está verificando os dados enviados. Isso pode levar alguns minutos. Você será notificado quando a conta for aprovada."
-              : "O Stripe precisa de mais informações para liberar os recebimentos. Retome o cadastro para resolver as pendências."}
+              ? "Estamos verificando os dados enviados. Isso pode levar alguns minutos. Você será avisado quando a conta estiver liberada."
+              : "Ainda faltam informações para liberar os recebimentos. Retome o cadastro para resolver as pendências."}
             {onboardingStatus === "restricted" &&
               status &&
               status.requirementsDue.length > 0 && (
@@ -287,8 +288,8 @@ function ConnectOnboardingCard({
                 <ExternalLink className="size-4" aria-hidden />
               )}
               {redirecting
-                ? "Abrindo cadastro no Stripe…"
-                : "Ativar recebimentos"}
+                ? "Abrindo cadastro seguro…"
+                : "Passo 2 — Conectar conta bancária"}
             </Button>
           )}
 
@@ -307,7 +308,7 @@ function ConnectOnboardingCard({
                 <ExternalLink className="size-4" aria-hidden />
               )}
               {redirecting
-                ? "Abrindo cadastro no Stripe…"
+                ? "Abrindo cadastro seguro…"
                 : onboardingStatus === "restricted"
                   ? "Resolver pendências"
                   : "Continuar cadastro"}
@@ -332,10 +333,22 @@ function ConnectOnboardingCard({
           )}
         </div>
 
+        {onboardingStatus === "active" && (
+          <div className="rounded-lg border border-success/30 bg-success-subtle/50 px-4 py-3 text-sm">
+            <p className="font-medium text-foreground">
+              Passo 3 — Pronto para receber
+            </p>
+            <p className="mt-1 text-muted-foreground">
+              Crie fundos de contribuição e compartilhe o link com a igreja.
+              Pix, cartão e boleto seguem o status acima.
+            </p>
+          </div>
+        )}
+
         {redirecting && (
           <p className="text-sm text-muted-foreground" role="status">
             Aguarde — estamos preparando sua conta e vamos te levar ao cadastro
-            seguro do Stripe.
+            seguro.
           </p>
         )}
 

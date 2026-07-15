@@ -192,10 +192,10 @@ export function GivingCheckoutForm({ fund }: { fund: PublicGivingFund }) {
         </FormField>
 
         {fund.paymentMethods.card ? (
-          <label className="flex items-start gap-3 rounded-xl border border-border px-3 py-3 text-sm">
+          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border/70 bg-muted/20 px-3 py-3 text-sm transition-colors hover:bg-muted/35">
             <input
               type="checkbox"
-              className="mt-0.5"
+              className="mt-0.5 size-4 shrink-0 rounded border-input accent-primary"
               checked={recurring}
               disabled={starting}
               onChange={(event) => setRecurring(event.target.checked)}

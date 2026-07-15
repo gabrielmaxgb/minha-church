@@ -10,6 +10,7 @@ import { membersKeys } from "@/lib/api/queries/members.keys";
 import { membershipsKeys } from "@/lib/api/queries/memberships.keys";
 import { ministriesKeys } from "@/lib/api/queries/ministries.keys";
 import { billingKeys } from "@/lib/api/queries/billing.keys";
+import { notificationsKeys } from "@/lib/api/queries/notifications.keys";
 import { paymentsKeys } from "@/lib/api/queries/payments.keys";
 import { prayerRequestsKeys } from "@/lib/api/queries/prayer-requests.keys";
 import { pricingKeys } from "@/lib/api/queries/pricing.keys";
@@ -30,6 +31,7 @@ export const queries = mergeQueryKeys(
   announcementsKeys,
   careRequestsKeys,
   prayerRequestsKeys,
+  notificationsKeys,
 );
 
 export { dashboardKeys } from "@/lib/api/queries/dashboard.keys";
@@ -189,3 +191,8 @@ export {
   usePrayerRequests,
   useTogglePrayerRequestPray,
 } from "@/lib/api/queries/use-prayer-requests";
+export { notificationsKeys } from "@/lib/api/queries/notifications.keys";
+export {
+  useMarkNotificationRead,
+  useNotificationInbox,
+} from "@/lib/api/queries/use-notifications";

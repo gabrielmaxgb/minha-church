@@ -11,6 +11,7 @@ import { CreateActivityModal } from "@/components/dashboard/activities/create-ac
 import { LockedFeatureHint } from "@/components/dashboard/locked-feature-hint";
 import { StaggerItem, StaggerList } from "@/components/motion/dashboard-motion";
 import { Button } from "@/components/ui/button";
+import { SelectField } from "@/components/ui/select-field";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useChurchEvents, useMinistries } from "@/lib/api/queries";
 import { getMonthQueryRange, startsAtForDateKey } from "@/lib/events/calendar";
@@ -151,16 +152,12 @@ export function ActivitiesContent() {
 
           {canCreate && (
             <div className="flex flex-col items-start gap-1.5 sm:items-end">
-              <Button
-                size="sm"
-                onClick={() => openCreateModal()}
-                {...blockProps}
-              >
+              <Button onClick={() => openCreateModal()} {...blockProps}>
                 <Plus className="size-4" />
-                Nova atividade
+                Novo evento
               </Button>
               {writesBlocked && (
-                <LockedFeatureHint action="criar ou editar atividades" />
+                <LockedFeatureHint action="criar ou editar eventos" />
               )}
             </div>
           )}
@@ -168,7 +165,7 @@ export function ActivitiesContent() {
 
         <div
           role="tablist"
-          aria-label="Visualização de atividades"
+          aria-label="Visualização de eventos"
           className="inline-flex rounded-xl border border-border/80 bg-muted/30 p-1"
         >
           <ViewTab
@@ -187,34 +184,31 @@ export function ActivitiesContent() {
           </ViewTab>
         </div>
 
-        <div className="space-y-2">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Filtrar por ministério
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <FilterPill
-              active={filter === "all"}
-              onClick={() => setFilter("all")}
-            >
-              Todos
-            </FilterPill>
-            <FilterPill
-              active={filter === "church"}
-              onClick={() => setFilter("church")}
-            >
-              Igreja
-            </FilterPill>
-            {canList &&
-              activeMinistries.map((ministry) => (
-                <FilterPill
-                  key={ministry.id}
-                  active={filter === ministry.id}
-                  onClick={() => setFilter(ministry.id)}
-                >
-                  {ministry.name}
-                </FilterPill>
-              ))}
-          </div>
+        <div className="max-w-sm space-y-1.5">
+          <label
+            htmlFor="activities-ministry-filter"
+            className="text-sm font-medium text-foreground"
+          >
+            Filtrar por
+          </label>
+          <SelectField
+            id="activities-ministry-filter"
+            value={filter}
+            onChange={(event) =>
+              setFilter(event.target.value as ActivityFilter)
+            }
+            aria-label="Filtrar eventos"
+          >
+            <option value="all">Todos os eventos</option>
+            <option value="church">Só da igreja</option>
+            {canList
+              ? activeMinistries.map((ministry) => (
+                  <option key={ministry.id} value={ministry.id}>
+                    {ministry.name}
+                  </option>
+                ))
+              : null}
+          </SelectField>
         </div>
 
         {view === "calendar" && (
@@ -266,7 +260,7 @@ export function ActivitiesContent() {
                     {...blockProps}
                   >
                     <Plus className="size-4" />
-                    Criar atividade
+                    Criar evento
                   </Button>
                 )}
               </div>
@@ -364,38 +358,13 @@ function ViewTab({
       aria-selected={active}
       onClick={onClick}
       className={cn(
-        "inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors",
+        "inline-flex min-h-11 items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors",
         active
           ? "bg-background text-foreground shadow-soft"
           : "text-muted-foreground hover:text-foreground",
       )}
     >
       {icon}
-      {children}
-    </button>
-  );
-}
-
-function FilterPill({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "rounded-full border px-3.5 py-2 text-sm font-medium transition-all duration-200",
-        active
-          ? "border-primary/20 bg-primary text-primary-foreground shadow-soft"
-          : "border-border/80 bg-card text-muted-foreground shadow-soft hover:bg-muted/60 hover:text-foreground",
-      )}
-    >
       {children}
     </button>
   );

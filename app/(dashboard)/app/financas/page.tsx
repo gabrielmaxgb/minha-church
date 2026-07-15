@@ -11,7 +11,6 @@ import {
   PiggyBank,
   Receipt,
   RefreshCw,
-  Settings2,
 } from "lucide-react";
 
 import { RequirePermission } from "@/components/auth/require-permission";
@@ -31,45 +30,32 @@ import { useFeatureLock } from "@/lib/subscription/use-feature-lock";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 
-type FinancesManageTab = "fundos" | "lancamentos-manuais";
-type FundsSubTab = "cadastro" | "contribuicoes" | "mensais";
+type FinancesTab = "fundos" | "contribuicoes" | "mensais" | "caixa";
 
-function parseFinancesHash(hash: string): {
-  tab: FinancesManageTab;
-  fundsSubTab: FundsSubTab;
-} {
+function parseFinancesHash(hash: string): FinancesTab {
   if (hash === "#contribuicoes") {
-    return { tab: "fundos", fundsSubTab: "contribuicoes" };
+    return "contribuicoes";
   }
-
   if (hash === "#mensais") {
-    return { tab: "fundos", fundsSubTab: "mensais" };
+    return "mensais";
   }
-
-  if (hash === "#movimentacoes" || hash === "#lancamentos-manuais") {
-    return { tab: "lancamentos-manuais", fundsSubTab: "cadastro" };
+  if (hash === "#movimentacoes" || hash === "#lancamentos-manuais" || hash === "#caixa") {
+    return "caixa";
   }
-
-  return { tab: "fundos", fundsSubTab: "cadastro" };
+  return "fundos";
 }
 
-function financesHashForState(
-  tab: FinancesManageTab,
-  fundsSubTab: FundsSubTab,
-): string {
-  if (tab === "lancamentos-manuais") {
-    return "#lancamentos-manuais";
+function financesHashForTab(tab: FinancesTab): string {
+  switch (tab) {
+    case "contribuicoes":
+      return "#contribuicoes";
+    case "mensais":
+      return "#mensais";
+    case "caixa":
+      return "#caixa";
+    default:
+      return "";
   }
-
-  if (fundsSubTab === "contribuicoes") {
-    return "#contribuicoes";
-  }
-
-  if (fundsSubTab === "mensais") {
-    return "#mensais";
-  }
-
-  return "";
 }
 
 function ownerActivationCopy(status: ConnectOnboardingStatus): {
@@ -111,8 +97,8 @@ function ownerActivationCopy(status: ConnectOnboardingStatus): {
       return {
         title: "Ative os recebimentos da sua igreja",
         description:
-          "Receba dízimos, doações e inscrições em eventos por Pix, cartão e boleto, com o histórico centralizado no Minha Church.",
-        cta: "Ativar recebimentos",
+          "Três passos: complete o perfil, conecte a conta bancária e comece a receber contribuições por Pix, cartão e boleto.",
+        cta: "Começar ativação",
       };
   }
 }
@@ -146,27 +132,25 @@ function FinancesManageTabs({
   value,
   onChange,
 }: {
-  value: FinancesManageTab;
-  onChange: (tab: FinancesManageTab) => void;
+  value: FinancesTab;
+  onChange: (tab: FinancesTab) => void;
 }) {
   const tabs: Array<{
-    id: FinancesManageTab;
+    id: FinancesTab;
     label: string;
     icon: typeof PiggyBank;
   }> = [
     { id: "fundos", label: "Fundos", icon: PiggyBank },
-    {
-      id: "lancamentos-manuais",
-      label: "Lançamentos manuais",
-      icon: NotebookPen,
-    },
+    { id: "contribuicoes", label: "Entradas", icon: Receipt },
+    { id: "mensais", label: "Mensais", icon: RefreshCw },
+    { id: "caixa", label: "Caixa", icon: NotebookPen },
   ];
 
   return (
     <div
       role="tablist"
       aria-label="Gestão financeira"
-      className="inline-flex w-full rounded-xl border border-border bg-muted/35 p-1 sm:w-auto"
+      className="inline-flex w-full flex-wrap rounded-xl border border-border bg-muted/35 p-1 sm:w-auto"
     >
       {tabs.map((tab) => {
         const Icon = tab.icon;
@@ -180,7 +164,7 @@ function FinancesManageTabs({
             id={`financas-tab-${tab.id}`}
             onClick={() => onChange(tab.id)}
             className={cn(
-              "inline-flex flex-1 items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm transition-colors sm:flex-none sm:min-w-40",
+              "inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors sm:flex-none sm:min-w-28",
               selected
                 ? "bg-foreground/85 font-medium text-background"
                 : "font-normal text-muted-foreground hover:bg-background/60 hover:text-foreground",
@@ -195,65 +179,12 @@ function FinancesManageTabs({
   );
 }
 
-function FundsSubTabs({
-  value,
-  onChange,
-}: {
-  value: FundsSubTab;
-  onChange: (tab: FundsSubTab) => void;
-}) {
-  const tabs: Array<{
-    id: FundsSubTab;
-    label: string;
-    icon: typeof Settings2;
-  }> = [
-    { id: "cadastro", label: "Cadastro", icon: Settings2 },
-    { id: "contribuicoes", label: "Contribuições", icon: Receipt },
-    { id: "mensais", label: "Mensais", icon: RefreshCw },
-  ];
-
-  return (
-    <div
-      role="tablist"
-      aria-label="Fundos"
-      className="inline-flex rounded-xl border border-border/80 bg-muted/30 p-1"
-    >
-      {tabs.map((subTab) => {
-        const Icon = subTab.icon;
-        const selected = value === subTab.id;
-        return (
-          <button
-            key={subTab.id}
-            type="button"
-            role="tab"
-            aria-selected={selected}
-            id={`financas-fundos-tab-${subTab.id}`}
-            onClick={() => onChange(subTab.id)}
-            className={cn(
-              "inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-colors",
-              selected
-                ? "bg-background font-medium text-foreground shadow-xs"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            <Icon className="size-3.5 opacity-80" aria-hidden />
-            {subTab.label}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
 function FinancesManageSection() {
-  const [tab, setTab] = useState<FinancesManageTab>("fundos");
-  const [fundsSubTab, setFundsSubTab] = useState<FundsSubTab>("cadastro");
+  const [tab, setTab] = useState<FinancesTab>("fundos");
 
   useEffect(() => {
     const readHash = () => {
-      const parsed = parseFinancesHash(window.location.hash);
-      setTab(parsed.tab);
-      setFundsSubTab(parsed.fundsSubTab);
+      setTab(parseFinancesHash(window.location.hash));
     };
 
     readHash();
@@ -261,20 +192,11 @@ function FinancesManageSection() {
     return () => window.removeEventListener("hashchange", readHash);
   }, []);
 
-  const syncHash = (nextTab: FinancesManageTab, nextFundsSubTab: FundsSubTab) => {
-    const url = new URL(window.location.href);
-    url.hash = financesHashForState(nextTab, nextFundsSubTab);
-    window.history.replaceState(null, "", url.pathname + url.search + url.hash);
-  };
-
-  const selectTab = (next: FinancesManageTab) => {
+  const selectTab = (next: FinancesTab) => {
     setTab(next);
-    syncHash(next, fundsSubTab);
-  };
-
-  const selectFundsSubTab = (next: FundsSubTab) => {
-    setFundsSubTab(next);
-    syncHash("fundos", next);
+    const url = new URL(window.location.href);
+    url.hash = financesHashForTab(next);
+    window.history.replaceState(null, "", url.pathname + url.search + url.hash);
   };
 
   return (
@@ -283,7 +205,7 @@ function FinancesManageSection() {
         <div>
           <h2 className="text-lg font-semibold tracking-tight">Gestão</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            Fundos de cobrança com histórico online e livro-caixa manual.
+            Dinheiro que a igreja recebe e registra.
           </p>
         </div>
         <FinancesManageTabs value={tab} onChange={selectTab} />
@@ -292,24 +214,14 @@ function FinancesManageSection() {
       <div
         role="tabpanel"
         aria-labelledby={`financas-tab-${tab}`}
-        className="min-h-48 space-y-4"
+        className="min-h-48"
       >
         {tab === "fundos" ? (
-          <>
-            <FundsSubTabs value={fundsSubTab} onChange={selectFundsSubTab} />
-            <div
-              role="tabpanel"
-              aria-labelledby={`financas-fundos-tab-${fundsSubTab}`}
-            >
-              {fundsSubTab === "cadastro" ? (
-                <GivingFundsPanel />
-              ) : fundsSubTab === "contribuicoes" ? (
-                <GivingDonationsPanel embedded />
-              ) : (
-                <GivingSubscriptionsPanel />
-              )}
-            </div>
-          </>
+          <GivingFundsPanel />
+        ) : tab === "contribuicoes" ? (
+          <GivingDonationsPanel embedded />
+        ) : tab === "mensais" ? (
+          <GivingSubscriptionsPanel />
         ) : (
           <FinanceEntriesPanel embedded />
         )}

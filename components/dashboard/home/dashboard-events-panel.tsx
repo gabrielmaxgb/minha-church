@@ -37,13 +37,13 @@ export function DashboardEventsPanel({
   const { writesBlocked, blockProps } = useTrialWriteGuard();
 
   return (
-    <section className="rounded-xl border border-domain-activities/20 bg-gradient-to-br from-domain-activities-subtle/50 via-card to-card">
-      <div className="flex flex-col gap-3 border-b border-domain-activities/15 px-4 py-3.5 sm:flex-row sm:items-start sm:justify-between">
+    <section className="rounded-xl border border-domain-activities/30 bg-gradient-to-br from-domain-activities-subtle via-card to-card">
+      <div className="flex flex-col gap-3 border-b border-domain-activities/20 px-4 py-3.5 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h2 className="text-sm font-medium text-domain-activities-foreground">
+          <h2 className="text-base font-medium text-domain-activities-foreground">
             Agenda da semana
           </h2>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <p className="mt-0.5 text-sm text-muted-foreground">
             Próximos cultos e encontros
           </p>
         </div>
@@ -69,10 +69,10 @@ export function DashboardEventsPanel({
               <div className="mt-4 flex flex-col items-center gap-1.5">
                 <Button size="sm" onClick={onCreateActivity} {...blockProps}>
                   <Plus className="size-4" />
-                  Criar atividade
+                  Criar evento
                 </Button>
                 {writesBlocked && (
-                  <LockedFeatureHint action="criar atividades" />
+                  <LockedFeatureHint action="criar eventos" />
                 )}
               </div>
             )}

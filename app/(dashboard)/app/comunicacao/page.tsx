@@ -8,7 +8,7 @@ export default function ComunicacaoPage() {
   return (
     <RequirePermission permission="communication">
       <DashboardPage
-        title="Quadro de avisos"
+        title="Avisos"
         subtitle="Comunicados da igreja"
       >
         <CommunicationContent />

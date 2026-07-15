@@ -47,7 +47,7 @@ const toneStyles: Record<
   },
   attention: {
     shell:
-      "border-attention-border bg-gradient-to-br from-attention-subtle via-attention-subtle to-card shadow-xs ring-1 ring-attention/15",
+      "border-attention-border bg-gradient-to-br from-attention-subtle via-attention-subtle to-card shadow-xs ring-1 ring-attention/18",
     icon: "bg-attention-mark text-attention-foreground",
     accent: "bg-attention",
     label: "text-attention-foreground",

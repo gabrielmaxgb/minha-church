@@ -34,16 +34,16 @@ export const CHURCH_PERMISSION_LABELS: Record<ChurchPermissionKey, string> = {
   dashboard_access: "Início",
   members_access: "Membros",
   ministries_access: "Ministérios",
-  activities_access: "Eventos e Atividades",
+  activities_access: "Eventos",
   schedules_access: "Minhas escalas",
   finances_access: "Finanças",
-  communication_access: "Quadro de avisos",
+  communication_access: "Avisos",
   reports_access: "Relatórios",
   settings_access: "Configurações",
   members_manage: "Cadastrar e editar membros",
   ministries_manage: "Cadastrar e editar ministérios",
-  events_create_church_wide: "Criar atividades em toda a igreja",
-  communication_manage: "Publicar e editar comunicados",
+  events_create_church_wide: "Criar eventos em toda a igreja",
+  communication_manage: "Publicar e editar avisos",
   roles_manage: "Definir cargos da igreja",
   memberships_manage: "Atribuir cargos a usuários",
   counseling_receive: "Receber pedidos de aconselhamento e visitas",
@@ -58,13 +58,13 @@ export const CHURCH_PERMISSION_DESCRIPTIONS: Record<ChurchPermissionKey, string>
   ministries_access:
     "Ver os ministérios, suas equipes e cargos. Somente leitura — criar ou editar exige “Cadastrar e editar ministérios”.",
   activities_access:
-    "Ver a agenda e os detalhes em Eventos e Atividades. Criar itens exige a permissão correspondente.",
+    "Ver a agenda e os detalhes em Eventos. Criar itens exige a permissão correspondente.",
   schedules_access:
     "Abre “Minhas escalas”, onde a pessoa acompanha as próprias convocações e marca disponibilidade.",
   finances_access:
     "Abre a área financeira da igreja (resumo de entradas e fundos).",
   communication_access:
-    "Abre o Quadro de avisos, com comunicados da igreja e dos ministérios.",
+    "Abre Avisos, com comunicados da igreja e dos ministérios.",
   reports_access:
     "Abre os resumos e relatórios da igreja.",
   settings_access:
@@ -74,9 +74,9 @@ export const CHURCH_PERMISSION_DESCRIPTIONS: Record<ChurchPermissionKey, string>
   ministries_manage:
     "Criar, editar e excluir ministérios, seus cargos e funções, e montar as equipes vinculando ou removendo membros. Também concede controle das escalas e eventos de todos os ministérios da igreja.",
   events_create_church_wide:
-    "Criar, editar e excluir atividades para toda a igreja e também eventos dentro de qualquer ministério, sem precisar liderá-lo.",
+    "Criar, editar e excluir eventos para toda a igreja e também eventos dentro de qualquer ministério, sem precisar liderá-lo.",
   communication_manage:
-    "Criar, editar e excluir comunicados para a igreja ou ministérios específicos, agendar publicação e ver o histórico de envios.",
+    "Criar, editar e excluir avisos para a igreja ou ministérios específicos, agendar publicação e ver o histórico de envios.",
   roles_manage:
     "Criar, editar e excluir cargos e definir quais permissões cada um concede (esta tela). Não atribui os cargos às pessoas.",
   memberships_manage:

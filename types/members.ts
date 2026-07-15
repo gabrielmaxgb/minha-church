@@ -1,6 +1,6 @@
 export type MemberStatus = "visitor" | "active" | "inactive";
 
-export type Gender = "male" | "female" | "other" | "prefer_not_to_say";
+export type Gender = "male" | "female";
 
 export type MaritalStatus = "single" | "married" | "divorced" | "widowed";
 
@@ -168,11 +168,13 @@ export type MemberAccountCredentials =
       login: string;
       temporaryPassword: string;
       mustChangePassword: true;
+      userId?: string;
     }
   | {
       kind: "linked";
       login: string;
       linkedExistingAccount: true;
+      userId?: string;
     };
 
 export interface CreateMemberResponse extends Member {

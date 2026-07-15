@@ -6,12 +6,10 @@ import { usePathname, useRouter } from "next/navigation";
 import { CheckoutReturnHandler } from "@/components/billing/checkout-return-handler";
 import { TierCrossingOwnerHost } from "@/components/billing/tier-crossing-owner-host";
 import { ChurchSwitchOverlay } from "@/components/dashboard/church-switch-overlay";
-import { EmailVerificationBanner } from "@/components/dashboard/email-verification-banner";
-import { SoftOnboardingHost } from "@/components/dashboard/onboarding/soft-onboarding-host";
 import { OnboardingChecklistProvider } from "@/components/dashboard/onboarding/onboarding-checklist-context";
-import { TrialStatusBanner } from "@/components/dashboard/trial-status-banner";
 import { RolePreviewBanner } from "@/components/dashboard/role-preview-banner";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
+import { SystemBannersHost } from "@/components/dashboard/system-banners-host";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { DashboardContentMotion } from "@/components/motion/dashboard-motion";
 import { AUTH_ROUTES } from "@/constants/routes";
@@ -115,9 +113,7 @@ export function DashboardShell({
             )}
           >
             <div className="px-4 pt-4 empty:hidden sm:px-6">
-              <EmailVerificationBanner />
-              <TrialStatusBanner />
-              <SoftOnboardingHost />
+              <SystemBannersHost />
             </div>
             <DashboardContentMotion className="flex min-h-0 flex-1 flex-col px-4 py-4 sm:px-6 sm:py-5">
               {children}
@@ -130,9 +126,7 @@ export function DashboardShell({
               isSwitchingChurch && "opacity-60",
             )}
           >
-            <EmailVerificationBanner />
-            <TrialStatusBanner />
-            <SoftOnboardingHost />
+            <SystemBannersHost />
             <DashboardContentMotion>{children}</DashboardContentMotion>
           </main>
         )}

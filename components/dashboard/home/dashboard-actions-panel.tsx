@@ -5,15 +5,12 @@ import type { LucideIcon } from "lucide-react";
 import {
   AlertCircle,
   Calendar,
+  CalendarDays,
   ChevronRight,
-  HeartHandshake,
   KeyRound,
-  Layers,
   Megaphone,
   UserPlus,
   Users,
-  Wallet,
-  ClipboardList,
 } from "lucide-react";
 
 import {
@@ -22,24 +19,21 @@ import {
   settingsSectionPath,
 } from "@/constants/routes";
 import { canManageChurchMemberships } from "@/lib/church-memberships/constants";
+import type { DashboardHomeProfile } from "@/lib/dashboard/home-profile";
 import {
-  canAccessMembers,
   canAccessSchedules,
   canCreateAnyActivity,
-  canListMinistries,
   canManageCommunication,
   canManageMembers,
 } from "@/lib/permissions";
-import type { DashboardHomeProfile } from "@/lib/dashboard/home-profile";
 import { useTrialWriteGuard } from "@/lib/subscription/use-trial-write-guard";
+import type { ProductDomain } from "@/lib/ui/domain-theme";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 
 interface DashboardQuickActionsProps {
   profile: DashboardHomeProfile;
   onCreateActivity: () => void;
-  carePendingCount?: number;
-  schedulePendingCount?: number;
 }
 
 interface QuickAction {
@@ -48,153 +42,108 @@ interface QuickAction {
   href?: string;
   onClick?: () => void;
   icon: LucideIcon;
-  tone: "members" | "activities" | "communication" | "ministries" | "finances" | "care" | "schedules" | "neutral";
-  badge?: number;
+  domain: ProductDomain;
   disabled?: boolean;
 }
 
-const UNIFIED_TONE = {
-  shell:
-    "border-billing/25 bg-billing-subtle/70 hover:border-billing/45 hover:bg-billing-subtle",
-  icon: "bg-billing/20 text-billing-foreground group-hover:bg-billing/30",
-  chevron: "text-billing-foreground/55 group-hover:text-billing-foreground",
-} as const;
-
-const toneStyles: Record<
-  QuickAction["tone"],
-  { shell: string; icon: string; chevron: string }
-> = {
-  members: UNIFIED_TONE,
-  activities: UNIFIED_TONE,
-  communication: UNIFIED_TONE,
-  ministries: UNIFIED_TONE,
-  finances: UNIFIED_TONE,
-  care: UNIFIED_TONE,
-  schedules: UNIFIED_TONE,
-  neutral: UNIFIED_TONE,
+const domainIconShell: Record<ProductDomain, string> = {
+  home: "bg-domain-home-subtle text-domain-home-foreground",
+  members: "bg-domain-members-subtle text-domain-members-foreground",
+  ministries: "bg-domain-ministries-subtle text-domain-ministries-foreground",
+  activities: "bg-domain-activities-subtle text-domain-activities-foreground",
+  schedules: "bg-domain-schedules-subtle text-domain-schedules-foreground",
+  communication:
+    "bg-domain-communication-subtle text-domain-communication-foreground",
+  finances: "bg-domain-finances-subtle text-domain-finances-foreground",
+  reports: "bg-domain-reports-subtle text-domain-reports-foreground",
+  settings: "bg-muted text-foreground",
 };
 
+/**
+ * No máximo 4 atalhos — tarefas diárias da secretaria.
+ * Pendências (escala, aconselhamento) ficam em Prioridades, não aqui.
+ */
 export function DashboardQuickActions({
   profile,
   onCreateActivity,
-  carePendingCount = 0,
-  schedulePendingCount = 0,
 }: DashboardQuickActionsProps) {
   const { permissions, user } = useAuth();
   const { writesBlocked } = useTrialWriteGuard();
-  const canSeeMembers = canAccessMembers(permissions);
-  const canReceiveCare =
-    Boolean(user?.isOwner) || Boolean(permissions?.counseling?.receive);
 
   const actions: QuickAction[] = [];
 
-  if (profile !== "member" && permissions && canManageMembers(permissions)) {
-    actions.push({
-      label: "Cadastrar membro",
-      description: "Novo cadastro pastoral",
-      href: MEMBER_CREATE_ROUTE,
-      icon: UserPlus,
-      tone: "members",
-    });
+  if (profile === "member") {
+    if (canAccessSchedules(permissions)) {
+      actions.push({
+        label: "Ver agenda",
+        description: "Sua escala e disponibilidade",
+        href: AUTH_ROUTES.mySchedules,
+        icon: CalendarDays,
+        domain: "schedules",
+      });
+    }
+    if (permissions?.communication.access) {
+      actions.push({
+        label: "Avisos",
+        description: "Comunicados da igreja",
+        href: AUTH_ROUTES.communication,
+        icon: Megaphone,
+        domain: "communication",
+      });
+    }
+  } else {
+    if (permissions && canManageMembers(permissions)) {
+      actions.push({
+        label: "Cadastrar membro",
+        description: "Novo cadastro pastoral",
+        href: MEMBER_CREATE_ROUTE,
+        icon: UserPlus,
+        domain: "members",
+      });
+    }
+
+    if (permissions && canCreateAnyActivity(permissions)) {
+      actions.push({
+        label: "Criar evento",
+        description: "Culto, ensaio ou encontro",
+        onClick: onCreateActivity,
+        icon: Calendar,
+        domain: "activities",
+        disabled: writesBlocked,
+      });
+    }
+
+    if (canManageCommunication(permissions, Boolean(user?.isOwner))) {
+      actions.push({
+        label: "Publicar aviso",
+        description: "Comunicado para a igreja",
+        href: AUTH_ROUTES.communication,
+        icon: Megaphone,
+        domain: "communication",
+        disabled: writesBlocked,
+      });
+    }
+
+    if (canAccessSchedules(permissions)) {
+      actions.push({
+        label: "Ver agenda",
+        description: "Escalas e próximos encontros",
+        href: AUTH_ROUTES.mySchedules,
+        icon: CalendarDays,
+        domain: "schedules",
+      });
+    } else if (permissions?.activities.access) {
+      actions.push({
+        label: "Ver agenda",
+        description: "Eventos da igreja",
+        href: AUTH_ROUTES.activities,
+        icon: CalendarDays,
+        domain: "activities",
+      });
+    }
   }
 
-  if (canSeeMembers && profile !== "member") {
-    actions.push({
-      label: "Ver membros",
-      description: "Cadastro da igreja",
-      href: AUTH_ROUTES.members,
-      icon: Users,
-      tone: "members",
-    });
-  }
-
-  if (
-    profile !== "member" &&
-    permissions &&
-    canCreateAnyActivity(permissions)
-  ) {
-    actions.push({
-      label: "Nova atividade",
-      description: "Evento ou encontro",
-      onClick: onCreateActivity,
-      icon: Calendar,
-      tone: "activities",
-      disabled: writesBlocked,
-    });
-  }
-
-  if (
-    profile !== "member" &&
-    canManageCommunication(permissions, Boolean(user?.isOwner))
-  ) {
-    actions.push({
-      label: "Novo comunicado",
-      description: "Aviso para a igreja",
-      href: AUTH_ROUTES.communication,
-      icon: Megaphone,
-      tone: "communication",
-      disabled: writesBlocked,
-    });
-  } else if (permissions?.communication.access) {
-    actions.push({
-      label: "Quadro de avisos",
-      description: "Comunicados da igreja",
-      href: AUTH_ROUTES.communication,
-      icon: Megaphone,
-      tone: "communication",
-    });
-  }
-
-  if (profile !== "member" && canListMinistries(permissions)) {
-    actions.push({
-      label: "Ministérios",
-      description: "Equipes e cargos",
-      href: AUTH_ROUTES.ministries,
-      icon: Layers,
-      tone: "ministries",
-    });
-  }
-
-  if (profile !== "member" && permissions?.finances.access) {
-    actions.push({
-      label: "Finanças",
-      description: "Recebimentos e doações",
-      href: AUTH_ROUTES.finances,
-      icon: Wallet,
-      tone: "finances",
-    });
-  }
-
-  if (canReceiveCare && profile !== "member") {
-    actions.push({
-      label: "Aconselhamentos",
-      description:
-        carePendingCount > 0
-          ? `${carePendingCount} pendente${carePendingCount === 1 ? "" : "s"}`
-          : "Pedidos e visitas",
-      href: AUTH_ROUTES.careRequests,
-      icon: HeartHandshake,
-      tone: "care",
-      badge: carePendingCount > 0 ? carePendingCount : undefined,
-    });
-  }
-
-  if (canAccessSchedules(permissions)) {
-    actions.push({
-      label: "Escalas",
-      description:
-        schedulePendingCount > 0
-          ? `${schedulePendingCount} aguardando você`
-          : "Sua disponibilidade",
-      href: AUTH_ROUTES.mySchedules,
-      icon: ClipboardList,
-      tone: "schedules",
-      badge: schedulePendingCount > 0 ? schedulePendingCount : undefined,
-    });
-  }
-
-  const maxActions = profile === "member" ? 4 : profile === "leader" ? 6 : 8;
-  const visibleActions = actions.slice(0, maxActions);
+  const visibleActions = actions.slice(0, 4);
 
   if (visibleActions.length === 0) {
     return null;
@@ -203,58 +152,48 @@ export function DashboardQuickActions({
   return (
     <section className="space-y-3">
       <div>
-        <h2 className="text-sm font-medium text-foreground">Ações rápidas</h2>
-        <p className="mt-0.5 text-xs text-muted-foreground">
+        <h2 className="text-base font-medium text-foreground">Faça agora</h2>
+        <p className="mt-0.5 text-sm text-muted-foreground">
           {profile === "member"
             ? "Atalhos do seu dia na igreja"
-            : "Atalhos do dia a dia da igreja"}
+            : "As tarefas mais comuns da secretaria"}
         </p>
       </div>
-      <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
+      <ul className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
         {visibleActions.map((action) => {
-          const styles = toneStyles[action.tone];
           const content = (
             <>
               <span
                 className={cn(
-                  "relative flex size-9 shrink-0 items-center justify-center rounded-lg transition-colors",
-                  styles.icon,
+                  "flex size-11 shrink-0 items-center justify-center rounded-xl",
+                  domainIconShell[action.domain],
                 )}
               >
-                <action.icon className="size-4" aria-hidden strokeWidth={2.25} />
-                {action.badge != null ? (
-                  <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-attention px-1 text-[10px] font-semibold text-white">
-                    {action.badge > 9 ? "9+" : action.badge}
-                  </span>
-                ) : null}
+                <action.icon className="size-5" aria-hidden strokeWidth={2} />
               </span>
               <span className="min-w-0 flex-1 text-left">
-                <span className="block truncate text-sm font-semibold tracking-tight text-foreground">
+                <span className="block truncate text-base font-semibold tracking-tight text-foreground">
                   {action.label}
                 </span>
-                <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+                <span className="mt-0.5 block truncate text-sm text-muted-foreground">
                   {action.description}
                 </span>
               </span>
               <ChevronRight
-                className={cn(
-                  "size-4 shrink-0 transition-transform duration-200 group-hover:translate-x-0.5",
-                  styles.chevron,
-                )}
+                className="size-5 shrink-0 text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-foreground"
                 aria-hidden
               />
             </>
           );
 
           const className = cn(
-            "group flex w-full cursor-pointer items-center gap-3 rounded-xl border px-3 py-3 text-left shadow-xs",
-            "transition-[transform,background-color,border-color,box-shadow] duration-200 ease-out",
-            "hover:-translate-y-px hover:shadow-sm",
-            "active:translate-y-0 active:scale-[0.98] active:shadow-xs",
+            "group flex min-h-14 w-full cursor-pointer items-center gap-3 rounded-xl border border-border bg-card px-4 py-3.5 text-left",
+            "transition-[transform,background-color,border-color] duration-200 ease-out",
+            "hover:border-foreground/20 hover:bg-muted/40",
+            "active:scale-[0.99]",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-            styles.shell,
             action.disabled &&
-              "pointer-events-none cursor-not-allowed opacity-50 shadow-none",
+              "pointer-events-none cursor-not-allowed opacity-50",
           );
 
           if (action.href) {
@@ -339,14 +278,14 @@ export function DashboardAttentionPanel({
           <li key={item.href}>
             <Link
               href={item.href}
-              className="flex items-center gap-3 rounded-md px-2.5 py-2.5 transition-colors hover:bg-card/60"
+              className="flex min-h-11 items-center gap-3 rounded-md px-2.5 py-2.5 transition-colors hover:bg-card/60"
             >
               <item.icon className="size-4 shrink-0 text-attention-foreground" />
               <span className="min-w-0">
                 <span className="block text-sm font-medium text-foreground">
                   {item.label}
                 </span>
-                <span className="block text-xs text-muted-foreground">
+                <span className="block text-sm text-muted-foreground">
                   {item.description}
                 </span>
               </span>

@@ -124,7 +124,7 @@ function SoftModalShell({
   );
 }
 
-function OwnerSoftOnboarding() {
+function OwnerSoftOnboarding({ showBanner }: { showBanner: boolean }) {
   const { church } = useAuth();
   const fiscal = useFiscalProfile();
   const profile = fiscal.data ?? null;
@@ -153,30 +153,32 @@ function OwnerSoftOnboarding() {
 
   return (
     <>
-      <DashboardBanner
-        tone="attention"
-        icon={Building2}
-        label="Perfil da igreja"
-        title="Complete o perfil da igreja"
-        description="WhatsApp, cidade/UF e documentos da igreja (CNPJ + CPF de quem responde, ou só CPF se a igreja não tiver CNPJ). Sem isso, não dá para receber doações."
-        action={
-          <>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="border-attention-border bg-card"
-              onClick={() => setOpen(true)}
-            >
-              Ver o que falta
-            </Button>
-            <Button asChild size="sm">
-              <Link href={settingsSectionPath("general")}>Completar</Link>
-            </Button>
-          </>
-        }
-        className="mb-4"
-      />
+      {showBanner ? (
+        <DashboardBanner
+          tone="attention"
+          icon={Building2}
+          label="Perfil da igreja"
+          title="Complete o perfil da igreja"
+          description="WhatsApp, cidade/UF e documentos da igreja (CNPJ + CPF de quem responde, ou só CPF se a igreja não tiver CNPJ). Sem isso, não dá para receber doações."
+          action={
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="border-attention-border bg-card"
+                onClick={() => setOpen(true)}
+              >
+                Ver o que falta
+              </Button>
+              <Button asChild size="sm">
+                <Link href={settingsSectionPath("general")}>Completar</Link>
+              </Button>
+            </>
+          }
+          className="mb-4"
+        />
+      ) : null}
 
       <SoftModalShell
         open={open}
@@ -206,8 +208,9 @@ function OwnerSoftOnboarding() {
           </li>
         </ul>
         <p className="mt-4 text-xs text-muted-foreground">
-          Você pode fechar e continuar no app. O aviso permanece até completar.
-          Recebimentos e fundos de doação só liberam depois.
+          Você pode fechar e continuar no app. O item permanece em “Precisa de
+          você” no Início até completar. Recebimentos e fundos de doação só
+          liberam depois.
         </p>
         <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-end">
           <Button type="button" variant="outline" onClick={() => setOpen(false)}>
@@ -224,7 +227,7 @@ function OwnerSoftOnboarding() {
   );
 }
 
-function MemberSoftOnboarding() {
+function MemberSoftOnboarding({ showBanner }: { showBanner: boolean }) {
   const { user, church, updateProfile } = useAuth();
   const myMember = useMyMember();
   const member = myMember.data;
@@ -304,25 +307,27 @@ function MemberSoftOnboarding() {
 
   return (
     <>
-      <DashboardBanner
-        tone="attention"
-        icon={UserRound}
-        label="Seu perfil"
-        title="Complete seu perfil"
-        description="Informe WhatsApp e data de nascimento para a igreja conseguir falar com você."
-        action={
-          <Button type="button" size="sm" onClick={() => setOpen(true)}>
-            Completar
-          </Button>
-        }
-        className="mb-4"
-      />
+      {showBanner ? (
+        <DashboardBanner
+          tone="attention"
+          icon={UserRound}
+          label="Seu perfil"
+          title="Complete seu perfil"
+          description="Informe WhatsApp e data de nascimento para a igreja conseguir falar com você."
+          action={
+            <Button type="button" size="sm" onClick={() => setOpen(true)}>
+              Completar
+            </Button>
+          }
+          className="mb-4"
+        />
+      ) : null}
 
       <SoftModalShell
         open={open}
         onClose={() => setOpen(false)}
         title="Seu perfil"
-        description="Só o essencial — você pode fechar e continuar usando o app."
+        description="Só o essencial — você pode fechar e continuar usando o app. O lembrete fica em “Precisa de você” no Início."
         icon={<UserRound className="size-5" aria-hidden />}
       >
         <form className="space-y-4" onSubmit={onSubmit} noValidate>
@@ -387,8 +392,14 @@ function MemberSoftOnboarding() {
   );
 }
 
-/** Banner + modal soft no 1º acesso (dono e membro). */
-export function SoftOnboardingHost({ className }: { className?: string }) {
+/** Soft onboarding: modal no 1º acesso; banner opcional (desligado no slot único do shell). */
+export function SoftOnboardingHost({
+  className,
+  showBanner = true,
+}: {
+  className?: string;
+  showBanner?: boolean;
+}) {
   const { user } = useAuth();
 
   if (!user) {
@@ -397,7 +408,11 @@ export function SoftOnboardingHost({ className }: { className?: string }) {
 
   return (
     <div className={cn(className)}>
-      {user.isOwner ? <OwnerSoftOnboarding /> : <MemberSoftOnboarding />}
+      {user.isOwner ? (
+        <OwnerSoftOnboarding showBanner={showBanner} />
+      ) : (
+        <MemberSoftOnboarding showBanner={showBanner} />
+      )}
     </div>
   );
 }

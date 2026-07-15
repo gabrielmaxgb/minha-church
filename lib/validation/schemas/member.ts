@@ -5,13 +5,7 @@ import type { MemberFormValues } from "@/lib/members/form";
 import { isValidCpf, isValidEmail } from "../shared";
 
 const memberStatusSchema = z.enum(["visitor", "active", "inactive"]);
-const genderSchema = z.enum([
-	"male",
-	"female",
-	"other",
-	"prefer_not_to_say",
-	"",
-]);
+const genderSchema = z.enum(["male", "female", ""]);
 const maritalStatusSchema = z.enum([
 	"single",
 	"married",

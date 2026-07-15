@@ -43,7 +43,7 @@ export const AUTH_ROUTES = {
   mySchedule: "/app/minhas-escalas",
   finances: "/app/financas",
   financesContributions: "/app/financas#contribuicoes",
-  financesManualEntries: "/app/financas#lancamentos-manuais",
+  financesManualEntries: "/app/financas#caixa",
   financesMonthly: "/app/financas#mensais",
   tithesOfferings: "/app/dizimos-e-ofertas",
   communication: "/app/comunicacao",

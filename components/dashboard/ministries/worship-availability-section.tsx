@@ -35,8 +35,8 @@ interface WorshipAvailabilitySectionProps {
 function formatEventDay(iso: string): string {
   return new Intl.DateTimeFormat("pt-BR", {
     weekday: "short",
-    day: "numeric",
-    month: "short",
+    day: "2-digit",
+    month: "2-digit",
   }).format(new Date(iso));
 }
 

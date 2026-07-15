@@ -1,11 +1,13 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  Building2,
   Calendar,
   ClipboardList,
   HeartHandshake,
   KeyRound,
   Megaphone,
   Ticket,
+  UserRound,
   Users,
 } from "lucide-react";
 
@@ -42,6 +44,10 @@ interface BuildPrioritiesInput {
   canReceiveCare: boolean;
   hasCommunicationAccess: boolean;
   canAccessActivities: boolean;
+  /** Dono: perfil fiscal/contato da igreja incompleto */
+  churchProfileIncomplete?: boolean;
+  /** Membro: WhatsApp / nascimento faltando */
+  memberProfileIncomplete?: boolean;
 }
 
 const MAX_PRIORITIES = 3;
@@ -50,6 +56,31 @@ export function buildDashboardPriorities(
   input: BuildPrioritiesInput,
 ): DashboardPriorityItem[] {
   const items: DashboardPriorityItem[] = [];
+
+  if (
+    input.churchProfileIncomplete &&
+    (input.profile === "owner" || input.profile === "leader")
+  ) {
+    items.push({
+      id: "church-profile",
+      title: "Complete o perfil da igreja",
+      description: "Contato, cidade e documentos — necessário para receber",
+      href: settingsSectionPath("general"),
+      icon: Building2,
+      tone: "attention",
+    });
+  }
+
+  if (input.memberProfileIncomplete && input.profile === "member") {
+    items.push({
+      id: "member-profile",
+      title: "Complete seu perfil",
+      description: "WhatsApp e nascimento para a igreja falar com você",
+      href: settingsSectionPath("profile"),
+      icon: UserRound,
+      tone: "attention",
+    });
+  }
 
   if (
     input.canManageMemberships &&
@@ -114,9 +145,9 @@ export function buildDashboardPriorities(
       id: "announcements-unread",
       title:
         input.announcementsUnreadCount === 1
-          ? "1 aviso novo no quadro"
-          : `${input.announcementsUnreadCount} avisos novos no quadro`,
-      description: "Comunicados que você ainda não abriu",
+          ? "1 aviso novo"
+          : `${input.announcementsUnreadCount} avisos novos`,
+      description: "Avisos que você ainda não abriu",
       href: AUTH_ROUTES.communication,
       icon: Megaphone,
       tone: "communication",
@@ -139,8 +170,8 @@ export function buildDashboardPriorities(
       title: firstOpenRegistration.name,
       description:
         extra > 0
-          ? `Inscrição aberta · +${extra} outro${extra === 1 ? "" : "s"}`
-          : "Inscrição aberta — confirme sua participação",
+          ? `Inscrições abertas · +${extra} outro${extra === 1 ? "" : "s"}`
+          : "Inscrições abertas — confirme sua participação",
       href: activityDetailPath(firstOpenRegistration.id),
       icon: Ticket,
       tone: "activities",

@@ -135,7 +135,7 @@ export interface UpdateProfilePayload {
   phone?: string | null;
   phoneSecondary?: string | null;
   birthDate?: string | null;
-  gender?: "male" | "female" | "other" | "prefer_not_to_say" | null;
+  gender?: "male" | "female" | null;
   maritalStatus?: "single" | "married" | "divorced" | "widowed" | null;
   weddingAnniversary?: string | null;
   street?: string | null;

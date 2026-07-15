@@ -2,13 +2,7 @@ import { z } from "zod";
 
 import { isValidEmail } from "../shared";
 
-const genderSchema = z.enum([
-  "male",
-  "female",
-  "other",
-  "prefer_not_to_say",
-  "",
-]);
+const genderSchema = z.enum(["male", "female", ""]);
 const maritalStatusSchema = z.enum([
   "single",
   "married",

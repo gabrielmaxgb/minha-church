@@ -43,13 +43,13 @@ const welcomePoints = [
     icon: HeartHandshake,
     title: "Bem-vindo de volta",
     description: "A semana da sua igreja, pronta pra você.",
-    tone: "text-domain-members-foreground bg-domain-members-subtle",
+    tone: "text-foreground bg-muted",
   },
   {
     icon: CalendarDays,
     title: "Próximo culto em vista",
     description: "Agenda, escalas e avisos no mesmo lugar.",
-    tone: "text-domain-activities-foreground bg-domain-activities-subtle",
+    tone: "text-attention-foreground bg-attention-subtle",
   },
 ] as const;
 
@@ -154,18 +154,18 @@ function LoginFormContent() {
       transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
     >
       <div className="overflow-hidden rounded-2xl border border-border/70 bg-card/90 shadow-popover backdrop-blur-sm lg:grid lg:min-h-[34rem] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
-        <aside className="relative flex overflow-hidden border-b border-border/60 bg-gradient-to-br from-domain-members-subtle via-card to-domain-activities-subtle/80 px-6 py-8 sm:px-8 sm:py-10 lg:min-h-full lg:border-b-0 lg:border-r lg:px-10 lg:py-12">
+        <aside className="relative flex overflow-hidden border-b border-border/60 bg-gradient-to-br from-muted via-card to-attention-subtle px-6 py-8 sm:px-8 sm:py-10 lg:min-h-full lg:border-b-0 lg:border-r lg:px-10 lg:py-12">
           <div
-            className="pointer-events-none absolute -left-16 -top-20 size-56 rounded-full bg-domain-members/15 blur-3xl"
+            className="pointer-events-none absolute -left-16 -top-20 size-56 rounded-full bg-domain-members/18 blur-3xl"
             aria-hidden
           />
           <div
-            className="pointer-events-none absolute -bottom-20 -right-10 size-48 rounded-full bg-domain-activities/20 blur-3xl"
+            className="pointer-events-none absolute -bottom-20 -right-10 size-48 rounded-full bg-attention/22 blur-3xl"
             aria-hidden
           />
 
           <div className="relative my-auto space-y-6">
-            <p className="inline-flex items-center gap-1.5 rounded-full border border-domain-members/25 bg-domain-members-subtle px-3 py-1 text-xs font-medium text-domain-members-foreground">
+            <p className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-muted/60 px-3 py-1 text-xs font-medium text-muted-foreground">
               <Sparkles className="size-3.5" aria-hidden />
               A semana da sua igreja
             </p>
@@ -351,7 +351,7 @@ function LoginFormContent() {
                           disabled={isLoading}
                           onClick={() => handleQuickLogin(account.email)}
                           className={cn(
-                            "flex w-full items-center justify-between gap-3 rounded-lg border border-border/70 bg-card px-3 py-2 text-left text-sm transition-colors hover:bg-domain-members-subtle/50",
+                            "flex w-full items-center justify-between gap-3 rounded-lg border border-border/70 bg-card px-3 py-2 text-left text-sm transition-colors hover:bg-muted/50",
                             loadingIdentifier === account.email && "opacity-70",
                           )}
                         >

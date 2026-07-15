@@ -15,8 +15,8 @@ import { URGENT_TRIAL_THRESHOLD_DAYS } from "./trial-status-shared";
 
 function formatTrialEndDate(isoDate: string): string {
   return new Intl.DateTimeFormat("pt-BR", {
-    day: "numeric",
-    month: "long",
+    day: "2-digit",
+    month: "2-digit",
     year: "numeric",
   }).format(new Date(isoDate));
 }

@@ -88,6 +88,7 @@ export function CreateActivityModal({
     defaultRecurrenceFormState(initialStartsAt),
   );
   const [error, setError] = useState<string | null>(null);
+  const [showMoreOptions, setShowMoreOptions] = useState(false);
 
   const creatableMinistries = useMemo(() => {
     if (!permissions) {
@@ -134,6 +135,7 @@ export function CreateActivityModal({
         setPriceReais("");
         setRecurrence(defaultRecurrenceFormState(fallbackStartsAt()));
         setError(null);
+        setShowMoreOptions(false);
       }
 
       wasOpenRef.current = false;
@@ -282,10 +284,10 @@ export function CreateActivityModal({
           </div>
           <div className="min-w-0 flex-1 pt-0.5">
             <h2 id={titleId} className="text-xl font-semibold tracking-tight">
-              Nova atividade
+              Novo evento
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Deixe sem ministério para destacar como atividade da igreja inteira.
+              Deixe sem ministério para destacar como evento da igreja inteira.
             </p>
           </div>
           <button
@@ -351,8 +353,8 @@ export function CreateActivityModal({
                   </SelectField>
                   <p className="text-xs text-muted-foreground">
                     {canSelectChurchWide
-                      ? "Atividades da igreja aparecem em destaque no painel."
-                      : "Selecione um ministério em que você pode criar atividades."}
+                      ? "Eventos da igreja aparecem em destaque no painel."
+                      : "Selecione um ministério em que você pode criar eventos."}
                   </p>
                 </div>
 
@@ -367,75 +369,6 @@ export function CreateActivityModal({
                     className="min-h-[80px] resize-y rounded-xl"
                     placeholder="Detalhes opcionais para a equipe ou participantes"
                   />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="activity-highlight-note">
-                    Recado em destaque
-                  </Label>
-                  <Textarea
-                    id="activity-highlight-note"
-                    value={highlightNote}
-                    onChange={(event) => setHighlightNote(event.target.value)}
-                    rows={2}
-                    disabled={createEvent.isPending}
-                    className="min-h-[80px] resize-y rounded-xl"
-                    placeholder="Ex.: Tema da mensagem: “A fé que move montanhas” — Pr. João"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Aparece em destaque na página do evento. Ideal para tema da
-                    palavra, pastorais ou avisos importantes.
-                  </p>
-                </div>
-
-                <div className="space-y-3">
-                  <EventOptionCard
-                    type="checkbox"
-                    checked={registrationOpen}
-                    onChange={(checked) => {
-                      setRegistrationOpen(checked);
-                      if (!checked) {
-                        setPriceReais("");
-                      }
-                    }}
-                    title="Abrir inscrição"
-                    description="Membros confirmam participação na página do evento. Pode ser gratuita ou paga."
-                    icon={Ticket}
-                    disabled={createEvent.isPending}
-                    compact
-                  />
-
-                  {registrationOpen ? (
-                    <div className="space-y-2 pl-1">
-                      <Label htmlFor="activity-price">
-                        Preço da inscrição (opcional)
-                      </Label>
-                      <div className="relative">
-                        <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-muted-foreground">
-                          R$
-                        </span>
-                        <Input
-                          id="activity-price"
-                          inputMode="numeric"
-                          autoComplete="off"
-                          value={priceReais}
-                          onChange={(event) => {
-                            const digits = event.target.value.replace(/\D/g, "");
-                            setPriceReais(
-                              digits ? applyBrlCentsMask(event.target.value) : "",
-                            );
-                          }}
-                          disabled={createEvent.isPending}
-                          placeholder="0,00 — vazio = gratuita"
-                          className="h-11 rounded-xl pl-10 tabular-nums"
-                        />
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        Vazio = inscrição gratuita. Com valor, membros pagam pelo
-                        Stripe Connect da igreja (mínimo R$ 5,00).
-                      </p>
-                    </div>
-                  ) : null}
                 </div>
 
                 <div className="space-y-2">
@@ -457,7 +390,7 @@ export function CreateActivityModal({
 
             <EventFormSection
               title="Data e horário"
-              description="Quando a atividade acontece e por quanto tempo."
+              description="Quando o evento acontece e por quanto tempo."
               icon={Clock}
             >
               <ActivityScheduleFields
@@ -470,32 +403,126 @@ export function CreateActivityModal({
               />
             </EventFormSection>
 
-            <EventFormSection
-              title="Repetição"
-              description="Opcional. Crie uma série de ocorrências com a mesma configuração."
-              icon={Repeat}
-            >
-              <EventRecurrenceFields
-                value={recurrence}
-                onChange={setRecurrence}
-                startsAt={startsAt}
-                disabled={createEvent.isPending}
-              />
-            </EventFormSection>
-
-            {ministryId ? (
-              <EventFormSection
-                title="Quem pode ver"
-                description="Controle se o evento aparece na agenda geral da igreja."
-                icon={Eye}
+            <div className="rounded-xl border border-border/80">
+              <button
+                type="button"
+                className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-medium text-foreground transition-colors hover:bg-muted/40"
+                aria-expanded={showMoreOptions}
+                onClick={() => setShowMoreOptions((current) => !current)}
               >
-                <EventVisibilityFields
-                  visibleToChurch={visibleToChurch}
-                  onVisibleToChurchChange={setVisibleToChurch}
-                  disabled={createEvent.isPending}
-                />
-              </EventFormSection>
-            ) : null}
+                <span>Mais opções</span>
+                <span className="text-sm font-normal text-muted-foreground">
+                  {showMoreOptions
+                    ? "Ocultar"
+                    : "Inscrição, repetição e destaque"}
+                </span>
+              </button>
+
+              {showMoreOptions ? (
+                <div className="space-y-8 border-t border-border/80 px-4 py-5">
+                  <div className="space-y-2">
+                    <Label htmlFor="activity-highlight-note">
+                      Recado em destaque
+                    </Label>
+                    <Textarea
+                      id="activity-highlight-note"
+                      value={highlightNote}
+                      onChange={(event) => setHighlightNote(event.target.value)}
+                      rows={2}
+                      disabled={createEvent.isPending}
+                      className="min-h-[80px] resize-y rounded-xl"
+                      placeholder="Ex.: Tema da mensagem: “A fé que move montanhas” — Pr. João"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Aparece em destaque na página do evento. Ideal para tema da
+                      palavra, pastorais ou avisos importantes.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <EventOptionCard
+                      type="checkbox"
+                      checked={registrationOpen}
+                      onChange={(checked) => {
+                        setRegistrationOpen(checked);
+                        if (!checked) {
+                          setPriceReais("");
+                        }
+                      }}
+                      title="Abrir inscrição"
+                      description="Membros confirmam participação na página do evento. Pode ser gratuita ou paga."
+                      icon={Ticket}
+                      disabled={createEvent.isPending}
+                      compact
+                    />
+
+                    {registrationOpen ? (
+                      <div className="space-y-2 pl-1">
+                        <Label htmlFor="activity-price">
+                          Preço da inscrição (opcional)
+                        </Label>
+                        <div className="relative">
+                          <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-muted-foreground">
+                            R$
+                          </span>
+                          <Input
+                            id="activity-price"
+                            inputMode="numeric"
+                            autoComplete="off"
+                            value={priceReais}
+                            onChange={(event) => {
+                              const digits = event.target.value.replace(
+                                /\D/g,
+                                "",
+                              );
+                              setPriceReais(
+                                digits
+                                  ? applyBrlCentsMask(event.target.value)
+                                  : "",
+                              );
+                            }}
+                            disabled={createEvent.isPending}
+                            placeholder="0,00 — vazio = gratuita"
+                            className="h-11 rounded-xl pl-10 tabular-nums"
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Vazio = inscrição gratuita. Com valor, membros pagam
+                          pela conta de recebimentos da igreja (mínimo R$ 5,00).
+                        </p>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <EventFormSection
+                    title="Repetição"
+                    description="Opcional. Crie uma série de ocorrências com a mesma configuração."
+                    icon={Repeat}
+                  >
+                    <EventRecurrenceFields
+                      value={recurrence}
+                      onChange={setRecurrence}
+                      startsAt={startsAt}
+                      disabled={createEvent.isPending}
+                    />
+                  </EventFormSection>
+
+                  {ministryId ? (
+                    <EventFormSection
+                      title="Quem pode ver"
+                      description="Controle se o evento aparece na agenda geral da igreja."
+                      icon={Eye}
+                    >
+                      <EventVisibilityFields
+                        visibleToChurch={visibleToChurch}
+                        onVisibleToChurchChange={setVisibleToChurch}
+                        disabled={createEvent.isPending}
+                      />
+                    </EventFormSection>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
           </div>
 
           <Separator />
@@ -521,7 +548,7 @@ export function CreateActivityModal({
                   Criando...
                 </>
               ) : (
-                "Criar atividade"
+                "Criar evento"
               )}
             </Button>
           </footer>

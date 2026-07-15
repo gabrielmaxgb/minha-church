@@ -87,7 +87,7 @@ export function DashboardWeekPulse({
   const chart = canAccessActivities ? (
     <div
       className={cn(
-        "rounded-xl border border-domain-activities/20 bg-gradient-to-br from-domain-activities-subtle via-card to-card p-4 sm:p-5",
+        "rounded-xl border border-domain-activities/30 bg-gradient-to-br from-domain-activities-subtle via-card to-card p-4 sm:p-5",
         chartOnly && "h-full",
       )}
     >
@@ -114,7 +114,7 @@ export function DashboardWeekPulse({
               <ArrowRight className="size-3.5 opacity-80" aria-hidden />
             </Link>
           </Button>
-          <p className="rounded-md bg-domain-activities/15 px-2 py-1 text-xs font-medium tabular-nums text-domain-activities-foreground">
+          <p className="rounded-md bg-domain-activities/20 px-2 py-1 text-xs font-medium tabular-nums text-domain-activities-foreground">
             {weekTotal} no total
           </p>
         </div>
@@ -206,13 +206,13 @@ export function DashboardWeekPulse({
               className={cn(
                 "rounded-xl border p-4 transition-colors duration-150",
                 chip.tone === "members" &&
-                  "border-domain-members/20 bg-domain-members-subtle/70 hover:bg-domain-members-subtle",
+                  "border-domain-members/30 bg-domain-members-subtle hover:bg-domain-members-subtle/90",
                 chip.tone === "activities" &&
-                  "border-domain-activities/20 bg-domain-activities-subtle/70 hover:bg-domain-activities-subtle",
+                  "border-domain-activities/30 bg-domain-activities-subtle hover:bg-domain-activities-subtle/90",
                 chip.tone === "attention" &&
-                  "border-attention-border bg-attention-subtle hover:bg-attention-subtle/80",
+                  "border-attention-border bg-attention-subtle hover:bg-attention-subtle/85",
                 chip.tone === "schedules" &&
-                  "border-domain-schedules/25 bg-domain-schedules-subtle hover:bg-domain-schedules-subtle/80",
+                  "border-domain-schedules/30 bg-domain-schedules-subtle hover:bg-domain-schedules-subtle/90",
               )}
             >
               <p className="text-xs font-medium text-muted-foreground">

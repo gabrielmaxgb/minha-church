@@ -253,8 +253,9 @@ function EventHero({
     new Date(event.startsAt),
   );
   const dayMonth = new Intl.DateTimeFormat("pt-BR", {
-    day: "numeric",
-    month: "long",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
   }).format(new Date(event.startsAt));
   const relativeEventDay = formatRelativeEventDay(event.startsAt);
   const description = event.description?.trim() ?? "";

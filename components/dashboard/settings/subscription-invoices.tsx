@@ -10,8 +10,8 @@ import { SettingsPanel } from "./settings-shared";
 
 function formatInvoiceDate(isoDate: string): string {
   return new Intl.DateTimeFormat("pt-BR", {
-    day: "numeric",
-    month: "short",
+    day: "2-digit",
+    month: "2-digit",
     year: "numeric",
   }).format(new Date(isoDate));
 }

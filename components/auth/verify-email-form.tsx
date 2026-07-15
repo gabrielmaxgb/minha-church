@@ -27,13 +27,13 @@ const successHighlights = [
     icon: HeartHandshake,
     title: "Obrigado por confirmar",
     description: "Sua conta está pronta — a igreja já pode começar organizada.",
-    tone: "text-domain-members-foreground bg-domain-members-subtle",
+    tone: "text-foreground bg-muted",
   },
   {
     icon: CalendarDays,
     title: "A semana te espera",
     description: "Membros, escalas e avisos no mesmo lugar, com calma.",
-    tone: "text-domain-activities-foreground bg-domain-activities-subtle",
+    tone: "text-muted-foreground bg-muted/80",
   },
   {
     icon: PartyPopper,
@@ -129,18 +129,18 @@ function VerifyEmailFormContent() {
       transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
     >
       <div className="overflow-hidden rounded-2xl border border-border/70 bg-card/90 shadow-popover backdrop-blur-sm lg:grid lg:min-h-[34rem] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
-        <aside className="relative flex overflow-hidden border-b border-border/60 bg-gradient-to-br from-domain-members-subtle via-card to-domain-activities-subtle/80 px-6 py-8 sm:px-8 sm:py-10 lg:min-h-full lg:border-b-0 lg:border-r lg:px-10 lg:py-12">
+        <aside className="relative flex overflow-hidden border-b border-border/60 bg-gradient-to-br from-muted via-card to-attention-subtle px-6 py-8 sm:px-8 sm:py-10 lg:min-h-full lg:border-b-0 lg:border-r lg:px-10 lg:py-12">
           <div
-            className="pointer-events-none absolute -left-16 -top-20 size-56 rounded-full bg-domain-members/15 blur-3xl"
+            className="pointer-events-none absolute -left-16 -top-20 size-56 rounded-full bg-domain-members/18 blur-3xl"
             aria-hidden
           />
           <div
-            className="pointer-events-none absolute -bottom-20 -right-10 size-48 rounded-full bg-attention/20 blur-3xl"
+            className="pointer-events-none absolute -bottom-20 -right-10 size-48 rounded-full bg-attention/22 blur-3xl"
             aria-hidden
           />
 
           <div className="relative my-auto space-y-6">
-            <p className="inline-flex items-center gap-1.5 rounded-full border border-domain-members/25 bg-domain-members-subtle px-3 py-1 text-xs font-medium text-domain-members-foreground">
+            <p className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-muted/60 px-3 py-1 text-xs font-medium text-muted-foreground">
               <Sparkles className="size-3.5" aria-hidden />
               {status === "success" ? "E-mail confirmado" : "Confirmação de e-mail"}
             </p>

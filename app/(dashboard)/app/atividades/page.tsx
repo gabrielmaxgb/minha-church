@@ -8,7 +8,7 @@ export default function AtividadesPage() {
   return (
     <RequirePermission permission="activities">
       <DashboardPage
-        title="Eventos e Atividades"
+        title="Eventos"
         subtitle="Calendário da igreja e agenda dos ministérios"
       >
         <ActivitiesContent />

@@ -19,6 +19,8 @@ import {
   useAnnouncementsUnreadCount,
   useCareInboxPendingCount,
   useChurchEvents,
+  useFiscalProfile,
+  useMyMember,
   useMySchedules,
   usePasswordResetRequests,
   usePendingAccessUsers,
@@ -27,6 +29,7 @@ import { canManageChurchMemberships } from "@/lib/church-memberships/constants";
 import { resolveDashboardHomeProfile } from "@/lib/dashboard/home-profile";
 import { buildDashboardPriorities } from "@/lib/dashboard/priority-items";
 import { collapseRecurringEventsForList } from "@/lib/events/list";
+import { isOwnerOnboardingMinimumComplete } from "@/lib/payments/fiscal-profile-completeness";
 import {
   canAccessActivities,
   canAccessMembers,
@@ -89,6 +92,10 @@ export function DashboardHomeContent() {
   const { data: carePending } = useCareInboxPendingCount({
     enabled: canReceiveCare,
   });
+  const fiscal = useFiscalProfile();
+  const myMember = useMyMember({
+    enabled: Boolean(user) && !user?.isOwner,
+  });
 
   const upcomingEvents = useMemo(
     () => sortUpcomingEvents(events ?? []),
@@ -96,6 +103,20 @@ export function DashboardHomeContent() {
   );
 
   const nextEvent = canAccessActivitiesData ? (upcomingEvents[0] ?? null) : null;
+
+  const churchProfileIncomplete =
+    Boolean(user?.isOwner) &&
+    !fiscal.isPending &&
+    !isOwnerOnboardingMinimumComplete(fiscal.data ?? null);
+
+  const memberProfileIncomplete = useMemo(() => {
+    if (user?.isOwner || myMember.isPending || myMember.isError || !myMember.data) {
+      return false;
+    }
+    const phone = (myMember.data.phone ?? "").replace(/\D/g, "");
+    const birth = myMember.data.birthDate?.trim();
+    return phone.length < 10 || !birth;
+  }, [user?.isOwner, myMember.data, myMember.isError, myMember.isPending]);
 
   const knownMinistryNames = useMemo(() => {
     const names: Record<string, string> = {};
@@ -135,6 +156,8 @@ export function DashboardHomeContent() {
         canReceiveCare,
         hasCommunicationAccess,
         canAccessActivities: canAccessActivitiesData,
+        churchProfileIncomplete,
+        memberProfileIncomplete,
       }),
     [
       profile,
@@ -144,11 +167,14 @@ export function DashboardHomeContent() {
       carePendingCount,
       announcementsUnreadCount,
       nextEvent,
+      upcomingEvents,
       canManageMemberships,
       canAccessSchedulesData,
       canReceiveCare,
       hasCommunicationAccess,
       canAccessActivitiesData,
+      churchProfileIncomplete,
+      memberProfileIncomplete,
     ],
   );
 
@@ -216,8 +242,6 @@ export function DashboardHomeContent() {
             <DashboardQuickActions
               profile={profile}
               onCreateActivity={() => setCreateActivityOpen(true)}
-              carePendingCount={carePendingCount}
-              schedulePendingCount={schedulePendingCount}
             />
           </StaggerItem>
         ) : null}

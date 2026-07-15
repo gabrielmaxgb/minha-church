@@ -41,7 +41,7 @@ export function EventRegistrationOpenBadge({
       )}
     >
       <Ticket className="size-3" aria-hidden />
-      Inscrição aberta{suffix}
+      Inscrições abertas{suffix}
     </Badge>
   );
 }

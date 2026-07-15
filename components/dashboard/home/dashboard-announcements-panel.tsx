@@ -22,13 +22,13 @@ export function DashboardAnnouncementsPanel({
   const recent = announcements.slice(0, 4);
 
   return (
-    <section className="rounded-xl border border-domain-communication/20 bg-gradient-to-br from-domain-communication-subtle/70 via-card to-card">
-      <div className="flex flex-col gap-3 border-b border-domain-communication/15 px-4 py-3.5 sm:flex-row sm:items-start sm:justify-between">
+    <section className="rounded-xl border border-domain-communication/30 bg-gradient-to-br from-domain-communication-subtle via-card to-card">
+      <div className="flex flex-col gap-3 border-b border-domain-communication/20 px-4 py-3.5 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h2 className="text-sm font-medium text-domain-communication-foreground">
-            Quadro de avisos
+          <h2 className="text-base font-medium text-domain-communication-foreground">
+            Avisos
           </h2>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <p className="mt-0.5 text-sm text-muted-foreground">
             Comunicados publicados para a igreja
           </p>
         </div>
@@ -45,7 +45,7 @@ export function DashboardAnnouncementsPanel({
       {recent.length === 0 ? (
         <div className="px-4 py-8 text-center">
           <p className="text-sm font-medium text-foreground">
-            Nenhum comunicado recente
+            Nenhum aviso recente
           </p>
           <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
             Publique um aviso para a igreja ficar alinhada.
@@ -58,7 +58,7 @@ export function DashboardAnnouncementsPanel({
                     <Plus className="size-4" />
                     Publicar aviso
                   </Button>
-                  <LockedFeatureHint action="publicar comunicados" />
+                  <LockedFeatureHint action="publicar avisos" />
                 </>
               ) : (
                 <Button size="sm" asChild>
