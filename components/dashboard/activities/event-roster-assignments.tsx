@@ -278,7 +278,7 @@ export function EventRosterAssignments({
             </span>
           </p>
           <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
-            Sem resposta não impede — escolha a função e adicione.
+            Escolha a função e adicione.
           </p>
         </div>
         {FILTER_OPTIONS.map((option) => {
