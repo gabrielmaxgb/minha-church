@@ -168,7 +168,7 @@ export function OnboardingChecklistProvider({
         id: "activate-receivables",
         title: "Ative os recebimentos",
         description:
-          "Receba dízimos, doações e inscrições em eventos por Pix, cartão e boleto.",
+          "Receba dízimos e doações por Pix, cartão e boleto.",
         actionLabel: "Ativar recebimentos",
         href: settingsSectionPath("recebimentos"),
         done: receivablesActive,

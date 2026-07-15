@@ -10,10 +10,8 @@ import {
   Landmark,
   Loader2,
   RefreshCw,
-  ShieldCheck,
+  Sparkles,
 } from "lucide-react";
-
-import { Sparkles } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -172,7 +170,7 @@ function ConnectOnboardingCard({
             <p className="mt-1 text-sm text-muted-foreground">
               {onboardingStatus === "active"
                 ? "As contribuições dos membros já podem cair na conta bancária da igreja."
-                : "Conecte a conta bancária da igreja pelo Stripe para receber dízimos, ofertas e doações."}
+                : "Conecte a conta bancária da igreja pelo Stripe para receber dízimos, ofertas, doações e habilitar a criação de eventos com o recurso de inscrição paga."}
             </p>
           </div>
         </div>
@@ -278,7 +276,6 @@ function ConnectOnboardingCard({
           {(onboardingStatus === "none" || onboardingStatus === "created") && (
             <Button
               type="button"
-              variant="cta"
               className="w-full gap-2 sm:w-auto"
               disabled={redirecting || !canStart}
               aria-busy={redirecting}
@@ -287,14 +284,11 @@ function ConnectOnboardingCard({
               {redirecting ? (
                 <Loader2 className="size-4 animate-spin" aria-hidden />
               ) : (
-                <ShieldCheck className="size-4" aria-hidden />
+                <ExternalLink className="size-4" aria-hidden />
               )}
               {redirecting
                 ? "Abrindo cadastro no Stripe…"
                 : "Ativar recebimentos"}
-              {!redirecting && (
-                <ExternalLink className="size-3.5 opacity-60" aria-hidden />
-              )}
             </Button>
           )}
 
@@ -302,7 +296,6 @@ function ConnectOnboardingCard({
             onboardingStatus === "restricted") && (
             <Button
               type="button"
-              variant="cta"
               className="w-full gap-2 sm:w-auto"
               disabled={redirecting}
               aria-busy={redirecting}

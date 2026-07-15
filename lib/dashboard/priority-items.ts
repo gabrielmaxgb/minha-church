@@ -5,6 +5,7 @@ import {
   HeartHandshake,
   KeyRound,
   Megaphone,
+  Ticket,
   Users,
 } from "lucide-react";
 
@@ -15,6 +16,7 @@ import {
 } from "@/constants/routes";
 import { formatRelativeEventDay } from "@/lib/dashboard/date-utils";
 import type { DashboardHomeProfile } from "@/lib/dashboard/home-profile";
+import { isEventRegistrationOpen } from "@/lib/events/registration";
 import type { ChurchEvent } from "@/types/events";
 
 export interface DashboardPriorityItem {
@@ -34,6 +36,7 @@ interface BuildPrioritiesInput {
   carePendingCount: number;
   announcementsUnreadCount: number;
   nextEvent: ChurchEvent | null;
+  upcomingEvents?: ChurchEvent[];
   canManageMemberships: boolean;
   canAccessSchedules: boolean;
   canReceiveCare: boolean;
@@ -120,10 +123,35 @@ export function buildDashboardPriorities(
     });
   }
 
+  const openRegistrationEvents = (input.upcomingEvents ?? []).filter(
+    isEventRegistrationOpen,
+  );
+  const firstOpenRegistration = openRegistrationEvents[0] ?? null;
+
+  if (
+    input.canAccessActivities &&
+    firstOpenRegistration &&
+    items.length < MAX_PRIORITIES
+  ) {
+    const extra = openRegistrationEvents.length - 1;
+    items.push({
+      id: "registration-open",
+      title: firstOpenRegistration.name,
+      description:
+        extra > 0
+          ? `Inscrição aberta · +${extra} outro${extra === 1 ? "" : "s"}`
+          : "Inscrição aberta — confirme sua participação",
+      href: activityDetailPath(firstOpenRegistration.id),
+      icon: Ticket,
+      tone: "activities",
+    });
+  }
+
   if (
     input.canAccessActivities &&
     input.nextEvent &&
-    items.length < MAX_PRIORITIES
+    items.length < MAX_PRIORITIES &&
+    input.nextEvent.id !== firstOpenRegistration?.id
   ) {
     const relative = formatRelativeEventDay(input.nextEvent.startsAt);
     const isSoon = relative === "Hoje" || relative === "Amanhã";

@@ -29,7 +29,7 @@ import { rosterKeys } from "@/lib/api/queries/roster.keys";
 import { queries } from "@/lib/api/queries";
 import { ministryDetailPath } from "@/constants/routes";
 import type { CreateMinistryEventPayload } from "@/types/ministries";
-import { useTenant } from "@/providers/auth-provider";
+import { useAuth, useTenant } from "@/providers/auth-provider";
 
 function useInvalidateMinistries() {
   const queryClient = useQueryClient();
@@ -43,6 +43,7 @@ function useInvalidateMinistries() {
 
 export function useCreateMinistry() {
   const { churchId } = useTenant();
+  const { reloadSession } = useAuth();
   const invalidate = useInvalidateMinistries();
   const router = useRouter();
 
@@ -55,7 +56,9 @@ export function useCreateMinistry() {
       return createMinistry(churchId, payload);
     },
     onSuccess: async (ministry) => {
-      await invalidate();
+      // Sessão inclui ministryIds derivadas dos ministérios ativos — precisa
+      // atualizar para escopos que ainda leem essa lista (filtros, etc.).
+      await Promise.all([invalidate(), reloadSession()]);
       router.push(ministryDetailPath(ministry.id));
     },
   });

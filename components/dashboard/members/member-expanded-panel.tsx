@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  Ban,
   Church,
   IdCard,
   MapPin,
@@ -18,6 +19,7 @@ import {
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 
 import { TierCrossingModal } from "@/components/billing/tier-crossing-modal";
+import { FinanceConfirmDialog } from "@/components/dashboard/finances/finance-confirm-dialog";
 import { LinkMemberFamilyModal } from "@/components/dashboard/members/link-member-family-modal";
 import { MemberAccountCreatedModal } from "@/components/dashboard/members/member-account-created-modal";
 import { MemberForm } from "@/components/dashboard/members/member-form";
@@ -218,6 +220,8 @@ export function MemberExpandedPanel({
   const [isEditing, setIsEditing] = useState(false);
   const [familyLinkOpen, setFamilyLinkOpen] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [pendingStatusChange, setPendingStatusChange] =
+    useState<MemberFormValues | null>(null);
   const [createdAccount, setCreatedAccount] = useState<{
     memberName: string;
     account: MemberAccountCredentials;
@@ -232,6 +236,7 @@ export function MemberExpandedPanel({
   const editStatus = useWatch({ control: form.control, name: "status" }) ?? member.status;
   const canReceiveAsMember =
     member.status === "visitor" && Boolean(member.email || member.cpf);
+  const openMonthlyCount = member.activeGivingSubscriptionsCount ?? 0;
 
   const updateMember = useUpdateMember(member.id);
   const deleteMember = useDeleteMember(member.id);
@@ -241,6 +246,7 @@ export function MemberExpandedPanel({
     form.reset(memberToFormValues(member));
     setConfirmName("");
     setDeleteError(null);
+    setPendingStatusChange(null);
     form.clearErrors("root");
   }, [member, form]);
 
@@ -264,34 +270,47 @@ export function MemberExpandedPanel({
         ] as const)
       : (["Salvando as alterações..."] as const);
 
+  async function runMemberUpdate(values: MemberFormValues) {
+    const becomingBillable =
+      !countsTowardBillingTier(member.status) &&
+      countsTowardBillingTier(values.status);
+
+    const runUpdate = async () => {
+      const result = await updateMember.mutateAsync(
+        formValuesToUpdatePayload(values),
+      );
+      setIsEditing(false);
+      setPendingStatusChange(null);
+      form.clearErrors("root");
+
+      if (result.account) {
+        setCreatedAccount({
+          memberName: result.name,
+          account: result.account,
+        });
+      }
+    };
+
+    if (becomingBillable) {
+      await tierCrossing.runWithTierCrossingCheck(values.status, runUpdate, {
+        projectedMemberCount: (church?.memberCount ?? 0) + 1,
+      });
+    } else {
+      await runUpdate();
+    }
+  }
+
   const onSubmit = form.handleSubmit(async (values) => {
     try {
-      const becomingBillable =
-        !countsTowardBillingTier(member.status) &&
-        countsTowardBillingTier(values.status);
+      const leavingActive =
+        member.status === "active" && values.status !== "active";
 
-      const runUpdate = async () => {
-        const result = await updateMember.mutateAsync(
-          formValuesToUpdatePayload(values),
-        );
-        setIsEditing(false);
-        form.clearErrors("root");
-
-        if (result.account) {
-          setCreatedAccount({
-            memberName: result.name,
-            account: result.account,
-          });
-        }
-      };
-
-      if (becomingBillable) {
-        await tierCrossing.runWithTierCrossingCheck(values.status, runUpdate, {
-          projectedMemberCount: (church?.memberCount ?? 0) + 1,
-        });
-      } else {
-        await runUpdate();
+      if (leavingActive) {
+        setPendingStatusChange(values);
+        return;
       }
+
+      await runMemberUpdate(values);
     } catch (submitError) {
       applyMemberFormApiError(
         form.setError,
@@ -560,6 +579,29 @@ export function MemberExpandedPanel({
           blockActivePromotion={writesBlocked && member.status !== "active"}
         />
 
+        {member.status === "active" && editStatus !== "active" ? (
+          <div
+            role="status"
+            className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm leading-relaxed text-amber-950"
+          >
+            <p className="font-medium">
+              Contribuições mensais serão canceladas ao salvar
+            </p>
+            <p className="mt-1 text-amber-900/90">
+              {openMonthlyCount > 0
+                ? `Há ${openMonthlyCount} ${
+                    openMonthlyCount === 1
+                      ? "contribuição mensal ativa"
+                      : "contribuições mensais ativas"
+                  } neste cadastro.`
+                : "Mesmo que não haja cobrança recorrente agora, confirmamos esse efeito para evitar surpresas."}{" "}
+              Ao salvar, pediremos confirmação e qualquer contribuição mensal
+              vinculada será encerrada. Valores já confirmados permanecem no
+              histórico.
+            </p>
+          </div>
+        ) : null}
+
         <section className="overflow-hidden rounded-lg border border-border bg-card">
           <header className="flex items-center gap-3 border-b border-border bg-muted/25 px-5 py-4 sm:px-6">
             <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-foreground text-background">
@@ -625,6 +667,27 @@ export function MemberExpandedPanel({
                 Digite o nome completo para confirmar.
               </p>
 
+              <div
+                role="alert"
+                className="mt-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3.5 py-3 text-sm leading-relaxed text-amber-950"
+              >
+                <p className="font-medium">
+                  Contribuições mensais serão canceladas
+                </p>
+                <p className="mt-1 text-amber-900/90">
+                  {openMonthlyCount > 0
+                    ? `Há ${openMonthlyCount} ${
+                        openMonthlyCount === 1
+                          ? "contribuição mensal ativa"
+                          : "contribuições mensais ativas"
+                      }. `
+                    : "Mesmo sem cobrança recorrente agora, "}
+                  ao excluir, qualquer contribuição mensal vinculada terá as
+                  cobranças futuras no cartão encerradas. Valores já confirmados
+                  permanecem no histórico financeiro.
+                </p>
+              </div>
+
               <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
                 <Input
                   value={confirmName}
@@ -640,7 +703,9 @@ export function MemberExpandedPanel({
                   onClick={handleDelete}
                 >
                   <Trash2 className="size-4" />
-                  {deleteMember.isPending ? "Excluindo..." : "Excluir cadastro"}
+                  {deleteMember.isPending
+                    ? "Excluindo..."
+                    : "Excluir e cancelar mensais"}
                 </Button>
               </div>
             </div>
@@ -674,6 +739,65 @@ export function MemberExpandedPanel({
           onClose={() => setCreatedAccount(null)}
         />
       )}
+
+      {pendingStatusChange ? (
+        <FinanceConfirmDialog
+          title="Cancelar contribuições mensais?"
+          tone="warning"
+          icon={Ban}
+          description={
+            <div className="space-y-3">
+              <p>
+                Ao mudar a situação de membro ativo para{" "}
+                <span className="font-medium text-foreground">
+                  {MEMBER_STATUS_LABELS[pendingStatusChange.status].toLowerCase()}
+                </span>
+                , contribuições mensais vinculadas a este cadastro serão
+                encerradas automaticamente.
+              </p>
+              <div
+                role="alert"
+                className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3.5 py-3 text-sm text-amber-950"
+              >
+                <p className="font-medium">
+                  {openMonthlyCount > 0
+                    ? `${openMonthlyCount} ${
+                        openMonthlyCount === 1
+                          ? "contribuição mensal ativa será cancelada"
+                          : "contribuições mensais ativas serão canceladas"
+                      }.`
+                    : "Não há contribuição mensal ativa agora — mesmo assim confirmamos: se houver, será cancelada."}
+                </p>
+                <p className="mt-1 text-amber-900/90">
+                  Cobranças futuras no cartão param. Valores já confirmados
+                  continuam no histórico financeiro da igreja.
+                </p>
+              </div>
+            </div>
+          }
+          confirmLabel="Salvar e cancelar mensais"
+          confirmingLabel="Salvando..."
+          isPending={updateMember.isPending}
+          onCancel={() => {
+            if (!updateMember.isPending) {
+              setPendingStatusChange(null);
+            }
+          }}
+          onConfirm={() => {
+            void runMemberUpdate(pendingStatusChange).catch((submitError) => {
+              setPendingStatusChange(null);
+              applyMemberFormApiError(
+                form.setError,
+                form.clearErrors,
+                submitError,
+                submitError instanceof Error
+                  ? submitError.message
+                  : "Não foi possível salvar as alterações.",
+              );
+            });
+          }}
+        />
+      ) : null}
 
       {tierCrossing.preview && (
         <TierCrossingModal

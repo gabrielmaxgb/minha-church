@@ -8,16 +8,21 @@ import {
   useUpdateChurchEventAvailability,
   useUpdateEventAvailability,
 } from "@/lib/api/queries";
+import { cn } from "@/lib/utils";
 import type { ChurchEventDetail } from "@/types/events";
 
 interface ActivityAvailabilitySectionProps {
   event: ChurchEventDetail;
   interactionsDisabled?: boolean;
+  dense?: boolean;
+  flush?: boolean;
 }
 
 export function ActivityAvailabilitySection({
   event,
   interactionsDisabled = false,
+  dense = false,
+  flush = false,
 }: ActivityAvailabilitySectionProps) {
   const updateChurchAvailability = useUpdateChurchEventAvailability(event.id);
   const updateMinistryAvailability = useUpdateEventAvailability(
@@ -58,21 +63,26 @@ export function ActivityAvailabilitySection({
   }
 
   return (
-    <div className="space-y-3">
-      {interactionsDisabled ? (
+    <div className={dense ? "h-full" : "space-y-3"}>
+      {interactionsDisabled && !dense ? (
         <LockedFeatureHint action="marcar disponibilidade em escalas" />
       ) : null}
 
       {error ? (
-        <p className="rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+        <p className="mb-3 rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive">
           {error}
         </p>
       ) : null}
 
       <EventAvailabilityPanel
         showHeader
+        layout={dense ? "compact" : "default"}
+        className={cn(
+          dense && "h-full",
+          flush && "rounded-none border-0 shadow-none ring-0",
+        )}
         availabilityStatus={event.myAvailabilityStatus ?? null}
-        availabilityMessage={event.availabilityMessage}
+        availabilityMessage={dense ? null : event.availabilityMessage}
         needsRosterFunctions={
           !event.isChurchWide && (event.needsRosterFunctions ?? false)
         }

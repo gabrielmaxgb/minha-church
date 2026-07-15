@@ -486,8 +486,10 @@ export function EventRosterAssignments({
 
 export function EventRosterPublicCard({
   event,
+  dense = false,
 }: {
   event: ChurchEventDetail;
+  dense?: boolean;
 }) {
   if (!event.usesRoster || event.roster.length === 0) {
     return null;
@@ -495,7 +497,12 @@ export function EventRosterPublicCard({
 
   return (
     <section className="overflow-hidden rounded-2xl border border-border/80 bg-card">
-      <header className="flex items-start gap-3 border-b border-border/60 px-5 py-4">
+      <header
+        className={cn(
+          "flex items-start gap-3 border-b border-border/60",
+          dense ? "px-4 py-3" : "px-5 py-4",
+        )}
+      >
         <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-foreground text-background">
           <Users className="size-4" aria-hidden />
         </div>
@@ -504,12 +511,23 @@ export function EventRosterPublicCard({
             Equipe escalada
           </h3>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            Quem vai servir neste dia.
+            {dense
+              ? `${event.roster.length} pessoa${event.roster.length === 1 ? "" : "s"} neste dia`
+              : "Quem vai servir neste dia."}
           </p>
         </div>
       </header>
-      <div className="p-4 sm:p-5">
-        <EventRosterAssignments event={event} canManage={false} embedded />
+      <div
+        className={cn(
+          dense ? "max-h-56 overflow-y-auto p-3 sm:p-4" : "p-4 sm:p-5",
+        )}
+      >
+        <EventRosterAssignments
+          event={event}
+          canManage={false}
+          embedded
+          compact={dense}
+        />
       </div>
     </section>
   );

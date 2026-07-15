@@ -44,3 +44,16 @@ export function useEventSeriesOccurrences(
     staleTime: 5 * 60_000,
   });
 }
+
+export function useEventTicketRegistrations(
+  eventId: string,
+  options?: { enabled?: boolean },
+) {
+  const { churchId } = useTenant();
+
+  return useQuery({
+    ...eventsKeys.ticketRegistrations(churchId ?? "unknown", eventId),
+    enabled: Boolean(churchId && eventId) && (options?.enabled ?? true),
+    staleTime: 30_000,
+  });
+}

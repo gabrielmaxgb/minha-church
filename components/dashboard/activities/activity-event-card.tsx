@@ -4,10 +4,12 @@ import Link from "next/link";
 import { Calendar, MapPin, Pencil, Repeat, Sparkles } from "lucide-react";
 
 import { EventListNavActions } from "@/components/dashboard/activities/event-list-nav-actions";
+import { EventRegistrationOpenBadge } from "@/components/dashboard/activities/event-registration-open-badge";
 import { HoverLift } from "@/components/motion/dashboard-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { activityDetailPath } from "@/constants/routes";
+import { isEventRegistrationOpen } from "@/lib/events/registration";
 import { cn, formatDateTime } from "@/lib/utils";
 import { formatRecurrenceSummary } from "@/lib/events/recurrence";
 import type { ChurchEvent } from "@/types/events";
@@ -29,14 +31,18 @@ export function ActivityEventCard({
   manageBlockTitle,
   onEdit,
 }: ActivityEventCardProps) {
+  const registrationOpen = isEventRegistrationOpen(event);
+
   return (
     <HoverLift>
       <article
         className={cn(
           "rounded-xl border bg-card p-5 transition-shadow duration-150 hover:shadow-elevated",
-          highlighted
-            ? "border-primary/15 bg-muted/20"
-            : "border-border/70",
+          registrationOpen
+            ? "border-success/25 bg-success-subtle/50"
+            : highlighted
+              ? "border-primary/15 bg-muted/20"
+              : "border-border/70",
         )}
       >
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -60,6 +66,7 @@ export function ActivityEventCard({
                   Recorrente
                 </Badge>
               )}
+              <EventRegistrationOpenBadge event={event} showPrice />
             </div>
             {event.description && (
               <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">

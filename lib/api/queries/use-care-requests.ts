@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
+  ackCareViewedMine,
   careRequestsKeys,
   createCareRequest,
   markCareRequestViewed,
@@ -51,6 +52,22 @@ export function useCareInboxPendingCount(options?: { enabled?: boolean }) {
   });
 }
 
+export function useCareViewedMineCount(options?: {
+  enabled?: boolean;
+  poll?: boolean;
+}) {
+  const { churchId } = useTenant();
+  const poll = options?.poll ?? false;
+
+  return useQuery({
+    ...careRequestsKeys.viewedCount(churchId ?? "unknown"),
+    enabled: Boolean(churchId) && (options?.enabled ?? true),
+    staleTime: 30_000,
+    refetchInterval: poll ? 60_000 : false,
+    retry: false,
+  });
+}
+
 export function useCreateCareRequest() {
   const { churchId } = useTenant();
   const queryClient = useQueryClient();
@@ -73,6 +90,26 @@ export function useCreateCareRequest() {
             .queryKey,
         }),
       ]);
+    },
+  });
+}
+
+export function useAckCareViewedMine() {
+  const { churchId } = useTenant();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => {
+      if (!churchId) {
+        throw new Error("Igreja não selecionada.");
+      }
+
+      return ackCareViewedMine(churchId);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: careRequestsKeys.viewedCount(churchId ?? "unknown").queryKey,
+      });
     },
   });
 }
@@ -100,6 +137,10 @@ export function useMarkCareRequestViewed() {
         }),
         queryClient.invalidateQueries({
           queryKey: careRequestsKeys.mine(churchId ?? "unknown").queryKey,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: careRequestsKeys.viewedCount(churchId ?? "unknown")
+            .queryKey,
         }),
       ]);
     },

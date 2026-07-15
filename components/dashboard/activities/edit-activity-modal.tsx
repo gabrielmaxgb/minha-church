@@ -10,6 +10,7 @@ import {
   MapPin,
   Repeat,
   Sparkles,
+  Ticket,
   Trash2,
   X,
 } from "lucide-react";
@@ -17,6 +18,7 @@ import {
 import { ActivityScheduleFields } from "@/components/dashboard/activities/activity-schedule-fields";
 import { EventFormSection } from "@/components/dashboard/activities/event-form-section";
 import { EventMutationScopeFields } from "@/components/dashboard/activities/event-mutation-scope-fields";
+import { EventOptionCard } from "@/components/dashboard/activities/event-option-card";
 import { EventRecurrenceFields } from "@/components/dashboard/activities/event-recurrence-fields";
 import { EventVisibilityFields } from "@/components/dashboard/activities/event-visibility-fields";
 import { Badge } from "@/components/ui/badge";
@@ -37,7 +39,13 @@ import {
   syncRecurrenceDaysWithStart,
   type EventRecurrenceFormState,
 } from "@/lib/events/recurrence";
-import { cn, formatDateTime } from "@/lib/utils";
+import {
+  applyBrlCentsMask,
+  cn,
+  formatBrlCentsMask,
+  formatDateTime,
+  parseBrlMaskToCents,
+} from "@/lib/utils";
 import type { ChurchEvent, EventMutationScope } from "@/types/events";
 
 interface EditActivityModalProps {
@@ -83,6 +91,8 @@ export function EditActivityModal({
   const [startsAt, setStartsAt] = useState("");
   const [endsAt, setEndsAt] = useState("");
   const [visibleToChurch, setVisibleToChurch] = useState(true);
+  const [registrationOpen, setRegistrationOpen] = useState(false);
+  const [priceReais, setPriceReais] = useState("");
   const [recurrence, setRecurrence] = useState<EventRecurrenceFormState>(
     defaultRecurrenceFormState(new Date().toISOString()),
   );
@@ -164,6 +174,15 @@ export function EditActivityModal({
     setStartsAt(nextStarts);
     setEndsAt(event.endsAt ? toDatetimeLocalValue(event.endsAt) : "");
     setVisibleToChurch(event.visibleToChurch ?? true);
+    setRegistrationOpen(
+      event.registrationOpen ??
+        Boolean(event.priceCents && event.priceCents > 0),
+    );
+    setPriceReais(
+      event.priceCents && event.priceCents > 0
+        ? formatBrlCentsMask(event.priceCents)
+        : "",
+    );
     setRecurrence(nextRecurrence);
     setInitialRecurrence(nextRecurrence);
     setError(null);
@@ -238,6 +257,25 @@ export function EditActivityModal({
           : buildRecurrencePayload(recurrence)
         : undefined;
 
+      const priceCents = priceReais.trim()
+        ? parseBrlMaskToCents(priceReais)
+        : null;
+
+      if (
+        registrationOpen &&
+        priceCents != null &&
+        priceCents > 0 &&
+        priceCents < 500
+      ) {
+        setError(
+          "O preço mínimo da inscrição paga é R$ 5,00 (ou deixe vazio para gratuita).",
+        );
+        return;
+      }
+
+      const openRegistration =
+        registrationOpen || Boolean(priceCents != null && priceCents >= 500);
+
       await updateEvent.mutateAsync({
         name: name.trim(),
         description: description.trim() || null,
@@ -246,6 +284,11 @@ export function EditActivityModal({
         startsAt: new Date(startsAt).toISOString(),
         endsAt: endsAt ? new Date(endsAt).toISOString() : null,
         visibleToChurch: event.ministryId ? visibleToChurch : undefined,
+        registrationOpen: openRegistration,
+        priceCents:
+          openRegistration && priceCents != null && priceCents >= 500
+            ? priceCents
+            : null,
         ...(recurrencePayload !== undefined
           ? { recurrence: recurrencePayload }
           : {}),
@@ -424,6 +467,58 @@ export function EditActivityModal({
                     className="min-h-[92px] resize-y rounded-xl border-border/80 bg-background px-4 py-3 text-base leading-relaxed"
                   />
                 </Field>
+
+                <div className="space-y-3">
+                  <EventOptionCard
+                    type="checkbox"
+                    checked={registrationOpen}
+                    onChange={(checked) => {
+                      setRegistrationOpen(checked);
+                      if (!checked) {
+                        setPriceReais("");
+                      }
+                    }}
+                    title="Abrir inscrição"
+                    description="Membros confirmam participação na página do evento. Pode ser gratuita ou paga."
+                    icon={Ticket}
+                    disabled={isPending}
+                    compact
+                  />
+
+                  {registrationOpen ? (
+                    <Field
+                      label="Preço da inscrição (opcional)"
+                      htmlFor="edit-activity-price"
+                      hint="Vazio = inscrição gratuita. Com valor, pagamento via Stripe Connect (mínimo R$ 5,00)."
+                    >
+                      <div className="relative">
+                        <span className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-sm text-muted-foreground">
+                          R$
+                        </span>
+                        <Input
+                          id="edit-activity-price"
+                          inputMode="numeric"
+                          autoComplete="off"
+                          value={priceReais}
+                          onChange={(inputEvent) => {
+                            const digits = inputEvent.target.value.replace(
+                              /\D/g,
+                              "",
+                            );
+                            setPriceReais(
+                              digits
+                                ? applyBrlCentsMask(inputEvent.target.value)
+                                : "",
+                            );
+                          }}
+                          placeholder="0,00 — vazio = gratuita"
+                          disabled={isPending}
+                          className="h-12 rounded-xl border-border/80 bg-background pl-11 pr-4 text-base tabular-nums"
+                        />
+                      </div>
+                    </Field>
+                  ) : null}
+                </div>
 
                 <Field label="Local" htmlFor="edit-activity-location">
                   <div className="relative">

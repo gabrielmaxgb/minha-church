@@ -12,6 +12,7 @@ import {
 } from "@/lib/api/queries/members.keys";
 import { membershipsKeys, queries } from "@/lib/api/queries";
 import { billingKeys } from "@/lib/api/queries/billing.keys";
+import { paymentsKeys } from "@/lib/api/queries/payments.keys";
 import { useAuth, useTenant } from "@/providers/auth-provider";
 
 function useInvalidateMembers() {
@@ -21,6 +22,7 @@ function useInvalidateMembers() {
   return async () => {
     await queryClient.invalidateQueries({ queryKey: membersKeys._def });
     await queryClient.invalidateQueries({ queryKey: queries.dashboard._def });
+    await queryClient.invalidateQueries({ queryKey: paymentsKeys._def });
     await reloadSession();
   };
 }

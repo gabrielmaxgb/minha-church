@@ -170,12 +170,12 @@ export function DashboardTopbar({
                     onClick={() => setMenuOpen(false)}
                   />
                   <div className="absolute right-0 z-20 mt-1.5 w-56 rounded-lg border border-border bg-popover p-1 shadow-popover">
-                    <div className="border-b border-border px-2.5 py-2">
-                      <p className="text-sm font-medium">{user.name}</p>
-                      <p className="text-xs text-muted-foreground">
+                    <div className="min-w-0 border-b border-border px-2.5 py-2">
+                      <p className="truncate text-sm font-medium">{user.name}</p>
+                      <p className="truncate text-xs text-muted-foreground">
                         {getUserLoginLabel(user)}
                       </p>
-                      <p className="mt-1 text-xs text-muted-foreground">
+                      <p className="mt-1 truncate text-xs text-muted-foreground">
                         {formatUserAccessLabel(user)}
                       </p>
                     </div>

@@ -39,6 +39,27 @@ async function fetchCareInboxPendingCount(
   );
 }
 
+async function fetchCareViewedMineCount(
+  churchId: string,
+): Promise<{ count: number }> {
+  return apiClient<{ count: number }>(
+    buildTenantPath(churchId, "/care-requests/mine/viewed-count"),
+    { churchId },
+  );
+}
+
+async function ackCareViewedMine(
+  churchId: string,
+): Promise<{ count: number }> {
+  return apiClient<{ count: number }>(
+    buildTenantPath(churchId, "/care-requests/mine/ack-viewed"),
+    {
+      churchId,
+      method: "POST",
+    },
+  );
+}
+
 async function createCareRequest(
   churchId: string,
   payload: CreateCareRequestPayload,
@@ -80,13 +101,19 @@ export const careRequestsKeys = createQueryKeys("careRequests", {
     queryKey: [churchId, "pending-count"],
     queryFn: () => fetchCareInboxPendingCount(churchId),
   }),
+  viewedCount: (churchId: string) => ({
+    queryKey: [churchId, "viewed-count"],
+    queryFn: () => fetchCareViewedMineCount(churchId),
+  }),
 });
 
 export {
+  ackCareViewedMine,
   createCareRequest,
   fetchCareInbox,
   fetchCareInboxPendingCount,
   fetchCareRecipients,
+  fetchCareViewedMineCount,
   fetchMyCareRequests,
   markCareRequestViewed,
 };

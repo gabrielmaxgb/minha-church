@@ -296,13 +296,82 @@ export async function deleteGivingFund(
 export async function createMemberGivingCheckout(
   churchId: string,
   fundId: string,
-  input: { amountCents: number },
+  input: { amountCents: number; recurring?: boolean },
 ): Promise<GivingCheckoutSession> {
   return apiClient<GivingCheckoutSession>(
     `/churches/${churchId}/payments/funds/${fundId}/checkout`,
     {
       method: "POST",
       body: JSON.stringify(input),
+      churchId,
+    },
+  );
+}
+
+export async function fetchMyGivingSubscriptions(
+  churchId: string,
+): Promise<GivingSubscription[]> {
+  return apiClient<GivingSubscription[]>(
+    `/churches/${churchId}/payments/subscriptions/mine`,
+    { churchId },
+  );
+}
+
+export async function fetchGivingSubscriptions(
+  churchId: string,
+  params: { fundId?: string; status?: string } = {},
+): Promise<GivingSubscription[]> {
+  const search = new URLSearchParams();
+  if (params.fundId) {
+    search.set("fundId", params.fundId);
+  }
+  if (params.status) {
+    search.set("status", params.status);
+  }
+  const query = search.toString();
+  return apiClient<GivingSubscription[]>(
+    `/churches/${churchId}/payments/subscriptions${query ? `?${query}` : ""}`,
+    { churchId },
+  );
+}
+
+export async function cancelMyGivingSubscription(
+  churchId: string,
+  subscriptionId: string,
+): Promise<GivingSubscription> {
+  return apiClient<GivingSubscription>(
+    `/churches/${churchId}/payments/subscriptions/${subscriptionId}/cancel`,
+    {
+      method: "POST",
+      body: JSON.stringify({}),
+      churchId,
+    },
+  );
+}
+
+export async function cancelGivingSubscriptionAsTreasurer(
+  churchId: string,
+  subscriptionId: string,
+): Promise<GivingSubscription> {
+  return apiClient<GivingSubscription>(
+    `/churches/${churchId}/payments/subscriptions/${subscriptionId}/cancel-as-treasurer`,
+    {
+      method: "POST",
+      body: JSON.stringify({}),
+      churchId,
+    },
+  );
+}
+
+export async function createEventTicketCheckout(
+  churchId: string,
+  eventId: string,
+): Promise<GivingCheckoutSession> {
+  return apiClient<GivingCheckoutSession>(
+    `/churches/${churchId}/payments/events/${eventId}/ticket-checkout`,
+    {
+      method: "POST",
+      body: JSON.stringify({}),
       churchId,
     },
   );
@@ -324,15 +393,33 @@ export interface CreateGivingCheckoutInput {
   amountCents: number;
   payerName?: string;
   payerEmail?: string;
+  recurring?: boolean;
 }
 
 export interface GivingCheckoutSession {
   donationId: string;
+  subscriptionId?: string | null;
+  mode?: "payment" | "subscription";
   clientSecret: string;
   stripeAccountId: string;
   publishableKey: string;
   amountCents: number;
   currency: "brl";
+}
+
+export interface GivingSubscription {
+  id: string;
+  fundId: string;
+  fundName: string;
+  amountCents: number;
+  currency: string;
+  status: string;
+  payerName: string | null;
+  payerEmail: string | null;
+  donorMemberId: string | null;
+  donorMemberName: string | null;
+  canceledAt: string | null;
+  createdAt: string;
 }
 
 export async function fetchPublicGivingFund(
@@ -398,13 +485,94 @@ export interface GivingDonation {
   createdAt: string;
 }
 
+export interface GivingDonationList {
+  items: GivingDonation[];
+  page: number;
+  limit: number;
+  total: number;
+}
+
+export interface FetchGivingDonationsParams {
+  fundId?: string;
+  status?: string;
+  memberId?: string;
+  from?: string;
+  to?: string;
+  page?: number;
+  limit?: number;
+}
+
+function toDonationsQuery(params?: FetchGivingDonationsParams): string {
+  if (!params) {
+    return "";
+  }
+
+  const search = new URLSearchParams();
+  if (params.fundId) search.set("fundId", params.fundId);
+  if (params.status) search.set("status", params.status);
+  if (params.memberId) search.set("memberId", params.memberId);
+  if (params.from) search.set("from", params.from);
+  if (params.to) search.set("to", params.to);
+  if (params.page) search.set("page", String(params.page));
+  if (params.limit) search.set("limit", String(params.limit));
+  const qs = search.toString();
+  return qs ? `?${qs}` : "";
+}
+
 export async function fetchGivingDonations(
   churchId: string,
-): Promise<GivingDonation[]> {
-  return apiClient<GivingDonation[]>(
-    `/churches/${churchId}/payments/donations`,
+  params?: FetchGivingDonationsParams,
+): Promise<GivingDonationList> {
+  return apiClient<GivingDonationList>(
+    `/churches/${churchId}/payments/donations${toDonationsQuery(params)}`,
     { churchId },
   );
+}
+
+export async function refundGivingDonation(
+  churchId: string,
+  donationId: string,
+): Promise<GivingDonation> {
+  return apiClient<GivingDonation>(
+    `/churches/${churchId}/payments/donations/${donationId}/refund`,
+    {
+      method: "POST",
+      body: JSON.stringify({}),
+      churchId,
+    },
+  );
+}
+
+export async function downloadGivingDonationsCsv(
+  churchId: string,
+  params?: FetchGivingDonationsParams,
+): Promise<void> {
+  const baseURL = process.env.NEXT_PUBLIC_API_URL?.trim();
+  if (!baseURL) {
+    throw new Error("NEXT_PUBLIC_API_URL não configurada.");
+  }
+
+  const response = await fetch(
+    `${baseURL}/churches/${churchId}/payments/donations/export${toDonationsQuery(params)}`,
+    {
+      credentials: "include",
+      headers: { "X-Church-Id": churchId },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error("Não foi possível exportar as contribuições.");
+  }
+
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = "contribuicoes.csv";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
 }
 
 export async function fetchMyGivingDonations(
@@ -414,4 +582,184 @@ export async function fetchMyGivingDonations(
     `/churches/${churchId}/payments/donations/mine`,
     { churchId },
   );
+}
+
+export type FinanceEntryType = "income" | "expense";
+export type FinanceEntryMethod = "cash" | "transfer" | "other";
+
+export interface FinanceEntry {
+  id: string;
+  type: FinanceEntryType;
+  amountCents: number;
+  currency: string;
+  occurredOn: string;
+  category: string;
+  fundId: string | null;
+  fundName: string | null;
+  method: FinanceEntryMethod;
+  note: string | null;
+  createdByUserId: string | null;
+  createdByUserName: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FinanceEntryList {
+  items: FinanceEntry[];
+  page: number;
+  limit: number;
+  total: number;
+}
+
+export interface FinanceEntriesSummary {
+  incomeCents: number;
+  expenseCents: number;
+  balanceCents: number;
+  onlineDonationCents: number;
+}
+
+export interface FetchFinanceEntriesParams {
+  type?: FinanceEntryType;
+  from?: string;
+  to?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface CreateFinanceEntryInput {
+  type: FinanceEntryType;
+  amountCents: number;
+  occurredOn: string;
+  category: string;
+  fundId?: string;
+  method?: FinanceEntryMethod;
+  note?: string;
+}
+
+export interface UpdateFinanceEntryInput {
+  type?: FinanceEntryType;
+  amountCents?: number;
+  occurredOn?: string;
+  category?: string;
+  fundId?: string | null;
+  method?: FinanceEntryMethod;
+  note?: string | null;
+}
+
+function toFinanceEntriesQuery(params?: FetchFinanceEntriesParams): string {
+  if (!params) {
+    return "";
+  }
+
+  const search = new URLSearchParams();
+  if (params.type) search.set("type", params.type);
+  if (params.from) search.set("from", params.from);
+  if (params.to) search.set("to", params.to);
+  if (params.page) search.set("page", String(params.page));
+  if (params.limit) search.set("limit", String(params.limit));
+  const qs = search.toString();
+  return qs ? `?${qs}` : "";
+}
+
+function toFinanceSummaryQuery(params?: { from?: string; to?: string }): string {
+  if (!params) {
+    return "";
+  }
+
+  const search = new URLSearchParams();
+  if (params.from) search.set("from", params.from);
+  if (params.to) search.set("to", params.to);
+  const qs = search.toString();
+  return qs ? `?${qs}` : "";
+}
+
+export async function fetchFinanceEntries(
+  churchId: string,
+  params?: FetchFinanceEntriesParams,
+): Promise<FinanceEntryList> {
+  return apiClient<FinanceEntryList>(
+    `/churches/${churchId}/payments/entries${toFinanceEntriesQuery(params)}`,
+    { churchId },
+  );
+}
+
+export async function fetchFinanceEntriesSummary(
+  churchId: string,
+  params?: { from?: string; to?: string },
+): Promise<FinanceEntriesSummary> {
+  return apiClient<FinanceEntriesSummary>(
+    `/churches/${churchId}/payments/entries/summary${toFinanceSummaryQuery(params)}`,
+    { churchId },
+  );
+}
+
+export async function createFinanceEntry(
+  churchId: string,
+  input: CreateFinanceEntryInput,
+): Promise<FinanceEntry> {
+  return apiClient<FinanceEntry>(`/churches/${churchId}/payments/entries`, {
+    method: "POST",
+    body: JSON.stringify(input),
+    churchId,
+  });
+}
+
+export async function updateFinanceEntry(
+  churchId: string,
+  entryId: string,
+  input: UpdateFinanceEntryInput,
+): Promise<FinanceEntry> {
+  return apiClient<FinanceEntry>(
+    `/churches/${churchId}/payments/entries/${entryId}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(input),
+      churchId,
+    },
+  );
+}
+
+export async function deleteFinanceEntry(
+  churchId: string,
+  entryId: string,
+): Promise<{ ok: true }> {
+  return apiClient<{ ok: true }>(
+    `/churches/${churchId}/payments/entries/${entryId}`,
+    {
+      method: "DELETE",
+      churchId,
+    },
+  );
+}
+
+export async function downloadFinanceEntriesCsv(
+  churchId: string,
+  params?: FetchFinanceEntriesParams,
+): Promise<void> {
+  const baseURL = process.env.NEXT_PUBLIC_API_URL?.trim();
+  if (!baseURL) {
+    throw new Error("NEXT_PUBLIC_API_URL não configurada.");
+  }
+
+  const response = await fetch(
+    `${baseURL}/churches/${churchId}/payments/entries/export${toFinanceEntriesQuery(params)}`,
+    {
+      credentials: "include",
+      headers: { "X-Church-Id": churchId },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error("Não foi possível exportar os lançamentos manuais.");
+  }
+
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = "lancamentos-manuais.csv";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
 }

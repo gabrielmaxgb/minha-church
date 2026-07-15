@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
+import { GivingDonationsPanel } from "@/components/dashboard/finances/giving-donations-panel";
 import { MemberExpandedPanel } from "@/components/dashboard/members/member-expanded-panel";
 import {
   Card,
@@ -27,8 +28,13 @@ interface MemberDetailContentProps {
 
 export function MemberDetailContent({ memberId }: MemberDetailContentProps) {
   const router = useRouter();
-  const { permissions } = useAuth();
+  const { permissions, user } = useAuth();
   const canManage = permissions ? canManageMembers(permissions) : false;
+  const canSeeContributions = Boolean(
+    user?.isOwner ||
+      permissions?.finances.access ||
+      permissions?.finances.manage,
+  );
   const { data: member, isLoading, isError, error } = useMember(memberId);
 
   if (isLoading) {
@@ -101,6 +107,22 @@ export function MemberDetailContent({ memberId }: MemberDetailContentProps) {
           />
         </CardContent>
       </Card>
+
+      {canSeeContributions ? (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-semibold tracking-tight">
+              Contribuições
+            </CardTitle>
+            <CardDescription>
+              Histórico de doações online deste membro nesta igreja.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <GivingDonationsPanel embedded memberId={memberId} />
+          </CardContent>
+        </Card>
+      ) : null}
     </div>
   );
 }

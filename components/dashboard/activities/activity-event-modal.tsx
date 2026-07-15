@@ -13,6 +13,7 @@ import {
   Pencil,
   Repeat,
   Sparkles,
+  Ticket,
   Trash2,
 } from "lucide-react";
 
@@ -21,7 +22,9 @@ import { ActivityScheduleFields } from "@/components/dashboard/activities/activi
 import { EventHighlightNote } from "@/components/dashboard/activities/event-highlight-note";
 import { EventFormSection } from "@/components/dashboard/activities/event-form-section";
 import { EventMutationScopeDialog } from "@/components/dashboard/activities/event-mutation-scope-dialog";
+import { EventOptionCard } from "@/components/dashboard/activities/event-option-card";
 import { EventRecurrenceFields } from "@/components/dashboard/activities/event-recurrence-fields";
+import { EventRegistrationOpenBadge } from "@/components/dashboard/activities/event-registration-open-badge";
 import { EventVisibilityFields } from "@/components/dashboard/activities/event-visibility-fields";
 import { LargeModalShell } from "@/components/dashboard/activities/large-modal-shell";
 import { TrialExpiredWriteModal } from "@/components/dashboard/trial-expired-write-modal";
@@ -38,6 +41,7 @@ import {
   useUpdateChurchEvent,
 } from "@/lib/api/queries";
 import { toDatetimeLocalValue } from "@/lib/activities/datetime";
+import { isEventRegistrationOpen } from "@/lib/events/registration";
 import {
   buildRecurrencePayload,
   defaultRecurrenceFormState,
@@ -52,7 +56,13 @@ import {
   canManageEventRoster,
 } from "@/lib/permissions";
 import { useTrialWriteGuard } from "@/lib/subscription/use-trial-write-guard";
-import { cn, formatDateTime } from "@/lib/utils";
+import {
+  applyBrlCentsMask,
+  cn,
+  formatBrlCentsMask,
+  formatDateTime,
+  parseBrlMaskToCents,
+} from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 import type { EventMutationScope } from "@/types/events";
 
@@ -85,6 +95,8 @@ export function ActivityEventModal({
   const [startsAt, setStartsAt] = useState("");
   const [endsAt, setEndsAt] = useState("");
   const [visibleToChurch, setVisibleToChurch] = useState(true);
+  const [registrationOpen, setRegistrationOpen] = useState(false);
+  const [priceReais, setPriceReais] = useState("");
   const [recurrence, setRecurrence] = useState<EventRecurrenceFormState>(
     defaultRecurrenceFormState(new Date().toISOString()),
   );
@@ -135,6 +147,11 @@ export function ActivityEventModal({
       (endsAt || "") !==
         (event.endsAt ? toDatetimeLocalValue(event.endsAt) : "") ||
       visibleToChurch !== (event.visibleToChurch ?? true) ||
+      registrationOpen !== isEventRegistrationOpen(event) ||
+      (priceReais.trim()
+        ? parseBrlMaskToCents(priceReais)
+        : null) !==
+        (event.priceCents && event.priceCents > 0 ? event.priceCents : null) ||
       recurrenceChanged
     );
   }, [
@@ -147,6 +164,8 @@ export function ActivityEventModal({
     startsAt,
     endsAt,
     visibleToChurch,
+    registrationOpen,
+    priceReais,
     recurrenceChanged,
   ]);
 
@@ -180,6 +199,12 @@ export function ActivityEventModal({
     setStartsAt(nextStarts);
     setEndsAt(event.endsAt ? toDatetimeLocalValue(event.endsAt) : "");
     setVisibleToChurch(event.visibleToChurch ?? true);
+    setRegistrationOpen(isEventRegistrationOpen(event));
+    setPriceReais(
+      event.priceCents && event.priceCents > 0
+        ? formatBrlCentsMask(event.priceCents)
+        : "",
+    );
     setRecurrence(nextRecurrence);
     setInitialRecurrence(nextRecurrence);
     setError(null);
@@ -200,6 +225,26 @@ export function ActivityEventModal({
       setScopeDialog(null);
       return;
     }
+
+    const priceCents = priceReais.trim()
+      ? parseBrlMaskToCents(priceReais)
+      : null;
+
+    if (
+      registrationOpen &&
+      priceCents != null &&
+      priceCents > 0 &&
+      priceCents < 500
+    ) {
+      setError(
+        "O preço mínimo da inscrição paga é R$ 5,00 (ou deixe vazio para gratuita).",
+      );
+      setScopeDialog(null);
+      return;
+    }
+
+    const openRegistration =
+      registrationOpen || Boolean(priceCents != null && priceCents >= 500);
 
     const recurrencePayload = recurrenceChanged
       ? recurrence.repeatMode === "none"
@@ -222,6 +267,11 @@ export function ActivityEventModal({
         startsAt: new Date(startsAt).toISOString(),
         endsAt: endsAt ? new Date(endsAt).toISOString() : null,
         visibleToChurch: event.ministryId ? visibleToChurch : undefined,
+        registrationOpen: openRegistration,
+        priceCents:
+          openRegistration && priceCents != null && priceCents >= 500
+            ? priceCents
+            : null,
         ...(recurrencePayload !== undefined
           ? { recurrence: recurrencePayload }
           : {}),
@@ -423,11 +473,32 @@ export function ActivityEventModal({
                   {event.rosterOpen ? "Coleta aberta" : "Coleta fechada"}
                 </Badge>
               ) : null}
+              <EventRegistrationOpenBadge event={event} showPrice />
             </div>
 
             {event.description ? (
               <p className="text-sm leading-relaxed text-muted-foreground">
                 {event.description}
+              </p>
+            ) : null}
+
+            {showAvailabilityPanel ? (
+              <ActivityAvailabilitySection
+                event={event}
+                interactionsDisabled={writesBlocked}
+              />
+            ) : null}
+
+            {event.usesRoster && canManageRoster ? (
+              <p className="text-sm text-muted-foreground">
+                Escala e equipe são gerenciadas na{" "}
+                <Link
+                  href={activityDetailPath(eventId)}
+                  className="font-medium text-foreground underline-offset-4 hover:underline"
+                >
+                  página do evento
+                </Link>
+                .
               </p>
             ) : null}
 
@@ -467,26 +538,6 @@ export function ActivityEventModal({
                 </div>
               ) : null}
             </div>
-
-            {showAvailabilityPanel ? (
-              <ActivityAvailabilitySection
-                event={event}
-                interactionsDisabled={writesBlocked}
-              />
-            ) : null}
-
-            {event.usesRoster && canManageRoster ? (
-              <p className="text-sm text-muted-foreground">
-                Escala e equipe são gerenciadas na{" "}
-                <Link
-                  href={activityDetailPath(eventId)}
-                  className="font-medium text-foreground underline-offset-4 hover:underline"
-                >
-                  página do evento
-                </Link>
-                .
-              </p>
-            ) : null}
           </div>
         ) : (
           <div className="space-y-8">
@@ -550,6 +601,61 @@ export function ActivityEventModal({
                     palavra, pastorais ou avisos importantes.
                   </p>
                 </div>
+                <div className="space-y-3">
+                  <EventOptionCard
+                    type="checkbox"
+                    checked={registrationOpen}
+                    onChange={(checked) => {
+                      setRegistrationOpen(checked);
+                      if (!checked) {
+                        setPriceReais("");
+                      }
+                    }}
+                    title="Abrir inscrição"
+                    description="Membros confirmam participação na página do evento. Pode ser gratuita ou paga."
+                    icon={Ticket}
+                    disabled={isPending}
+                    compact
+                  />
+
+                  {registrationOpen ? (
+                    <div className="space-y-2 pl-1">
+                      <Label htmlFor="event-modal-price">
+                        Preço da inscrição (opcional)
+                      </Label>
+                      <div className="relative">
+                        <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-muted-foreground">
+                          R$
+                        </span>
+                        <Input
+                          id="event-modal-price"
+                          inputMode="numeric"
+                          autoComplete="off"
+                          value={priceReais}
+                          onChange={(inputEvent) => {
+                            const digits = inputEvent.target.value.replace(
+                              /\D/g,
+                              "",
+                            );
+                            setPriceReais(
+                              digits
+                                ? applyBrlCentsMask(inputEvent.target.value)
+                                : "",
+                            );
+                          }}
+                          disabled={isPending}
+                          placeholder="0,00 — vazio = gratuita"
+                          className="h-11 rounded-xl pl-10 tabular-nums"
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Vazio = inscrição gratuita. Com valor, pagamento via
+                        Stripe Connect (mínimo R$ 5,00).
+                      </p>
+                    </div>
+                  ) : null}
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="event-modal-location">Local</Label>
                   <Input

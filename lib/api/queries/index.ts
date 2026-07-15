@@ -38,7 +38,12 @@ export { membersKeys } from "@/lib/api/queries/members.keys";
 export { membershipsKeys } from "@/lib/api/queries/memberships.keys";
 export { ministriesKeys } from "@/lib/api/queries/ministries.keys";
 export { pricingKeys } from "@/lib/api/queries/pricing.keys";
-export { useChurchEvent, useChurchEvents, useEventSeriesOccurrences } from "@/lib/api/queries/use-church-events";
+export {
+  useChurchEvent,
+  useChurchEvents,
+  useEventSeriesOccurrences,
+  useEventTicketRegistrations,
+} from "@/lib/api/queries/use-church-events";
 export {
 	useCreateChurchEvent,
 	useDeleteChurchEvent,
@@ -132,18 +137,30 @@ export { paymentsKeys } from "@/lib/api/queries/payments.keys";
 export {
   resolvePaymentsError,
   useConnectStatus,
+  useCreateFinanceEntry,
   useCreateGivingFund,
   useCreateMemberGivingCheckout,
+  useDeleteFinanceEntry,
   useDeleteGivingFund,
+  useExportFinanceEntries,
+  useExportGivingDonations,
+  useFinanceEntries,
+  useFinanceEntriesSummary,
   useFiscalProfile,
   useGivingDonations,
   useMyGivingDonations,
+  useMyGivingSubscriptions,
+  useCancelMyGivingSubscription,
+  useGivingSubscriptions,
+  useCancelGivingSubscriptionAsTreasurer,
   useGivingFunds,
   useMemberGivingFunds,
   usePaymentsSummary,
+  useRefundGivingDonation,
   useResumeConnectOnboarding,
   useStartConnectOnboarding,
   useSyncConnectAccount,
+  useUpdateFinanceEntry,
   useUpdateGivingFund,
   useUpsertFiscalProfile,
 } from "@/lib/api/queries/use-payments";
@@ -155,9 +172,11 @@ export {
 } from "@/lib/api/queries/use-respond-worship-availability";
 export { careRequestsKeys } from "@/lib/api/queries/care-requests.keys";
 export {
+  useAckCareViewedMine,
   useCareInbox,
   useCareInboxPendingCount,
   useCareRecipients,
+  useCareViewedMineCount,
   useCreateCareRequest,
   useMarkCareRequestViewed,
   useMyCareRequests,

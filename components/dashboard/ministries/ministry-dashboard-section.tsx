@@ -9,6 +9,8 @@ import { MinistryMembersList } from "@/components/dashboard/ministries/ministry-
 import { CreateMinistryEventModal } from "@/components/dashboard/ministries/create-ministry-event-modal";
 import { ActivityEventModal } from "@/components/dashboard/activities/activity-event-modal";
 import { EventListNavActions } from "@/components/dashboard/activities/event-list-nav-actions";
+import { EventRegistrationOpenBadge } from "@/components/dashboard/activities/event-registration-open-badge";
+import { LockedFeatureHint } from "@/components/dashboard/locked-feature-hint";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,22 +21,25 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { myScheduleMinistryPath } from "@/constants/routes";
+import {
+  activityDetailPath,
+  myScheduleMinistryPath,
+} from "@/constants/routes";
 import {
   useMinistryEvents,
   useMinistryMembers,
   useRemoveMemberFromMinistry,
   useUpdateMemberMinistryRole,
 } from "@/lib/api/queries";
-import { activityDetailPath } from "@/constants/routes";
 import { collapseRecurringEventsForList } from "@/lib/events/list";
+import { isEventRegistrationOpen } from "@/lib/events/registration";
 import { formatRecurrenceSummary } from "@/lib/events/recurrence";
 import {
   canCreateMinistryActivity,
   canManageActivity,
   canManageMinistryTeam,
 } from "@/lib/permissions";
-import { formatDateTime } from "@/lib/utils";
+import { cn, formatDateTime } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 import type { Ministry, MinistryEvent } from "@/types/ministries";
 
@@ -199,7 +204,12 @@ export function MinistryDashboardSection({
                 return (
                   <div
                     key={event.recurrenceSeriesId ?? event.id}
-                    className="flex flex-col gap-2 rounded-lg border border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+                    className={cn(
+                      "flex flex-col gap-2 rounded-lg border px-4 py-3 sm:flex-row sm:items-center sm:justify-between",
+                      isEventRegistrationOpen(event)
+                        ? "border-success/25 bg-success-subtle/50"
+                        : "border-border",
+                    )}
                   >
                     <Link
                       href={activityDetailPath(event.id)}
@@ -213,6 +223,7 @@ export function MinistryDashboardSection({
                             Recorrente
                           </Badge>
                         )}
+                        <EventRegistrationOpenBadge event={event} />
                       </div>
                       {event.recurrence && (
                         <p className="mt-1 text-xs text-muted-foreground">

@@ -23,11 +23,13 @@ import {
 import { markTierCrossingStaffNoticeRead } from "@/lib/api/billing";
 import { billingKeys } from "@/lib/api/queries/billing.keys";
 import {
+  useAckCareViewedMine,
   useMyMinistryNotifications,
   useMySchedules,
   usePasswordResetRequests,
   useAnnouncementsUnreadCount,
   useCareInboxPendingCount,
+  useCareViewedMineCount,
 } from "@/lib/api/queries";
 import { canManageChurchMemberships } from "@/lib/church-memberships/constants";
 import {
@@ -73,6 +75,7 @@ function useNotificationCount(): number {
   const { data: carePending } = useCareInboxPendingCount({
     enabled: canReceiveCare,
   });
+  const { data: careViewed } = useCareViewedMineCount({ poll: true });
   const { data: pendingTier } = useQuery({
     ...billingKeys.tierCrossingPending(churchId ?? "unknown"),
     enabled: Boolean(churchId) && isOwner,
@@ -95,6 +98,7 @@ function useNotificationCount(): number {
     hasCommunicationAccess,
   );
   const carePendingCount = canReceiveCare ? (carePending?.count ?? 0) : 0;
+  const careViewedCount = careViewed?.count ?? 0;
   const tierPendingCount = isOwner && pendingTier ? 1 : 0;
   const tierNoticeCount = canMembers ? (staffNotices?.length ?? 0) : 0;
 
@@ -104,6 +108,7 @@ function useNotificationCount(): number {
     ministryCount +
     announcementCount +
     carePendingCount +
+    careViewedCount +
     tierPendingCount +
     tierNoticeCount
   );
@@ -160,6 +165,13 @@ function NotificationsPanel({
   } = useCareInboxPendingCount({
     enabled: open && canReceiveCare,
   });
+  const {
+    data: careViewed,
+    isLoading: careViewedLoading,
+    isError: careViewedError,
+  } = useCareViewedMineCount({
+    enabled: open,
+  });
   const { data: pendingTier } = useQuery({
     ...billingKeys.tierCrossingPending(churchId ?? "unknown"),
     enabled: open && Boolean(churchId) && isOwner,
@@ -183,6 +195,7 @@ function NotificationsPanel({
       });
     },
   });
+  const ackCareViewed = useAckCareViewedMine();
 
   const passwordResetCount = canManage ? (passwordResetRequests?.length ?? 0) : 0;
   const pendingScheduleCount = schedulePendingCount(
@@ -195,6 +208,7 @@ function NotificationsPanel({
     hasCommunicationAccess,
   );
   const carePendingCount = canReceiveCare ? (carePending?.count ?? 0) : 0;
+  const careViewedCount = careViewed?.count ?? 0;
   const tierPendingCount = isOwner && pendingTier ? 1 : 0;
   const tierNoticeCount = canMembers ? (staffNotices?.length ?? 0) : 0;
   const count =
@@ -203,6 +217,7 @@ function NotificationsPanel({
     ministryCount +
     announcementCount +
     carePendingCount +
+    careViewedCount +
     tierPendingCount +
     tierNoticeCount;
 
@@ -215,13 +230,15 @@ function NotificationsPanel({
     (hasSchedulesAccess && schedulesLoading) ||
     ministryNotificationsLoading ||
     (hasCommunicationAccess && announcementsLoading) ||
-    (canReceiveCare && carePendingLoading);
+    (canReceiveCare && carePendingLoading) ||
+    careViewedLoading;
   const isError =
     (canManage && passwordResetError) ||
     (hasSchedulesAccess && schedulesError) ||
     ministryNotificationsError ||
     (hasCommunicationAccess && announcementsError) ||
-    (canReceiveCare && carePendingError);
+    (canReceiveCare && carePendingError) ||
+    careViewedError;
 
   useEffect(() => {
     if (!open) {
@@ -365,6 +382,44 @@ function NotificationsPanel({
                     onClick={onClose}
                   >
                     <Link href={AUTH_ROUTES.careRequests}>Ver pedidos</Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {!isLoading && !isError && careViewedCount > 0 && (
+            <div className="border-b border-border/70 px-4 py-3 last:border-b-0">
+              <div className="flex items-start gap-3">
+                <div className={pendingNotificationStyles.icon.sm}>
+                  <HeartHandshake
+                    className={cn("size-3.5", pendingNotificationStyles.iconText)}
+                    aria-hidden
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className={pendingNotificationStyles.label}>
+                    Aconselhamentos e visitas
+                  </p>
+                  <p className="mt-1 text-sm font-medium leading-snug">
+                    {careViewedCount === 1
+                      ? "Seu pedido foi lido"
+                      : `${careViewedCount} pedidos foram lidos`}
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Alguém confirma a leitura — e em breve entra em contato.
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-2 h-8 text-xs"
+                    asChild
+                    onClick={() => {
+                      void ackCareViewed.mutateAsync();
+                      onClose();
+                    }}
+                  >
+                    <Link href={AUTH_ROUTES.careRequests}>Ver meus pedidos</Link>
                   </Button>
                 </div>
               </div>

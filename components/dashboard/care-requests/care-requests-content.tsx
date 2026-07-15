@@ -1,14 +1,22 @@
 "use client";
 
-import { useState } from "react";
-import { CheckCircle2, ChevronRight, Clock3, Loader2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import {
+  CheckCircle2,
+  ChevronRight,
+  Clock3,
+  Eye,
+} from "lucide-react";
 
 import { CreateCareRequestModal } from "@/components/dashboard/care-requests/create-care-request-modal";
+import { FinanceConfirmDialog } from "@/components/dashboard/finances/finance-confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  useAckCareViewedMine,
   useCareInbox,
   useCareRecipients,
+  useCareViewedMineCount,
   useMarkCareRequestViewed,
   useMyCareRequests,
 } from "@/lib/api/queries";
@@ -54,6 +62,8 @@ export function CareRequestsContent() {
     Boolean(user?.isOwner) || Boolean(permissions?.counseling?.receive);
   const [selectedRecipient, setSelectedRecipient] =
     useState<CareRequestRecipient | null>(null);
+  const [confirmViewRequest, setConfirmViewRequest] =
+    useState<CareRequest | null>(null);
 
   const {
     data: recipients = [],
@@ -77,6 +87,28 @@ export function CareRequestsContent() {
   } = useCareInbox({ enabled: canReceive });
 
   const markViewed = useMarkCareRequestViewed();
+  const { data: viewedCount } = useCareViewedMineCount();
+  const ackViewed = useAckCareViewedMine();
+  const ackViewedMutate = ackViewed.mutate;
+  const ackedViewedRef = useRef(false);
+  const confirmingView =
+    markViewed.isPending &&
+    confirmViewRequest != null &&
+    markViewed.variables === confirmViewRequest.id;
+
+  useEffect(() => {
+    if ((viewedCount?.count ?? 0) <= 0) {
+      ackedViewedRef.current = false;
+      return;
+    }
+
+    if (ackedViewedRef.current) {
+      return;
+    }
+
+    ackedViewedRef.current = true;
+    ackViewedMutate();
+  }, [viewedCount?.count, ackViewedMutate]);
 
   return (
     <div className="space-y-8">
@@ -267,9 +299,6 @@ export function CareRequestsContent() {
             <ul className="space-y-2">
               {inbox.map((request) => {
                 const isPending = request.status === "pending";
-                const marking =
-                  markViewed.isPending &&
-                  markViewed.variables === request.id;
 
                 return (
                   <li
@@ -311,17 +340,9 @@ export function CareRequestsContent() {
                           type="button"
                           size="sm"
                           className="shrink-0"
-                          disabled={marking}
-                          onClick={() => void markViewed.mutateAsync(request.id)}
+                          onClick={() => setConfirmViewRequest(request)}
                         >
-                          {marking ? (
-                            <>
-                              <Loader2 className="size-4 animate-spin" />
-                              Confirmando…
-                            </>
-                          ) : (
-                            "Confirmar leitura"
-                          )}
+                          Confirmar leitura
                         </Button>
                       ) : null}
                     </div>
@@ -332,6 +353,40 @@ export function CareRequestsContent() {
           )}
         </section>
       )}
+
+      {confirmViewRequest ? (
+        <FinanceConfirmDialog
+          title="Confirmar leitura?"
+          description={
+            <>
+              <p>
+                {confirmViewRequest.requester.name} será notificado de que você
+                leu o pedido.
+              </p>
+              <p className="mt-2">
+                Ao confirmar, planeje a{" "}
+                {confirmViewRequest.type === "visit"
+                  ? "visita"
+                  : "conversa de aconselhamento"}
+                — esse próximo passo é o que realmente acolhe quem pediu.
+              </p>
+            </>
+          }
+          confirmLabel="Confirmar leitura"
+          confirmingLabel="Confirmando…"
+          tone="neutral"
+          icon={Eye}
+          isPending={confirmingView}
+          onCancel={() => {
+            if (!confirmingView) setConfirmViewRequest(null);
+          }}
+          onConfirm={() => {
+            void markViewed
+              .mutateAsync(confirmViewRequest.id)
+              .then(() => setConfirmViewRequest(null));
+          }}
+        />
+      ) : null}
 
       <CreateCareRequestModal
         recipient={selectedRecipient}

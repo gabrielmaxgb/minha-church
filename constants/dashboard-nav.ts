@@ -119,7 +119,7 @@ export const dashboardNavItems: DashboardNavItem[] = [
     label: "Finanças",
     href: AUTH_ROUTES.finances,
     icon: Wallet,
-    description: "Entradas, saídas e prestação de contas",
+    description: "Recebimentos, saídas e exportação",
     domain: "finances",
     permission: "finances",
   },

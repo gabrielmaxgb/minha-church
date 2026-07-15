@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Calendar, MapPin, Plus, Repeat } from "lucide-react";
 
 import { EventListNavActions } from "@/components/dashboard/activities/event-list-nav-actions";
+import { EventRegistrationOpenBadge } from "@/components/dashboard/activities/event-registration-open-badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LockedFeatureHint } from "@/components/dashboard/locked-feature-hint";
@@ -13,6 +14,7 @@ import {
   formatEventTime,
   formatRelativeEventDay,
 } from "@/lib/dashboard/date-utils";
+import { isEventRegistrationOpen } from "@/lib/events/registration";
 import { formatRecurrenceSummary } from "@/lib/events/recurrence";
 import { useTrialWriteGuard } from "@/lib/subscription/use-trial-write-guard";
 import { cn } from "@/lib/utils";
@@ -100,12 +102,17 @@ function EventTimelineItem({
 }) {
   const chip = formatEventDateChip(event.startsAt);
   const relativeDay = formatRelativeEventDay(event.startsAt);
+  const registrationOpen = isEventRegistrationOpen(event);
 
   return (
     <li
       className={cn(
         "flex flex-col gap-2 rounded-md px-2.5 py-2.5 sm:flex-row sm:items-center sm:gap-3",
-        isNext && "bg-muted/40",
+        registrationOpen
+          ? "bg-success-subtle/70"
+          : isNext
+            ? "bg-muted/40"
+            : null,
       )}
     >
       <Link
@@ -115,7 +122,7 @@ function EventTimelineItem({
         <div
           className={cn(
             "flex size-10 shrink-0 flex-col items-center justify-center rounded-md border text-center leading-none",
-            isNext
+            isNext && !registrationOpen
               ? "border-foreground/15 bg-foreground text-background"
               : "border-border bg-card text-foreground",
           )}
@@ -124,7 +131,9 @@ function EventTimelineItem({
           <span
             className={cn(
               "mt-0.5 text-[9px] font-medium uppercase tracking-wide",
-              isNext ? "text-background/80" : "text-muted-foreground",
+              isNext && !registrationOpen
+                ? "text-background/80"
+                : "text-muted-foreground",
             )}
           >
             {chip.month}
@@ -148,6 +157,7 @@ function EventTimelineItem({
                 {relativeDay}
               </span>
             )}
+            <EventRegistrationOpenBadge event={event} showPrice />
           </div>
 
           <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">

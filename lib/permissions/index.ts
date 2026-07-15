@@ -121,6 +121,13 @@ export function canCreateMinistryActivity(
   permissions: UserPermissions,
   ministryId: string,
 ) {
+  // Alinhado ao backend (`canManageMinistryEvents`): quem cria eventos da
+  // igreja (owner / events_create_church_wide) pode em qualquer ministério,
+  // sem depender da lista cached de ministryIds na sessão.
+  if (permissions.activities.createChurchWide) {
+    return true;
+  }
+
   return permissions.activities.ministryIds.includes(ministryId);
 }
 

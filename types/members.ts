@@ -53,6 +53,8 @@ export interface Member {
   membershipDate: string | null;
   userId: string | null;
   ministries: MemberMinistryLink[];
+  /** Contribuições mensais abertas; preenchido no detalhe do membro. */
+  activeGivingSubscriptionsCount?: number;
   createdAt: string;
   updatedAt: string;
 }

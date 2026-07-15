@@ -1,14 +1,23 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { HeartHandshake } from "lucide-react";
+import { Ban, HeartHandshake } from "lucide-react";
 
+import { FinanceConfirmDialog } from "@/components/dashboard/finances/finance-confirm-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FormAlert } from "@/components/ui/form-field";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AUTH_ROUTES } from "@/constants/routes";
-import { useMyGivingDonations, useMyMember } from "@/lib/api/queries";
+import type { GivingSubscription } from "@/lib/api/payments";
+import {
+  resolvePaymentsError,
+  useCancelMyGivingSubscription,
+  useMyGivingDonations,
+  useMyGivingSubscriptions,
+  useMyMember,
+} from "@/lib/api/queries";
 import { formatCurrency } from "@/lib/utils";
 
 import { SettingsPanel, SettingsSectionHeader } from "./settings-shared";
@@ -20,6 +29,13 @@ const STATUS_LABEL: Record<string, string> = {
   failed: "Não concluída",
   canceled: "Cancelada",
   refunded: "Estornada",
+};
+
+const SUBSCRIPTION_STATUS_LABEL: Record<string, string> = {
+  incomplete: "Aguardando pagamento",
+  active: "Ativa",
+  past_due: "Pagamento pendente",
+  canceled: "Cancelada",
 };
 
 function statusVariant(
@@ -42,9 +58,14 @@ function statusVariant(
 export function MyContributionsSettings() {
   const myMember = useMyMember();
   const donationsQuery = useMyGivingDonations();
+  const subscriptionsQuery = useMyGivingSubscriptions();
+  const cancelSubscription = useCancelMyGivingSubscription();
+  const [subscriptionToCancel, setSubscriptionToCancel] =
+    useState<GivingSubscription | null>(null);
 
   const hasMemberRecord = Boolean(myMember.data?.id);
   const donations = donationsQuery.data ?? [];
+  const subscriptions = subscriptionsQuery.data ?? [];
   const confirmedTotalCents = donations
     .filter((donation) => donation.status === "succeeded")
     .reduce((sum, donation) => sum + donation.amountCents, 0);
@@ -113,6 +134,60 @@ export function MyContributionsSettings() {
             </div>
           ) : null}
 
+          {subscriptions.length > 0 ? (
+            <SettingsPanel>
+              <div className="border-b border-border/70 px-4 py-3">
+                <p className="text-sm font-medium text-foreground">
+                  Contribuições mensais
+                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Você pode encerrar a cobrança recorrente a qualquer momento.
+                </p>
+              </div>
+              <ul className="divide-y divide-border/70">
+                {subscriptions.map((subscription) => (
+                  <li
+                    key={subscription.id}
+                    className="flex flex-col gap-2 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-sm font-semibold tabular-nums">
+                          {formatCurrency(subscription.amountCents / 100)}/mês
+                        </p>
+                        <Badge variant="secondary">
+                          {SUBSCRIPTION_STATUS_LABEL[subscription.status] ??
+                            subscription.status}
+                        </Badge>
+                      </div>
+                      <p className="mt-0.5 text-sm text-muted-foreground">
+                        {subscription.fundName}
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={cancelSubscription.isPending}
+                      onClick={() => setSubscriptionToCancel(subscription)}
+                    >
+                      Encerrar
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </SettingsPanel>
+          ) : null}
+
+          {cancelSubscription.isError ? (
+            <FormAlert>
+              {resolvePaymentsError(
+                cancelSubscription.error,
+                "Não foi possível cancelar a contribuição mensal.",
+              )}
+            </FormAlert>
+          ) : null}
+
           <SettingsPanel>
             <ul className="divide-y divide-border/70">
               {donations.length === 0 ? (
@@ -161,6 +236,43 @@ export function MyContributionsSettings() {
             </ul>
           </SettingsPanel>
         </div>
+      ) : null}
+
+      {subscriptionToCancel ? (
+        <FinanceConfirmDialog
+          title="Encerrar contribuição mensal?"
+          tone="warning"
+          icon={Ban}
+          description={
+            <div className="space-y-3">
+              <p>
+                As cobranças futuras param. As contribuições já confirmadas
+                continuam no histórico.
+              </p>
+              <div className="rounded-xl border border-border bg-muted/40 px-3.5 py-3">
+                <p className="text-base font-semibold tabular-nums tracking-tight text-foreground">
+                  {formatCurrency(subscriptionToCancel.amountCents / 100)}/mês
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {subscriptionToCancel.fundName}
+                </p>
+              </div>
+            </div>
+          }
+          confirmLabel="Encerrar mensal"
+          confirmingLabel="Encerrando..."
+          isPending={cancelSubscription.isPending}
+          onCancel={() => {
+            if (!cancelSubscription.isPending) {
+              setSubscriptionToCancel(null);
+            }
+          }}
+          onConfirm={() => {
+            void cancelSubscription
+              .mutateAsync(subscriptionToCancel.id)
+              .then(() => setSubscriptionToCancel(null));
+          }}
+        />
       ) : null}
     </div>
   );

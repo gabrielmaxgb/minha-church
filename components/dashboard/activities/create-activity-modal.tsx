@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { Calendar, Clock, Eye, FileText, Loader2, MapPin, Repeat, X } from "lucide-react";
+import { Calendar, Clock, Eye, FileText, Loader2, MapPin, Repeat, Ticket, X } from "lucide-react";
 
 import { ActivityScheduleFields } from "@/components/dashboard/activities/activity-schedule-fields";
 import { EventFormSection } from "@/components/dashboard/activities/event-form-section";
+import { EventOptionCard } from "@/components/dashboard/activities/event-option-card";
 import { EventRecurrenceFields } from "@/components/dashboard/activities/event-recurrence-fields";
 import { EventVisibilityFields } from "@/components/dashboard/activities/event-visibility-fields";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,10 @@ import {
   type EventRecurrenceFormState,
 } from "@/lib/events/recurrence";
 import type { CreateChurchEventPayload } from "@/types/events";
+import {
+  applyBrlCentsMask,
+  parseBrlMaskToCents,
+} from "@/lib/utils";
 
 interface CreateActivityModalProps {
   open: boolean;
@@ -77,6 +82,8 @@ export function CreateActivityModal({
   const [startsAt, setStartsAt] = useState(initialStartsAt);
   const [endsAt, setEndsAt] = useState("");
   const [visibleToChurch, setVisibleToChurch] = useState(true);
+  const [registrationOpen, setRegistrationOpen] = useState(false);
+  const [priceReais, setPriceReais] = useState("");
   const [recurrence, setRecurrence] = useState<EventRecurrenceFormState>(
     defaultRecurrenceFormState(initialStartsAt),
   );
@@ -123,6 +130,8 @@ export function CreateActivityModal({
         setStartsAt(fallbackStartsAt());
         setEndsAt("");
         setVisibleToChurch(true);
+        setRegistrationOpen(false);
+        setPriceReais("");
         setRecurrence(defaultRecurrenceFormState(fallbackStartsAt()));
         setError(null);
       }
@@ -197,6 +206,25 @@ export function CreateActivityModal({
       return;
     }
 
+    const priceCents = priceReais.trim()
+      ? parseBrlMaskToCents(priceReais)
+      : null;
+
+    if (
+      registrationOpen &&
+      priceCents != null &&
+      priceCents > 0 &&
+      priceCents < 500
+    ) {
+      setError(
+        "O preço mínimo da inscrição paga é R$ 5,00 (ou deixe vazio para gratuita).",
+      );
+      return;
+    }
+
+    const openRegistration =
+      registrationOpen || Boolean(priceCents != null && priceCents >= 500);
+
     const payload: CreateChurchEventPayload = {
       name: name.trim(),
       description: description.trim() || undefined,
@@ -209,6 +237,11 @@ export function CreateActivityModal({
       // Escala fica implícita (padrão do backend). Coleta de disponibilidade
       // e montagem da equipe acontecem na página do evento após a criação.
       ...(ministryId ? { visibleToChurch } : {}),
+      registrationOpen: openRegistration,
+      priceCents:
+        openRegistration && priceCents != null && priceCents >= 500
+          ? priceCents
+          : null,
     };
 
     try {
@@ -353,6 +386,56 @@ export function CreateActivityModal({
                     Aparece em destaque na página do evento. Ideal para tema da
                     palavra, pastorais ou avisos importantes.
                   </p>
+                </div>
+
+                <div className="space-y-3">
+                  <EventOptionCard
+                    type="checkbox"
+                    checked={registrationOpen}
+                    onChange={(checked) => {
+                      setRegistrationOpen(checked);
+                      if (!checked) {
+                        setPriceReais("");
+                      }
+                    }}
+                    title="Abrir inscrição"
+                    description="Membros confirmam participação na página do evento. Pode ser gratuita ou paga."
+                    icon={Ticket}
+                    disabled={createEvent.isPending}
+                    compact
+                  />
+
+                  {registrationOpen ? (
+                    <div className="space-y-2 pl-1">
+                      <Label htmlFor="activity-price">
+                        Preço da inscrição (opcional)
+                      </Label>
+                      <div className="relative">
+                        <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-muted-foreground">
+                          R$
+                        </span>
+                        <Input
+                          id="activity-price"
+                          inputMode="numeric"
+                          autoComplete="off"
+                          value={priceReais}
+                          onChange={(event) => {
+                            const digits = event.target.value.replace(/\D/g, "");
+                            setPriceReais(
+                              digits ? applyBrlCentsMask(event.target.value) : "",
+                            );
+                          }}
+                          disabled={createEvent.isPending}
+                          placeholder="0,00 — vazio = gratuita"
+                          className="h-11 rounded-xl pl-10 tabular-nums"
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Vazio = inscrição gratuita. Com valor, membros pagam pelo
+                        Stripe Connect da igreja (mínimo R$ 5,00).
+                      </p>
+                    </div>
+                  ) : null}
                 </div>
 
                 <div className="space-y-2">

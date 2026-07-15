@@ -129,6 +129,7 @@ export function DashboardHomeContent() {
         carePendingCount,
         announcementsUnreadCount,
         nextEvent,
+        upcomingEvents,
         canManageMemberships,
         canAccessSchedules: canAccessSchedulesData,
         canReceiveCare,

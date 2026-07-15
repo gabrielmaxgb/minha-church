@@ -2,13 +2,25 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowRight, Landmark, Loader2, Lock, PiggyBank, Receipt } from "lucide-react";
+import {
+  ArrowRight,
+  Landmark,
+  Loader2,
+  Lock,
+  NotebookPen,
+  PiggyBank,
+  Receipt,
+  RefreshCw,
+  Settings2,
+} from "lucide-react";
 
 import { RequirePermission } from "@/components/auth/require-permission";
 import { DashboardPage } from "@/components/dashboard/dashboard-shell";
+import { FinanceEntriesPanel } from "@/components/dashboard/finances/finance-entries-panel";
 import { FinancesSummaryCards } from "@/components/dashboard/finances/finances-summary-cards";
 import { GivingDonationsPanel } from "@/components/dashboard/finances/giving-donations-panel";
 import { GivingFundsPanel } from "@/components/dashboard/finances/giving-funds-panel";
+import { GivingSubscriptionsPanel } from "@/components/dashboard/finances/giving-subscriptions-panel";
 import { SubscribePricingTrigger } from "@/components/billing/subscribe-pricing-trigger";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,7 +31,46 @@ import { useFeatureLock } from "@/lib/subscription/use-feature-lock";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 
-type FinancesManageTab = "fundos" | "contribuicoes";
+type FinancesManageTab = "fundos" | "lancamentos-manuais";
+type FundsSubTab = "cadastro" | "contribuicoes" | "mensais";
+
+function parseFinancesHash(hash: string): {
+  tab: FinancesManageTab;
+  fundsSubTab: FundsSubTab;
+} {
+  if (hash === "#contribuicoes") {
+    return { tab: "fundos", fundsSubTab: "contribuicoes" };
+  }
+
+  if (hash === "#mensais") {
+    return { tab: "fundos", fundsSubTab: "mensais" };
+  }
+
+  if (hash === "#movimentacoes" || hash === "#lancamentos-manuais") {
+    return { tab: "lancamentos-manuais", fundsSubTab: "cadastro" };
+  }
+
+  return { tab: "fundos", fundsSubTab: "cadastro" };
+}
+
+function financesHashForState(
+  tab: FinancesManageTab,
+  fundsSubTab: FundsSubTab,
+): string {
+  if (tab === "lancamentos-manuais") {
+    return "#lancamentos-manuais";
+  }
+
+  if (fundsSubTab === "contribuicoes") {
+    return "#contribuicoes";
+  }
+
+  if (fundsSubTab === "mensais") {
+    return "#mensais";
+  }
+
+  return "";
+}
 
 function ownerActivationCopy(status: ConnectOnboardingStatus): {
   title: string;
@@ -32,7 +83,7 @@ function ownerActivationCopy(status: ConnectOnboardingStatus): {
       return {
         title: "Conclua a ativação dos recebimentos",
         description:
-          "O cadastro da sua conta de recebimentos foi iniciado, mas ainda não foi concluído. Retome para começar a receber dízimos, doações e inscrições em eventos.",
+          "O cadastro da sua conta de recebimentos foi iniciado, mas ainda não foi concluído. Retome para começar a receber dízimos e doações.",
         cta: "Continuar configuração",
       };
     case "verifying":
@@ -60,7 +111,7 @@ function ownerActivationCopy(status: ConnectOnboardingStatus): {
       return {
         title: "Ative os recebimentos da sua igreja",
         description:
-          "Receba dízimos, doações e inscrições em eventos por Pix, cartão e boleto, com relatórios centralizados no Minha Church.",
+          "Receba dízimos, doações e inscrições em eventos por Pix, cartão e boleto, com o histórico centralizado no Minha Church.",
         cta: "Ativar recebimentos",
       };
   }
@@ -77,7 +128,7 @@ function FinancesLockedCard({ isOwner }: { isOwner: boolean }) {
       </h2>
       <p className="mx-auto mt-2 max-w-lg text-sm leading-relaxed text-muted-foreground">
         {isOwner
-          ? "Os recebimentos fazem parte do plano. Reative sua assinatura para voltar a coletar dízimos, doações e inscrições em eventos."
+          ? "Os recebimentos fazem parte do plano. Reative sua assinatura para voltar a coletar dízimos e doações."
           : "Os recebimentos estão indisponíveis no momento. Fale com a liderança da igreja para reativar o plano."}
       </p>
       {isOwner && (
@@ -104,7 +155,11 @@ function FinancesManageTabs({
     icon: typeof PiggyBank;
   }> = [
     { id: "fundos", label: "Fundos", icon: PiggyBank },
-    { id: "contribuicoes", label: "Contribuições", icon: Receipt },
+    {
+      id: "lancamentos-manuais",
+      label: "Lançamentos manuais",
+      icon: NotebookPen,
+    },
   ];
 
   return (
@@ -125,10 +180,10 @@ function FinancesManageTabs({
             id={`financas-tab-${tab.id}`}
             onClick={() => onChange(tab.id)}
             className={cn(
-              "inline-flex flex-1 items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm transition-colors sm:flex-none sm:min-w-36",
+              "inline-flex flex-1 items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm transition-colors sm:flex-none sm:min-w-40",
               selected
-                ? "bg-card font-medium text-foreground shadow-xs"
-                : "font-normal text-muted-foreground hover:text-foreground",
+                ? "bg-foreground/85 font-medium text-background"
+                : "font-normal text-muted-foreground hover:bg-background/60 hover:text-foreground",
             )}
           >
             <Icon className="size-4 opacity-80" aria-hidden />
@@ -140,14 +195,65 @@ function FinancesManageTabs({
   );
 }
 
+function FundsSubTabs({
+  value,
+  onChange,
+}: {
+  value: FundsSubTab;
+  onChange: (tab: FundsSubTab) => void;
+}) {
+  const tabs: Array<{
+    id: FundsSubTab;
+    label: string;
+    icon: typeof Settings2;
+  }> = [
+    { id: "cadastro", label: "Cadastro", icon: Settings2 },
+    { id: "contribuicoes", label: "Contribuições", icon: Receipt },
+    { id: "mensais", label: "Mensais", icon: RefreshCw },
+  ];
+
+  return (
+    <div
+      role="tablist"
+      aria-label="Fundos"
+      className="inline-flex rounded-xl border border-border/80 bg-muted/30 p-1"
+    >
+      {tabs.map((subTab) => {
+        const Icon = subTab.icon;
+        const selected = value === subTab.id;
+        return (
+          <button
+            key={subTab.id}
+            type="button"
+            role="tab"
+            aria-selected={selected}
+            id={`financas-fundos-tab-${subTab.id}`}
+            onClick={() => onChange(subTab.id)}
+            className={cn(
+              "inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-colors",
+              selected
+                ? "bg-background font-medium text-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            <Icon className="size-3.5 opacity-80" aria-hidden />
+            {subTab.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function FinancesManageSection() {
   const [tab, setTab] = useState<FinancesManageTab>("fundos");
+  const [fundsSubTab, setFundsSubTab] = useState<FundsSubTab>("cadastro");
 
   useEffect(() => {
     const readHash = () => {
-      if (window.location.hash === "#contribuicoes") {
-        setTab("contribuicoes");
-      }
+      const parsed = parseFinancesHash(window.location.hash);
+      setTab(parsed.tab);
+      setFundsSubTab(parsed.fundsSubTab);
     };
 
     readHash();
@@ -155,15 +261,20 @@ function FinancesManageSection() {
     return () => window.removeEventListener("hashchange", readHash);
   }, []);
 
+  const syncHash = (nextTab: FinancesManageTab, nextFundsSubTab: FundsSubTab) => {
+    const url = new URL(window.location.href);
+    url.hash = financesHashForState(nextTab, nextFundsSubTab);
+    window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+  };
+
   const selectTab = (next: FinancesManageTab) => {
     setTab(next);
-    const url = new URL(window.location.href);
-    if (next === "contribuicoes") {
-      url.hash = "contribuicoes";
-    } else {
-      url.hash = "";
-    }
-    window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+    syncHash(next, fundsSubTab);
+  };
+
+  const selectFundsSubTab = (next: FundsSubTab) => {
+    setFundsSubTab(next);
+    syncHash("fundos", next);
   };
 
   return (
@@ -172,7 +283,7 @@ function FinancesManageSection() {
         <div>
           <h2 className="text-lg font-semibold tracking-tight">Gestão</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            Fundos de cobrança e histórico de entradas.
+            Fundos de cobrança com histórico online e livro-caixa manual.
           </p>
         </div>
         <FinancesManageTabs value={tab} onChange={selectTab} />
@@ -181,12 +292,26 @@ function FinancesManageSection() {
       <div
         role="tabpanel"
         aria-labelledby={`financas-tab-${tab}`}
-        className="min-h-48"
+        className="min-h-48 space-y-4"
       >
         {tab === "fundos" ? (
-          <GivingFundsPanel />
+          <>
+            <FundsSubTabs value={fundsSubTab} onChange={selectFundsSubTab} />
+            <div
+              role="tabpanel"
+              aria-labelledby={`financas-fundos-tab-${fundsSubTab}`}
+            >
+              {fundsSubTab === "cadastro" ? (
+                <GivingFundsPanel />
+              ) : fundsSubTab === "contribuicoes" ? (
+                <GivingDonationsPanel embedded />
+              ) : (
+                <GivingSubscriptionsPanel />
+              )}
+            </div>
+          </>
         ) : (
-          <GivingDonationsPanel embedded />
+          <FinanceEntriesPanel embedded />
         )}
       </div>
     </section>

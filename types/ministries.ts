@@ -58,6 +58,8 @@ export interface MinistryEvent {
   usesRoster: boolean;
   rosterOpen: boolean;
   visibleToChurch: boolean;
+  registrationOpen: boolean;
+  priceCents: number | null;
   rosterSlots?: EventRosterSlot[];
   createdAt: string;
   updatedAt: string;

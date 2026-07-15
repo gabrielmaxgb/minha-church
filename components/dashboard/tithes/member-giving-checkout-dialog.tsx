@@ -53,6 +53,7 @@ export function MemberGivingCheckoutDialog({
     formatBrlCentsMask(5_000),
   );
   const [error, setError] = useState<string | null>(null);
+  const [recurring, setRecurring] = useState(false);
   const [session, setSession] = useState<GivingCheckoutSession | null>(null);
 
   const amountCents = parseBrlMaskToCents(amountMasked);
@@ -98,6 +99,7 @@ export function MemberGivingCheckoutDialog({
       const next = await createCheckout.mutateAsync({
         fundId: fund.id,
         amountCents,
+        recurring: recurring || undefined,
       });
       setSession(next);
     } catch (startError) {
@@ -216,6 +218,26 @@ export function MemberGivingCheckoutDialog({
 
                 {error ? <FormAlert>{error}</FormAlert> : null}
 
+                {fund.paymentMethods.card ? (
+                  <label className="flex items-start gap-3 rounded-xl border border-border px-3 py-3 text-sm">
+                    <input
+                      type="checkbox"
+                      className="mt-0.5"
+                      checked={recurring}
+                      disabled={createCheckout.isPending}
+                      onChange={(event) => setRecurring(event.target.checked)}
+                    />
+                    <span>
+                      <span className="font-medium text-foreground">
+                        Contribuir mensalmente
+                      </span>
+                      <span className="mt-0.5 block text-muted-foreground">
+                        Cobrança recorrente no cartão.
+                      </span>
+                    </span>
+                  </label>
+                ) : null}
+
                 <Button
                   type="button"
                   className="w-full gap-2"
@@ -227,6 +249,7 @@ export function MemberGivingCheckoutDialog({
                   ) : null}
                   Continuar
                   {amountValid ? ` · ${formatBrlFromCents(amountCents)}` : ""}
+                  {recurring && amountValid ? "/mês" : ""}
                 </Button>
 
                 <div className="flex items-start gap-3 text-muted-foreground lg:hidden">

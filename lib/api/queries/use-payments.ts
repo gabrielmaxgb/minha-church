@@ -4,16 +4,28 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { ApiError } from "@/lib/api/client";
 import {
+  cancelGivingSubscriptionAsTreasurer,
+  cancelMyGivingSubscription,
+  createFinanceEntry,
   createGivingFund,
   createMemberGivingCheckout,
+  deleteFinanceEntry,
   deleteGivingFund,
+  downloadFinanceEntriesCsv,
+  downloadGivingDonationsCsv,
+  refundGivingDonation,
   resumeConnectOnboarding,
   startConnectOnboarding,
   syncConnectAccount,
+  updateFinanceEntry,
   updateGivingFund,
   upsertFiscalProfile,
   type ConnectStatus,
+  type CreateFinanceEntryInput,
   type CreateGivingFundInput,
+  type FetchFinanceEntriesParams,
+  type FetchGivingDonationsParams,
+  type UpdateFinanceEntryInput,
   type UpdateGivingFundInput,
   type UpsertFiscalProfileInput,
 } from "@/lib/api/payments";
@@ -97,19 +109,242 @@ export function useMemberGivingFunds(options?: { enabled?: boolean }) {
   });
 }
 
-export function useGivingDonations(options?: { enabled?: boolean }) {
+export function useGivingDonations(
+  params: FetchGivingDonationsParams = {},
+  options?: { enabled?: boolean },
+) {
   const { church, permissions, user } = useAuth();
   const churchId = church?.id;
-  const canManage = Boolean(
-    churchId && (user?.isOwner || permissions?.finances.manage),
+  const canAccess = Boolean(
+    churchId &&
+      (user?.isOwner ||
+        permissions?.finances.access ||
+        permissions?.finances.manage),
   );
-  const enabled = (options?.enabled ?? true) && canManage;
+  const enabled = (options?.enabled ?? true) && canAccess;
 
   return useQuery({
-    ...paymentsKeys.givingDonations(churchId ?? ""),
+    ...paymentsKeys.givingDonations(churchId ?? "", params),
     enabled,
     staleTime: 15_000,
     refetchOnWindowFocus: true,
+  });
+}
+
+export function useRefundGivingDonation() {
+  const { church } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (donationId: string) => {
+      if (!church?.id) {
+        throw new Error("Igreja não encontrada.");
+      }
+
+      return refundGivingDonation(church.id, donationId);
+    },
+    onSuccess: (donation) => {
+      if (!church?.id) {
+        return;
+      }
+
+      // Prefix da factory: ["payments", "givingDonations", ...]
+      void queryClient.invalidateQueries({
+        queryKey: paymentsKeys.givingDonations._def,
+      });
+      void queryClient.invalidateQueries({
+        queryKey: paymentsKeys.myGivingDonations(church.id).queryKey,
+      });
+      void queryClient.invalidateQueries({
+        queryKey: paymentsKeys.paymentsSummary(church.id).queryKey,
+      });
+      // Otimista: atualiza qualquer lista em cache com o item estornado.
+      queryClient.setQueriesData(
+        { queryKey: paymentsKeys.givingDonations._def },
+        (current: unknown) => {
+          if (
+            !current ||
+            typeof current !== "object" ||
+            !("items" in current) ||
+            !Array.isArray((current as { items: unknown }).items)
+          ) {
+            return current;
+          }
+
+          const list = current as {
+            items: Array<{ id: string; status: string }>;
+            page: number;
+            limit: number;
+            total: number;
+          };
+
+          return {
+            ...list,
+            items: list.items.map((item) =>
+              item.id === donation.id ? { ...item, ...donation } : item,
+            ),
+          };
+        },
+      );
+    },
+  });
+}
+
+export function useExportGivingDonations() {
+  const { church } = useAuth();
+
+  return useMutation({
+    mutationFn: async (params: FetchGivingDonationsParams = {}) => {
+      if (!church?.id) {
+        throw new Error("Igreja não encontrada.");
+      }
+
+      await downloadGivingDonationsCsv(church.id, params);
+    },
+  });
+}
+
+export function useFinanceEntries(
+  params: FetchFinanceEntriesParams = {},
+  options?: { enabled?: boolean },
+) {
+  const { church, permissions, user } = useAuth();
+  const churchId = church?.id;
+  const canAccess = Boolean(
+    churchId &&
+      (user?.isOwner ||
+        permissions?.finances.access ||
+        permissions?.finances.manage),
+  );
+  const enabled = (options?.enabled ?? true) && canAccess;
+
+  return useQuery({
+    ...paymentsKeys.financeEntries(churchId ?? "", params),
+    enabled,
+    staleTime: 15_000,
+    refetchOnWindowFocus: true,
+  });
+}
+
+export function useFinanceEntriesSummary(
+  params: { from?: string; to?: string } = {},
+  options?: { enabled?: boolean },
+) {
+  const { church, permissions, user } = useAuth();
+  const churchId = church?.id;
+  const canAccess = Boolean(
+    churchId &&
+      (user?.isOwner ||
+        permissions?.finances.access ||
+        permissions?.finances.manage),
+  );
+  const enabled = (options?.enabled ?? true) && canAccess;
+
+  return useQuery({
+    ...paymentsKeys.financeEntriesSummary(churchId ?? "", params),
+    enabled,
+    staleTime: 15_000,
+  });
+}
+
+export function useCreateFinanceEntry() {
+  const { church } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: CreateFinanceEntryInput) => {
+      if (!church?.id) {
+        throw new Error("Igreja não encontrada.");
+      }
+
+      return createFinanceEntry(church.id, input);
+    },
+    onSuccess: () => {
+      if (!church?.id) {
+        return;
+      }
+
+      void queryClient.invalidateQueries({
+        queryKey: paymentsKeys.financeEntries._def,
+      });
+      void queryClient.invalidateQueries({
+        queryKey: paymentsKeys.financeEntriesSummary._def,
+      });
+    },
+  });
+}
+
+export function useUpdateFinanceEntry() {
+  const { church } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      entryId,
+      input,
+    }: {
+      entryId: string;
+      input: UpdateFinanceEntryInput;
+    }) => {
+      if (!church?.id) {
+        throw new Error("Igreja não encontrada.");
+      }
+
+      return updateFinanceEntry(church.id, entryId, input);
+    },
+    onSuccess: () => {
+      if (!church?.id) {
+        return;
+      }
+
+      void queryClient.invalidateQueries({
+        queryKey: paymentsKeys.financeEntries._def,
+      });
+      void queryClient.invalidateQueries({
+        queryKey: paymentsKeys.financeEntriesSummary._def,
+      });
+    },
+  });
+}
+
+export function useDeleteFinanceEntry() {
+  const { church } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (entryId: string) => {
+      if (!church?.id) {
+        throw new Error("Igreja não encontrada.");
+      }
+
+      return deleteFinanceEntry(church.id, entryId);
+    },
+    onSuccess: () => {
+      if (!church?.id) {
+        return;
+      }
+
+      void queryClient.invalidateQueries({
+        queryKey: paymentsKeys.financeEntries._def,
+      });
+      void queryClient.invalidateQueries({
+        queryKey: paymentsKeys.financeEntriesSummary._def,
+      });
+    },
+  });
+}
+
+export function useExportFinanceEntries() {
+  const { church } = useAuth();
+
+  return useMutation({
+    mutationFn: async (params: FetchFinanceEntriesParams = {}) => {
+      if (!church?.id) {
+        throw new Error("Igreja não encontrada.");
+      }
+
+      await downloadFinanceEntriesCsv(church.id, params);
+    },
   });
 }
 
@@ -123,6 +358,93 @@ export function useMyGivingDonations(options?: { enabled?: boolean }) {
     enabled,
     staleTime: 15_000,
     refetchOnWindowFocus: true,
+  });
+}
+
+export function useMyGivingSubscriptions(options?: { enabled?: boolean }) {
+  const { church } = useAuth();
+  const churchId = church?.id;
+  const enabled = (options?.enabled ?? true) && Boolean(churchId);
+
+  return useQuery({
+    ...paymentsKeys.myGivingSubscriptions(churchId ?? ""),
+    enabled,
+    staleTime: 15_000,
+  });
+}
+
+export function useCancelMyGivingSubscription() {
+  const { church } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (subscriptionId: string) => {
+      if (!church?.id) {
+        throw new Error("Igreja não encontrada.");
+      }
+
+      return cancelMyGivingSubscription(church.id, subscriptionId);
+    },
+    onSuccess: () => {
+      if (!church?.id) {
+        return;
+      }
+
+      void queryClient.invalidateQueries({
+        queryKey: paymentsKeys.myGivingSubscriptions(church.id).queryKey,
+      });
+      void queryClient.invalidateQueries({
+        queryKey: paymentsKeys.myGivingDonations(church.id).queryKey,
+      });
+      void queryClient.invalidateQueries({
+        queryKey: [paymentsKeys._def[0], church.id, "giving-subscriptions"],
+      });
+    },
+  });
+}
+
+export function useGivingSubscriptions(
+  params: { fundId?: string; status?: string } = {},
+  options?: { enabled?: boolean },
+) {
+  const { church } = useAuth();
+  const churchId = church?.id;
+  const enabled = (options?.enabled ?? true) && Boolean(churchId);
+
+  return useQuery({
+    ...paymentsKeys.givingSubscriptions(churchId ?? "", params),
+    enabled,
+    staleTime: 15_000,
+  });
+}
+
+export function useCancelGivingSubscriptionAsTreasurer() {
+  const { church } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (subscriptionId: string) => {
+      if (!church?.id) {
+        throw new Error("Igreja não encontrada.");
+      }
+
+      return cancelGivingSubscriptionAsTreasurer(church.id, subscriptionId);
+    },
+    onSuccess: () => {
+      if (!church?.id) {
+        return;
+      }
+
+      void queryClient.invalidateQueries({
+        queryKey: [paymentsKeys._def[0], church.id, "giving-subscriptions"],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: paymentsKeys.myGivingSubscriptions(church.id).queryKey,
+      });
+      void queryClient.invalidateQueries({
+        queryKey: [paymentsKeys._def[0], church.id, "giving-donations"],
+      });
+    },
   });
 }
 
@@ -254,15 +576,20 @@ export function useCreateMemberGivingCheckout() {
     mutationFn: async ({
       fundId,
       amountCents,
+      recurring,
     }: {
       fundId: string;
       amountCents: number;
+      recurring?: boolean;
     }) => {
       if (!church?.id) {
         throw new Error("Igreja não encontrada.");
       }
 
-      return createMemberGivingCheckout(church.id, fundId, { amountCents });
+      return createMemberGivingCheckout(church.id, fundId, {
+        amountCents,
+        recurring,
+      });
     },
   });
 }
