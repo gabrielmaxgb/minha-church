@@ -179,14 +179,6 @@ export function DashboardTopbar({
                         {formatUserAccessLabel(user)}
                       </p>
                     </div>
-                    <Link
-                      href={AUTH_ROUTES.settingsUser}
-                      className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm transition-colors hover:bg-muted"
-                      onClick={() => setMenuOpen(false)}
-                    >
-                      <User className="size-4" />
-                      Configurações de perfil
-                    </Link>
                     {canAccessChurchSettings ? (
                       <Link
                         href={AUTH_ROUTES.settingsChurch}
@@ -197,6 +189,14 @@ export function DashboardTopbar({
                         Configurações da igreja
                       </Link>
                     ) : null}
+                    <Link
+                      href={AUTH_ROUTES.settingsUser}
+                      className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm transition-colors hover:bg-muted"
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      <User className="size-4" />
+                      Configurações de perfil
+                    </Link>
                     <button
                       type="button"
                       onClick={() => {
