@@ -8,6 +8,7 @@ import { AddMinistryMemberModal } from "@/components/dashboard/ministries/add-mi
 import { MinistryMembersList } from "@/components/dashboard/ministries/ministry-members-list";
 import { CreateMinistryEventModal } from "@/components/dashboard/ministries/create-ministry-event-modal";
 import { ActivityEventModal } from "@/components/dashboard/activities/activity-event-modal";
+import { EventListNavActions } from "@/components/dashboard/activities/event-list-nav-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -236,6 +237,12 @@ export function MinistryDashboardSection({
                           {event.location}
                         </p>
                       )}
+                      <EventListNavActions
+                        eventId={event.id}
+                        startsAt={event.startsAt}
+                        showOccurrence
+                        showCalendar
+                      />
                       {canEdit && (
                         <Button
                           type="button"

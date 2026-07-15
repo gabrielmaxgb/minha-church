@@ -6,7 +6,8 @@ import { useState } from "react";
 import {
   ArrowLeft,
   CalendarDays,
-  Clock,
+  Eye,
+  EyeOff,
   Layers,
   MapPin,
   Pencil,
@@ -24,12 +25,6 @@ import { InactiveMinistryBanner } from "@/components/dashboard/ministries/inacti
 import { TrialExpiredWriteModal } from "@/components/dashboard/trial-expired-write-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-} from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   activitiesCalendarPath,
@@ -57,6 +52,66 @@ interface ActivityDetailContentProps {
   eventId: string;
 }
 
+function SecondaryMeta({
+  icon: Icon,
+  children,
+}: {
+  icon: React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
+  children: React.ReactNode;
+}) {
+  return (
+    <span className="inline-flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
+      <Icon className="size-3.5 shrink-0 opacity-70" aria-hidden />
+      <span className="min-w-0 truncate">{children}</span>
+    </span>
+  );
+}
+
+function EventWhen({
+  startsAt,
+  timeLabel,
+}: {
+  startsAt: string;
+  timeLabel: string;
+}) {
+  const chip = formatEventDateChip(startsAt);
+  const weekday = new Intl.DateTimeFormat("pt-BR", { weekday: "long" }).format(
+    new Date(startsAt),
+  );
+  const dayMonth = new Intl.DateTimeFormat("pt-BR", {
+    day: "numeric",
+    month: "long",
+  }).format(new Date(startsAt));
+
+  return (
+    <div className="flex items-stretch gap-4 sm:gap-5">
+      <time
+        dateTime={startsAt}
+        className="flex w-14 shrink-0 flex-col items-center justify-center rounded-xl border border-border/80 bg-muted/40 py-2.5 text-center shadow-xs sm:w-16"
+        aria-label={formatLongDate(new Date(startsAt))}
+      >
+        <span className="text-[1.65rem] font-semibold leading-none tracking-tight text-foreground sm:text-[1.85rem]">
+          {chip.day}
+        </span>
+        <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+          {chip.month}
+        </span>
+      </time>
+
+      <div className="flex min-w-0 flex-col justify-center gap-1">
+        <p className="text-sm font-medium capitalize tracking-tight text-foreground sm:text-[0.95rem]">
+          <span className="capitalize">{weekday}</span>
+          <span className="mx-1.5 text-border">·</span>
+          <span>{dayMonth}</span>
+        </p>
+        <p className="text-2xl font-semibold tabular-nums tracking-tight text-foreground sm:text-[1.75rem]">
+          {timeLabel}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export function ActivityDetailContent({ eventId }: ActivityDetailContentProps) {
   const router = useRouter();
   const { user, permissions } = useAuth();
@@ -79,7 +134,6 @@ export function ActivityDetailContent({ eventId }: ActivityDetailContentProps) {
       !canManageRoster &&
       event.canRespondToAvailability,
   );
-  const eventDateChip = event ? formatEventDateChip(event.startsAt) : null;
   const relativeEventDay = event ? formatRelativeEventDay(event.startsAt) : null;
   const ministryInactive = Boolean(
     event?.ministryId && !event.ministryIsActive,
@@ -89,7 +143,8 @@ export function ActivityDetailContent({ eventId }: ActivityDetailContentProps) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-5 w-40" />
-        <Skeleton className="h-[28rem] rounded-xl" />
+        <Skeleton className="h-28 w-full rounded-2xl" />
+        <Skeleton className="h-72 w-full rounded-2xl" />
       </div>
     );
   }
@@ -105,7 +160,7 @@ export function ActivityDetailContent({ eventId }: ActivityDetailContentProps) {
           Voltar para atividades
         </Link>
 
-        <div className="rounded-xl border border-border bg-muted/20 p-6 text-sm text-muted-foreground">
+        <div className="rounded-2xl border border-border bg-muted/20 p-6 text-sm text-muted-foreground">
           {error instanceof Error
             ? error.message
             : "Não foi possível carregar a atividade."}
@@ -114,16 +169,47 @@ export function ActivityDetailContent({ eventId }: ActivityDetailContentProps) {
     );
   }
 
+  const timeLabel = event.endsAt
+    ? `${formatEventTime(event.startsAt)} – ${formatEventTime(event.endsAt)}`
+    : formatEventTime(event.startsAt);
+
   return (
     <>
-      <div className="space-y-6">
-        <Link
-          href={AUTH_ROUTES.activities}
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <ArrowLeft className="size-4" />
-          Voltar para atividades
-        </Link>
+      <div className="space-y-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Link
+            href={AUTH_ROUTES.activities}
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ArrowLeft className="size-4" />
+            Atividades
+          </Link>
+
+          {!ministryInactive ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <ActivityOccurrenceNav event={event} />
+              <Button size="sm" variant="outline" asChild>
+                <Link
+                  href={activitiesCalendarPath(dateKeyFromIso(event.startsAt))}
+                >
+                  <CalendarDays className="size-4" />
+                  Calendário
+                </Link>
+              </Button>
+              {canManage ? (
+                <Button
+                  size="sm"
+                  onClick={() =>
+                    guardWrite("editar atividades", () => setEditOpen(true))
+                  }
+                >
+                  <Pencil className="size-4" />
+                  Editar
+                </Button>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
 
         {ministryInactive && (
           <InactiveMinistryBanner
@@ -136,187 +222,121 @@ export function ActivityDetailContent({ eventId }: ActivityDetailContentProps) {
           />
         )}
 
-        {!ministryInactive ? (
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            <ActivityOccurrenceNav event={event} />
-            <Button size="sm" variant="outline" asChild>
-              <Link href={activitiesCalendarPath(dateKeyFromIso(event.startsAt))}>
-                <CalendarDays className="size-4" />
-                Ver no calendário
-              </Link>
-            </Button>
-            {canManage ? (
-              <Button
-                size="sm"
-                onClick={() =>
-                  guardWrite("editar atividades", () => setEditOpen(true))
-                }
-              >
-                <Pencil className="size-4" />
-                Editar
-              </Button>
-            ) : null}
-          </div>
-        ) : null}
-
         <div
           className={cn(
-            "space-y-6",
+            "space-y-5",
             ministryInactive && "pointer-events-none select-none opacity-60",
           )}
           aria-hidden={ministryInactive || undefined}
         >
-        <Card
-          className={cn(
-            event.isChurchWide && "border-primary/15 bg-muted/20",
-          )}
-        >
-          <CardHeader className="pb-4">
-            <div className="flex flex-wrap items-center gap-2">
-              {!event.isChurchWide && event.ministryName && event.ministryId && (
-                writesBlocked ? (
-                  <Badge className="gap-1.5 border border-primary/25 bg-primary/10 px-2.5 py-1 text-sm font-medium text-primary">
-                    <Layers className="size-3.5" />
-                    {event.ministryName}
-                  </Badge>
-                ) : (
-                  <Link href={ministryDetailPath(event.ministryId)}>
-                    <Badge className="gap-1.5 border border-primary/25 bg-primary/10 px-2.5 py-1 text-sm font-medium text-primary hover:bg-primary/15">
-                      <Layers className="size-3.5" />
+          <header className="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-xs">
+            <div className="space-y-5 px-5 py-5 sm:px-6 sm:py-6">
+              <div className="flex flex-wrap items-center gap-2">
+                {!event.isChurchWide &&
+                event.ministryName &&
+                event.ministryId ? (
+                  writesBlocked ? (
+                    <Badge
+                      variant="secondary"
+                      className="gap-1.5 font-medium"
+                    >
+                      <Layers className="size-3.5" aria-hidden />
                       {event.ministryName}
                     </Badge>
-                  </Link>
-                )
-              )}
-              {event.isChurchWide && (
-                <Badge className="gap-1.5">
-                  <Sparkles className="size-3" />
-                  Igreja
-                </Badge>
-              )}
-              {event.recurrence && (
-                <span
-                  className="inline-flex size-7 items-center justify-center rounded-lg border border-border/70 bg-muted/40 text-muted-foreground"
-                  title={formatRecurrenceSummary(event.recurrence, event.startsAt)}
-                  aria-label={`Recorrente: ${formatRecurrenceSummary(event.recurrence, event.startsAt)}`}
-                >
-                  <Repeat className="size-3.5" aria-hidden />
-                </span>
-              )}
-            </div>
+                  ) : (
+                    <Link href={ministryDetailPath(event.ministryId)}>
+                      <Badge
+                        variant="secondary"
+                        className="gap-1.5 font-medium hover:bg-muted"
+                      >
+                        <Layers className="size-3.5" aria-hidden />
+                        {event.ministryName}
+                      </Badge>
+                    </Link>
+                  )
+                ) : null}
 
-            <h1 className="page-title mt-3">
-              {event.name}
-            </h1>
+                {event.isChurchWide ? (
+                  <Badge variant="secondary" className="gap-1.5 font-medium">
+                    <Sparkles className="size-3" aria-hidden />
+                    Igreja
+                  </Badge>
+                ) : null}
 
-            {event.description && (
-              <CardDescription className="mt-2 text-sm leading-relaxed">
-                {event.description}
-              </CardDescription>
-            )}
-          </CardHeader>
+                {relativeEventDay ? (
+                  <Badge className="font-medium">{relativeEventDay}</Badge>
+                ) : null}
 
-          <CardContent>
-            <div className="mb-4 flex flex-col gap-4 rounded-xl border border-primary/20 bg-primary/5 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
-              <div className="flex min-w-0 items-center gap-4">
-                {eventDateChip ? (
-                  <div
-                    className="flex shrink-0 flex-col items-center justify-center rounded-xl border border-primary/15 bg-background px-3.5 py-2.5"
-                    aria-hidden
+                {event.recurrence ? (
+                  <span
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-muted/30 px-2.5 py-0.5 text-xs text-muted-foreground"
+                    title={formatRecurrenceSummary(
+                      event.recurrence,
+                      event.startsAt,
+                    )}
                   >
-                    <span className="text-3xl font-bold leading-none tabular-nums text-foreground">
-                      {eventDateChip.day}
-                    </span>
-                    <span className="mt-1 text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-primary">
-                      {eventDateChip.month}
-                    </span>
-                  </div>
+                    <Repeat className="size-3" aria-hidden />
+                    Recorrente
+                  </span>
                 ) : null}
-
-                <div className="min-w-0">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-primary/80">
-                    Data e hora
-                  </p>
-                  <p className="mt-1 text-xl font-semibold capitalize leading-tight text-foreground sm:text-2xl">
-                    {formatLongDate(new Date(event.startsAt))}
-                  </p>
-                  {relativeEventDay ? (
-                    <Badge variant="secondary" className="mt-2">
-                      {relativeEventDay}
-                    </Badge>
-                  ) : null}
-                </div>
               </div>
 
-              <div className="flex shrink-0 items-center gap-3 sm:flex-col sm:items-end sm:gap-1">
-                <div className="flex items-center gap-2">
-                  <Clock className="size-5 text-primary" aria-hidden />
-                  <p className="text-3xl font-bold tabular-nums tracking-tight text-foreground sm:text-4xl">
-                    {formatEventTime(event.startsAt)}
-                  </p>
-                </div>
-                {event.endsAt ? (
-                  <p className="text-sm text-muted-foreground">
-                    até {formatEventTime(event.endsAt)}
+              <EventWhen startsAt={event.startsAt} timeLabel={timeLabel} />
+
+              <div className="space-y-2 border-t border-border/60 pt-5">
+                <h1 className="page-title max-w-3xl">{event.name}</h1>
+                {event.description ? (
+                  <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
+                    {event.description}
                   </p>
                 ) : null}
               </div>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              {event.location && (
-                <div className="flex items-start gap-3 rounded-xl border border-border/70 bg-muted/15 px-4 py-3.5 sm:col-span-2">
-                  <MapPin className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-                  <div>
-                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                      Local
-                    </p>
-                    <p className="mt-1 text-sm font-medium text-foreground">
-                      {event.location}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {event.recurrence && (
-                <div className="rounded-xl border border-border/70 bg-muted/10 px-4 py-3.5 sm:col-span-2">
-                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Repetição
-                  </p>
-                  <p className="mt-1 text-sm text-foreground">
-                    {formatRecurrenceSummary(event.recurrence, event.startsAt)}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {canManage && !event.isChurchWide ? (
-              <div className="mt-4 border-t border-border/60 pt-4 text-sm text-muted-foreground">
-                Visível na agenda da igreja:{" "}
-                <span className="font-medium text-foreground">
-                  {event.visibleToChurch ? "Sim" : "Somente ministério"}
-                </span>
+            {(event.location ||
+              (canManage && !event.isChurchWide) ||
+              event.recurrence) && (
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border/60 bg-muted/25 px-5 py-3 sm:px-6">
+                {event.location ? (
+                  <SecondaryMeta icon={MapPin}>{event.location}</SecondaryMeta>
+                ) : null}
+                {canManage && !event.isChurchWide ? (
+                  <SecondaryMeta
+                    icon={event.visibleToChurch ? Eye : EyeOff}
+                  >
+                    {event.visibleToChurch
+                      ? "Visível na agenda da igreja"
+                      : "Somente no ministério"}
+                  </SecondaryMeta>
+                ) : null}
+                {event.recurrence ? (
+                  <SecondaryMeta icon={Repeat}>
+                    {formatRecurrenceSummary(
+                      event.recurrence,
+                      event.startsAt,
+                    )}
+                  </SecondaryMeta>
+                ) : null}
               </div>
-            ) : null}
-          </CardContent>
-        </Card>
+            )}
+          </header>
 
-        {event.highlightNote ? (
-          <EventHighlightNote note={event.highlightNote} />
-        ) : null}
+          {event.highlightNote ? (
+            <EventHighlightNote note={event.highlightNote} />
+          ) : null}
 
-        {canManageRoster ? (
-          <ActivityRosterSection event={event} readOnly={writesBlocked} />
-        ) : event.usesRoster ? (
-          <EventRosterPublicCard event={event} />
-        ) : null}
+          {canManageRoster ? (
+            <ActivityRosterSection event={event} readOnly={writesBlocked} />
+          ) : event.usesRoster ? (
+            <EventRosterPublicCard event={event} />
+          ) : null}
 
-        {showAvailabilityPanel ? (
-          <ActivityAvailabilitySection
-            event={event}
-            interactionsDisabled={writesBlocked}
-          />
-        ) : null}
+          {showAvailabilityPanel ? (
+            <ActivityAvailabilitySection
+              event={event}
+              interactionsDisabled={writesBlocked}
+            />
+          ) : null}
         </div>
       </div>
 

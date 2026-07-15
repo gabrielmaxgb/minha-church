@@ -58,17 +58,16 @@ const RELATION_CHOICES: MemberRelationType[] = [
 ];
 
 /**
- * Relation colors mapped onto the app's own design tokens (globals.css),
- * so the graph stays on-brand instead of using arbitrary bright hues.
+ * Relation colors for data viz (distinct parentesco hues — not product domains).
  */
 const RELATION_COLORS: Record<MemberRelationType, string> = {
-  parent: "var(--domain-members)",
-  spouse: "var(--destructive)",
-  sibling: "var(--domain-activities)",
-  grandparent: "var(--domain-communication)",
-  step_parent: "var(--attention)",
-  parent_in_law: "var(--domain-ministries)",
-  uncle: "var(--ring)",
+  parent: "var(--relation-parent)",
+  spouse: "var(--relation-spouse)",
+  sibling: "var(--relation-sibling)",
+  grandparent: "var(--relation-grandparent)",
+  step_parent: "var(--relation-step-parent)",
+  parent_in_law: "var(--relation-parent-in-law)",
+  uncle: "var(--relation-uncle)",
 };
 
 const RELATION_LEGEND: {
@@ -185,8 +184,8 @@ function MemberNode({ data }: NodeProps<MemberFlowNode>) {
       className={cn(
         "flex flex-col items-center justify-center gap-1.5 rounded-[1.25rem] border bg-white/95 px-3 py-2 text-center shadow-xs backdrop-blur-sm transition-[box-shadow,border-color] duration-200",
         active
-          ? "border-domain-members shadow-popover ring-[3px] ring-domain-members/20"
-          : "border-black/6 hover:border-domain-members/35 hover:shadow-popover",
+          ? "border-billing shadow-popover ring-[3px] ring-billing/20"
+          : "border-black/6 hover:border-billing/35 hover:shadow-popover",
         canEdit ? "cursor-pointer" : "cursor-default",
       )}
       style={{ width: NODE_W, height: NODE_H }}
@@ -210,8 +209,8 @@ function MemberNode({ data }: NodeProps<MemberFlowNode>) {
         className={cn(
           "flex size-9 items-center justify-center rounded-full text-[13px] font-semibold tracking-wide",
           active
-            ? "bg-domain-members text-white"
-            : "bg-domain-members-subtle text-domain-members-foreground",
+            ? "bg-billing text-white"
+            : "bg-billing-subtle text-billing-foreground",
         )}
       >
         {initials(member.name)}
@@ -770,7 +769,7 @@ function FamilyGraphFlow({
                     key={n}
                     className={cn(
                       "h-1.5 w-6 rounded-full transition-colors",
-                      step >= n ? "bg-domain-members" : "bg-domain-members/20",
+                      step >= n ? "bg-billing" : "bg-billing/20",
                     )}
                   />
                 ))}
@@ -816,7 +815,7 @@ function FamilyGraphFlow({
 
         {pendingPair && fromMember && toMember && (
           <div className="absolute inset-x-3 bottom-3 z-20 mx-auto max-h-[min(52dvh,420px)] max-w-md overflow-hidden rounded-2xl border border-border/60 bg-white/98 shadow-popover backdrop-blur-md sm:inset-x-4 sm:bottom-4">
-            <div className="border-b border-border/50 bg-domain-members-subtle/40 px-4 py-3 text-center">
+            <div className="border-b border-border/50 bg-billing-subtle/40 px-4 py-3 text-center">
               <p className="text-sm font-medium text-foreground">
                 {firstName(fromMember.name)}
                 <span className="mx-2 font-normal text-muted-foreground">→</span>
@@ -887,8 +886,8 @@ function FamilyGraphFlow({
 export function FamilyGraphCanvas(props: FamilyGraphCanvasProps) {
   if (props.members.length === 0) {
     return (
-      <div className="flex h-full w-full flex-col items-center justify-center bg-domain-members-subtle/40 px-6 text-center">
-        <div className="flex size-14 items-center justify-center rounded-2xl bg-domain-members-subtle text-domain-members-foreground">
+      <div className="flex h-full w-full flex-col items-center justify-center bg-billing-subtle/40 px-6 text-center">
+        <div className="flex size-14 items-center justify-center rounded-2xl bg-billing-subtle text-billing-foreground">
           <Users className="size-6" aria-hidden />
         </div>
         <p className="mt-4 text-base font-medium text-foreground">

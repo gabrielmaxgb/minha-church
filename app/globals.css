@@ -36,7 +36,7 @@
   --attention-solid-foreground: #3a2b0e;
   --signal: var(--attention-solid);
   --signal-ring: color-mix(in srgb, var(--attention-solid) 28%, transparent);
-  /* Billing / assinatura — pedra da marca (alinha com primary / domain-home) */
+  /* Billing / assinatura — pedra da marca (accent único do produto) */
   --billing: #4a4a45;
   --billing-foreground: #2c2c2a;
   --billing-subtle: color-mix(in srgb, var(--billing) 10%, var(--card));
@@ -56,31 +56,40 @@
   --shadow-soft: var(--shadow-xs);
   --shadow-elevated: var(--shadow-popover);
 
-  /* Domínios — accents suaves (pastoral / institutional quiet) */
-  --domain-home: #6a6a64;
-  --domain-home-foreground: #3f3f3b;
-  --domain-home-subtle: color-mix(in srgb, var(--domain-home) 9%, var(--card));
-  --domain-members: #5f6f5a;
-  --domain-members-foreground: #3a4638;
-  --domain-members-subtle: color-mix(in srgb, var(--domain-members) 10%, var(--card));
-  --domain-ministries: #9a6b52;
-  --domain-ministries-foreground: #5c3f30;
-  --domain-ministries-subtle: color-mix(in srgb, var(--domain-ministries) 10%, var(--card));
-  --domain-activities: #5c6b7a;
-  --domain-activities-foreground: #384552;
-  --domain-activities-subtle: color-mix(in srgb, var(--domain-activities) 10%, var(--card));
-  --domain-schedules: var(--attention);
-  --domain-schedules-foreground: var(--attention-foreground);
-  --domain-schedules-subtle: var(--attention-subtle);
-  --domain-communication: #4f6f68;
-  --domain-communication-foreground: #2f4540;
-  --domain-communication-subtle: color-mix(in srgb, var(--domain-communication) 10%, var(--card));
-  --domain-finances: var(--success);
-  --domain-finances-foreground: var(--success-foreground);
-  --domain-finances-subtle: var(--success-subtle);
-  --domain-reports: #6a6a64;
-  --domain-reports-foreground: #3f3f3b;
-  --domain-reports-subtle: color-mix(in srgb, var(--domain-reports) 9%, var(--card));
+  /* Domínios — unificados na pedra da marca (legado de nomes por área) */
+  --domain-home: var(--billing);
+  --domain-home-foreground: var(--billing-foreground);
+  --domain-home-subtle: var(--billing-subtle);
+  --domain-members: var(--billing);
+  --domain-members-foreground: var(--billing-foreground);
+  --domain-members-subtle: var(--billing-subtle);
+  --domain-ministries: var(--billing);
+  --domain-ministries-foreground: var(--billing-foreground);
+  --domain-ministries-subtle: var(--billing-subtle);
+  --domain-activities: var(--billing);
+  --domain-activities-foreground: var(--billing-foreground);
+  --domain-activities-subtle: var(--billing-subtle);
+  --domain-schedules: var(--billing);
+  --domain-schedules-foreground: var(--billing-foreground);
+  --domain-schedules-subtle: var(--billing-subtle);
+  --domain-communication: var(--billing);
+  --domain-communication-foreground: var(--billing-foreground);
+  --domain-communication-subtle: var(--billing-subtle);
+  --domain-finances: var(--billing);
+  --domain-finances-foreground: var(--billing-foreground);
+  --domain-finances-subtle: var(--billing-subtle);
+  --domain-reports: var(--billing);
+  --domain-reports-foreground: var(--billing-foreground);
+  --domain-reports-subtle: var(--billing-subtle);
+
+  /* Grafo familiar — tipos de parentesco (data viz, não domínio de produto) */
+  --relation-parent: #5f6f5a;
+  --relation-spouse: var(--destructive);
+  --relation-sibling: #5c6b7a;
+  --relation-grandparent: #4f6f68;
+  --relation-step-parent: var(--attention);
+  --relation-parent-in-law: #9a6b52;
+  --relation-uncle: var(--ring);
 }
 
 .dark {
@@ -130,30 +139,38 @@
   --shadow-soft: var(--shadow-xs);
   --shadow-elevated: var(--shadow-popover);
 
-  --domain-home: #a3a39c;
-  --domain-home-foreground: #d4d4ce;
-  --domain-home-subtle: color-mix(in srgb, var(--domain-home) 12%, var(--card));
-  --domain-members: #8aa08a;
-  --domain-members-foreground: #c5d4c5;
-  --domain-members-subtle: color-mix(in srgb, var(--domain-members) 14%, var(--card));
-  --domain-ministries: #c49a7a;
-  --domain-ministries-foreground: #e0c4ae;
-  --domain-ministries-subtle: color-mix(in srgb, var(--domain-ministries) 14%, var(--card));
-  --domain-activities: #8a9aab;
-  --domain-activities-foreground: #c0ccd8;
-  --domain-activities-subtle: color-mix(in srgb, var(--domain-activities) 14%, var(--card));
-  --domain-schedules: var(--attention);
-  --domain-schedules-foreground: var(--attention-foreground);
-  --domain-schedules-subtle: var(--attention-subtle);
-  --domain-communication: #7a9a92;
-  --domain-communication-foreground: #b8d0ca;
-  --domain-communication-subtle: color-mix(in srgb, var(--domain-communication) 14%, var(--card));
-  --domain-finances: var(--success);
-  --domain-finances-foreground: var(--success-foreground);
-  --domain-finances-subtle: var(--success-subtle);
-  --domain-reports: #a3a39c;
-  --domain-reports-foreground: #d4d4ce;
-  --domain-reports-subtle: color-mix(in srgb, var(--domain-reports) 12%, var(--card));
+  --domain-home: var(--billing);
+  --domain-home-foreground: var(--billing-foreground);
+  --domain-home-subtle: var(--billing-subtle);
+  --domain-members: var(--billing);
+  --domain-members-foreground: var(--billing-foreground);
+  --domain-members-subtle: var(--billing-subtle);
+  --domain-ministries: var(--billing);
+  --domain-ministries-foreground: var(--billing-foreground);
+  --domain-ministries-subtle: var(--billing-subtle);
+  --domain-activities: var(--billing);
+  --domain-activities-foreground: var(--billing-foreground);
+  --domain-activities-subtle: var(--billing-subtle);
+  --domain-schedules: var(--billing);
+  --domain-schedules-foreground: var(--billing-foreground);
+  --domain-schedules-subtle: var(--billing-subtle);
+  --domain-communication: var(--billing);
+  --domain-communication-foreground: var(--billing-foreground);
+  --domain-communication-subtle: var(--billing-subtle);
+  --domain-finances: var(--billing);
+  --domain-finances-foreground: var(--billing-foreground);
+  --domain-finances-subtle: var(--billing-subtle);
+  --domain-reports: var(--billing);
+  --domain-reports-foreground: var(--billing-foreground);
+  --domain-reports-subtle: var(--billing-subtle);
+
+  --relation-parent: #8aa08a;
+  --relation-spouse: var(--destructive);
+  --relation-sibling: #8a9aab;
+  --relation-grandparent: #7a9a92;
+  --relation-step-parent: var(--attention);
+  --relation-parent-in-law: #c49a7a;
+  --relation-uncle: var(--ring);
 }
 
 @theme inline {
@@ -301,12 +318,12 @@
     background-image:
       radial-gradient(
         ellipse 80% 50% at 0% -10%,
-        color-mix(in srgb, var(--domain-activities) 8%, transparent),
+        color-mix(in srgb, var(--billing) 8%, transparent),
         transparent 55%
       ),
       radial-gradient(
         ellipse 60% 40% at 100% 0%,
-        color-mix(in srgb, var(--attention) 7%, transparent),
+        color-mix(in srgb, var(--attention) 5%, transparent),
         transparent 50%
       );
   }
@@ -315,17 +332,17 @@
     background-image:
       radial-gradient(
         ellipse 70% 55% at 15% 0%,
-        color-mix(in srgb, var(--domain-activities) 12%, transparent),
+        color-mix(in srgb, var(--billing) 12%, transparent),
         transparent 60%
       ),
       radial-gradient(
         ellipse 55% 45% at 90% 10%,
-        color-mix(in srgb, var(--domain-members) 10%, transparent),
+        color-mix(in srgb, var(--billing) 8%, transparent),
         transparent 55%
       ),
       radial-gradient(
         ellipse 50% 40% at 50% 100%,
-        color-mix(in srgb, var(--attention) 8%, transparent),
+        color-mix(in srgb, var(--attention) 6%, transparent),
         transparent 50%
       );
   }

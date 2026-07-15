@@ -53,62 +53,25 @@ interface QuickAction {
   disabled?: boolean;
 }
 
+const UNIFIED_TONE = {
+  shell:
+    "border-billing/25 bg-billing-subtle/70 hover:border-billing/45 hover:bg-billing-subtle",
+  icon: "bg-billing/20 text-billing-foreground group-hover:bg-billing/30",
+  chevron: "text-billing-foreground/55 group-hover:text-billing-foreground",
+} as const;
+
 const toneStyles: Record<
   QuickAction["tone"],
   { shell: string; icon: string; chevron: string }
 > = {
-  members: {
-    shell:
-      "border-domain-members/25 bg-domain-members-subtle/70 hover:border-domain-members/45 hover:bg-domain-members-subtle",
-    icon: "bg-domain-members/20 text-domain-members-foreground group-hover:bg-domain-members/30",
-    chevron: "text-domain-members-foreground/55 group-hover:text-domain-members-foreground",
-  },
-  activities: {
-    shell:
-      "border-domain-activities/25 bg-domain-activities-subtle/70 hover:border-domain-activities/45 hover:bg-domain-activities-subtle",
-    icon: "bg-domain-activities/20 text-domain-activities-foreground group-hover:bg-domain-activities/30",
-    chevron:
-      "text-domain-activities-foreground/55 group-hover:text-domain-activities-foreground",
-  },
-  communication: {
-    shell:
-      "border-domain-communication/25 bg-domain-communication-subtle/70 hover:border-domain-communication/45 hover:bg-domain-communication-subtle",
-    icon: "bg-domain-communication/20 text-domain-communication-foreground group-hover:bg-domain-communication/30",
-    chevron:
-      "text-domain-communication-foreground/55 group-hover:text-domain-communication-foreground",
-  },
-  ministries: {
-    shell:
-      "border-domain-ministries/25 bg-domain-ministries-subtle/70 hover:border-domain-ministries/45 hover:bg-domain-ministries-subtle",
-    icon: "bg-domain-ministries/20 text-domain-ministries-foreground group-hover:bg-domain-ministries/30",
-    chevron:
-      "text-domain-ministries-foreground/55 group-hover:text-domain-ministries-foreground",
-  },
-  finances: {
-    shell:
-      "border-domain-finances/25 bg-domain-finances-subtle/70 hover:border-domain-finances/45 hover:bg-domain-finances-subtle",
-    icon: "bg-domain-finances/20 text-domain-finances-foreground group-hover:bg-domain-finances/30",
-    chevron:
-      "text-domain-finances-foreground/55 group-hover:text-domain-finances-foreground",
-  },
-  care: {
-    shell:
-      "border-border bg-card hover:border-foreground/20 hover:bg-muted/50",
-    icon: "bg-muted text-foreground group-hover:bg-muted/80",
-    chevron: "text-muted-foreground/60 group-hover:text-foreground",
-  },
-  schedules: {
-    shell:
-      "border-attention-border bg-attention-subtle/80 hover:border-attention/50 hover:bg-attention-subtle",
-    icon: "bg-attention-mark text-attention-foreground group-hover:bg-attention/25",
-    chevron: "text-attention-foreground/55 group-hover:text-attention-foreground",
-  },
-  neutral: {
-    shell:
-      "border-border bg-card hover:border-foreground/20 hover:bg-muted/50",
-    icon: "bg-muted text-foreground group-hover:bg-muted/80",
-    chevron: "text-muted-foreground/60 group-hover:text-foreground",
-  },
+  members: UNIFIED_TONE,
+  activities: UNIFIED_TONE,
+  communication: UNIFIED_TONE,
+  ministries: UNIFIED_TONE,
+  finances: UNIFIED_TONE,
+  care: UNIFIED_TONE,
+  schedules: UNIFIED_TONE,
+  neutral: UNIFIED_TONE,
 };
 
 export function DashboardQuickActions({

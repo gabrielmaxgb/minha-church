@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Calendar, MapPin, Plus, Repeat } from "lucide-react";
 
+import { EventListNavActions } from "@/components/dashboard/activities/event-list-nav-actions";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LockedFeatureHint } from "@/components/dashboard/locked-feature-hint";
@@ -101,13 +102,15 @@ function EventTimelineItem({
   const relativeDay = formatRelativeEventDay(event.startsAt);
 
   return (
-    <li>
+    <li
+      className={cn(
+        "flex flex-col gap-2 rounded-md px-2.5 py-2.5 sm:flex-row sm:items-center sm:gap-3",
+        isNext && "bg-muted/40",
+      )}
+    >
       <Link
         href={activityDetailPath(event.id)}
-        className={cn(
-          "flex items-center gap-3 rounded-md px-2.5 py-2.5 transition-colors duration-150 hover:bg-muted/60",
-          isNext && "bg-muted/40",
-        )}
+        className="flex min-w-0 flex-1 items-center gap-3 transition-colors duration-150 hover:opacity-90"
       >
         <div
           className={cn(
@@ -172,6 +175,13 @@ function EventTimelineItem({
           </div>
         </div>
       </Link>
+
+      <EventListNavActions
+        eventId={event.id}
+        startsAt={event.startsAt}
+        showOccurrence
+        className="shrink-0 sm:justify-end"
+      />
     </li>
   );
 }

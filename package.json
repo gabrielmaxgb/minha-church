@@ -7,7 +7,8 @@
     "dev:webpack": "next dev --webpack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:unit": "npx --yes tsx --test lib/ministries/roster-candidates.test.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",

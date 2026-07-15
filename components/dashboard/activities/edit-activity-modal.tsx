@@ -3,7 +3,6 @@
 import { useEffect, useId, useMemo, useState } from "react";
 import {
   Calendar,
-  ClipboardList,
   Clock,
   Eye,
   FileText,
@@ -19,7 +18,6 @@ import { ActivityScheduleFields } from "@/components/dashboard/activities/activi
 import { EventFormSection } from "@/components/dashboard/activities/event-form-section";
 import { EventMutationScopeFields } from "@/components/dashboard/activities/event-mutation-scope-fields";
 import { EventRecurrenceFields } from "@/components/dashboard/activities/event-recurrence-fields";
-import { EventRosterOptionsFields } from "@/components/dashboard/activities/event-roster-options-fields";
 import { EventVisibilityFields } from "@/components/dashboard/activities/event-visibility-fields";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -39,11 +37,6 @@ import {
   syncRecurrenceDaysWithStart,
   type EventRecurrenceFormState,
 } from "@/lib/events/recurrence";
-import {
-  rosterSlotPlanEqual,
-  rosterSlotsToPlan,
-  type RosterSlotPlanItem,
-} from "@/lib/ministries/roster";
 import { cn, formatDateTime } from "@/lib/utils";
 import type { ChurchEvent, EventMutationScope } from "@/types/events";
 
@@ -89,10 +82,6 @@ export function EditActivityModal({
   const [location, setLocation] = useState("");
   const [startsAt, setStartsAt] = useState("");
   const [endsAt, setEndsAt] = useState("");
-  const [usesRoster, setUsesRoster] = useState(false);
-  const [rosterOpen, setRosterOpen] = useState(false);
-  const [rosterSlotPlan, setRosterSlotPlan] = useState<RosterSlotPlanItem[]>([]);
-  const [availabilityMessage, setAvailabilityMessage] = useState("");
   const [visibleToChurch, setVisibleToChurch] = useState(true);
   const [recurrence, setRecurrence] = useState<EventRecurrenceFormState>(
     defaultRecurrenceFormState(new Date().toISOString()),
@@ -129,14 +118,7 @@ export function EditActivityModal({
       startsAt !== toDatetimeLocalValue(event.startsAt) ||
       (endsAt || "") !==
         (event.endsAt ? toDatetimeLocalValue(event.endsAt) : "") ||
-      usesRoster !== event.usesRoster ||
-      rosterOpen !== event.rosterOpen ||
       visibleToChurch !== (event.visibleToChurch ?? true) ||
-      !rosterSlotPlanEqual(
-        rosterSlotPlan,
-        rosterSlotsToPlan(event.rosterSlots ?? []),
-      ) ||
-      (availabilityMessage.trim() || "") !== (event.availabilityMessage ?? "") ||
       recurrenceChanged
     );
   }, [
@@ -147,10 +129,6 @@ export function EditActivityModal({
     location,
     startsAt,
     endsAt,
-    usesRoster,
-    rosterOpen,
-    rosterSlotPlan,
-    availabilityMessage,
     visibleToChurch,
     recurrenceChanged,
   ]);
@@ -163,10 +141,6 @@ export function EditActivityModal({
       setLocation("");
       setStartsAt("");
       setEndsAt("");
-      setUsesRoster(false);
-      setRosterOpen(false);
-      setRosterSlotPlan([]);
-      setAvailabilityMessage("");
       setVisibleToChurch(true);
       setRecurrence(defaultRecurrenceFormState(new Date().toISOString()));
       setInitialRecurrence(defaultRecurrenceFormState(new Date().toISOString()));
@@ -189,11 +163,7 @@ export function EditActivityModal({
     setLocation(event.location ?? "");
     setStartsAt(nextStarts);
     setEndsAt(event.endsAt ? toDatetimeLocalValue(event.endsAt) : "");
-    setUsesRoster(event.usesRoster);
-    setRosterOpen(event.rosterOpen);
     setVisibleToChurch(event.visibleToChurch ?? true);
-    setRosterSlotPlan(rosterSlotsToPlan(event.rosterSlots ?? []));
-    setAvailabilityMessage(event.availabilityMessage ?? "");
     setRecurrence(nextRecurrence);
     setInitialRecurrence(nextRecurrence);
     setError(null);
@@ -275,13 +245,7 @@ export function EditActivityModal({
         location: location.trim() || null,
         startsAt: new Date(startsAt).toISOString(),
         endsAt: endsAt ? new Date(endsAt).toISOString() : null,
-        usesRoster,
         visibleToChurch: event.ministryId ? visibleToChurch : undefined,
-        rosterOpen: usesRoster ? rosterOpen : false,
-        rosterSlotPlan: usesRoster ? rosterSlotPlan : [],
-        availabilityMessage: usesRoster
-          ? availabilityMessage.trim() || null
-          : null,
         ...(recurrencePayload !== undefined
           ? { recurrence: recurrencePayload }
           : {}),
@@ -524,30 +488,6 @@ export function EditActivityModal({
                 />
               </EventFormSection>
             )}
-
-            <EventFormSection
-              title="Escala da equipe"
-              description={
-                event.isChurchWide
-                  ? "Coleta de disponibilidade e funções opcionais para montar a escala."
-                  : "Disponibilidade, funções e montagem de escala neste evento."
-              }
-              icon={ClipboardList}
-            >
-              <EventRosterOptionsFields
-                usesRoster={usesRoster}
-                rosterOpen={rosterOpen}
-                rosterSlotPlan={rosterSlotPlan}
-                availabilityMessage={availabilityMessage}
-                onUsesRosterChange={setUsesRoster}
-                onRosterOpenChange={setRosterOpen}
-                onRosterSlotPlanChange={setRosterSlotPlan}
-                onAvailabilityMessageChange={setAvailabilityMessage}
-                disabled={isPending}
-                hideSlotPlan={Boolean(event.ministryId)}
-                optionalSlotPlan={event.isChurchWide}
-              />
-            </EventFormSection>
 
             {isRecurring && (
               <EventFormSection

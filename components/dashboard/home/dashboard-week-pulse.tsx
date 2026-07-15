@@ -103,9 +103,6 @@ export function DashboardWeekPulse({
           </p>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-2">
-          <p className="rounded-md bg-domain-activities/15 px-2 py-1 text-xs font-medium tabular-nums text-domain-activities-foreground">
-            {weekTotal} no total
-          </p>
           <Button
             asChild
             variant="outline"
@@ -117,6 +114,9 @@ export function DashboardWeekPulse({
               <ArrowRight className="size-3.5 opacity-80" aria-hidden />
             </Link>
           </Button>
+          <p className="rounded-md bg-domain-activities/15 px-2 py-1 text-xs font-medium tabular-nums text-domain-activities-foreground">
+            {weekTotal} no total
+          </p>
         </div>
       </div>
 
