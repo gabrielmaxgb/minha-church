@@ -56,6 +56,7 @@ import {
   inboxNotificationTypeLabel,
   inboxUnreadCount,
   inboxUnreadItems,
+  resolveInboxNotificationBody,
 } from "@/lib/notifications/inbox-notifications";
 import { canManageMembers } from "@/lib/permissions";
 import { pendingNotificationStyles } from "@/lib/ui/notification-styles";
@@ -360,6 +361,7 @@ function NotificationsPanel({
             !isError &&
             unreadInboxItems.map((item) => {
               const Icon = inboxTypeIcon(item.type);
+              const body = resolveInboxNotificationBody(item);
               return (
                 <div
                   key={item.id}
@@ -382,9 +384,9 @@ function NotificationsPanel({
                       <p className="mt-1 text-sm font-medium leading-snug">
                         {item.title}
                       </p>
-                      {item.body ? (
+                      {body ? (
                         <p className="mt-0.5 text-xs text-muted-foreground">
-                          {item.body}
+                          {body}
                         </p>
                       ) : null}
                       <Button

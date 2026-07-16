@@ -10,6 +10,7 @@ import {
 
 import { CreateCareRequestModal } from "@/components/dashboard/care-requests/create-care-request-modal";
 import { FinanceConfirmDialog } from "@/components/dashboard/finances/finance-confirm-dialog";
+import { MemberDetailButton } from "@/components/dashboard/members/member-detail-link";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -180,6 +181,11 @@ export function CareRequestsContent() {
                     </p>
                   )}
                 </div>
+                <MemberDetailButton
+                  memberId={recipient.id}
+                  memberName={recipient.name}
+                  stopPropagation
+                />
                 <span className="hidden text-sm text-muted-foreground transition-colors group-hover:text-foreground sm:inline">
                   Pedir
                 </span>
@@ -235,12 +241,17 @@ export function CareRequestsContent() {
               >
                 <div className="flex flex-wrap items-start justify-between gap-2.5">
                   <div className="min-w-0">
-                    <p className="font-medium text-foreground">
+                    <p className="inline-flex flex-wrap items-center gap-1 font-medium text-foreground">
                       {CARE_REQUEST_TYPE_LABELS[request.type]}
                       <span className="font-normal text-muted-foreground">
                         {" "}
                         com {request.recipient.name}
                       </span>
+                      <MemberDetailButton
+                        memberId={request.recipient.id}
+                        memberName={request.recipient.name}
+                        className="size-7"
+                      />
                     </p>
                     <p className="mt-0.5 text-xs text-muted-foreground">
                       {formatRequestDate(request.createdAt)}
@@ -312,12 +323,17 @@ export function CareRequestsContent() {
                   >
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div className="min-w-0">
-                        <p className="font-medium text-foreground">
+                        <p className="inline-flex flex-wrap items-center gap-1 font-medium text-foreground">
                           {CARE_REQUEST_TYPE_LABELS[request.type]}
                           <span className="font-normal text-muted-foreground">
                             {" "}
                             de {request.requester.name}
                           </span>
+                          <MemberDetailButton
+                            memberId={request.requester.id}
+                            memberName={request.requester.name}
+                            className="size-7"
+                          />
                         </p>
                         <p className="mt-0.5 text-xs text-muted-foreground">
                           {formatRequestDate(request.createdAt)}

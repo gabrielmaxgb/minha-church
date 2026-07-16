@@ -22,7 +22,8 @@ export const homeFeatures: FeatureHighlight[] = [
     icon: Users,
     items: [
       "Cadastro pastoral",
-      "Histórico e anotações",
+      "Grafo de família",
+      "Histórico de status e vínculos",
       "Status ativo, visitante ou inativo",
     ],
   },
@@ -59,7 +60,8 @@ export const resourceSections = [
       "Cadastre e acompanhe cada pessoa com histórico pastoral, contato e status — a referência da comunidade.",
     items: [
       "Cadastro com dados pessoais e de contato",
-      "Histórico pastoral e anotações confidenciais",
+      "Grafo de família com vínculos de parentesco",
+      "Histórico de status, datas e vínculos ministeriais",
       "Status: visitante, ativo ou inativo",
       "Vínculo com ministérios e cargos",
       "Importação a partir de planilha",
@@ -110,7 +112,7 @@ export const resourceSections = [
     description:
       "Publique comunicados para a igreja ou ministérios e mantenha o registro do que foi dito.",
     items: [
-      "Comunicados por e-mail",
+      "Avisos no painel da igreja",
       "Segmentação por ministério",
       "Histórico de publicações",
       "Leitura pela equipe",

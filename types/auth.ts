@@ -54,6 +54,12 @@ export interface Church {
   featuresLocked?: boolean;
   /** Motivo do bloqueio, para copy por status. */
   lockReason?: SubscriptionLockReason | null;
+  dpaAcceptedAt?: string | null;
+  dpaVersion?: string | null;
+  /** Aceite do DPA na versão atual. */
+  dpaAccepted?: boolean;
+  deletedAt?: string | null;
+  purgeAfter?: string | null;
 }
 
 export interface User {

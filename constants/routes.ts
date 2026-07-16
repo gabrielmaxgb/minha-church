@@ -7,6 +7,7 @@ export const PUBLIC_ROUTES = {
   security: "/seguranca",
   terms: "/termos",
   privacy: "/privacidade",
+  dpa: "/dpa",
   login: "/login",
   register: "/cadastro",
   forgotPassword: "/recuperar-senha",

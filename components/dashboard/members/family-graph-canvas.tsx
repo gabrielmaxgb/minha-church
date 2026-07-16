@@ -24,6 +24,7 @@ import {
 } from "@xyflow/react";
 import { RotateCcw, Trash2, Users, X } from "lucide-react";
 
+import { MemberDetailButton } from "@/components/dashboard/members/member-detail-link";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { routeAroundObstacles } from "@/lib/members/family-graph-edge-route";
@@ -176,7 +177,7 @@ const handleClassName =
   "!h-2 !w-2 !min-w-0 !border-0 !bg-transparent !opacity-0";
 
 function MemberNode({ data }: NodeProps<MemberFlowNode>) {
-  const { member, active, canEdit } = data;
+  const { member, active } = data;
   const surname = restName(member.name);
 
   return (
@@ -186,7 +187,7 @@ function MemberNode({ data }: NodeProps<MemberFlowNode>) {
         active
           ? "border-billing shadow-popover ring-[3px] ring-billing/20"
           : "border-black/6 hover:border-billing/35 hover:shadow-popover",
-        canEdit ? "cursor-pointer" : "cursor-default",
+        "cursor-pointer",
       )}
       style={{ width: NODE_W, height: NODE_H }}
     >
@@ -597,9 +598,15 @@ function FamilyGraphFlow({
     (event: unknown, node: MemberFlowNode) => void
   >(
     (_event, node) => {
-      if (!canEdit || isBusy) return;
+      if (isBusy) return;
       setSelectedRelationId(null);
       setError(null);
+
+      if (!canEdit) {
+        setPendingPair(null);
+        setSelectedId((current) => (current === node.id ? null : node.id));
+        return;
+      }
 
       setSelectedId((current) => {
         if (!current) {
@@ -686,12 +693,15 @@ function FamilyGraphFlow({
 
   const fromMember = pendingPair ? memberById.get(pendingPair.fromId) : null;
   const toMember = pendingPair ? memberById.get(pendingPair.toId) : null;
+  const selectedMember = selectedId ? memberById.get(selectedId) : null;
   const selectedRelation = selectedRelationId
     ? relations.find((relation) => relation.id === selectedRelationId)
     : null;
 
   const hint = !canEdit
-    ? "Só visualização — quem edita membros pode criar vínculos."
+    ? selectedId
+      ? "Toque no ícone de pessoa para abrir a ficha."
+      : "Toque em alguém para ver a ficha."
     : pendingPair
       ? "Como a primeira pessoa se relaciona com a segunda?"
       : selectedId
@@ -783,6 +793,13 @@ function FamilyGraphFlow({
 
         <div className="pointer-events-none absolute bottom-4 right-3 z-20 flex flex-col items-end gap-1.5 sm:right-4">
           <div className="pointer-events-auto flex items-center gap-1.5">
+            {selectedMember ? (
+              <MemberDetailButton
+                memberId={selectedMember.id}
+                memberName={selectedMember.name}
+                className="size-9 border border-border/60 bg-white/90 shadow-xs backdrop-blur-md hover:bg-white"
+              />
+            ) : null}
             {canEdit && (
               <Button
                 type="button"

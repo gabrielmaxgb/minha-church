@@ -2,17 +2,17 @@ export const securityFeatures = [
   {
     title: "Criptografia",
     description:
-      "Todos os dados são transmitidos via HTTPS/TLS e armazenados com criptografia em repouso.",
+      "Dados em trânsito via HTTPS/TLS. O armazenamento na nuvem usa criptografia em repouso do provedor de infraestrutura.",
   },
   {
     title: "Backup automático",
     description:
-      "Backups diários com retenção de 30 dias. Seus dados nunca ficam em risco por falha de hardware.",
+      "Backups gerenciados na infraestrutura de nuvem, com retenção conforme a política do provedor.",
   },
   {
     title: "LGPD",
     description:
-      "Estamos em conformidade com a Lei Geral de Proteção de Dados. Você controla quem acessa o quê.",
+      "O produto foi desenhado em linha com a LGPD: papéis, permissões e textos legais públicos. A igreja controla quem acessa os dados da comunidade.",
   },
   {
     title: "Disponibilidade",
@@ -27,7 +27,7 @@ export const securityFeatures = [
   {
     title: "Exportação de dados",
     description:
-      "Seus dados são seus. Exporte membros, finanças e relatórios a qualquer momento.",
+      "Exporte membros (CSV), pacote da igreja, dados da conta e contribuições em CSV. Exclusão self-service com retenção de 90 dias antes da anonimização.",
   },
 ];
 

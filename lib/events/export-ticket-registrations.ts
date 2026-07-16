@@ -87,7 +87,7 @@ export function downloadEventTicketRegistrationsCsv(
       ...(location ? [location] : []),
       item.name,
       item.email ?? "",
-      STATUS_LABEL[item.status] ?? item.status,
+      STATUS_LABEL[item.status] ?? "Desconhecido",
       formatDateTime(item.createdAt),
     ];
     if (isPaid) {

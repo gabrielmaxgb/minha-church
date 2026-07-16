@@ -150,6 +150,38 @@ async function receiveMember(
   );
 }
 
+export type RecordParentalConsentPayload = {
+  guardianMemberId?: string;
+  guardianName?: string;
+  guardianEmail?: string;
+  accepted: boolean;
+};
+
+async function recordParentalConsent(
+  churchId: string,
+  memberId: string,
+  payload: RecordParentalConsentPayload,
+): Promise<Member> {
+  return apiClient<Member>(
+    buildTenantPath(churchId, `/members/${memberId}/parental-consent`),
+    {
+      churchId,
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
+}
+
+async function revokeParentalConsent(
+  churchId: string,
+  memberId: string,
+): Promise<Member> {
+  return apiClient<Member>(
+    buildTenantPath(churchId, `/members/${memberId}/parental-consent`),
+    { churchId, method: "DELETE" },
+  );
+}
+
 export interface AssignMemberMinistryPayload {
   ministryId: string;
   ministryRoleIds?: string[];
@@ -282,7 +314,9 @@ export {
   fetchMyMinistryNotifications,
   importMembers,
   receiveMember,
+  recordParentalConsent,
   removeMemberMinistry,
+  revokeParentalConsent,
   updateMember,
 };
 

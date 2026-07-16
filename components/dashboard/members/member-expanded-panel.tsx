@@ -23,6 +23,7 @@ import { FinanceConfirmDialog } from "@/components/dashboard/finances/finance-co
 import { LinkMemberFamilyModal } from "@/components/dashboard/members/link-member-family-modal";
 import { MemberAccountCreatedModal } from "@/components/dashboard/members/member-account-created-modal";
 import { MemberForm } from "@/components/dashboard/members/member-form";
+import { ParentalConsentModal } from "@/components/dashboard/members/parental-consent-modal";
 import { MemberMinistriesFunctionsSection } from "@/components/dashboard/members/member-ministries-functions-section";
 import { MemberMinistriesSection } from "@/components/dashboard/members/member-ministries-section";
 import { MemberMinistryTagsSummary } from "@/components/dashboard/ministries/ministry-member-tags";
@@ -36,6 +37,7 @@ import { familyGraphPath } from "@/constants/routes";
 import {
   useDeleteMember,
   useReceiveMember,
+  useRevokeParentalConsent,
   useUpdateMember,
 } from "@/lib/api/queries";
 import {
@@ -50,12 +52,17 @@ import {
   type MemberFormValues,
 } from "@/lib/members/form";
 import { applyMemberFormApiError } from "@/lib/members/form-api-errors";
+import {
+  isMinorMember,
+  needsParentalConsentBeforeReceive,
+} from "@/lib/members/parental-consent";
 import { useTrialWriteGuard } from "@/lib/subscription/use-trial-write-guard";
 import { createMemberFormSchema } from "@/lib/validation/schemas";
 import { cn, formatDate } from "@/lib/utils";
 import type { Member, MemberAccountCredentials } from "@/types/members";
 import { MEMBER_STATUS_LABELS } from "@/types/members";
 import { useAuth } from "@/providers/auth-provider";
+import { ApiError } from "@/lib/api/client";
 
 interface MemberExpandedPanelProps {
   member: Member;
@@ -130,9 +137,25 @@ function ReadOnlyDetails({
         <DetailItem
           label="Status"
           value={
-            <Badge variant="secondary">
-              {MEMBER_STATUS_LABELS[member.status]}
-            </Badge>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="secondary">
+                {MEMBER_STATUS_LABELS[member.status]}
+              </Badge>
+              {isMinorMember(member) ? (
+                <Badge
+                  variant="outline"
+                  className={
+                    member.parentalConsentGranted
+                      ? "border-emerald-600/30 text-emerald-700"
+                      : "border-amber-600/30 text-amber-700"
+                  }
+                >
+                  {member.parentalConsentGranted
+                    ? "Menor · consentimento ok"
+                    : "Menor · consentimento pendente"}
+                </Badge>
+              ) : null}
+            </div>
           }
         />
       </DetailSection>
@@ -226,6 +249,9 @@ export function MemberExpandedPanel({
     memberName: string;
     account: MemberAccountCredentials;
   } | null>(null);
+  const [consentModalOpen, setConsentModalOpen] = useState(false);
+  const [receiveAfterConsent, setReceiveAfterConsent] = useState(false);
+  const [consentError, setConsentError] = useState<string | null>(null);
 
   const form = useForm<MemberFormValues>({
     resolver: zodResolver(createMemberFormSchema()),
@@ -236,11 +262,14 @@ export function MemberExpandedPanel({
   const editStatus = useWatch({ control: form.control, name: "status" }) ?? member.status;
   const canReceiveAsMember =
     member.status === "visitor" && Boolean(member.email || member.cpf);
+  const needsConsent = needsParentalConsentBeforeReceive(member);
+  const isMinor = isMinorMember(member);
   const openMonthlyCount = member.activeGivingSubscriptionsCount ?? 0;
 
   const updateMember = useUpdateMember(member.id);
   const deleteMember = useDeleteMember(member.id);
   const receiveMember = useReceiveMember();
+  const revokeConsent = useRevokeParentalConsent(member.id);
 
   useEffect(() => {
     form.reset(memberToFormValues(member));
@@ -323,26 +352,64 @@ export function MemberExpandedPanel({
     }
   });
 
-  async function handleReceiveMember() {
-    try {
-      await tierCrossing.runWithTierCrossingCheck(
-        "active",
-        async () => {
-          const result = await receiveMember.mutateAsync(member.id);
+  async function runReceiveMember() {
+    await tierCrossing.runWithTierCrossingCheck(
+      "active",
+      async () => {
+        const result = await receiveMember.mutateAsync(member.id);
 
-          if (result.account) {
-            setCreatedAccount({
-              memberName: result.name,
-              account: result.account,
-            });
-          }
-        },
-        {
-          projectedMemberCount: (church?.memberCount ?? 0) + 1,
-        },
+        if (result.account) {
+          setCreatedAccount({
+            memberName: result.name,
+            account: result.account,
+          });
+        }
+      },
+      {
+        projectedMemberCount: (church?.memberCount ?? 0) + 1,
+      },
+    );
+  }
+
+  async function handleReceiveMember() {
+    setConsentError(null);
+
+    if (needsConsent) {
+      setReceiveAfterConsent(true);
+      setConsentModalOpen(true);
+      return;
+    }
+
+    try {
+      await runReceiveMember();
+    } catch (error) {
+      setConsentError(
+        error instanceof ApiError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : "Não foi possível receber o membro.",
       );
-    } catch {
-      // mutation / preview error surfaces via form or react-query if needed
+    }
+  }
+
+  async function handleConsentRecorded() {
+    setConsentError(null);
+    if (!receiveAfterConsent) {
+      return;
+    }
+
+    setReceiveAfterConsent(false);
+    try {
+      await runReceiveMember();
+    } catch (error) {
+      setConsentError(
+        error instanceof ApiError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : "Consentimento registrado, mas não foi possível receber o membro.",
+      );
     }
   }
 
@@ -456,9 +523,51 @@ export function MemberExpandedPanel({
                 title={writesBlocked ? reason ?? undefined : undefined}
                 onClick={() => void handleReceiveMember()}
               >
-                {receiveMember.isPending ? "Recebendo..." : "Receber como membro"}
+                {receiveMember.isPending
+                  ? "Recebendo..."
+                  : needsConsent
+                    ? "Consentir e receber"
+                    : "Receber como membro"}
               </Button>
             )}
+
+            {isMinor && needsConsent ? (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={writesBlocked || revokeConsent.isPending}
+                onClick={() => {
+                  setReceiveAfterConsent(false);
+                  setConsentModalOpen(true);
+                }}
+              >
+                Registrar consentimento
+              </Button>
+            ) : null}
+
+            {isMinor && member.parentalConsentGranted ? (
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={writesBlocked || revokeConsent.isPending}
+                onClick={() => {
+                  setConsentError(null);
+                  void revokeConsent.mutateAsync().catch((error: unknown) => {
+                    setConsentError(
+                      error instanceof ApiError
+                        ? error.message
+                        : error instanceof Error
+                          ? error.message
+                          : "Não foi possível revogar o consentimento.",
+                    );
+                  });
+                }}
+              >
+                {revokeConsent.isPending
+                  ? "Revogando..."
+                  : "Revogar consentimento"}
+              </Button>
+            ) : null}
           </div>
 
           {member.status === "visitor" && !canReceiveAsMember && (
@@ -467,6 +576,15 @@ export function MemberExpandedPanel({
               acesso ao painel.
             </p>
           )}
+
+          {needsConsent ? (
+            <p className="text-sm text-muted-foreground">
+              Menor de idade: a ficha pastoral pode ser usada normalmente. Para
+              liberar login no painel, registre o consentimento parental.
+            </p>
+          ) : null}
+
+          {consentError ? <FormAlert>{consentError}</FormAlert> : null}
 
           <ReadOnlyDetails member={member} showMinistries={false} />
 
@@ -509,6 +627,18 @@ export function MemberExpandedPanel({
           memberName={member.name}
           open={familyLinkOpen}
           onClose={() => setFamilyLinkOpen(false)}
+        />
+
+        <ParentalConsentModal
+          member={member}
+          open={consentModalOpen}
+          onClose={() => {
+            setConsentModalOpen(false);
+            setReceiveAfterConsent(false);
+          }}
+          onRecorded={() => {
+            void handleConsentRecorded();
+          }}
         />
 
         {tierCrossing.preview && (
@@ -627,8 +757,9 @@ export function MemberExpandedPanel({
           <div className="rounded-lg border border-border bg-muted/15 px-5 py-4">
             <p className="text-sm font-medium">Receber como membro</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Promove para membro ativo e cria o acesso ao painel com senha
-              temporária.
+              {needsConsent
+                ? "Menor de idade: registre o consentimento parental e então libere o acesso ao painel."
+                : "Promove para membro ativo e cria o acesso ao painel com senha temporária."}
             </p>
             <Button
               type="button"
@@ -644,10 +775,28 @@ export function MemberExpandedPanel({
               title={writesBlocked ? reason ?? undefined : undefined}
               onClick={() => void handleReceiveMember()}
             >
-              {receiveMember.isPending ? "Recebendo..." : "Receber como membro"}
+              {receiveMember.isPending
+                ? "Recebendo..."
+                : needsConsent
+                  ? "Consentir e receber"
+                  : "Receber como membro"}
             </Button>
           </div>
         )}
+
+        {consentError ? <FormAlert>{consentError}</FormAlert> : null}
+
+        <ParentalConsentModal
+          member={member}
+          open={consentModalOpen}
+          onClose={() => {
+            setConsentModalOpen(false);
+            setReceiveAfterConsent(false);
+          }}
+          onRecorded={() => {
+            void handleConsentRecorded();
+          }}
+        />
 
         {deleteError && <FormAlert>{deleteError}</FormAlert>}
 

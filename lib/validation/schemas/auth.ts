@@ -104,7 +104,7 @@ export const registerChurchSchema = z
       .max(128, "A senha deve ter no máximo 128 caracteres."),
     confirmPassword: z.string().min(1, "Confirme sua senha."),
     acceptTerms: z.boolean().refine((value) => value, {
-      message: "Você precisa aceitar os termos de uso.",
+      message: "Você precisa aceitar os Termos, a Privacidade e o Adendo LGPD.",
     }),
   })
   .superRefine((data, ctx) => {

@@ -10,6 +10,7 @@ import {
   Trash2,
 } from "lucide-react";
 
+import { MemberDetailButton } from "@/components/dashboard/members/member-detail-link";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
@@ -44,7 +45,7 @@ function authorLabel(request: PrayerRequest): string {
   }
 
   if (request.isAnonymous && request.author) {
-    return `${request.author.name} (anônimo para outros)`;
+    return `${request.author.name} (oculto para a comunidade)`;
   }
 
   return request.author?.name ?? "Membro";
@@ -112,8 +113,15 @@ function PrayerRequestCard({
         <div className="min-w-0 flex-1 space-y-3">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold tracking-tight text-foreground">
-                {authorLabel(request)}
+              <p className="inline-flex max-w-full items-center gap-1 text-sm font-semibold tracking-tight text-foreground">
+                <span className="truncate">{authorLabel(request)}</span>
+                {request.author ? (
+                  <MemberDetailButton
+                    memberId={request.author.id}
+                    memberName={request.author.name}
+                    className="size-7"
+                  />
+                ) : null}
               </p>
               <time
                 dateTime={request.createdAt}
@@ -311,34 +319,42 @@ export function PrayerRequestsContent() {
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <button
-              id={anonymousId}
-              type="button"
-              role="switch"
-              aria-checked={isAnonymous}
-              onClick={() => setIsAnonymous((value) => !value)}
-              disabled={createRequest.isPending}
-              className={cn(
-                "inline-flex h-9 w-fit items-center gap-2.5 rounded-lg border px-3 text-sm transition-colors",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                isAnonymous
-                  ? "border-domain-communication/35 bg-domain-communication-subtle text-domain-communication-foreground"
-                  : "border-border bg-background text-muted-foreground hover:bg-muted/40 hover:text-foreground",
-              )}
-            >
-              <span
+            <div className="min-w-0 space-y-1.5">
+              <button
+                id={anonymousId}
+                type="button"
+                role="switch"
+                aria-checked={isAnonymous}
+                onClick={() => setIsAnonymous((value) => !value)}
+                disabled={createRequest.isPending}
                 className={cn(
-                  "relative flex size-4 shrink-0 items-center justify-center rounded border transition-colors",
+                  "inline-flex h-9 w-fit items-center gap-2.5 rounded-lg border px-3 text-sm transition-colors",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                   isAnonymous
-                    ? "border-domain-communication bg-domain-communication text-white"
-                    : "border-muted-foreground/40 bg-background",
+                    ? "border-domain-communication/35 bg-domain-communication-subtle text-domain-communication-foreground"
+                    : "border-border bg-background text-muted-foreground hover:bg-muted/40 hover:text-foreground",
                 )}
-                aria-hidden
               >
-                {isAnonymous ? <Check className="size-3 stroke-[3]" /> : null}
-              </span>
-              Publicar de forma anônima
-            </button>
+                <span
+                  className={cn(
+                    "relative flex size-4 shrink-0 items-center justify-center rounded border transition-colors",
+                    isAnonymous
+                      ? "border-domain-communication bg-domain-communication text-white"
+                      : "border-muted-foreground/40 bg-background",
+                  )}
+                  aria-hidden
+                >
+                  {isAnonymous ? <Check className="size-3 stroke-[3]" /> : null}
+                </span>
+                Ocultar meu nome no quadro
+              </button>
+              {isAnonymous ? (
+                <p className="max-w-sm text-xs leading-relaxed text-muted-foreground">
+                  Seu nome fica oculto para a comunidade. O responsável da
+                  igreja no Minha Church ainda pode identificar o autor.
+                </p>
+              ) : null}
+            </div>
 
             <Button
               type="submit"

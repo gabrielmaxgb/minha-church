@@ -46,7 +46,7 @@ async function parseErrorBody(response: Response): Promise<{
 	email?: string;
 	details?: unknown;
 }> {
-	let raw = `API error: ${response.status}`;
+	let raw = `Não foi possível concluir a solicitação (${response.status}).`;
 	let code: string | undefined;
 	let email: string | undefined;
 	let details: unknown;

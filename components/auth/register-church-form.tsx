@@ -383,8 +383,8 @@ export function RegisterChurchForm() {
                         rel="noopener noreferrer"
                       >
                         Termos de Uso
-                      </Link>{" "}
-                      e a{" "}
+                      </Link>
+                      , a{" "}
                       <Link
                         href={PUBLIC_ROUTES.privacy}
                         className="font-medium underline-offset-4 hover:underline"
@@ -392,6 +392,15 @@ export function RegisterChurchForm() {
                         rel="noopener noreferrer"
                       >
                         Política de Privacidade
+                      </Link>{" "}
+                      e o{" "}
+                      <Link
+                        href={PUBLIC_ROUTES.dpa}
+                        className="font-medium underline-offset-4 hover:underline"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Adendo LGPD (DPA)
                       </Link>
                       .
                     </span>

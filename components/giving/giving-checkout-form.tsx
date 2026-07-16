@@ -23,7 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { FormAlert, FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
-import { givingFundPath } from "@/constants/routes";
+import { givingFundPath, PUBLIC_ROUTES } from "@/constants/routes";
 import { ApiError } from "@/lib/api/client";
 import {
   createGivingCheckout,
@@ -190,6 +190,23 @@ export function GivingCheckoutForm({ fund }: { fund: PublicGivingFund }) {
             disabled={starting}
           />
         </FormField>
+
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          Nome e e-mail (se informados) ficam registrados para a igreja
+          identificar a contribuição e, quando possível, enviar comprovante.
+          A igreja é a controladora desses dados; o Minha Church opera a
+          plataforma. Cartão e dados de pagamento são tratados pelo Stripe.
+          Veja a{" "}
+          <a
+            href={PUBLIC_ROUTES.privacy}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-foreground underline-offset-4 hover:underline"
+          >
+            Política de Privacidade
+          </a>
+          .
+        </p>
 
         {fund.paymentMethods.card ? (
           <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border/70 bg-muted/20 px-3 py-3 text-sm transition-colors hover:bg-muted/35">

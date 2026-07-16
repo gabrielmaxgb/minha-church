@@ -7,6 +7,7 @@ import { resourceSections } from "@/constants/features";
 import { PUBLIC_ROUTES } from "@/constants/routes";
 import { Container } from "@/components/layout/container";
 import { CtaBanner } from "@/components/marketing/cta-banner";
+import { FamilyGraphPreview } from "@/components/marketing/family-graph-preview";
 import { MotionDiv, MotionSection } from "@/components/motion/motion-section";
 import { Heading } from "@/components/ui/heading";
 import { fadeInUp } from "@/lib/motion";
@@ -73,6 +74,11 @@ export function RecursosContent() {
                         </li>
                       ))}
                     </ul>
+                    {section.id === "membros" ? (
+                      <div className="mt-8 max-w-xl">
+                        <FamilyGraphPreview />
+                      </div>
+                    ) : null}
                   </div>
                 </MotionSection>
               </div>

@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Download, Loader2, Undo2 } from "lucide-react";
 
 import { FinanceConfirmDialog } from "@/components/dashboard/finances/finance-confirm-dialog";
+import { MemberDetailButton } from "@/components/dashboard/members/member-detail-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -270,13 +271,22 @@ export function GivingDonationsPanel({
                     {formatCurrency(donation.amountCents / 100)}
                   </p>
                   <Badge variant={statusVariant(donation.status)}>
-                    {STATUS_LABEL[donation.status] ?? donation.status}
+                    {STATUS_LABEL[donation.status] ?? "Desconhecido"}
                   </Badge>
                 </div>
-                <p className="mt-1 text-sm text-muted-foreground">
+                <p className="mt-1 flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
                   <span className="text-foreground/80">{donation.fundName}</span>
-                  {" · "}
-                  {donorLabel(donation)}
+                  <span aria-hidden>·</span>
+                  <span className="inline-flex min-w-0 items-center gap-0.5">
+                    <span className="truncate">{donorLabel(donation)}</span>
+                    {donation.donorMemberId && !memberId ? (
+                      <MemberDetailButton
+                        memberId={donation.donorMemberId}
+                        memberName={donation.donorMemberName}
+                        className="size-7"
+                      />
+                    ) : null}
+                  </span>
                   {donation.donorMemberId ? (
                     <span className="text-muted-foreground/80"> · membro</span>
                   ) : (

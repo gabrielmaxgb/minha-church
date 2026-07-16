@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { FloatingSaveBar } from "@/components/ui/floating-save-bar";
 import { AlertTriangle, RefreshCw } from "lucide-react";
+import { MemberDetailButton } from "@/components/dashboard/members/member-detail-link";
 import { AUTH_ROUTES } from "@/constants/routes";
 import {
   useAssignableRoles,
@@ -495,8 +496,13 @@ export function ChurchMembershipsSettings() {
                     onToggle={() => toggleExpanded(membership.userId)}
                   >
                     {membership.memberName && (
-                      <p className="mb-3 text-xs text-muted-foreground">
-                        Membro vinculado: {membership.memberName}
+                      <p className="mb-3 inline-flex items-center gap-1 text-xs text-muted-foreground">
+                        <span>Membro vinculado: {membership.memberName}</span>
+                        <MemberDetailButton
+                          memberId={membership.memberId}
+                          memberName={membership.memberName}
+                          className="size-7"
+                        />
                       </p>
                     )}
 

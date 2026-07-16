@@ -58,9 +58,10 @@ export function SegurancaContent() {
           <MotionSection variants={fadeInUp} className="max-w-2xl">
             <Heading as="h2">LGPD e privacidade</Heading>
             <p className="mt-4 leading-relaxed text-muted-foreground">
-              Estamos em conformidade com a Lei Geral de Proteção de Dados. Você
-              controla quem acessa informações de membros, finanças e
-              comunicação. Detalhes do tratamento de dados estão na{" "}
+              O Minha Church foi desenhado em linha com a Lei Geral de Proteção
+              de Dados. A igreja controla quem acessa informações de membros,
+              finanças e comunicação no painel. Detalhes do tratamento de dados
+              estão na{" "}
               <Link
                 href={PUBLIC_ROUTES.privacy}
                 className="font-medium text-foreground underline-offset-4 hover:underline"

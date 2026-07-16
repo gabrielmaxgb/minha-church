@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Loader2, UserMinus, UserPlus, Users } from "lucide-react";
 
+import { MemberDetailButton } from "@/components/dashboard/members/member-detail-link";
 import { BusyOverlay } from "@/components/ui/busy-overlay";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -156,23 +157,29 @@ export function FamilyMembersManager({
               <span className="min-w-0 truncate text-sm font-medium text-foreground">
                 {member.name}
               </span>
-              {canEdit ? (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  className="shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                  disabled={busy}
-                  onClick={() => void handleRemove(member.id)}
-                >
-                  {removingId === member.id ? (
-                    <Loader2 className="size-3.5 animate-spin" />
-                  ) : (
-                    <UserMinus className="size-3.5" />
-                  )}
-                  Remover
-                </Button>
-              ) : null}
+              <div className="flex shrink-0 items-center gap-0.5">
+                <MemberDetailButton
+                  memberId={member.id}
+                  memberName={member.name}
+                />
+                {canEdit ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    disabled={busy}
+                    onClick={() => void handleRemove(member.id)}
+                  >
+                    {removingId === member.id ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <UserMinus className="size-3.5" />
+                    )}
+                    Remover
+                  </Button>
+                ) : null}
+              </div>
             </li>
           ))
         )}

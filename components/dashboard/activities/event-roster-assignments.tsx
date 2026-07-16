@@ -9,6 +9,7 @@ import {
   Users,
 } from "lucide-react";
 
+import { MemberDetailButton } from "@/components/dashboard/members/member-detail-link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -232,19 +233,25 @@ export function EventRosterAssignments({
                       {assignment.memberName}
                     </span>
 
-                    {canManage ? (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        className="size-8 shrink-0 p-0 text-muted-foreground hover:text-destructive"
-                        disabled={removeRoster.isPending}
-                        onClick={() => void handleRemove(assignment.memberId)}
-                        aria-label={`Remover ${assignment.memberName} da escala`}
-                      >
-                        <Trash2 className="size-3.5" />
-                      </Button>
-                    ) : null}
+                    <div className="flex shrink-0 items-center gap-0.5">
+                      <MemberDetailButton
+                        memberId={assignment.memberId}
+                        memberName={assignment.memberName}
+                      />
+                      {canManage ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          className="size-8 shrink-0 p-0 text-muted-foreground hover:text-destructive"
+                          disabled={removeRoster.isPending}
+                          onClick={() => void handleRemove(assignment.memberId)}
+                          aria-label={`Remover ${assignment.memberName} da escala`}
+                        >
+                          <Trash2 className="size-3.5" />
+                        </Button>
+                      ) : null}
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -354,10 +361,17 @@ export function EventRosterAssignments({
                       />
 
                       <div className="min-w-0 flex-1">
-                        <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                          <p className="truncate text-sm font-medium leading-tight text-foreground">
-                            {candidate.memberName}
-                          </p>
+                        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5">
+                          <span className="inline-flex min-w-0 items-center gap-0.5">
+                            <p className="truncate text-sm font-medium leading-tight text-foreground">
+                              {candidate.memberName}
+                            </p>
+                            <MemberDetailButton
+                              memberId={candidate.memberId}
+                              memberName={candidate.memberName}
+                              className="size-7"
+                            />
+                          </span>
                           <p className="text-[11px] leading-tight text-muted-foreground">
                             {meta.label}
                           </p>

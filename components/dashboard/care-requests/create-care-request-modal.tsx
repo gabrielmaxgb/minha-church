@@ -346,7 +346,7 @@ export function CreateCareRequestModal({
                         onChange={(event) => setMessage(event.target.value)}
                         maxLength={500}
                         rows={4}
-                        placeholder="Se quiser, conte um pouco do contexto — só quem recebe o pedido vê."
+                        placeholder="Se quiser, conte um pouco do contexto — a mensagem fica só no app para quem recebe."
                         className="min-h-[112px]"
                       />
                     </div>
@@ -354,8 +354,10 @@ export function CreateCareRequestModal({
                     {error ? <FormAlert>{error}</FormAlert> : null}
 
                     <p className="text-xs leading-relaxed text-muted-foreground">
-                      A pessoa recebe aviso no app e por e-mail. Em Meus pedidos
-                      você acompanha se já leram.
+                      A pessoa recebe aviso no app e por e-mail (sem o texto da
+                      mensagem). Isto não é sigilo profissional nem substitui
+                      atendimento clínico ou jurídico. Em Meus pedidos você
+                      acompanha se já leram.
                     </p>
 
                     <div className="flex flex-col-reverse gap-2 border-t border-border/80 pt-4 sm:flex-row sm:justify-end">

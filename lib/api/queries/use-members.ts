@@ -11,7 +11,10 @@ import {
   fetchMembers,
   membersKeys,
   receiveMember,
+  recordParentalConsent,
+  revokeParentalConsent,
   ackMinistryCatalogNotifications,
+  type RecordParentalConsentPayload,
 } from "@/lib/api/queries/members.keys";
 import { queries } from "@/lib/api/queries";
 import type { ListMembersParams } from "@/types/members";
@@ -127,6 +130,45 @@ export function useReceiveMember() {
       }
 
       return receiveMember(churchId, memberId);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: membersKeys._def });
+      await queryClient.invalidateQueries({ queryKey: queries.dashboard._def });
+      await reloadSession();
+    },
+  });
+}
+
+export function useRecordParentalConsent(memberId: string) {
+  const { churchId } = useTenant();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: RecordParentalConsentPayload) => {
+      if (!churchId) {
+        throw new Error("Igreja não selecionada.");
+      }
+
+      return recordParentalConsent(churchId, memberId, payload);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: membersKeys._def });
+    },
+  });
+}
+
+export function useRevokeParentalConsent(memberId: string) {
+  const { churchId } = useTenant();
+  const queryClient = useQueryClient();
+  const { reloadSession } = useAuth();
+
+  return useMutation({
+    mutationFn: () => {
+      if (!churchId) {
+        throw new Error("Igreja não selecionada.");
+      }
+
+      return revokeParentalConsent(churchId, memberId);
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: membersKeys._def });

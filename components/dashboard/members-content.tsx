@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import {
   ChevronDown,
   ChevronRight,
+  Download,
   Loader2,
   Network,
   Plus,
@@ -27,6 +28,7 @@ import {
 } from "@/constants/routes";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useMembersInfinite, useFamilies } from "@/lib/api/queries";
+import { downloadMembersCsv } from "@/lib/api/privacy";
 import { canManageMembers } from "@/lib/permissions";
 import { memberStatusBadgeClass } from "@/lib/members/status-badge";
 import { cn } from "@/lib/utils";
@@ -235,10 +237,11 @@ function FamilyGroupItem({
 }
 
 export function MembersContent() {
-  const { permissions } = useAuth();
+  const { permissions, church } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [importOpen, setImportOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<MemberStatus | "all">("all");
   const [familyId, setFamilyId] = useState<string>("all");
@@ -249,6 +252,16 @@ export function MembersContent() {
   const debouncedSearch = useDebouncedValue(search.trim(), 300);
   const canManage = permissions ? canManageMembers(permissions) : false;
   const { data: families = [] } = useFamilies();
+
+  async function handleExportMembers() {
+    if (!church?.id) return;
+    setExporting(true);
+    try {
+      await downloadMembersCsv(church.id);
+    } finally {
+      setExporting(false);
+    }
+  }
 
   // Abre o assistente automaticamente quando chega via onboarding (?importar=1).
   useEffect(() => {
@@ -327,6 +340,20 @@ export function MembersContent() {
 
           {canManage && (
             <div className="flex shrink-0 flex-wrap gap-2 self-start sm:self-auto">
+              <Button
+                size="sm"
+                variant="outline"
+                type="button"
+                disabled={exporting || !church?.id}
+                onClick={() => void handleExportMembers()}
+              >
+                {exporting ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Download className="size-4" />
+                )}
+                Exportar CSV
+              </Button>
               <Button
                 size="sm"
                 variant="outline"

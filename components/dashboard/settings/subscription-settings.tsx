@@ -57,7 +57,7 @@ function resolveStatusLabel(data: {
     case "canceled":
       return "Assinatura encerrada";
     default:
-      return data.subscriptionStatus;
+      return "Status da assinatura";
   }
 }
 

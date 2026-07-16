@@ -142,8 +142,8 @@ function FinancesManageTabs({
   }> = [
     { id: "fundos", label: "Fundos", icon: PiggyBank },
     { id: "contribuicoes", label: "Entradas", icon: Receipt },
-    { id: "mensais", label: "Mensais", icon: RefreshCw },
-    { id: "caixa", label: "Caixa", icon: NotebookPen },
+    { id: "mensais", label: "Recorrentes", icon: RefreshCw },
+    { id: "caixa", label: "Lançamentos manuais", icon: NotebookPen },
   ];
 
   return (
@@ -236,7 +236,7 @@ function FinancesContent() {
   const isOwner = Boolean(user?.isOwner);
   const canManage = isOwner || Boolean(permissions?.finances.manage);
   const { data: connect, isPending: connectPending } = useConnectStatus();
-  const { data: summary, isPending: summaryPending } = usePaymentsSummary();
+  const { data: summary } = usePaymentsSummary();
 
   if (locked) {
     return <FinancesLockedCard isOwner={isOwner} />;
@@ -297,7 +297,7 @@ function FinancesContent() {
         </p>
       </div>
 
-      <FinancesSummaryCards summary={summary} isPending={summaryPending} />
+      <FinancesSummaryCards />
 
       {canManage ? (
         <FinancesManageSection />

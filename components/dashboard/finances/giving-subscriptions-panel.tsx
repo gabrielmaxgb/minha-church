@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Ban } from "lucide-react";
 
 import { FinanceConfirmDialog } from "@/components/dashboard/finances/finance-confirm-dialog";
+import { MemberDetailButton } from "@/components/dashboard/members/member-detail-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FormAlert } from "@/components/ui/form-field";
@@ -144,15 +145,24 @@ export function GivingSubscriptionsPanel() {
                   </p>
                   <Badge variant={statusVariant(subscription.status)}>
                     {SUBSCRIPTION_STATUS_LABEL[subscription.status] ??
-                      subscription.status}
+                      "Desconhecido"}
                   </Badge>
                 </div>
-                <p className="mt-1 text-sm text-muted-foreground">
+                <p className="mt-1 flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
                   <span className="text-foreground/80">
                     {subscription.fundName}
                   </span>
-                  {" · "}
-                  {donorLabel(subscription)}
+                  <span aria-hidden>·</span>
+                  <span className="inline-flex min-w-0 items-center gap-0.5">
+                    <span className="truncate">{donorLabel(subscription)}</span>
+                    {subscription.donorMemberId ? (
+                      <MemberDetailButton
+                        memberId={subscription.donorMemberId}
+                        memberName={subscription.donorMemberName}
+                        className="size-7"
+                      />
+                    ) : null}
+                  </span>
                   {subscription.donorMemberId ? (
                     <span className="text-muted-foreground/80"> · membro</span>
                   ) : (

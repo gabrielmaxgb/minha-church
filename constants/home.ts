@@ -14,7 +14,7 @@ export const homeFlows = [
   {
     title: "Do primeiro contato ao acompanhamento pastoral",
     description:
-      "Cadastre visitantes e membros, registre o histórico e acompanhe quem faz parte da comunidade.",
+      "Cadastre visitantes e membros, veja o grafo da família e acompanhe quem faz parte da comunidade.",
   },
   {
     title: "Convide voluntários e feche a escala com antecedência",

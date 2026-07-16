@@ -52,6 +52,15 @@ export interface Member {
   baptismDate: string | null;
   membershipDate: string | null;
   userId: string | null;
+  /** Menor de 18 com data de nascimento conhecida. */
+  isMinor: boolean;
+  /** Precisa de consentimento parental antes de liberar login. */
+  parentalConsentRequired: boolean;
+  parentalConsentGranted: boolean;
+  parentalConsentAt: string | null;
+  parentalConsentGuardianName: string | null;
+  parentalConsentGuardianEmail: string | null;
+  parentalConsentGuardianMemberId: string | null;
   ministries: MemberMinistryLink[];
   /** Contribuições mensais abertas; preenchido no detalhe do membro. */
   activeGivingSubscriptionsCount?: number;

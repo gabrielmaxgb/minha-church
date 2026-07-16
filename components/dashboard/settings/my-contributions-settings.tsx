@@ -157,7 +157,7 @@ export function MyContributionsSettings() {
                         </p>
                         <Badge variant="secondary">
                           {SUBSCRIPTION_STATUS_LABEL[subscription.status] ??
-                            subscription.status}
+                            "Desconhecido"}
                         </Badge>
                       </div>
                       <p className="mt-0.5 text-sm text-muted-foreground">
@@ -214,7 +214,7 @@ export function MyContributionsSettings() {
                           {formatCurrency(donation.amountCents / 100)}
                         </p>
                         <Badge variant={statusVariant(donation.status)}>
-                          {STATUS_LABEL[donation.status] ?? donation.status}
+                          {STATUS_LABEL[donation.status] ?? "Desconhecido"}
                         </Badge>
                       </div>
                       <p className="mt-0.5 text-sm text-muted-foreground">

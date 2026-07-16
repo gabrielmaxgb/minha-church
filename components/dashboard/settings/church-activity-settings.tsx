@@ -7,11 +7,30 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuditLogs } from "@/lib/api/queries/use-audit-logs";
 import type { AuditLogEntry } from "@/types/audit-logs";
+import {
+  CHURCH_PERMISSION_LABELS,
+  type ChurchPermissionKey,
+} from "@/types/church-roles";
 
 import {
   SettingsPanel,
   SettingsSectionHeader,
 } from "./settings-shared";
+
+const AUDIT_ACTION_LABELS: Record<string, string> = {
+  "church.registered": "Igreja cadastrada",
+  "church_role.created": "Cargo criado",
+  "church_role.updated": "Cargo alterado",
+  "church_role.deleted": "Cargo excluído",
+  "membership.updated": "Acesso de usuário",
+  "membership.password_reset": "Senha redefinida",
+  "terms.accepted": "Termos aceitos",
+  "dpa.accepted": "Adendo LGPD aceito",
+  "privacy.purged": "Dados anonimizados",
+  "church.closure_requested": "Encerramento solicitado",
+  "church.closure_cancelled": "Encerramento cancelado",
+  "user.account_deleted": "Conta excluída",
+};
 
 function formatWhen(iso: string) {
   const date = new Date(iso);
@@ -42,18 +61,20 @@ function formatWhen(iso: string) {
 }
 
 function formatActionLabel(action: string) {
-  switch (action) {
-    case "church_role.created":
-      return "Cargo criado";
-    case "church_role.updated":
-      return "Cargo alterado";
-    case "church_role.deleted":
-      return "Cargo excluído";
-    case "membership.updated":
-      return "Acesso de usuário";
-    default:
-      return action;
+  return AUDIT_ACTION_LABELS[action] ?? "Atividade";
+}
+
+function formatPermissionLabel(value: string): string {
+  if (value in CHURCH_PERMISSION_LABELS) {
+    return CHURCH_PERMISSION_LABELS[value as ChurchPermissionKey];
   }
+
+  // Updates já gravam o rótulo em PT; creates antigos podem ter a chave.
+  return value;
+}
+
+function formatPermissionList(values: string[] | undefined): string {
+  return (values ?? []).map(formatPermissionLabel).join(", ");
 }
 
 function MetadataDetails({ entry }: { entry: AuditLogEntry }) {
@@ -68,7 +89,14 @@ function MetadataDetails({ entry }: { entry: AuditLogEntry }) {
     | undefined;
   const permissions = metadata.permissions as
     | { added?: string[]; removed?: string[] }
+    | string[]
     | undefined;
+
+  const added =
+    permissions && !Array.isArray(permissions) ? permissions.added : undefined;
+  const removed =
+    permissions && !Array.isArray(permissions) ? permissions.removed : undefined;
+  const permissionList = Array.isArray(permissions) ? permissions : undefined;
 
   return (
     <div className="mt-2 space-y-1 text-xs text-muted-foreground">
@@ -78,11 +106,14 @@ function MetadataDetails({ entry }: { entry: AuditLogEntry }) {
           {roles.after.join(", ") || "—"}
         </p>
       )}
-      {permissions?.added && permissions.added.length > 0 && (
-        <p>+ {permissions.added.join(", ")}</p>
+      {permissionList && permissionList.length > 0 && (
+        <p>Permissões: {formatPermissionList(permissionList)}</p>
       )}
-      {permissions?.removed && permissions.removed.length > 0 && (
-        <p>− {permissions.removed.join(", ")}</p>
+      {added && added.length > 0 && (
+        <p>+ {formatPermissionList(added)}</p>
+      )}
+      {removed && removed.length > 0 && (
+        <p>− {formatPermissionList(removed)}</p>
       )}
     </div>
   );

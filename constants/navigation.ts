@@ -20,6 +20,7 @@ export const footerNavLinks: NavLink[] = [
   { label: "Segurança", href: PUBLIC_ROUTES.security },
   { label: "Termos de Uso", href: PUBLIC_ROUTES.terms },
   { label: "Privacidade", href: PUBLIC_ROUTES.privacy },
+  { label: "Adendo LGPD", href: PUBLIC_ROUTES.dpa },
 ];
 
 export const siteConfig = {

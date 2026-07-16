@@ -120,7 +120,7 @@ export function DashboardWeekPulse({
         </div>
       </div>
 
-      <div className="mt-5 flex h-28 items-end gap-1.5 sm:gap-2">
+      <div className="mt-5 flex h-28 items-end gap-1">
         {week.map((day) => {
           const heightPct =
             day.count === 0 ? 8 : Math.max(18, (day.count / maxCount) * 100);
@@ -133,7 +133,7 @@ export function DashboardWeekPulse({
               <div className="flex h-20 w-full items-end justify-center">
                 <motion.div
                   className={cn(
-                    "w-full max-w-[2.25rem] rounded-md",
+                    "w-full max-w-[3.75rem] rounded-md",
                     day.count === 0
                       ? "bg-muted"
                       : day.isToday

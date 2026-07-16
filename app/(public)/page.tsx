@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import {
   BenefitsSection,
   CtaSection,
+  FamilyGraphDemoSection,
   FlowsSection,
   HeroSection,
   HomeFaqSection,
@@ -22,6 +23,7 @@ export default function HomePage() {
     <>
       <HeroSection />
       <OperationDemoSection />
+      <FamilyGraphDemoSection />
       <FlowsSection />
       <ScreensSection />
       <HowItWorksSection />

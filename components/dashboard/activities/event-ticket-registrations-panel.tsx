@@ -1,12 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { Clock3, Download, Ticket, Users } from "lucide-react";
 
+import { MemberDetailButton } from "@/components/dashboard/members/member-detail-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { memberDetailPath } from "@/constants/routes";
 import { useEventTicketRegistrations } from "@/lib/api/queries";
 import { downloadEventTicketRegistrationsCsv } from "@/lib/events/export-ticket-registrations";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
@@ -14,6 +13,9 @@ import { formatCurrency, formatDateTime } from "@/lib/utils";
 const STATUS_LABEL: Record<string, string> = {
   succeeded: "Confirmada",
   pending: "Aguardando",
+  failed: "Falhou",
+  canceled: "Cancelada",
+  refunded: "Estornada",
 };
 
 export function EventTicketRegistrationsPanel({
@@ -123,8 +125,12 @@ export function EventTicketRegistrationsPanel({
       <ul className="divide-y divide-border rounded-xl border border-border">
         {registrations.map((item) => {
           const isPendingStatus = item.status === "pending";
-          const content = (
-            <>
+
+          return (
+            <li
+              key={item.id}
+              className="flex items-center gap-3 px-4 py-3"
+            >
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="truncate text-sm font-medium text-foreground">
@@ -141,7 +147,7 @@ export function EventTicketRegistrationsPanel({
                     {isPendingStatus ? (
                       <Clock3 className="size-3" aria-hidden />
                     ) : null}
-                    {STATUS_LABEL[item.status] ?? item.status}
+                    {STATUS_LABEL[item.status] ?? "Desconhecido"}
                   </Badge>
                 </div>
                 <p className="mt-0.5 truncate text-xs text-muted-foreground">
@@ -150,28 +156,15 @@ export function EventTicketRegistrationsPanel({
                     .join(" · ")}
                 </p>
               </div>
+              <MemberDetailButton
+                memberId={item.memberId}
+                memberName={item.name}
+              />
               {isPaid ? (
                 <p className="shrink-0 text-sm font-medium tabular-nums text-foreground">
                   {formatCurrency(item.amountCents / 100)}
                 </p>
               ) : null}
-            </>
-          );
-
-          return (
-            <li key={item.id}>
-              {item.memberId ? (
-                <Link
-                  href={memberDetailPath(item.memberId)}
-                  className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/40"
-                >
-                  {content}
-                </Link>
-              ) : (
-                <div className="flex items-center gap-3 px-4 py-3">
-                  {content}
-                </div>
-              )}
             </li>
           );
         })}

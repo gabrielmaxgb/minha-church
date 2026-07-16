@@ -14,6 +14,7 @@ import { PUBLIC_ROUTES } from "@/constants/routes";
 import { Container } from "@/components/layout/container";
 import { MotionDiv, MotionSection } from "@/components/motion/motion-section";
 import { ProductShowcase } from "@/components/marketing/product-showcase";
+import { FamilyGraphPreview } from "@/components/marketing/family-graph-preview";
 import { FaqList } from "@/components/marketing/faq-list";
 import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
@@ -173,14 +174,14 @@ export function HeroSection() {
       </Container>
 
       <div className="hidden border-t border-border bg-gradient-to-b from-muted/30 to-background lg:block">
-        <Container className="py-10 xl:py-12">
+        <div className="w-full px-4 py-10 sm:px-6 lg:px-8 xl:py-12">
           <MotionDiv variants={fadeInUp}>
             <p className="mb-5 text-sm text-muted-foreground">
               Assim a liderança vê a semana
             </p>
             <ProductShowcase className="w-full shadow-popover" />
           </MotionDiv>
-        </Container>
+        </div>
       </div>
     </section>
   );
@@ -229,6 +230,56 @@ export function OperationDemoSection() {
               aria-hidden
             />
             <SundayPreviewCard className="relative mx-auto max-w-md xl:ml-auto xl:mr-0" />
+          </div>
+        </MotionSection>
+      </Container>
+    </section>
+  );
+}
+
+export function FamilyGraphDemoSection() {
+  return (
+    <section className="border-b border-border bg-gradient-to-b from-domain-members-subtle/40 via-background to-background py-14 sm:py-20 lg:py-24">
+      <Container>
+        <MotionSection
+          variants={fadeInUp}
+          className="grid items-center gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-14"
+        >
+          <div className="max-w-lg">
+            <p className="text-[11px] font-semibold tracking-[0.16em] text-domain-members-foreground uppercase">
+              Cadastro pastoral
+            </p>
+            <Heading as="h2" className="mt-3 text-balance">
+              A família inteira, não só a ficha
+            </Heading>
+            <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+              O mesmo grafo que a liderança usa no app: pais, cônjuges e filhos
+              ligados de forma visual — para pastorear com contexto, não com
+              planilha.
+            </p>
+
+            <ul className="mt-8 space-y-3">
+              {[
+                "Vínculos de parentesco com cores claras",
+                "Quem é quem na família, de um olhar",
+                "Aberto direto da ficha do membro",
+              ].map((signal) => (
+                <li
+                  key={signal}
+                  className="flex items-start gap-3 text-sm text-foreground"
+                >
+                  <span
+                    className="mt-1.5 size-1.5 shrink-0 rounded-full bg-domain-members"
+                    aria-hidden
+                  />
+                  <span className="leading-snug">{signal}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="relative min-w-0">
+            <FamilyGraphPreview />
           </div>
         </MotionSection>
       </Container>
@@ -299,8 +350,8 @@ export function ScreensSection() {
       domain: "schedules" as const,
     },
     {
-      title: "Membros",
-      description: "Cadastro pastoral com histórico da comunidade.",
+      title: "Famílias",
+      description: "Grafo de parentesco — o mesmo que você abre no cadastro.",
       domain: "members" as const,
     },
   ];

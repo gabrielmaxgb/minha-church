@@ -38,6 +38,7 @@ import {
   SettingsPanel,
   SettingsSectionHeader,
 } from "./settings-shared";
+import { AccountPrivacyPanel } from "./account-privacy-panel";
 
 function toDateInputValue(value: string | null | undefined): string {
   if (!value) {
@@ -85,7 +86,7 @@ function ProfileSettingsForm({
   hasMemberProfile: boolean;
 }) {
   const { updateProfile } = useAuth();
-  const { churchId } = useTenant();
+  const { churchId, church } = useTenant();
   const queryClient = useQueryClient();
   const [isSaving, setIsSaving] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
@@ -528,6 +529,10 @@ function ProfileSettingsForm({
           </>
         )}
       </form>
+
+      <div className="mt-6">
+        <AccountPrivacyPanel churchId={church?.id ?? churchId} />
+      </div>
 
       <FloatingSaveBar
         visible={isDirty}

@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { FormAlert, FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip } from "@/components/ui/tooltip";
 import { givingFundPath, settingsSectionPath } from "@/constants/routes";
 import {
   resolvePaymentsError,
@@ -448,7 +449,7 @@ export function GivingFundsPanel() {
         </div>
       ) : null}
 
-      <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
+      <ul className="divide-y divide-border rounded-xl border border-border bg-card">
         {funds.length === 0 ? (
           <li className="px-4 py-8 text-center text-sm leading-relaxed text-muted-foreground">
             Nenhum fundo ainda.
@@ -504,7 +505,16 @@ export function GivingFundsPanel() {
                   ) : (
                     "Disponível em Dízimos e ofertas"
                   )}
-                  {!fund.canDelete ? <span>· Já recebeu contribuições</span> : null}
+                  {!fund.canDelete ? (
+                    <Tooltip content="Não é possível excluir: este fundo já recebeu contribuições. Desative-o para preservar o histórico financeiro.">
+                      <span
+                        tabIndex={0}
+                        className="cursor-help underline decoration-dotted underline-offset-2 outline-none"
+                      >
+                        · Já recebeu contribuições
+                      </span>
+                    </Tooltip>
+                  ) : null}
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
