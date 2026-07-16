@@ -8,6 +8,7 @@ import {
   Repeat,
 } from "lucide-react";
 
+import { EventListNavActions } from "@/components/dashboard/activities/event-list-nav-actions";
 import { OccurrenceAvailabilityActions } from "@/components/dashboard/my-schedule/occurrence-availability-actions";
 import { RosterFunctionsReminder } from "@/components/dashboard/ministries/roster-functions-reminder";
 import type { EventAvailabilityPayload } from "@/components/dashboard/my-schedule/event-availability-panel";
@@ -34,8 +35,8 @@ interface WorshipAvailabilitySectionProps {
 function formatEventDay(iso: string): string {
   return new Intl.DateTimeFormat("pt-BR", {
     weekday: "short",
-    day: "numeric",
-    month: "short",
+    day: "2-digit",
+    month: "2-digit",
   }).format(new Date(iso));
 }
 
@@ -112,14 +113,11 @@ function SeriesCard({
         </button>
 
         {firstOpen ? (
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-8 shrink-0"
-            asChild
-          >
-            <Link href={activityDetailPath(firstOpen.id)}>Ver evento</Link>
-          </Button>
+          <EventListNavActions
+            eventId={firstOpen.id}
+            startsAt={firstOpen.startsAt}
+            showOccurrence
+          />
         ) : null}
       </div>
 

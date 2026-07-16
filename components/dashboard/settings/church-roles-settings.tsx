@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { HelpCircle, Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Eye, HelpCircle, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +14,8 @@ import {
   useDeleteChurchRole,
   useUpdateChurchRole,
 } from "@/lib/api/queries";
-import { canManageChurchRoles } from "@/lib/permissions";
+import { canManageChurchRoles, getFirstAccessibleRoute } from "@/lib/permissions";
+import { churchRolePermissionsToUserPermissions } from "@/lib/permissions/role-preview";
 import {
   applyChurchPermissionGroupToggle,
   applyChurchPermissionToggle,
@@ -108,7 +110,8 @@ function ChurchRoleSidebarGroupLabel({
 }
 
 export function ChurchRolesSettings() {
-  const { permissions } = useAuth();
+  const router = useRouter();
+  const { permissions, startRolePreview } = useAuth();
   const { data: roles, isLoading, isError } = useChurchRoles();
   const createRole = useCreateChurchRole();
   const updateRole = useUpdateChurchRole();
@@ -643,6 +646,63 @@ export function ChurchRolesSettings() {
                 )}
 
                 <div className="flex-1 space-y-4 px-4 py-4 sm:px-5">
+                  <div className="rounded-xl border border-border bg-muted/30 p-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0">
+                        <p className="flex items-center gap-1.5 text-sm font-medium">
+                          <Eye className="size-4" />
+                          Ver a igreja como este cargo
+                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Navegue com o menu e os botões que{" "}
+                          <span className="font-medium">
+                            {getDraftName(selectedRole)}
+                          </span>{" "}
+                          enxerga, sem entrar em outra conta. Um aviso no rodapé
+                          permite sair a qualquer momento.
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="shrink-0"
+                        disabled={selectedDirty}
+                        onClick={() => {
+                          const previewPermissions =
+                            churchRolePermissionsToUserPermissions(
+                              selectedRole.permissions,
+                            );
+                          startRolePreview(
+                            getDraftName(selectedRole),
+                            previewPermissions,
+                          );
+                          router.push(
+                            getFirstAccessibleRoute(previewPermissions, {
+                              isOwner: false,
+                            }),
+                          );
+                        }}
+                      >
+                        <Eye className="size-4" />
+                        Pré-visualizar
+                      </Button>
+                    </div>
+                    {selectedDirty ? (
+                      <p className="mt-2 text-[11px] text-amber-600 dark:text-amber-400">
+                        Salve as alterações para pré-visualizar com elas
+                        aplicadas.
+                      </p>
+                    ) : (
+                      <p className="mt-2 text-[11px] text-muted-foreground">
+                        Prévia parcial: os dados exibidos continuam sendo os
+                        seus (você é o dono); áreas liberadas por situação de
+                        membro (Dízimos, Pedidos de oração) e acessos
+                        específicos por ministério não são simulados.
+                      </p>
+                    )}
+                  </div>
+
                   <div>
                     <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                       Atribuição
@@ -672,8 +732,8 @@ export function ChurchRolesSettings() {
                     />
                     {selectedRole.systemKey === "member" ? (
                       <p className="mt-2 text-xs text-muted-foreground">
-                        O cargo Membro é compartilhado por todos e não pode ser
-                        titular único.
+                        O cargo Membro/todos é compartilhado por todos com login
+                        e não pode ser titular único.
                       </p>
                     ) : null}
                   </div>

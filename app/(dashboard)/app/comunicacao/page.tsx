@@ -7,7 +7,10 @@ import { DashboardPage } from "@/components/dashboard/dashboard-shell";
 export default function ComunicacaoPage() {
   return (
     <RequirePermission permission="communication">
-      <DashboardPage title="Comunicação" subtitle="Comunicados da igreja">
+      <DashboardPage
+        title="Avisos"
+        subtitle="Comunicados da igreja"
+      >
         <CommunicationContent />
       </DashboardPage>
     </RequirePermission>

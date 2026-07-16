@@ -8,9 +8,31 @@ import {
 } from "@/lib/api/queries/ministries.keys";
 import { eventsKeys, updateChurchEventAvailability } from "@/lib/api/queries/events.keys";
 import { rosterKeys } from "@/lib/api/queries/roster.keys";
-import { queries } from "@/lib/api/queries";
 import { CHURCH_WIDE_SCHEDULE_ID } from "@/lib/events/church-wide-schedule";
 import { useTenant } from "@/providers/auth-provider";
+
+function invalidateAvailabilityViews(
+  queryClient: ReturnType<typeof useQueryClient>,
+  churchId: string,
+  ministryId: string,
+  eventId: string,
+) {
+  // Fire-and-forget: don't hold the button busy while heavy GETs refetch.
+  // Skip dashboard — members often get 403 on /summary and it isn't needed here.
+  void queryClient.invalidateQueries({
+    queryKey: rosterKeys._def,
+  });
+
+  if (ministryId !== CHURCH_WIDE_SCHEDULE_ID) {
+    void queryClient.invalidateQueries({
+      queryKey: ministriesKeys.rosterProfile(churchId, ministryId).queryKey,
+    });
+  }
+
+  void queryClient.invalidateQueries({
+    queryKey: eventsKeys.detail(churchId, eventId).queryKey,
+  });
+}
 
 export function useRespondToRosterAvailability() {
   const { churchId } = useTenant();
@@ -37,43 +59,22 @@ export function useRespondToRosterAvailability() {
           status,
           roleLabels,
         });
-        return null;
+        return;
       }
 
-      return updateEventAvailability(churchId, ministryId, eventId, {
+      await updateEventAvailability(churchId, ministryId, eventId, {
         status,
         roleLabels,
       });
     },
-    onSuccess: async (profile, variables) => {
-      if (churchId) {
-        if (
-          profile &&
-          variables.ministryId !== CHURCH_WIDE_SCHEDULE_ID
-        ) {
-          queryClient.setQueryData(
-            ministriesKeys.rosterProfile(
-              churchId,
-              variables.ministryId,
-            ).queryKey,
-            profile,
-          );
-          await queryClient.invalidateQueries({
-            queryKey: ministriesKeys.rosterProfile(
-              churchId,
-              variables.ministryId,
-            ).queryKey,
-          });
-        }
-
-        await queryClient.invalidateQueries({
-          queryKey: eventsKeys.detail(churchId, variables.eventId).queryKey,
-        });
-        await queryClient.invalidateQueries({ queryKey: eventsKeys._def });
-        await queryClient.invalidateQueries({ queryKey: queries.dashboard._def });
-      }
-
-      await queryClient.invalidateQueries({ queryKey: rosterKeys._def });
+    onSuccess: (_data, variables) => {
+      if (!churchId) return;
+      invalidateAvailabilityViews(
+        queryClient,
+        churchId,
+        variables.ministryId,
+        variables.eventId,
+      );
     },
   });
 }

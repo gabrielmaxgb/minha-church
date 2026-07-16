@@ -306,7 +306,7 @@ export function PricingSection() {
                       <CardHeader>
                         {tier.highlighted && (
                           <span className="mb-2 inline-flex w-fit rounded-full bg-background/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-background">
-                            Mais escolhida
+                            Mais vendida
                           </span>
                         )}
                         <CardTitle

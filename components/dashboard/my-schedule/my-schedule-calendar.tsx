@@ -314,7 +314,9 @@ export function MyScheduleCalendar({
           ) : (
             <ul className="space-y-3">
               {selectedEvents.map((event) => {
-                const busy = busyEventId === event.eventId || respondBusy;
+                const isSaving = busyEventId === event.eventId;
+                const respondLocked =
+                  respondBusy && busyEventId !== event.eventId;
                 const kind = getScheduleEventDisplayKind(event);
                 const canRespond =
                   event.rosterOpen && kind !== "assigned";
@@ -366,7 +368,8 @@ export function MyScheduleCalendar({
                         ministryName={
                           ministryName ?? event.ministryName ?? "este ministério"
                         }
-                        busy={busy}
+                        busy={isSaving}
+                        disabled={respondLocked}
                         interactionsDisabled={interactionsDisabled}
                         layout="compact"
                         onRespond={(payload) =>

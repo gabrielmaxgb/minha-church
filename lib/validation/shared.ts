@@ -24,6 +24,63 @@ export function formatCpfInput(value: string): string {
   return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
 }
 
+export function normalizeCnpj(value: string): string {
+  return value.replace(/\D/g, "");
+}
+
+export function formatCnpjInput(value: string): string {
+  const digits = normalizeCnpj(value).slice(0, 14);
+
+  if (digits.length <= 2) {
+    return digits;
+  }
+
+  if (digits.length <= 5) {
+    return `${digits.slice(0, 2)}.${digits.slice(2)}`;
+  }
+
+  if (digits.length <= 8) {
+    return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5)}`;
+  }
+
+  if (digits.length <= 12) {
+    return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8)}`;
+  }
+
+  return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12)}`;
+}
+
+export function isValidCnpj(value: string): boolean {
+  const cnpj = normalizeCnpj(value);
+
+  if (cnpj.length !== 14 || /^(\d)\1+$/.test(cnpj)) {
+    return false;
+  }
+
+  const calcCheckDigit = (length: number): number => {
+    let sum = 0;
+    let weight = length - 7;
+
+    for (let index = 0; index < length; index += 1) {
+      sum += Number(cnpj[index]) * weight;
+      weight -= 1;
+
+      if (weight < 2) {
+        weight = 9;
+      }
+    }
+
+    const remainder = sum % 11;
+    return remainder < 2 ? 0 : 11 - remainder;
+  };
+
+  if (calcCheckDigit(12) !== Number(cnpj[12])) {
+    return false;
+  }
+
+  return calcCheckDigit(13) === Number(cnpj[13]);
+}
+
 export function isValidCpf(value: string): boolean {
   const cpf = normalizeCpf(value);
 

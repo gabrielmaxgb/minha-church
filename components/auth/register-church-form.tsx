@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ArrowRight,
   CalendarDays,
+  Church,
   Eye,
   EyeOff,
   MessageSquare,
@@ -16,10 +17,15 @@ import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { motion, useReducedMotion } from "motion/react";
 
+import { BusyOverlay } from "@/components/ui/busy-overlay";
 import { Button } from "@/components/ui/button";
 import { FormAlert, FormField, FormMessage } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
-import { AUTH_ROUTES, PUBLIC_ROUTES } from "@/constants/routes";
+import {
+  AUTH_ROUTES,
+  PUBLIC_ROUTES,
+  emailSentPath,
+} from "@/constants/routes";
 import { isRegisterChurchPending } from "@/types/auth";
 import {
   registerChurchSchema,
@@ -33,19 +39,19 @@ const highlights = [
     icon: Users,
     title: "Membros no lugar certo",
     description: "Cadastro pastoral sem planilha perdida.",
-    tone: "text-domain-members-foreground bg-domain-members-subtle",
+    tone: "text-foreground bg-muted",
   },
   {
     icon: CalendarDays,
     title: "Escalas com antecedência",
     description: "Convide, confirme e feche o culto com calma.",
-    tone: "text-domain-schedules-foreground bg-domain-schedules-subtle",
+    tone: "text-attention-foreground bg-attention-subtle",
   },
   {
     icon: MessageSquare,
     title: "Avisos com histórico",
     description: "Comunique a igreja sem depender só do WhatsApp.",
-    tone: "text-domain-communication-foreground bg-domain-communication-subtle",
+    tone: "text-muted-foreground bg-muted/80",
   },
 ] as const;
 
@@ -100,11 +106,9 @@ export function RegisterChurchForm() {
       });
 
       if (isRegisterChurchPending(result)) {
-        const params = new URLSearchParams({
-          verify: "sent",
-          email: result.email,
-        });
-        window.location.replace(`${PUBLIC_ROUTES.login}?${params.toString()}`);
+        window.location.replace(
+          emailSentPath(result.email, { from: "register" }),
+        );
         return;
       }
 
@@ -127,15 +131,26 @@ export function RegisterChurchForm() {
       animate={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
       transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
     >
-      <div className="overflow-hidden rounded-2xl border border-border/70 bg-card/90 shadow-popover backdrop-blur-sm lg:grid lg:min-h-[36rem] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
+      <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-card/90 shadow-popover backdrop-blur-sm lg:grid lg:min-h-[36rem] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
+        <BusyOverlay
+          active={isLoading}
+          icon={Church}
+          steps={[
+            "Criando sua igreja...",
+            "Preparando o painel...",
+            "Quase lá...",
+          ]}
+          hint="Só um instante — estamos montando o espaço da sua comunidade."
+        />
+
         {/* Painel de empolgação */}
-        <aside className="relative flex overflow-hidden border-b border-border/60 bg-gradient-to-br from-domain-activities-subtle via-card to-domain-members-subtle/80 px-6 py-8 sm:px-8 sm:py-10 lg:min-h-full lg:border-b-0 lg:border-r lg:px-10 lg:py-12">
+        <aside className="relative flex overflow-hidden border-b border-border/60 bg-gradient-to-br from-muted via-card to-attention-subtle px-6 py-8 sm:px-8 sm:py-10 lg:min-h-full lg:border-b-0 lg:border-r lg:px-10 lg:py-12">
           <div
-            className="pointer-events-none absolute -left-16 -top-20 size-56 rounded-full bg-domain-activities/15 blur-3xl"
+            className="pointer-events-none absolute -left-16 -top-20 size-56 rounded-full bg-domain-members/18 blur-3xl"
             aria-hidden
           />
           <div
-            className="pointer-events-none absolute -bottom-20 -right-10 size-48 rounded-full bg-attention/20 blur-3xl"
+            className="pointer-events-none absolute -bottom-20 -right-10 size-48 rounded-full bg-attention/22 blur-3xl"
             aria-hidden
           />
 

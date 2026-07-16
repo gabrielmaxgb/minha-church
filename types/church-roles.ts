@@ -34,18 +34,20 @@ export const CHURCH_PERMISSION_LABELS: Record<ChurchPermissionKey, string> = {
   dashboard_access: "Início",
   members_access: "Membros",
   ministries_access: "Ministérios",
-  activities_access: "Atividades",
+  activities_access: "Eventos",
   schedules_access: "Minhas escalas",
   finances_access: "Finanças",
-  communication_access: "Comunicação",
+  communication_access: "Avisos",
   reports_access: "Relatórios",
   settings_access: "Configurações",
   members_manage: "Cadastrar e editar membros",
   ministries_manage: "Cadastrar e editar ministérios",
-  events_create_church_wide: "Criar atividades em toda a igreja",
-  communication_manage: "Publicar e editar comunicados",
+  events_create_church_wide: "Criar eventos em toda a igreja",
+  communication_manage: "Publicar e editar avisos",
   roles_manage: "Definir cargos da igreja",
   memberships_manage: "Atribuir cargos a usuários",
+  counseling_receive: "Receber pedidos de aconselhamento e visitas",
+  receivables_manage: "Gerenciar recebimentos",
 };
 
 export const CHURCH_PERMISSION_DESCRIPTIONS: Record<ChurchPermissionKey, string> = {
@@ -56,29 +58,33 @@ export const CHURCH_PERMISSION_DESCRIPTIONS: Record<ChurchPermissionKey, string>
   ministries_access:
     "Ver os ministérios, suas equipes e cargos. Somente leitura — criar ou editar exige “Cadastrar e editar ministérios”.",
   activities_access:
-    "Ver a agenda e os detalhes das atividades e eventos da igreja. Criar atividades exige a permissão correspondente.",
+    "Ver a agenda e os detalhes em Eventos. Criar itens exige a permissão correspondente.",
   schedules_access:
     "Abre “Minhas escalas”, onde a pessoa acompanha as próprias convocações e marca disponibilidade.",
   finances_access:
-    "Abre a área financeira da igreja (entradas, saídas e relatórios).",
+    "Abre a área financeira da igreja (resumo de entradas e fundos).",
   communication_access:
-    "Abre a área de comunicação, com avisos e mensagens da igreja.",
+    "Abre Avisos, com comunicados da igreja e dos ministérios.",
   reports_access:
     "Abre os resumos e relatórios da igreja.",
   settings_access:
-    "Abre as configurações gerais da igreja. Algumas abas ainda pedem permissões próprias (cargos, usuários).",
+    "Abre as configurações da igreja (geral, cargos, usuários, atividade). Sem essa permissão, a pessoa só acessa as configurações da própria conta.",
   members_manage:
     "Cadastrar, editar e excluir membros, receber visitantes como membros e vincular ou desvincular pessoas de ministérios. Já inclui o acesso de leitura de “Membros”.",
   ministries_manage:
     "Criar, editar e excluir ministérios, seus cargos e funções, e montar as equipes vinculando ou removendo membros. Também concede controle das escalas e eventos de todos os ministérios da igreja.",
   events_create_church_wide:
-    "Criar, editar e excluir atividades para toda a igreja e também eventos dentro de qualquer ministério, sem precisar liderá-lo.",
+    "Criar, editar e excluir eventos para toda a igreja e também eventos dentro de qualquer ministério, sem precisar liderá-lo.",
   communication_manage:
-    "Criar, editar e excluir comunicados para a igreja ou ministérios específicos, agendar publicação e ver o histórico de envios.",
+    "Criar, editar e excluir avisos para a igreja ou ministérios específicos, agendar publicação e ver o histórico de envios.",
   roles_manage:
     "Criar, editar e excluir cargos e definir quais permissões cada um concede (esta tela). Não atribui os cargos às pessoas.",
   memberships_manage:
     "Atribuir e remover cargos dos usuários, definir proprietários, aprovar acessos pendentes e redefinir senhas de acesso.",
+  counseling_receive:
+    "Aparece na lista de Aconselhamentos e visitas e recebe solicitações de membros pelo app (notificação e e-mail).",
+  receivables_manage:
+    "Criar e gerenciar fundos de cobrança e ver o histórico de contribuições. Não inclui ativar o Stripe Connect (somente o proprietário). Já inclui o menu Finanças.",
 };
 
 export const CHURCH_PERMISSION_GROUPS: Array<{
@@ -116,6 +122,8 @@ export const CHURCH_PERMISSION_GROUPS: Array<{
       "communication_manage",
       "roles_manage",
       "memberships_manage",
+      "counseling_receive",
+      "receivables_manage",
     ],
   },
 ];

@@ -8,6 +8,7 @@ import { ArrowLeft, Loader2, UserPlus } from "lucide-react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 
 import { MemberAccountCreatedModal } from "@/components/dashboard/members/member-account-created-modal";
+import { MemberCreatingOverlay } from "@/components/dashboard/members/member-creating-overlay";
 import { MemberForm } from "@/components/dashboard/members/member-form";
 import { TierCrossingModal } from "@/components/billing/tier-crossing-modal";
 import { Button } from "@/components/ui/button";
@@ -99,7 +100,12 @@ export function CreateMemberContent() {
           Voltar para membros
         </Link>
 
-        <Card>
+        <Card className="relative overflow-hidden">
+          <MemberCreatingOverlay
+            active={createMember.isPending}
+            requiresLogin={status === "active"}
+          />
+
           <CardHeader>
             <div className="flex items-start gap-4">
               <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
@@ -124,13 +130,14 @@ export function CreateMemberContent() {
                   <FormAlert>{form.formState.errors.root.message}</FormAlert>
                 )}
 
-                {memberAccessLocked && status === "active" && (
+                {memberAccessLocked && (
                   <FormAlert>{MEMBER_ACCESS_LOCKED_REASON}</FormAlert>
                 )}
 
                 <MemberForm
                   requireLogin={status === "active"}
                   disabled={createMember.isPending}
+                  blockActivePromotion={memberAccessLocked}
                 />
 
                 <div className="flex flex-col-reverse gap-2 border-t border-border pt-6 sm:flex-row sm:justify-end">

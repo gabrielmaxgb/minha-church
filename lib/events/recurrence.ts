@@ -203,7 +203,11 @@ export function formatRecurrenceSummary(
   }
 
   if (recurrence.endDate) {
-    return `${base} até ${new Intl.DateTimeFormat("pt-BR").format(new Date(`${recurrence.endDate}T12:00:00`))}`;
+    return `${base} até ${new Intl.DateTimeFormat("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    }).format(new Date(`${recurrence.endDate}T12:00:00`))}`;
   }
 
   if (recurrence.maxOccurrences) {

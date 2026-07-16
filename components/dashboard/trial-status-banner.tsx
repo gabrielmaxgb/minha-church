@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { AlertTriangle, Clock, CreditCard, Lock, Sparkles } from "lucide-react";
+import { AlertTriangle, Clock, CreditCard, HeartHandshake, Sparkles } from "lucide-react";
 
 import { BillingNotice } from "@/components/billing/billing-notice";
 import { SubscribePricingTrigger } from "@/components/billing/subscribe-pricing-trigger";
@@ -11,12 +11,12 @@ import { useBillingPortalAction } from "@/lib/billing/use-billing-portal";
 import { useFeatureLock } from "@/lib/subscription/use-feature-lock";
 import { useAuth } from "@/providers/auth-provider";
 
-const URGENT_THRESHOLD_DAYS = 7;
+import { URGENT_TRIAL_THRESHOLD_DAYS } from "./trial-status-shared";
 
 function formatTrialEndDate(isoDate: string): string {
   return new Intl.DateTimeFormat("pt-BR", {
-    day: "numeric",
-    month: "long",
+    day: "2-digit",
+    month: "2-digit",
     year: "numeric",
   }).format(new Date(isoDate));
 }
@@ -40,6 +40,10 @@ function buildTrialCountdownMessage(
   return `Faltam ${trialDaysRemaining} ${dayLabel} de teste gratuito${endDateHint}.`;
 }
 
+/**
+ * Banner grande — só past_due, bloqueado ou trial urgente (≤7 dias).
+ * Trial calmo fica no chip do topbar.
+ */
 export function TrialStatusBanner() {
   const { user } = useAuth();
   const {
@@ -60,13 +64,13 @@ export function TrialStatusBanner() {
         tone="urgent"
         icon={AlertTriangle}
         title="Pagamento da assinatura pendente"
-        description="Não conseguimos cobrar a renovação. Atualize o cartão para continuar editando ministérios, comunicados e configurações."
+        description="Não conseguimos cobrar a renovação. Atualize o cartão para continuar editando ministérios, comunicados, recebimentos e configurações."
         action={
-          <div className="flex flex-col gap-2 sm:items-end">
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:items-end">
             <Button
               type="button"
-              size="sm"
-              className="w-full gap-2 bg-billing text-white hover:bg-billing/90 sm:w-auto"
+              size="default"
+              className="w-full min-w-40 gap-2 bg-[#f4f4f1] font-semibold text-[#1a1a18] shadow-xs hover:bg-white sm:w-auto"
               disabled={portalLoading}
               onClick={() => void openPortal()}
             >
@@ -75,7 +79,7 @@ export function TrialStatusBanner() {
             </Button>
             <Link
               href={`${AUTH_ROUTES.settings}?section=subscription`}
-              className="text-center text-xs text-billing-foreground underline-offset-4 hover:underline sm:text-right"
+              className="text-center text-xs text-[#f4f4f1]/70 underline-offset-4 hover:text-[#f4f4f1] hover:underline sm:text-right"
             >
               Ver detalhes da assinatura
             </Link>
@@ -90,35 +94,36 @@ export function TrialStatusBanner() {
 
     return (
       <BillingNotice
-        tone="critical"
-        icon={Lock}
+        tone="info"
+        icon={isCanceled ? HeartHandshake : Sparkles}
         title={
           isCanceled
-            ? "Sua assinatura foi encerrada"
-            : "Seu período de teste terminou"
+            ? "Sua assinatura pausou — a gente te espera de volta"
+            : "Obrigado por experimentar — vamos seguir juntos?"
         }
         description={
           isCanceled
-            ? "Você ainda pode consultar o painel e cadastrar novos membros. Para voltar a editar ministérios, atividades e comunicados, reative a assinatura."
-            : "Você ainda pode consultar o painel, ver o que já criou e cadastrar novos membros. Para editar ministérios, atividades, comunicados e configurações, assine a faixa do tamanho da sua igreja."
+            ? "Seu painel continua aqui para consulta e para cadastrar visitantes. Quando quiser retomar membros, ministérios e o dia a dia completo, é só reativar — com carinho, no tempo da sua igreja."
+            : "Seu teste gratuito chegou ao fim, mas nada do que você criou se perde. Continua podendo olhar o painel e cadastrar visitantes. Para receber membros e cuidar de ministérios, atividades e o resto com a equipe, escolha a faixa que cabe na sua igreja."
         }
         action={
-          <SubscribePricingTrigger className="w-full bg-billing text-white hover:bg-billing/90 sm:w-auto">
-            {isCanceled ? "Reativar assinatura" : "Assinar agora"}
+          <SubscribePricingTrigger inverted className="w-full sm:w-auto">
+            {isCanceled ? "Reativar assinatura" : "Escolher meu plano"}
           </SubscribePricingTrigger>
         }
       />
     );
   }
 
-  const isTrialing =
-    subscriptionStatus === "trialing" && trialDaysRemaining !== null;
+  const isUrgentTrial =
+    subscriptionStatus === "trialing" &&
+    trialDaysRemaining !== null &&
+    trialDaysRemaining <= URGENT_TRIAL_THRESHOLD_DAYS;
 
-  if (!isTrialing) {
+  if (!isUrgentTrial) {
     return null;
   }
 
-  const isUrgent = trialDaysRemaining <= URGENT_THRESHOLD_DAYS;
   const countdownMessage = buildTrialCountdownMessage(
     trialDaysRemaining,
     trialEndsAt,
@@ -126,26 +131,17 @@ export function TrialStatusBanner() {
 
   return (
     <BillingNotice
-      tone={isUrgent ? "urgent" : "info"}
-      icon={isUrgent ? Clock : Sparkles}
+      tone="urgent"
+      icon={Clock}
       title="Você está no período de teste gratuito"
       description={
         <>
-          {countdownMessage}{" "}
-          {isUrgent
-            ? "Veja a faixa da sua igreja para continuar gerenciando tudo sem interrupção."
-            : "Explore com calma — a cobrança só começa se você decidir continuar após o teste."}
+          {countdownMessage} Veja a faixa da sua igreja para continuar
+          gerenciando tudo sem interrupção.
         </>
       }
       action={
-        <SubscribePricingTrigger
-          variant={isUrgent ? "default" : "outline"}
-          className={
-            isUrgent
-              ? "w-full bg-billing text-white hover:bg-billing/90 sm:w-auto"
-              : "w-full border-billing/30 bg-card/80 text-billing-foreground hover:bg-billing-subtle sm:w-auto"
-          }
-        >
+        <SubscribePricingTrigger inverted className="w-full sm:w-auto">
           Assinar agora
         </SubscribePricingTrigger>
       }

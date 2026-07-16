@@ -14,6 +14,8 @@ const badgeVariants = cva(
         outline: "border-border bg-card text-foreground",
         attention:
           "border-attention-border bg-attention-subtle text-attention-foreground",
+        signal:
+          "border-transparent bg-signal text-attention-solid-foreground font-semibold",
         danger:
           "border-destructive/25 bg-destructive/10 text-destructive",
         success:

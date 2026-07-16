@@ -29,7 +29,7 @@ import { rosterKeys } from "@/lib/api/queries/roster.keys";
 import { queries } from "@/lib/api/queries";
 import { ministryDetailPath } from "@/constants/routes";
 import type { CreateMinistryEventPayload } from "@/types/ministries";
-import { useTenant } from "@/providers/auth-provider";
+import { useAuth, useTenant } from "@/providers/auth-provider";
 
 function useInvalidateMinistries() {
   const queryClient = useQueryClient();
@@ -43,6 +43,7 @@ function useInvalidateMinistries() {
 
 export function useCreateMinistry() {
   const { churchId } = useTenant();
+  const { reloadSession } = useAuth();
   const invalidate = useInvalidateMinistries();
   const router = useRouter();
 
@@ -55,7 +56,9 @@ export function useCreateMinistry() {
       return createMinistry(churchId, payload);
     },
     onSuccess: async (ministry) => {
-      await invalidate();
+      // Sessão inclui ministryIds derivadas dos ministérios ativos — precisa
+      // atualizar para escopos que ainda leem essa lista (filtros, etc.).
+      await Promise.all([invalidate(), reloadSession()]);
       router.push(ministryDetailPath(ministry.id));
     },
   });
@@ -255,23 +258,16 @@ export function useUpdateEventAvailability(ministryId: string) {
         roleLabels,
       });
     },
-    onSuccess: async (profile, variables) => {
-      if (churchId) {
-        queryClient.setQueryData(
-          ministriesKeys.rosterProfile(churchId, ministryId).queryKey,
-          profile,
-        );
-        await queryClient.invalidateQueries({
-          queryKey: ministriesKeys.rosterProfile(churchId, ministryId).queryKey,
-        });
-        await queryClient.invalidateQueries({
-          queryKey: eventsKeys.detail(churchId, variables.eventId).queryKey,
-        });
-        await queryClient.invalidateQueries({ queryKey: eventsKeys._def });
-        await queryClient.invalidateQueries({ queryKey: queries.dashboard._def });
-      }
-
-      await queryClient.invalidateQueries({ queryKey: rosterKeys._def });
+    onSuccess: (_data, variables) => {
+      if (!churchId) return;
+      // Don't await — keep the confirm button snappy; calendar refetches in background.
+      void queryClient.invalidateQueries({
+        queryKey: ministriesKeys.rosterProfile(churchId, ministryId).queryKey,
+      });
+      void queryClient.invalidateQueries({
+        queryKey: eventsKeys.detail(churchId, variables.eventId).queryKey,
+      });
+      void queryClient.invalidateQueries({ queryKey: rosterKeys._def });
     },
   });
 }

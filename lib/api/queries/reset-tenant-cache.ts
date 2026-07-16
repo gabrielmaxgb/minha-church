@@ -7,6 +7,7 @@ import { eventsKeys } from "@/lib/api/queries/events.keys";
 import { membersKeys } from "@/lib/api/queries/members.keys";
 import { membershipsKeys } from "@/lib/api/queries/memberships.keys";
 import { ministriesKeys } from "@/lib/api/queries/ministries.keys";
+import { paymentsKeys } from "@/lib/api/queries/payments.keys";
 
 const tenantQueryRoots = [
   dashboardKeys._def,
@@ -16,6 +17,7 @@ const tenantQueryRoots = [
   ministriesKeys._def,
   churchRolesKeys._def,
   auditLogsKeys._def,
+  paymentsKeys._def,
 ] as const;
 
 export function resetTenantQueryCache(queryClient: QueryClient) {

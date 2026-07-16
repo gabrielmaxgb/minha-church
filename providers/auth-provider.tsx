@@ -73,6 +73,14 @@ interface AuthContextValue {
   isLoading: boolean;
   isSwitchingChurch: boolean;
   switchingToChurchName: string | null;
+  /** True quando o usuário está pré-visualizando a igreja como um cargo. */
+  isPreviewingRole: boolean;
+  /** Nome do cargo em pré-visualização (para o banner). */
+  previewRoleName: string | null;
+  /** Entra no modo "ver como cargo" — sobrescreve permissões e desliga o bypass de owner. */
+  startRolePreview: (roleName: string, permissions: UserPermissions) => void;
+  /** Sai do modo de pré-visualização, voltando às permissões reais. */
+  stopRolePreview: () => void;
   login: (credentials: LoginCredentials) => Promise<AuthResponse>;
   registerChurch: (payload: RegisterChurchPayload) => Promise<RegisterChurchResult>;
   logout: () => Promise<void>;
@@ -148,6 +156,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [church, setChurch] = useState<Church | null>(null);
   const [churches, setChurches] = useState<Church[]>([]);
   const [permissions, setPermissions] = useState<UserPermissions | null>(null);
+  const [previewPermissions, setPreviewPermissions] =
+    useState<UserPermissions | null>(null);
+  const [previewRoleName, setPreviewRoleName] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSwitchingChurch, setIsSwitchingChurch] = useState(false);
   const [switchingToChurchName, setSwitchingToChurchName] = useState<string | null>(
@@ -356,16 +367,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [church?.id, churches, queryClient, scheduleTokenRefresh, sessionSetters, user],
   );
 
+  const startRolePreview = useCallback(
+    (roleName: string, rolePermissions: UserPermissions) => {
+      setPreviewRoleName(roleName);
+      setPreviewPermissions(rolePermissions);
+    },
+    [],
+  );
+
+  const stopRolePreview = useCallback(() => {
+    setPreviewRoleName(null);
+    setPreviewPermissions(null);
+  }, []);
+
+  // Sai da pré-visualização automaticamente ao trocar de igreja (evita estado preso).
+  useEffect(() => {
+    setPreviewRoleName(null);
+    setPreviewPermissions(null);
+  }, [church?.id]);
+
+  const isPreviewingRole = previewPermissions !== null;
+
+  // Permissões efetivas: em preview, o cargo escolhido; senão, as reais da sessão.
+  const effectivePermissions = previewPermissions ?? permissions;
+
+  // Durante a pré-visualização, o owner passa a ser tratado como não-owner para
+  // que os bypass de owner (menu, guardas de rota, botões) reflitam o cargo.
+  const effectiveUser = useMemo<User | null>(
+    () => (isPreviewingRole && user ? { ...user, isOwner: false } : user),
+    [isPreviewingRole, user],
+  );
+
   const value = useMemo<AuthContextValue>(
     () => ({
-      user,
+      user: effectiveUser,
       church,
       churches,
-      permissions,
-      isAuthenticated: Boolean(user && church),
+      permissions: effectivePermissions,
+      isAuthenticated: Boolean(effectiveUser && church),
       isLoading,
       isSwitchingChurch,
       switchingToChurchName,
+      isPreviewingRole,
+      previewRoleName,
+      startRolePreview,
+      stopRolePreview,
       login,
       registerChurch,
       logout,
@@ -378,17 +424,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       changePassword,
       church,
       churches,
+      effectivePermissions,
+      effectiveUser,
       isLoading,
+      isPreviewingRole,
       isSwitchingChurch,
       login,
       registerChurch,
       logout,
-      permissions,
+      previewRoleName,
       reloadSession,
+      startRolePreview,
+      stopRolePreview,
       switchChurch,
       switchingToChurchName,
       updateProfile,
-      user,
     ],
   );
 

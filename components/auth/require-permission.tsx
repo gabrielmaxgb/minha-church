@@ -21,16 +21,30 @@ export function RequirePermission({
   children,
 }: RequirePermissionProps) {
   const router = useRouter();
-  const { permissions, isLoading, isAuthenticated } = useAuth();
+  const { permissions, user, isLoading, isAuthenticated } = useAuth();
 
   const allowed =
-    permissions !== null && hasRoutePermission(permissions, permission);
+    permissions !== null &&
+    hasRoutePermission(permissions, permission, {
+      isOwner: Boolean(user?.isOwner),
+    });
 
   useEffect(() => {
     if (!isLoading && isAuthenticated && !allowed && permissions) {
-      router.replace(getFirstAccessibleRoute(permissions));
+      router.replace(
+        getFirstAccessibleRoute(permissions, {
+          isOwner: Boolean(user?.isOwner),
+        }),
+      );
     }
-  }, [allowed, isAuthenticated, isLoading, permissions, router]);
+  }, [
+    allowed,
+    isAuthenticated,
+    isLoading,
+    permissions,
+    router,
+    user?.isOwner,
+  ]);
 
   if (isLoading) {
     return (

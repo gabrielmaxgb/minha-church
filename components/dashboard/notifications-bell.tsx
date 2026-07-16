@@ -8,9 +8,12 @@ import {
   Bell,
   ClipboardList,
   CreditCard,
+  HeartHandshake,
   KeyRound,
   Mail,
+  Ticket,
   UserCheck,
+  Users,
 } from "lucide-react";
 
 import { openTierUpgradeApprovalModal } from "@/components/billing/tier-crossing-owner-host";
@@ -22,10 +25,15 @@ import {
 import { markTierCrossingStaffNoticeRead } from "@/lib/api/billing";
 import { billingKeys } from "@/lib/api/queries/billing.keys";
 import {
+  useAckCareViewedMine,
+  useMarkNotificationRead,
   useMyMinistryNotifications,
   useMySchedules,
+  useNotificationInbox,
   usePasswordResetRequests,
   useAnnouncementsUnreadCount,
+  useCareInboxPendingCount,
+  useCareViewedMineCount,
 } from "@/lib/api/queries";
 import { canManageChurchMemberships } from "@/lib/church-memberships/constants";
 import {
@@ -44,11 +52,30 @@ import {
   firstPendingScheduleHref,
   schedulePendingCount,
 } from "@/lib/my-schedule/schedule-notifications";
+import {
+  inboxNotificationTypeLabel,
+  inboxUnreadCount,
+  inboxUnreadItems,
+} from "@/lib/notifications/inbox-notifications";
 import { canManageMembers } from "@/lib/permissions";
 import { pendingNotificationStyles } from "@/lib/ui/notification-styles";
 import { cn, formatDateTime } from "@/lib/utils";
 import { useAuth, useTenant } from "@/providers/auth-provider";
+import type { InboxNotificationType } from "@/types/notifications";
 
+function inboxTypeIcon(type: InboxNotificationType) {
+  switch (type) {
+    case "registration_open":
+      return Ticket;
+    case "schedule_roster_assigned":
+      return ClipboardList;
+    case "pending_access":
+      return Users;
+    case "account_linked":
+    default:
+      return UserCheck;
+  }
+}
 function useNotificationCount(): number {
   const { permissions, user } = useAuth();
   const { churchId } = useTenant();
@@ -57,6 +84,8 @@ function useNotificationCount(): number {
   const isOwner = Boolean(user?.isOwner);
   const hasSchedulesAccess = Boolean(permissions?.schedules.access);
   const hasCommunicationAccess = Boolean(permissions?.communication.access);
+  const canReceiveCare =
+    isOwner || Boolean(permissions?.counseling?.receive);
 
   const { data: passwordResetRequests } = usePasswordResetRequests({
     poll: canManage,
@@ -66,6 +95,11 @@ function useNotificationCount(): number {
   const { data: unreadAnnouncements } = useAnnouncementsUnreadCount({
     enabled: hasCommunicationAccess,
   });
+  const { data: carePending } = useCareInboxPendingCount({
+    enabled: canReceiveCare,
+  });
+  const { data: careViewed } = useCareViewedMineCount({ poll: true });
+  const { data: inbox } = useNotificationInbox({ poll: true });
   const { data: pendingTier } = useQuery({
     ...billingKeys.tierCrossingPending(churchId ?? "unknown"),
     enabled: Boolean(churchId) && isOwner,
@@ -87,16 +121,22 @@ function useNotificationCount(): number {
     unreadAnnouncements,
     hasCommunicationAccess,
   );
+  const carePendingCount = canReceiveCare ? (carePending?.count ?? 0) : 0;
+  const careViewedCount = careViewed?.count ?? 0;
   const tierPendingCount = isOwner && pendingTier ? 1 : 0;
   const tierNoticeCount = canMembers ? (staffNotices?.length ?? 0) : 0;
+  const inboxCount = inboxUnreadCount(inbox);
 
   return (
     passwordResetCount +
     pendingScheduleCount +
     ministryCount +
     announcementCount +
+    carePendingCount +
+    careViewedCount +
     tierPendingCount +
-    tierNoticeCount
+    tierNoticeCount +
+    inboxCount
   );
 }
 
@@ -119,6 +159,8 @@ function NotificationsPanel({
   const isOwner = Boolean(user?.isOwner);
   const hasSchedulesAccess = Boolean(permissions?.schedules.access);
   const hasCommunicationAccess = Boolean(permissions?.communication.access);
+  const canReceiveCare =
+    isOwner || Boolean(permissions?.counseling?.receive);
 
   const {
     data: passwordResetRequests,
@@ -141,6 +183,28 @@ function NotificationsPanel({
     isError: announcementsError,
   } = useAnnouncementsUnreadCount({
     enabled: open && hasCommunicationAccess,
+  });
+  const {
+    data: carePending,
+    isLoading: carePendingLoading,
+    isError: carePendingError,
+  } = useCareInboxPendingCount({
+    enabled: open && canReceiveCare,
+  });
+  const {
+    data: careViewed,
+    isLoading: careViewedLoading,
+    isError: careViewedError,
+  } = useCareViewedMineCount({
+    enabled: open,
+  });
+  const {
+    data: inbox,
+    isLoading: inboxLoading,
+    isError: inboxError,
+  } = useNotificationInbox({
+    enabled: open,
+    poll: open,
   });
   const { data: pendingTier } = useQuery({
     ...billingKeys.tierCrossingPending(churchId ?? "unknown"),
@@ -165,6 +229,8 @@ function NotificationsPanel({
       });
     },
   });
+  const ackCareViewed = useAckCareViewedMine();
+  const markInboxRead = useMarkNotificationRead();
 
   const passwordResetCount = canManage ? (passwordResetRequests?.length ?? 0) : 0;
   const pendingScheduleCount = schedulePendingCount(
@@ -176,15 +242,22 @@ function NotificationsPanel({
     unreadAnnouncements,
     hasCommunicationAccess,
   );
+  const carePendingCount = canReceiveCare ? (carePending?.count ?? 0) : 0;
+  const careViewedCount = careViewed?.count ?? 0;
   const tierPendingCount = isOwner && pendingTier ? 1 : 0;
   const tierNoticeCount = canMembers ? (staffNotices?.length ?? 0) : 0;
+  const unreadInboxItems = inboxUnreadItems(inbox?.items);
+  const inboxCount = inboxUnreadCount(inbox);
   const count =
     passwordResetCount +
     pendingScheduleCount +
     ministryCount +
     announcementCount +
+    carePendingCount +
+    careViewedCount +
     tierPendingCount +
-    tierNoticeCount;
+    tierNoticeCount +
+    inboxCount;
 
   const respondHref = schedules
     ? firstPendingScheduleHref(schedules)
@@ -194,12 +267,18 @@ function NotificationsPanel({
     (canManage && passwordResetLoading) ||
     (hasSchedulesAccess && schedulesLoading) ||
     ministryNotificationsLoading ||
-    (hasCommunicationAccess && announcementsLoading);
+    (hasCommunicationAccess && announcementsLoading) ||
+    (canReceiveCare && carePendingLoading) ||
+    careViewedLoading ||
+    inboxLoading;
   const isError =
     (canManage && passwordResetError) ||
     (hasSchedulesAccess && schedulesError) ||
     ministryNotificationsError ||
-    (hasCommunicationAccess && announcementsError);
+    (hasCommunicationAccess && announcementsError) ||
+    (canReceiveCare && carePendingError) ||
+    careViewedError ||
+    inboxError;
 
   useEffect(() => {
     if (!open) {
@@ -279,6 +358,59 @@ function NotificationsPanel({
 
           {!isLoading &&
             !isError &&
+            unreadInboxItems.map((item) => {
+              const Icon = inboxTypeIcon(item.type);
+              return (
+                <div
+                  key={item.id}
+                  className="border-b border-border/70 px-4 py-3 last:border-b-0"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className={pendingNotificationStyles.icon.sm}>
+                      <Icon
+                        className={cn(
+                          "size-3.5",
+                          pendingNotificationStyles.iconText,
+                        )}
+                        aria-hidden
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className={pendingNotificationStyles.label}>
+                        {inboxNotificationTypeLabel(item.type)}
+                      </p>
+                      <p className="mt-1 text-sm font-medium leading-snug">
+                        {item.title}
+                      </p>
+                      {item.body ? (
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {item.body}
+                        </p>
+                      ) : null}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-2 h-8 text-xs"
+                        asChild={Boolean(item.href)}
+                        onClick={() => {
+                          void markInboxRead.mutateAsync(item.id);
+                          onClose();
+                        }}
+                      >
+                        {item.href ? (
+                          <Link href={item.href}>Ver</Link>
+                        ) : (
+                          "Entendi"
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+
+          {!isLoading &&
+            !isError &&
             announcementCount > 0 && (
               <div className="border-b border-border/70 px-4 py-3 last:border-b-0">
                 <div className="flex items-start gap-3">
@@ -313,6 +445,79 @@ function NotificationsPanel({
                 </div>
               </div>
             )}
+
+          {!isLoading && !isError && carePendingCount > 0 && (
+            <div className="border-b border-border/70 px-4 py-3 last:border-b-0">
+              <div className="flex items-start gap-3">
+                <div className={pendingNotificationStyles.icon.sm}>
+                  <HeartHandshake
+                    className={cn("size-3.5", pendingNotificationStyles.iconText)}
+                    aria-hidden
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className={pendingNotificationStyles.label}>
+                    Aconselhamentos e visitas
+                  </p>
+                  <p className="mt-1 text-sm font-medium leading-snug">
+                    {carePendingCount === 1
+                      ? "1 pedido esperando sua leitura"
+                      : `${carePendingCount} pedidos esperando sua leitura`}
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Confirmar a leitura tranquiliza quem pediu.
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-2 h-8 text-xs"
+                    asChild
+                    onClick={onClose}
+                  >
+                    <Link href={AUTH_ROUTES.careRequests}>Ver pedidos</Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {!isLoading && !isError && careViewedCount > 0 && (
+            <div className="border-b border-border/70 px-4 py-3 last:border-b-0">
+              <div className="flex items-start gap-3">
+                <div className={pendingNotificationStyles.icon.sm}>
+                  <HeartHandshake
+                    className={cn("size-3.5", pendingNotificationStyles.iconText)}
+                    aria-hidden
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className={pendingNotificationStyles.label}>
+                    Aconselhamentos e visitas
+                  </p>
+                  <p className="mt-1 text-sm font-medium leading-snug">
+                    {careViewedCount === 1
+                      ? "Seu pedido foi lido"
+                      : `${careViewedCount} pedidos foram lidos`}
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Alguém confirma a leitura — e em breve entra em contato.
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-2 h-8 text-xs"
+                    asChild
+                    onClick={() => {
+                      void ackCareViewed.mutateAsync();
+                      onClose();
+                    }}
+                  >
+                    <Link href={AUTH_ROUTES.careRequests}>Ver meus pedidos</Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {!isLoading && !isError && tierPendingCount > 0 && pendingTier && (
             <div className="border-b border-border/70 px-4 py-3 last:border-b-0">
@@ -521,19 +726,11 @@ function NotificationsPanel({
 export function NotificationsBell() {
   const titleId = useId();
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const { permissions, user } = useAuth();
-  const canManage = canManageChurchMemberships(permissions);
-  const canMembers = permissions ? canManageMembers(permissions) : false;
-  const isOwner = Boolean(user?.isOwner);
-  const hasSchedulesAccess = Boolean(permissions?.schedules.access);
-  const hasCommunicationAccess = Boolean(permissions?.communication.access);
+  const { churchId } = useTenant();
   const [open, setOpen] = useState(false);
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
   const count = useNotificationCount();
   const hasNotifications = count > 0;
-  const { data: ministryNotifications } = useMyMinistryNotifications();
-  const hasMinistryNotifications =
-    ministryNotificationsCount(ministryNotifications) > 0;
 
   useEffect(() => {
     if (!open) {
@@ -556,14 +753,8 @@ export function NotificationsBell() {
     };
   }, [open]);
 
-  if (
-    !canManage &&
-    !canMembers &&
-    !isOwner &&
-    !hasSchedulesAccess &&
-    !hasMinistryNotifications &&
-    !hasCommunicationAccess
-  ) {
+  // Todo membro com igreja selecionada vê o sininho (comunicação da igreja).
+  if (!churchId) {
     return null;
   }
 

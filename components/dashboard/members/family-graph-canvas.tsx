@@ -1,18 +1,116 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { motion, useReducedMotion } from "motion/react";
-import { Heart, Trash2, Users, X } from "lucide-react";
+import "@xyflow/react/dist/style.css";
+
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  BaseEdge,
+  Background,
+  BackgroundVariant,
+  Controls,
+  Handle,
+  MarkerType,
+  Position,
+  ReactFlow,
+  ReactFlowProvider,
+  useEdgesState,
+  useNodesState,
+  useReactFlow,
+  useStore,
+  type Edge,
+  type EdgeProps,
+  type Node,
+  type NodeProps,
+} from "@xyflow/react";
+import { RotateCcw, Trash2, Users, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { routeAroundObstacles } from "@/lib/members/family-graph-edge-route";
+import {
+  NODE_H,
+  NODE_W,
+  computeFamilyLayout,
+  firstName,
+  initials,
+  restName,
+} from "@/lib/members/family-graph-layout";
 import type {
   FamilyGraphMember,
   MemberRelation,
   MemberRelationType,
 } from "@/types/members";
+import {
+  ASCENDANT_RELATION_TYPES,
+  MEMBER_RELATION_LABELS,
+  UNDIRECTED_RELATION_TYPES,
+  relationChoiceLabel,
+} from "@/types/members";
+
+const RELATION_CHOICES: MemberRelationType[] = [
+  "spouse",
+  "sibling",
+  "parent",
+  "grandparent",
+  "step_parent",
+  "parent_in_law",
+  "uncle",
+];
+
+/**
+ * Relation colors for data viz (distinct parentesco hues — not product domains).
+ */
+const RELATION_COLORS: Record<MemberRelationType, string> = {
+  parent: "var(--relation-parent)",
+  spouse: "var(--relation-spouse)",
+  sibling: "var(--relation-sibling)",
+  grandparent: "var(--relation-grandparent)",
+  step_parent: "var(--relation-step-parent)",
+  parent_in_law: "var(--relation-parent-in-law)",
+  uncle: "var(--relation-uncle)",
+};
+
+const RELATION_LEGEND: {
+  type: MemberRelationType;
+  label: string;
+}[] = [
+  { type: "parent", label: "Pai/mãe → filho(a)" },
+  { type: "spouse", label: "Cônjuges" },
+  { type: "sibling", label: "Irmãos(ãs)" },
+  { type: "grandparent", label: "Avô/avó → neto(a)" },
+  { type: "step_parent", label: "Padrasto/madrasta" },
+  { type: "parent_in_law", label: "Sogro/sogra" },
+  { type: "uncle", label: "Tio/tia → sobrinho(a)" },
+];
+
+function relationStroke(type: MemberRelationType): string {
+  return RELATION_COLORS[type];
+}
+
+function RelationColorSwatch({
+  type,
+  className,
+}: {
+  type: MemberRelationType;
+  className?: string;
+}) {
+  const dashed = type === "step_parent" || type === "uncle";
+  return (
+    <span
+      className={cn("block h-1.5 w-7 shrink-0 rounded-full", className)}
+      style={{
+        backgroundColor: dashed ? "transparent" : relationStroke(type),
+        borderTop: dashed ? `2.5px dashed ${relationStroke(type)}` : undefined,
+        height: dashed ? 0 : undefined,
+        marginTop: dashed ? 4 : undefined,
+      }}
+      aria-hidden
+    />
+  );
+}
 
 interface FamilyGraphCanvasProps {
+  familyId: string;
   members: FamilyGraphMember[];
   relations: MemberRelation[];
   canEdit: boolean;
@@ -25,294 +123,221 @@ interface FamilyGraphCanvasProps {
   onDeleteRelation: (relationId: string) => Promise<void> | void;
 }
 
-interface NodePosition {
-  id: string;
-  x: number;
-  y: number;
-  generation: number;
+type NodePos = { x: number; y: number };
+
+/* -------------------------------------------------------------------------- */
+/* Position persistence (per family, localStorage)                            */
+/* -------------------------------------------------------------------------- */
+
+function storageKey(familyId: string): string {
+  return `mc:familyGraph:positions:${familyId}`;
 }
 
-const BASE_WIDTH = 960;
-const PAD_X = 96;
-const PAD_Y = 80;
-const NODE_W = 112;
-const NODE_H = 96;
-/** Vertical distance between generation centers — leaves room for edge markers. */
-const ROW_GAP = 220;
-/** Gap between siblings / unrelated people in a row. */
-const COL_GAP = 96;
-/** Slightly tighter gap between spouses, still room for the ♥. */
-const SPOUSE_GAP = 72;
-
-function firstName(name: string) {
-  return name.trim().split(/\s+/)[0] ?? name;
+function loadPositions(familyId: string): Record<string, NodePos> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(storageKey(familyId));
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as unknown;
+    if (parsed && typeof parsed === "object") {
+      return parsed as Record<string, NodePos>;
+    }
+  } catch {
+    // Ignora cache corrompido.
+  }
+  return {};
 }
 
-function restName(name: string) {
-  return name.trim().split(/\s+/).slice(1).join(" ");
+function persistPositions(familyId: string, positions: Record<string, NodePos>) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(
+      storageKey(familyId),
+      JSON.stringify(positions),
+    );
+  } catch {
+    // Ignora quota/erros de storage.
+  }
 }
 
-function initials(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("");
+/* -------------------------------------------------------------------------- */
+/* Custom node                                                                */
+/* -------------------------------------------------------------------------- */
+
+type MemberNodeData = {
+  member: FamilyGraphMember;
+  active: boolean;
+  canEdit: boolean;
+};
+
+type MemberFlowNode = Node<MemberNodeData, "member">;
+
+const handleClassName =
+  "!h-2 !w-2 !min-w-0 !border-0 !bg-transparent !opacity-0";
+
+function MemberNode({ data }: NodeProps<MemberFlowNode>) {
+  const { member, active, canEdit } = data;
+  const surname = restName(member.name);
+
+  return (
+    <div
+      className={cn(
+        "flex flex-col items-center justify-center gap-1.5 rounded-[1.25rem] border bg-white/95 px-3 py-2 text-center shadow-xs backdrop-blur-sm transition-[box-shadow,border-color] duration-200",
+        active
+          ? "border-billing shadow-popover ring-[3px] ring-billing/20"
+          : "border-black/6 hover:border-billing/35 hover:shadow-popover",
+        canEdit ? "cursor-pointer" : "cursor-default",
+      )}
+      style={{ width: NODE_W, height: NODE_H }}
+    >
+      <Handle
+        id="t"
+        type="target"
+        position={Position.Top}
+        isConnectable={false}
+        className={handleClassName}
+      />
+      <Handle
+        id="l"
+        type="target"
+        position={Position.Left}
+        isConnectable={false}
+        className={handleClassName}
+      />
+
+      <span
+        className={cn(
+          "flex size-9 items-center justify-center rounded-full text-[13px] font-semibold tracking-wide",
+          active
+            ? "bg-billing text-white"
+            : "bg-billing-subtle text-billing-foreground",
+        )}
+      >
+        {initials(member.name)}
+      </span>
+      <span className="min-w-0 w-full">
+        <span className="block truncate text-[13px] font-medium leading-tight text-foreground">
+          {firstName(member.name)}
+        </span>
+        {surname ? (
+          <span className="mt-0.5 block truncate text-[10px] leading-tight text-muted-foreground">
+            {surname}
+          </span>
+        ) : null}
+      </span>
+
+      <Handle
+        id="b"
+        type="source"
+        position={Position.Bottom}
+        isConnectable={false}
+        className={handleClassName}
+      />
+      <Handle
+        id="r"
+        type="source"
+        position={Position.Right}
+        isConnectable={false}
+        className={handleClassName}
+      />
+    </div>
+  );
 }
 
-/** Build generation ranks from parent edges; spouses share a generation. */
-function layoutNodes(
-  members: FamilyGraphMember[],
-  relations: MemberRelation[],
-): { positions: NodePosition[]; height: number; width: number } {
-  if (members.length === 0) {
-    return { positions: [], height: 360, width: BASE_WIDTH };
-  }
+/* -------------------------------------------------------------------------- */
+/* Custom edge                                                                */
+/* -------------------------------------------------------------------------- */
 
-  const ids = members.map((m) => m.id);
-  const idSet = new Set(ids);
+type RelationEdgeData = {
+  relationType: MemberRelationType;
+  isSelected: boolean;
+  /** Horizontal shift for the mid-segment so parallel ascendant lines fan out. */
+  laneOffset?: number;
+};
 
-  const parentsOf = new Map<string, string[]>();
-  const childrenOf = new Map<string, string[]>();
-  const spouseOf = new Map<string, string>();
+type RelationFlowEdge = Edge<RelationEdgeData, "relation">;
 
-  for (const id of ids) {
-    parentsOf.set(id, []);
-    childrenOf.set(id, []);
-  }
+function RelationEdge({
+  id,
+  source,
+  target,
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  markerEnd,
+  data,
+}: EdgeProps<RelationFlowEdge>) {
+  const relationType = data?.relationType ?? "parent";
+  const isPeer = UNDIRECTED_RELATION_TYPES.has(relationType);
+  const isSelected = data?.isSelected ?? false;
+  const laneOffset = data?.laneOffset ?? 0;
+  const color = relationStroke(relationType);
 
-  for (const rel of relations) {
-    if (!idSet.has(rel.fromMemberId) || !idSet.has(rel.toMemberId)) continue;
-
-    if (rel.type === "parent") {
-      parentsOf.get(rel.toMemberId)?.push(rel.fromMemberId);
-      childrenOf.get(rel.fromMemberId)?.push(rel.toMemberId);
-    } else if (rel.type === "spouse") {
-      spouseOf.set(rel.fromMemberId, rel.toMemberId);
-      spouseOf.set(rel.toMemberId, rel.fromMemberId);
-    }
-  }
-
-  const generation = new Map<string, number>();
-  const visiting = new Set<string>();
-
-  function rank(id: string): number {
-    const cached = generation.get(id);
-    if (cached !== undefined) return cached;
-    if (visiting.has(id)) return 0;
-    visiting.add(id);
-
-    const parents = parentsOf.get(id) ?? [];
-    let g = 0;
-    if (parents.length > 0) {
-      g = Math.max(...parents.map(rank)) + 1;
-    }
-
-    visiting.delete(id);
-    generation.set(id, g);
-    return g;
-  }
-
-  for (const id of ids) rank(id);
-
-  // Spouses align to the same generation (prefer the lower/earlier one).
-  for (const [a, b] of spouseOf) {
-    const ga = generation.get(a) ?? 0;
-    const gb = generation.get(b) ?? 0;
-    const shared = Math.min(ga, gb);
-    generation.set(a, shared);
-    generation.set(b, shared);
-  }
-
-  // Re-propagate children after spouse alignment.
-  let changed = true;
-  let guard = 0;
-  while (changed && guard < 8) {
-    changed = false;
-    guard += 1;
-    for (const id of ids) {
-      const parents = parentsOf.get(id) ?? [];
-      if (parents.length === 0) continue;
-      const next = Math.max(...parents.map((p) => generation.get(p) ?? 0)) + 1;
-      if (next > (generation.get(id) ?? 0)) {
-        generation.set(id, next);
-        changed = true;
-        const spouse = spouseOf.get(id);
-        if (spouse) {
-          const sg = generation.get(spouse) ?? 0;
-          if (next < sg) generation.set(spouse, next);
-          else if (next > sg) generation.set(id, sg);
-        }
-      }
-    }
-  }
-
-  const byGen = new Map<number, string[]>();
-  for (const id of ids) {
-    const g = generation.get(id) ?? 0;
-    const row = byGen.get(g) ?? [];
-    row.push(id);
-    byGen.set(g, row);
-  }
-
-  const gens = [...byGen.keys()].sort((a, b) => a - b);
-
-  // Order each row: keep spouses adjacent; prefer parent-centroid for children.
-  for (const g of gens) {
-    const row = byGen.get(g) ?? [];
-    const placed = new Set<string>();
-    const ordered: string[] = [];
-
-    const score = (id: string) => {
-      const parents = parentsOf.get(id) ?? [];
-      if (parents.length === 0) return 0;
-      return (
-        parents.reduce((sum, p) => {
-          const pg = generation.get(p) ?? 0;
-          const prow = byGen.get(pg) ?? [];
-          const idx = prow.indexOf(p);
-          return sum + (idx >= 0 ? idx : 0);
-        }, 0) / parents.length
-      );
-    };
-
-    row.sort((a, b) => score(a) - score(b) || a.localeCompare(b));
-
-    for (const id of row) {
-      if (placed.has(id)) continue;
-      const spouse = spouseOf.get(id);
-      if (spouse && row.includes(spouse) && !placed.has(spouse)) {
-        // Put lower id first for stability, but keep pair together.
-        if (id < spouse) {
-          ordered.push(id, spouse);
-        } else {
-          ordered.push(spouse, id);
-        }
-        placed.add(id);
-        placed.add(spouse);
-      } else {
-        ordered.push(id);
-        placed.add(id);
-      }
-    }
-
-    byGen.set(g, ordered);
-  }
-
-  const maxGen = gens.length > 0 ? Math.max(...gens) : 0;
-  const height = Math.max(
-    400,
-    PAD_Y * 2 + (maxGen + 1) * NODE_H + maxGen * (ROW_GAP - NODE_H),
+  // Cards are obstacles — route through gutters, never through a member.
+  const obstacles = useStore((state) =>
+    state.nodes
+      .filter((node) => node.id !== source && node.id !== target)
+      .map((node) => ({
+        x: node.position.x,
+        y: node.position.y,
+        width: NODE_W,
+        height: NODE_H,
+      })),
   );
 
-  // Measure each row with spouse-aware gaps, then size the canvas to fit.
-  function rowWidth(row: string[]): number {
-    if (row.length === 0) return 0;
-    let w = NODE_W;
-    for (let i = 0; i < row.length - 1; i += 1) {
-      const a = row[i];
-      const b = row[i + 1];
-      const gap =
-        spouseOf.get(a) === b || spouseOf.get(b) === a ? SPOUSE_GAP : COL_GAP;
-      w += gap + NODE_W;
-    }
-    return w;
-  }
+  const edgePath = useMemo(
+    () =>
+      routeAroundObstacles(
+        { x: sourceX, y: sourceY },
+        { x: targetX, y: targetY },
+        obstacles,
+        { laneOffset, padding: 16, grid: 16, cornerRadius: 14 },
+      ),
+    [sourceX, sourceY, targetX, targetY, obstacles, laneOffset],
+  );
 
-  const widestRow = Math.max(...gens.map((g) => rowWidth(byGen.get(g) ?? [])), 0);
-  const width = Math.max(BASE_WIDTH, widestRow + PAD_X * 2);
-
-  const positions: NodePosition[] = [];
-
-  for (const g of gens) {
-    const row = byGen.get(g) ?? [];
-    const totalWidth = rowWidth(row);
-    let x = (width - totalWidth) / 2 + NODE_W / 2;
-    const y = PAD_Y + NODE_H / 2 + g * ROW_GAP;
-
-    row.forEach((id, index) => {
-      positions.push({
-        id,
-        x,
-        y,
-        generation: g,
-      });
-
-      if (index < row.length - 1) {
-        const next = row[index + 1];
-        const gap =
-          spouseOf.get(id) === next || spouseOf.get(next) === id
-            ? SPOUSE_GAP
-            : COL_GAP;
-        x += NODE_W + gap;
-      }
-    });
-  }
-
-  return { positions, height, width };
+  return (
+    <>
+      {/* Soft halo only for readability when two lines cross in a gutter. */}
+      <BaseEdge
+        id={`${id}-halo`}
+        path={edgePath}
+        style={{
+          stroke: "rgba(255,255,255,0.9)",
+          strokeWidth: isSelected ? 7 : 5.5,
+          strokeLinecap: "round",
+        }}
+      />
+      <BaseEdge
+        id={id}
+        path={edgePath}
+        markerEnd={markerEnd}
+        interactionWidth={28}
+        style={{
+          stroke: color,
+          strokeWidth: isSelected ? 3.5 : isPeer ? 3 : 2.75,
+          strokeOpacity: 1,
+          strokeLinecap: "round",
+          strokeDasharray:
+            relationType === "step_parent" || relationType === "uncle"
+              ? "6 5"
+              : undefined,
+        }}
+      />
+    </>
+  );
 }
 
-function edgeEndpoints(
-  from: NodePosition,
-  to: NodePosition,
-): { start: { x: number; y: number }; end: { x: number; y: number } } {
-  const dx = to.x - from.x;
-  const dy = to.y - from.y;
-  const dist = Math.hypot(dx, dy) || 1;
-  const ux = dx / dist;
-  const uy = dy / dist;
+const nodeTypes = { member: MemberNode };
+const edgeTypes = { relation: RelationEdge };
 
-  // Keep a visible segment even when cards are close — never eat more than ~35% per side.
-  const inset = Math.min(52, dist * 0.35);
+/* -------------------------------------------------------------------------- */
+/* Inner flow                                                                 */
+/* -------------------------------------------------------------------------- */
 
-  return {
-    start: { x: from.x + ux * inset, y: from.y + uy * inset },
-    end: { x: to.x - ux * inset, y: to.y - uy * inset },
-  };
-}
-
-function curvedPath(
-  start: { x: number; y: number },
-  end: { x: number; y: number },
-  soft = true,
-): string {
-  if (!soft) {
-    return `M ${start.x} ${start.y} L ${end.x} ${end.y}`;
-  }
-
-  const mx = (start.x + end.x) / 2;
-  const my = (start.y + end.y) / 2;
-  const dx = end.x - start.x;
-  const dy = end.y - start.y;
-  const dist = Math.hypot(dx, dy) || 1;
-  const lift = Math.min(28, dist * 0.1);
-  const cx = mx + (Math.abs(dy) > Math.abs(dx) ? (dx / dist) * lift * 0.15 : 0);
-  const cy = my;
-
-  return `M ${start.x} ${start.y} Q ${cx} ${cy} ${end.x} ${end.y}`;
-}
-
-function pathMid(
-  start: { x: number; y: number },
-  end: { x: number; y: number },
-  nudge = 0,
-): { x: number; y: number } {
-  const mx = (start.x + end.x) / 2;
-  const my = (start.y + end.y) / 2;
-  if (!nudge) return { x: mx, y: my };
-
-  const dx = end.x - start.x;
-  const dy = end.y - start.y;
-  const dist = Math.hypot(dx, dy) || 1;
-  // Perpendicular offset so crossing edges don't stack markers.
-  return {
-    x: mx - (dy / dist) * nudge,
-    y: my + (dx / dist) * nudge,
-  };
-}
-
-export function FamilyGraphCanvas({
+function FamilyGraphFlow({
+  familyId,
   members,
   relations,
   canEdit,
@@ -320,7 +345,8 @@ export function FamilyGraphCanvas({
   onCreateRelation,
   onDeleteRelation,
 }: FamilyGraphCanvasProps) {
-  const shouldReduceMotion = useReducedMotion();
+  const { fitView } = useReactFlow();
+
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [pendingPair, setPendingPair] = useState<{
     fromId: string;
@@ -329,20 +355,18 @@ export function FamilyGraphCanvas({
   const [selectedRelationId, setSelectedRelationId] = useState<string | null>(
     null,
   );
+  const [layoutTick, setLayoutTick] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
-  const { positions, height, width } = useMemo(
-    () => layoutNodes(members, relations),
-    [members, relations],
-  );
-  const positionById = useMemo(
-    () => new Map(positions.map((node) => [node.id, node])),
-    [positions],
-  );
+  const positionsRef = useRef<Record<string, NodePos>>(loadPositions(familyId));
+
   const memberById = useMemo(
     () => new Map(members.map((member) => [member.id, member])),
     [members],
   );
+
+  const [nodes, setNodes, onNodesChange] = useNodesState<MemberFlowNode>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<RelationFlowEdge>([]);
 
   function resetSelection() {
     setSelectedId(null);
@@ -351,28 +375,264 @@ export function FamilyGraphCanvas({
     setError(null);
   }
 
-  function handleNodeClick(memberId: string) {
-    if (!canEdit || isBusy) return;
-    setSelectedRelationId(null);
+  const handleSelectRelation = useCallback((relationId: string) => {
+    setSelectedId(null);
+    setPendingPair(null);
+    setSelectedRelationId(relationId);
     setError(null);
+  }, []);
 
-    if (!selectedId) {
-      setSelectedId(memberId);
-      setPendingPair(null);
-      return;
+  const handleEdgeClick = useCallback(
+    (_event: unknown, edge: RelationFlowEdge) => {
+      if (!canEdit || isBusy || edge.id === "pending-edge") return;
+      handleSelectRelation(edge.id);
+    },
+    [canEdit, isBusy, handleSelectRelation],
+  );
+
+  // Rebuild nodes when the roster changes, preserving manual/saved positions.
+  useEffect(() => {
+    const layout = computeFamilyLayout(members, relations);
+    const layoutById = new Map(layout.map((node) => [node.id, node]));
+    const saved = positionsRef.current;
+
+    // Seed positionsRef with layout so edge handles pick a soft curve on first paint.
+    const seeded = { ...saved };
+    for (const node of layout) {
+      if (!seeded[node.id]) {
+        seeded[node.id] = { x: node.x, y: node.y };
+      }
+    }
+    positionsRef.current = seeded;
+
+    setNodes((previous) => {
+      const previousById = new Map(previous.map((node) => [node.id, node]));
+
+      return members.map((member) => {
+        const savedPos = seeded[member.id];
+        const previousPos = previousById.get(member.id)?.position;
+        const layoutPos = layoutById.get(member.id);
+        const position =
+          savedPos ??
+          previousPos ??
+          (layoutPos
+            ? { x: layoutPos.x, y: layoutPos.y }
+            : { x: 0, y: 0 });
+
+        return {
+          id: member.id,
+          type: "member" as const,
+          position,
+          data: {
+            member,
+            active: false,
+            canEdit,
+          },
+          draggable: canEdit,
+        };
+      });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [members, relations, canEdit]);
+
+  // Reflect selection state on nodes without recomputing layout.
+  useEffect(() => {
+    setNodes((previous) =>
+      previous.map((node) => {
+        const active =
+          selectedId === node.id ||
+          pendingPair?.fromId === node.id ||
+          pendingPair?.toId === node.id;
+
+        if (node.data.active === active && node.data.canEdit === canEdit) {
+          return node;
+        }
+
+        return { ...node, data: { ...node.data, active, canEdit } };
+      }),
+    );
+  }, [selectedId, pendingPair, canEdit, setNodes]);
+
+  // Build edges from relations + pending preview.
+  useEffect(() => {
+    const positionOf = (id: string): NodePos | undefined => {
+      const saved = positionsRef.current[id];
+      if (saved) return saved;
+      return undefined;
+    };
+
+    const validRelations = relations.filter(
+      (relation) =>
+        memberById.has(relation.fromMemberId) &&
+        memberById.has(relation.toMemberId),
+    );
+
+    // Fan out ascendant lines that converge on the same child so distinct
+    // ties (e.g. pai/mãe vs. tio/tia) run in parallel corridors instead of
+    // stacking on top of one another into the same top handle.
+    const LANE_GAP = 30;
+    const laneByRelationId = new Map<string, number>();
+    const ascendantByTarget = new Map<string, MemberRelation[]>();
+    for (const relation of validRelations) {
+      if (!ASCENDANT_RELATION_TYPES.has(relation.type)) continue;
+      const bucket = ascendantByTarget.get(relation.toMemberId) ?? [];
+      bucket.push(relation);
+      ascendantByTarget.set(relation.toMemberId, bucket);
+    }
+    for (const bucket of ascendantByTarget.values()) {
+      const ordered = [...bucket].sort((a, b) => {
+        const ax = positionsRef.current[a.fromMemberId]?.x ?? 0;
+        const bx = positionsRef.current[b.fromMemberId]?.x ?? 0;
+        return ax - bx || a.id.localeCompare(b.id);
+      });
+      const mid = (ordered.length - 1) / 2;
+      ordered.forEach((relation, index) => {
+        laneByRelationId.set(relation.id, (index - mid) * LANE_GAP);
+      });
     }
 
-    if (selectedId === memberId) {
-      resetSelection();
-      return;
+    const relationEdges: RelationFlowEdge[] = validRelations.map((relation) => {
+        const isPeer = UNDIRECTED_RELATION_TYPES.has(relation.type);
+        const isAscendant = ASCENDANT_RELATION_TYPES.has(relation.type);
+        let source = relation.fromMemberId;
+        let target = relation.toMemberId;
+        let sourceHandle = "b";
+        let targetHandle = "t";
+
+        if (isPeer) {
+          const fromPos = positionOf(relation.fromMemberId);
+          const toPos = positionOf(relation.toMemberId);
+
+          if (fromPos && toPos) {
+            const dx = toPos.x - fromPos.x;
+            const dy = toPos.y - fromPos.y;
+
+            if (Math.abs(dx) >= Math.abs(dy)) {
+              if (fromPos.x <= toPos.x) {
+                source = relation.fromMemberId;
+                target = relation.toMemberId;
+              } else {
+                source = relation.toMemberId;
+                target = relation.fromMemberId;
+              }
+              sourceHandle = "r";
+              targetHandle = "l";
+            } else if (fromPos.y <= toPos.y) {
+              source = relation.fromMemberId;
+              target = relation.toMemberId;
+              sourceHandle = "b";
+              targetHandle = "t";
+            } else {
+              source = relation.toMemberId;
+              target = relation.fromMemberId;
+              sourceHandle = "b";
+              targetHandle = "t";
+            }
+          } else {
+            sourceHandle = "r";
+            targetHandle = "l";
+          }
+        } else if (isAscendant) {
+          source = relation.fromMemberId;
+          target = relation.toMemberId;
+          sourceHandle = "b";
+          targetHandle = "t";
+        }
+
+        return {
+          id: relation.id,
+          source,
+          target,
+          sourceHandle,
+          targetHandle,
+          type: "relation" as const,
+          markerEnd: isPeer
+            ? undefined
+            : {
+                type: MarkerType.ArrowClosed,
+                width: 16,
+                height: 16,
+                color: relationStroke(relation.type),
+              },
+          data: {
+            relationType: relation.type,
+            isSelected: selectedRelationId === relation.id,
+            laneOffset: laneByRelationId.get(relation.id) ?? 0,
+          },
+          selectable: canEdit,
+          focusable: canEdit,
+        };
+      });
+
+    if (pendingPair) {
+      relationEdges.push({
+        id: "pending-edge",
+        source: pendingPair.fromId,
+        target: pendingPair.toId,
+        sourceHandle: "b",
+        targetHandle: "t",
+        type: "relation",
+        animated: true,
+        data: {
+          relationType: "parent",
+          isSelected: false,
+        },
+        style: { stroke: "var(--attention)", strokeDasharray: "6 6" },
+        selectable: false,
+      });
     }
 
-    setPendingPair({ fromId: selectedId, toId: memberId });
-  }
+    setEdges(relationEdges);
+  }, [
+    relations,
+    memberById,
+    selectedRelationId,
+    pendingPair,
+    canEdit,
+    setEdges,
+    layoutTick,
+  ]);
+
+  const handleNodeClick = useCallback<
+    (event: unknown, node: MemberFlowNode) => void
+  >(
+    (_event, node) => {
+      if (!canEdit || isBusy) return;
+      setSelectedRelationId(null);
+      setError(null);
+
+      setSelectedId((current) => {
+        if (!current) {
+          setPendingPair(null);
+          return node.id;
+        }
+        if (current === node.id) {
+          setPendingPair(null);
+          return null;
+        }
+        setPendingPair({ fromId: current, toId: node.id });
+        return current;
+      });
+    },
+    [canEdit, isBusy],
+  );
+
+  const handleNodeDragStop = useCallback<
+    (event: unknown, node: MemberFlowNode) => void
+  >(
+    (_event, node) => {
+      positionsRef.current = {
+        ...positionsRef.current,
+        [node.id]: { x: node.position.x, y: node.position.y },
+      };
+      persistPositions(familyId, positionsRef.current);
+      setLayoutTick((tick) => tick + 1);
+    },
+    [familyId],
+  );
 
   async function chooseRelation(type: MemberRelationType) {
     if (!pendingPair) return;
-
     try {
       setError(null);
       await onCreateRelation({
@@ -392,7 +652,6 @@ export function FamilyGraphCanvas({
 
   async function handleDeleteSelectedRelation() {
     if (!selectedRelationId) return;
-
     try {
       setError(null);
       await onDeleteRelation(selectedRelationId);
@@ -406,20 +665,23 @@ export function FamilyGraphCanvas({
     }
   }
 
-  if (members.length === 0) {
-    return (
-      <div className="flex min-h-[320px] flex-col items-center justify-center rounded-[1.75rem] border border-dashed border-domain-members/25 bg-domain-members-subtle/40 px-6 text-center">
-        <div className="flex size-14 items-center justify-center rounded-2xl bg-domain-members-subtle text-domain-members-foreground">
-          <Users className="size-6" aria-hidden />
-        </div>
-        <p className="mt-4 text-base font-medium text-foreground">
-          Ninguém nesta família ainda
-        </p>
-        <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-          Vincule membros à família no cadastro para montar o grafo.
-        </p>
-      </div>
+  function handleAutoArrange() {
+    const layout = computeFamilyLayout(members, relations);
+    const next: Record<string, NodePos> = {};
+    for (const node of layout) {
+      next[node.id] = { x: node.x, y: node.y };
+    }
+    positionsRef.current = next;
+    persistPositions(familyId, next);
+    setNodes((previous) =>
+      previous.map((node) => ({
+        ...node,
+        position: next[node.id] ?? node.position,
+      })),
     );
+    setLayoutTick((tick) => tick + 1);
+    resetSelection();
+    window.setTimeout(() => void fitView({ duration: 400, padding: 0.2 }), 0);
   }
 
   const fromMember = pendingPair ? memberById.get(pendingPair.fromId) : null;
@@ -434,336 +696,166 @@ export function FamilyGraphCanvas({
       ? "Como a primeira pessoa se relaciona com a segunda?"
       : selectedId
         ? "Agora toque na outra pessoa."
-        : "Toque em alguém, depois em outra pessoa.";
+        : "Arraste para reposicionar. Toque em alguém para vincular, ou numa linha para remover.";
 
   const step = !canEdit ? 0 : pendingPair ? 2 : selectedId ? 1 : 0;
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-3">
-          {canEdit && (
-            <div className="hidden items-center gap-1.5 sm:flex" aria-hidden>
-              {[0, 1, 2].map((n) => (
-                <span
-                  key={n}
-                  className={cn(
-                    "h-1.5 w-6 rounded-full transition-colors",
-                    step >= n
-                      ? "bg-domain-members"
-                      : "bg-domain-members/20",
-                  )}
-                />
-              ))}
-            </div>
-          )}
-          <p className="truncate text-sm text-muted-foreground">{hint}</p>
-        </div>
-        {(selectedId || pendingPair || selectedRelationId) && (
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            onClick={resetSelection}
-            disabled={isBusy}
-            className="shrink-0"
-          >
-            <X className="size-3.5" />
-            Limpar
-          </Button>
-        )}
-      </div>
-
-      <div className="relative overflow-hidden rounded-[1.75rem] border border-border/50 bg-surface-elevated shadow-xs">
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{
-            backgroundImage:
-              "radial-gradient(ellipse 80% 50% at 50% -10%, color-mix(in srgb, var(--domain-members) 16%, transparent), transparent 55%), radial-gradient(ellipse 50% 40% at 100% 100%, color-mix(in srgb, var(--domain-ministries) 10%, transparent), transparent 50%)",
-          }}
-          aria-hidden
-        />
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.35]"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--foreground) 8%, transparent) 1px, transparent 0)",
-            backgroundSize: "22px 22px",
-          }}
-          aria-hidden
-        />
-
-        <div
-          className="relative w-full overflow-x-auto"
+    <div className="relative h-full w-full overflow-hidden bg-surface-elevated">
+        <ReactFlow<MemberFlowNode, RelationFlowEdge>
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          onNodeClick={handleNodeClick}
+          onNodeDragStop={handleNodeDragStop}
+          onEdgeClick={handleEdgeClick}
+          onPaneClick={resetSelection}
+          nodesDraggable={canEdit && !isBusy}
+          nodesConnectable={false}
+          elementsSelectable
+          edgesFocusable={canEdit}
+          minZoom={0.3}
+          maxZoom={1.6}
+          fitView
+          fitViewOptions={{ padding: 0.2 }}
+          proOptions={{ hideAttribution: false }}
+          className="[&_.react-flow__handle]:cursor-pointer!"
         >
-          <div
-            className="relative mx-auto"
-            style={{
-              width: "100%",
-              aspectRatio: `${width} / ${height}`,
-            }}
-          >
-            <svg
-              viewBox={`0 0 ${width} ${height}`}
-              className="absolute inset-0 h-full w-full"
-              preserveAspectRatio="xMidYMid meet"
-              aria-hidden
-            >
-              <defs>
-                <marker
-                  id="graph-arrow"
-                  markerWidth="8"
-                  markerHeight="8"
-                  refX="7"
-                  refY="3.5"
-                  orient="auto"
-                  markerUnits="strokeWidth"
+          <Background
+            variant={BackgroundVariant.Dots}
+            gap={22}
+            size={1.4}
+            color="color-mix(in srgb, var(--foreground) 12%, transparent)"
+          />
+          <Controls
+            showInteractive={false}
+            className="rounded-xl! border! border-border/60! bg-white/95! shadow-xs!"
+          />
+        </ReactFlow>
+
+        <div className="pointer-events-none absolute left-3 top-20 z-20 sm:left-4 sm:top-18">
+          <div className="pointer-events-auto w-[min(100%,15.5rem)] rounded-2xl border border-border/60 bg-white/92 p-3 shadow-xs backdrop-blur-md">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Legenda
+            </p>
+            <ul className="mt-2 space-y-1.5">
+              {RELATION_LEGEND.map((item) => (
+                <li
+                  key={item.type}
+                  className="flex items-center gap-2.5 text-xs text-foreground"
                 >
-                  <path
-                    d="M0,0 L7,3.5 L0,7 Z"
-                    fill="var(--domain-members)"
-                    opacity="0.85"
-                  />
-                </marker>
-              </defs>
+                  <RelationColorSwatch type={item.type} />
+                  <span className="leading-tight">{item.label}</span>
+                </li>
+              ))}
+            </ul>
+            {canEdit ? (
+              <p className="mt-2.5 border-t border-border/50 pt-2 text-[10px] leading-relaxed text-muted-foreground">
+                Toque numa linha para remover o vínculo.
+              </p>
+            ) : null}
+          </div>
+        </div>
 
-              {relations.map((relation) => {
-                const from = positionById.get(relation.fromMemberId);
-                const to = positionById.get(relation.toMemberId);
-                if (!from || !to) return null;
-
-                const isSpouse = relation.type === "spouse";
-                const isSelected = selectedRelationId === relation.id;
-                const { start, end } = edgeEndpoints(from, to);
-
-                return (
-                  <path
-                    key={relation.id}
-                    d={curvedPath(start, end, !isSpouse)}
-                    fill="none"
-                    stroke={
-                      isSpouse
-                        ? "var(--domain-ministries)"
-                        : "var(--domain-members)"
-                    }
-                    strokeWidth={isSelected ? 3.25 : isSpouse ? 2.75 : 2.25}
-                    strokeOpacity={isSelected ? 1 : isSpouse ? 0.85 : 0.7}
-                    strokeLinecap="round"
-                    markerEnd={isSpouse ? undefined : "url(#graph-arrow)"}
-                  />
-                );
-              })}
-
-              {pendingPair &&
-                (() => {
-                  const from = positionById.get(pendingPair.fromId);
-                  const to = positionById.get(pendingPair.toId);
-                  if (!from || !to) return null;
-                  const { start, end } = edgeEndpoints(from, to);
-                  return (
-                    <path
-                      d={curvedPath(start, end)}
-                      fill="none"
-                      stroke="var(--attention)"
-                      strokeWidth={2.5}
-                      strokeDasharray="6 6"
-                      strokeOpacity={0.95}
-                      strokeLinecap="round"
-                    />
-                  );
-                })()}
-            </svg>
-
-            {relations.map((relation) => {
-              const from = positionById.get(relation.fromMemberId);
-              const to = positionById.get(relation.toMemberId);
-              if (!from || !to) return null;
-
-              const isSpouse = relation.type === "spouse";
-              const isSelected = selectedRelationId === relation.id;
-              const { start, end } = edgeEndpoints(from, to);
-              const parentEdges = relations.filter((r) => r.type === "parent");
-              const parentIdx = isSpouse
-                ? 0
-                : parentEdges.findIndex((r) => r.id === relation.id);
-              const nudge = isSpouse
-                ? 0
-                : (parentIdx - (parentEdges.length - 1) / 2) * 22;
-              const mid = pathMid(start, end, nudge);
-
-              return (
-                <button
-                  key={`label-${relation.id}`}
-                  type="button"
-                  disabled={!canEdit || isBusy}
-                  title={
-                    isSpouse
-                      ? "Cônjuges — toque para remover"
-                      : "Filiação — toque para remover"
-                  }
-                  onClick={() => {
-                    setSelectedId(null);
-                    setPendingPair(null);
-                    setSelectedRelationId(relation.id);
-                  }}
-                  className={cn(
-                    "absolute z-[1] flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border shadow-xs transition-transform",
-                    isSpouse
-                      ? "border-domain-ministries/25 bg-white text-domain-ministries-foreground"
-                      : "border-domain-members/25 bg-white text-domain-members-foreground",
-                    isSelected && "scale-110 ring-2 ring-foreground/10",
-                    canEdit && "hover:scale-110",
-                    !canEdit && "cursor-default",
-                  )}
-                  style={{
-                    left: `${(mid.x / width) * 100}%`,
-                    top: `${(mid.y / height) * 100}%`,
-                    width: `${(32 / width) * 100}%`,
-                    aspectRatio: "1",
-                  }}
-                >
-                  {isSpouse ? (
-                    <Heart className="size-[40%] fill-current" />
-                  ) : (
-                    <span
-                      className="text-[clamp(10px,1.4vw,14px)] font-light leading-none"
-                      aria-hidden
-                    >
-                      ↓
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-
-            {positions.map((node, index) => {
-              const member = memberById.get(node.id);
-              if (!member) return null;
-
-              const isSelected = selectedId === node.id;
-              const inPending =
-                pendingPair?.fromId === node.id ||
-                pendingPair?.toId === node.id;
-              const active = isSelected || inPending;
-              const surname = restName(member.name);
-
-              return (
-                <motion.button
-                  key={node.id}
-                  type="button"
-                  disabled={!canEdit || isBusy}
-                  onClick={() => handleNodeClick(node.id)}
-                  initial={
-                    shouldReduceMotion ? false : { opacity: 0, y: 10 }
-                  }
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    duration: 0.4,
-                    delay: shouldReduceMotion ? 0 : index * 0.05,
-                    ease: [0.22, 1, 0.36, 1],
-                  }}
-                  className={cn(
-                    "absolute z-[2] flex -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center gap-1.5 rounded-[1.25rem] border bg-white/95 px-[2%] py-[1.5%] text-center shadow-xs backdrop-blur-sm transition-[box-shadow,border-color,transform] duration-200",
-                    active
-                      ? "border-domain-members shadow-popover ring-[3px] ring-domain-members/20"
-                      : "border-black/[0.06] hover:border-domain-members/35 hover:shadow-popover",
-                    canEdit && "cursor-pointer",
-                    !canEdit && "cursor-default",
-                  )}
-                  style={{
-                    left: `${(node.x / width) * 100}%`,
-                    top: `${(node.y / height) * 100}%`,
-                    width: `${(NODE_W / width) * 100}%`,
-                    height: `${(NODE_H / height) * 100}%`,
-                  }}
-                >
+        <div className="pointer-events-none absolute inset-x-3 bottom-20 z-20 flex justify-center sm:inset-x-4 sm:bottom-4 sm:justify-start sm:pl-66">
+          <div className="pointer-events-auto flex max-w-[min(100%,28rem)] items-center gap-2 rounded-full border border-border/60 bg-white/90 px-3 py-1.5 shadow-xs backdrop-blur-md">
+            {canEdit && (
+              <div className="hidden items-center gap-1.5 sm:flex" aria-hidden>
+                {[0, 1, 2].map((n) => (
                   <span
+                    key={n}
                     className={cn(
-                      "flex aspect-square w-[38%] max-w-11 items-center justify-center rounded-full text-[clamp(10px,1.1vw,13px)] font-semibold tracking-wide",
-                      active
-                        ? "bg-domain-members text-white"
-                        : "bg-domain-members-subtle text-domain-members-foreground",
+                      "h-1.5 w-6 rounded-full transition-colors",
+                      step >= n ? "bg-billing" : "bg-billing/20",
                     )}
-                  >
-                    {initials(member.name)}
-                  </span>
-                  <span className="min-w-0 w-full">
-                    <span className="block truncate text-[clamp(11px,1.2vw,13px)] font-medium leading-tight text-foreground">
-                      {firstName(member.name)}
-                    </span>
-                    {surname ? (
-                      <span className="mt-0.5 block truncate text-[clamp(9px,1vw,10px)] leading-tight text-muted-foreground">
-                        {surname}
-                      </span>
-                    ) : null}
-                  </span>
-                </motion.button>
-              );
-            })}
+                  />
+                ))}
+              </div>
+            )}
+            <p className="truncate text-xs text-muted-foreground sm:text-sm">
+              {hint}
+            </p>
+          </div>
+        </div>
+
+        <div className="pointer-events-none absolute bottom-4 right-3 z-20 flex flex-col items-end gap-1.5 sm:right-4">
+          <div className="pointer-events-auto flex items-center gap-1.5">
+            {canEdit && (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={handleAutoArrange}
+                disabled={isBusy}
+                title="Reorganizar automaticamente"
+                className="bg-white/90 shadow-xs backdrop-blur-md"
+              >
+                <RotateCcw className="size-3.5" />
+                <span className="hidden sm:inline">Reorganizar</span>
+              </Button>
+            )}
+            {(selectedId || pendingPair || selectedRelationId) && (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={resetSelection}
+                disabled={isBusy}
+                className="bg-white/90 shadow-xs backdrop-blur-md"
+              >
+                <X className="size-3.5" />
+                <span className="hidden sm:inline">Limpar</span>
+              </Button>
+            )}
           </div>
         </div>
 
         {pendingPair && fromMember && toMember && (
-          <motion.div
-            initial={shouldReduceMotion ? false : { opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="absolute inset-x-3 bottom-3 z-20 mx-auto max-w-md overflow-hidden rounded-2xl border border-border/60 bg-white/98 shadow-popover backdrop-blur-md sm:inset-x-4 sm:bottom-4"
-          >
-            <div className="border-b border-border/50 bg-domain-members-subtle/40 px-4 py-3 text-center">
+          <div className="absolute inset-x-3 bottom-3 z-20 mx-auto max-h-[min(52dvh,420px)] max-w-md overflow-hidden rounded-2xl border border-border/60 bg-white/98 shadow-popover backdrop-blur-md sm:inset-x-4 sm:bottom-4">
+            <div className="border-b border-border/50 bg-billing-subtle/40 px-4 py-3 text-center">
               <p className="text-sm font-medium text-foreground">
                 {firstName(fromMember.name)}
-                <span className="mx-2 font-normal text-muted-foreground">
-                  →
-                </span>
+                <span className="mx-2 font-normal text-muted-foreground">→</span>
                 {firstName(toMember.name)}
               </p>
               <p className="mt-0.5 text-[11px] text-muted-foreground">
-                Ordem do toque
+                Ordem do toque · escolha o parentesco
               </p>
             </div>
 
-            <div className="grid gap-1 p-2">
-              <button
-                type="button"
-                disabled={isBusy}
-                onClick={() => void chooseRelation("spouse")}
-                className="flex items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors hover:bg-domain-ministries-subtle/70"
-              >
-                <span className="flex size-9 items-center justify-center rounded-full bg-domain-ministries-subtle text-domain-ministries-foreground">
-                  <Heart className="size-3.5 fill-current" />
-                </span>
-                <span className="text-sm font-medium text-foreground">
-                  São cônjuges
-                </span>
-              </button>
-
-              <button
-                type="button"
-                disabled={isBusy}
-                onClick={() => void chooseRelation("parent")}
-                className="flex items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors hover:bg-domain-members-subtle/80"
-              >
-                <span className="flex size-9 items-center justify-center rounded-full bg-domain-members-subtle text-[11px] font-semibold text-domain-members-foreground">
-                  →
-                </span>
-                <span className="text-sm font-medium text-foreground">
-                  {firstName(fromMember.name)} é pai/mãe de{" "}
-                  {firstName(toMember.name)}
-                </span>
-              </button>
+            <div className="max-h-[min(40dvh,320px)] space-y-0.5 overflow-y-auto p-2">
+              {RELATION_CHOICES.map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  disabled={isBusy}
+                  onClick={() => void chooseRelation(type)}
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-muted/70"
+                >
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-full border border-border/50 bg-muted/30">
+                    <RelationColorSwatch type={type} />
+                  </span>
+                  <span className="text-sm font-medium text-foreground">
+                    {relationChoiceLabel(
+                      type,
+                      fromMember.name,
+                      toMember.name,
+                    )}
+                  </span>
+                </button>
+              ))}
             </div>
-          </motion.div>
+          </div>
         )}
 
         {selectedRelation && canEdit && !pendingPair && (
-          <motion.div
-            initial={shouldReduceMotion ? false : { opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="absolute inset-x-3 bottom-3 z-20 mx-auto flex max-w-sm items-center justify-between gap-3 rounded-2xl border border-border/60 bg-white/98 px-4 py-3 shadow-popover backdrop-blur-md sm:inset-x-4 sm:bottom-4"
-          >
+          <div className="absolute inset-x-3 bottom-3 z-20 mx-auto flex max-w-sm items-center justify-between gap-3 rounded-2xl border border-border/60 bg-white/98 px-4 py-3 shadow-popover backdrop-blur-md sm:inset-x-4 sm:bottom-4">
             <div>
               <p className="text-sm font-medium text-foreground">
-                {selectedRelation.type === "spouse" ? "Cônjuges" : "Filiação"}
+                {MEMBER_RELATION_LABELS[selectedRelation.type]}
               </p>
               <p className="text-xs text-muted-foreground">
                 Remover este vínculo?
@@ -779,11 +871,38 @@ export function FamilyGraphCanvas({
               <Trash2 className="size-3.5" />
               Remover
             </Button>
-          </motion.div>
+          </div>
         )}
-      </div>
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+        {error && (
+          <div className="absolute inset-x-3 top-16 z-30 mx-auto max-w-sm rounded-xl border border-destructive/30 bg-white/95 px-4 py-2.5 text-center text-sm text-destructive shadow-popover backdrop-blur-md sm:top-20">
+            {error}
+          </div>
+        )}
     </div>
+  );
+}
+
+export function FamilyGraphCanvas(props: FamilyGraphCanvasProps) {
+  if (props.members.length === 0) {
+    return (
+      <div className="flex h-full w-full flex-col items-center justify-center bg-billing-subtle/40 px-6 text-center">
+        <div className="flex size-14 items-center justify-center rounded-2xl bg-billing-subtle text-billing-foreground">
+          <Users className="size-6" aria-hidden />
+        </div>
+        <p className="mt-4 text-base font-medium text-foreground">
+          Ninguém nesta família ainda
+        </p>
+        <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+          Vincule membros à família no cadastro para montar o grafo.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <ReactFlowProvider>
+      <FamilyGraphFlow {...props} />
+    </ReactFlowProvider>
   );
 }

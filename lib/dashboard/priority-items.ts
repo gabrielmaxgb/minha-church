@@ -1,0 +1,203 @@
+import type { LucideIcon } from "lucide-react";
+import {
+  Building2,
+  Calendar,
+  ClipboardList,
+  HeartHandshake,
+  KeyRound,
+  Megaphone,
+  Ticket,
+  UserRound,
+  Users,
+} from "lucide-react";
+
+import {
+  AUTH_ROUTES,
+  activityDetailPath,
+  settingsSectionPath,
+} from "@/constants/routes";
+import { formatRelativeEventDay } from "@/lib/dashboard/date-utils";
+import type { DashboardHomeProfile } from "@/lib/dashboard/home-profile";
+import { isEventRegistrationOpen } from "@/lib/events/registration";
+import type { ChurchEvent } from "@/types/events";
+
+export interface DashboardPriorityItem {
+  id: string;
+  title: string;
+  description: string;
+  href: string;
+  icon: LucideIcon;
+  tone: "attention" | "schedules" | "care" | "communication" | "activities";
+}
+
+interface BuildPrioritiesInput {
+  profile: DashboardHomeProfile;
+  pendingAccessCount: number;
+  passwordResetCount: number;
+  schedulePendingCount: number;
+  carePendingCount: number;
+  announcementsUnreadCount: number;
+  nextEvent: ChurchEvent | null;
+  upcomingEvents?: ChurchEvent[];
+  canManageMemberships: boolean;
+  canAccessSchedules: boolean;
+  canReceiveCare: boolean;
+  hasCommunicationAccess: boolean;
+  canAccessActivities: boolean;
+  /** Dono: perfil fiscal/contato da igreja incompleto */
+  churchProfileIncomplete?: boolean;
+  /** Membro: WhatsApp / nascimento faltando */
+  memberProfileIncomplete?: boolean;
+}
+
+const MAX_PRIORITIES = 3;
+
+export function buildDashboardPriorities(
+  input: BuildPrioritiesInput,
+): DashboardPriorityItem[] {
+  const items: DashboardPriorityItem[] = [];
+
+  if (
+    input.churchProfileIncomplete &&
+    (input.profile === "owner" || input.profile === "leader")
+  ) {
+    items.push({
+      id: "church-profile",
+      title: "Complete o perfil da igreja",
+      description: "Contato, cidade e documentos — necessário para receber",
+      href: settingsSectionPath("general"),
+      icon: Building2,
+      tone: "attention",
+    });
+  }
+
+  if (input.memberProfileIncomplete && input.profile === "member") {
+    items.push({
+      id: "member-profile",
+      title: "Complete seu perfil",
+      description: "WhatsApp e nascimento para a igreja falar com você",
+      href: settingsSectionPath("profile"),
+      icon: UserRound,
+      tone: "attention",
+    });
+  }
+
+  if (
+    input.canManageMemberships &&
+    input.pendingAccessCount > 0 &&
+    (input.profile === "owner" || input.profile === "leader")
+  ) {
+    items.push({
+      id: "pending-access",
+      title: `${input.pendingAccessCount} acesso${input.pendingAccessCount === 1 ? "" : "s"} pendente${input.pendingAccessCount === 1 ? "" : "s"}`,
+      description: "Alguém espera aprovação para entrar no painel",
+      href: settingsSectionPath("pending-users"),
+      icon: Users,
+      tone: "attention",
+    });
+  }
+
+  if (
+    input.canManageMemberships &&
+    input.passwordResetCount > 0 &&
+    (input.profile === "owner" || input.profile === "leader")
+  ) {
+    items.push({
+      id: "password-reset",
+      title: `${input.passwordResetCount} pedido${input.passwordResetCount === 1 ? "" : "s"} de senha`,
+      description: "Pessoas pedindo para voltar a acessar a conta",
+      href: settingsSectionPath("password-reset-requests"),
+      icon: KeyRound,
+      tone: "attention",
+    });
+  }
+
+  if (input.canAccessSchedules && input.schedulePendingCount > 0) {
+    items.push({
+      id: "schedule-pending",
+      title:
+        input.schedulePendingCount === 1
+          ? "1 escala aguarda sua resposta"
+          : `${input.schedulePendingCount} escalas aguardam sua resposta`,
+      description: "Sem isso, o líder não fecha a equipe",
+      href: AUTH_ROUTES.mySchedules,
+      icon: ClipboardList,
+      tone: "schedules",
+    });
+  }
+
+  if (input.canReceiveCare && input.carePendingCount > 0) {
+    items.push({
+      id: "care-pending",
+      title:
+        input.carePendingCount === 1
+          ? "1 pedido pastoral aguarda você"
+          : `${input.carePendingCount} pedidos pastorais aguardam você`,
+      description: "Alguém pediu aconselhamento ou visita",
+      href: AUTH_ROUTES.careRequests,
+      icon: HeartHandshake,
+      tone: "care",
+    });
+  }
+
+  if (input.hasCommunicationAccess && input.announcementsUnreadCount > 0) {
+    items.push({
+      id: "announcements-unread",
+      title:
+        input.announcementsUnreadCount === 1
+          ? "1 aviso novo"
+          : `${input.announcementsUnreadCount} avisos novos`,
+      description: "Avisos que você ainda não abriu",
+      href: AUTH_ROUTES.communication,
+      icon: Megaphone,
+      tone: "communication",
+    });
+  }
+
+  const openRegistrationEvents = (input.upcomingEvents ?? []).filter(
+    isEventRegistrationOpen,
+  );
+  const firstOpenRegistration = openRegistrationEvents[0] ?? null;
+
+  if (
+    input.canAccessActivities &&
+    firstOpenRegistration &&
+    items.length < MAX_PRIORITIES
+  ) {
+    const extra = openRegistrationEvents.length - 1;
+    items.push({
+      id: "registration-open",
+      title: firstOpenRegistration.name,
+      description:
+        extra > 0
+          ? `Inscrições abertas · +${extra} outro${extra === 1 ? "" : "s"}`
+          : "Inscrições abertas — confirme sua participação",
+      href: activityDetailPath(firstOpenRegistration.id),
+      icon: Ticket,
+      tone: "activities",
+    });
+  }
+
+  if (
+    input.canAccessActivities &&
+    input.nextEvent &&
+    items.length < MAX_PRIORITIES &&
+    input.nextEvent.id !== firstOpenRegistration?.id
+  ) {
+    const relative = formatRelativeEventDay(input.nextEvent.startsAt);
+    const isSoon = relative === "Hoje" || relative === "Amanhã";
+
+    if (isSoon || input.profile === "member" || items.length === 0) {
+      items.push({
+        id: "next-event",
+        title: input.nextEvent.name,
+        description: `${relative ?? "Em breve"} · próximo na agenda`,
+        href: activityDetailPath(input.nextEvent.id),
+        icon: Calendar,
+        tone: "activities",
+      });
+    }
+  }
+
+  return items.slice(0, MAX_PRIORITIES);
+}

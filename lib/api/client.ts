@@ -11,6 +11,7 @@ export class ApiError extends Error {
 		public status: number,
 		public code?: string,
 		public email?: string,
+		public details?: unknown,
 	) {
 		super(message);
 		this.name = "ApiError";
@@ -27,6 +28,15 @@ function getApiBaseUrl(): string {
 		);
 	}
 
+	// No browser, `/api/v1` passa pelo rewrite do Next. No RSC/server,
+	// precisa ir direto ao Nest (API_PROXY_TARGET).
+	if (typeof window === "undefined" && baseURL.startsWith("/")) {
+		const apiOrigin = (
+			process.env.API_PROXY_TARGET ?? "http://localhost:3001"
+		).replace(/\/$/, "");
+		return `${apiOrigin}${baseURL}`;
+	}
+
 	return baseURL;
 }
 
@@ -34,10 +44,12 @@ async function parseErrorBody(response: Response): Promise<{
 	message: string;
 	code?: string;
 	email?: string;
+	details?: unknown;
 }> {
 	let raw = `API error: ${response.status}`;
 	let code: string | undefined;
 	let email: string | undefined;
+	let details: unknown;
 
 	try {
 		const body = (await response.json()) as {
@@ -45,6 +57,8 @@ async function parseErrorBody(response: Response): Promise<{
 			code?: string;
 			email?: string;
 		};
+
+		details = body;
 
 		if (Array.isArray(body.message)) {
 			raw = body.message.join(", ");
@@ -73,10 +87,11 @@ async function parseErrorBody(response: Response): Promise<{
 				"Muitas tentativas em pouco tempo. Aguarde um momento e tente novamente.",
 			code,
 			email,
+			details,
 		};
 	}
 
-	return { message: raw, code, email };
+	return { message: raw, code, email, details };
 }
 
 export async function apiClient<T>(
@@ -129,6 +144,7 @@ export async function apiClient<T>(
 			response.status,
 			error.code,
 			error.email,
+			error.details,
 		);
 	}
 
@@ -141,7 +157,14 @@ export async function apiClient<T>(
 		return undefined as T;
 	}
 
-	return JSON.parse(raw) as T;
+	try {
+		return JSON.parse(raw) as T;
+	} catch {
+		throw new ApiError(
+			`Resposta inválida da API (${response.status}). Confira NEXT_PUBLIC_API_URL / API_PROXY_TARGET.`,
+			response.status,
+		);
+	}
 }
 
 export function buildTenantPath(churchId: string, path: string): string {

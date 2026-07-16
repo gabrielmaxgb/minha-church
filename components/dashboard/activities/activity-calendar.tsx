@@ -10,6 +10,7 @@ import {
   Repeat,
 } from "lucide-react";
 
+import { EventRegistrationOpenBadge } from "@/components/dashboard/activities/event-registration-open-badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { activityDetailPath } from "@/constants/routes";
@@ -24,6 +25,7 @@ import {
   isToday,
   toDateKey,
 } from "@/lib/events/calendar";
+import { isEventRegistrationOpen } from "@/lib/events/registration";
 import { cn } from "@/lib/utils";
 import type { ChurchEvent } from "@/types/events";
 
@@ -88,14 +90,18 @@ function groupDayAgendaEvents(events: ChurchEvent[]): DayAgendaGroup[] {
 }
 
 function DayAgendaEventItem({ event }: { event: ChurchEvent }) {
+  const registrationOpen = isEventRegistrationOpen(event);
+
   return (
     <Link
       href={activityDetailPath(event.id)}
       className={cn(
         "block rounded-xl border px-3 py-2.5 transition-colors hover:bg-muted/40",
-        event.isChurchWide
-          ? "border-foreground/15 bg-muted/30"
-          : "border-border/70",
+        registrationOpen
+          ? "border-success/25 bg-success-subtle/50"
+          : event.isChurchWide
+            ? "border-foreground/15 bg-muted/30"
+            : "border-border/70",
       )}
     >
       <div className="flex flex-wrap items-center gap-1.5">
@@ -108,6 +114,7 @@ function DayAgendaEventItem({ event }: { event: ChurchEvent }) {
             Recorrente
           </span>
         )}
+        <EventRegistrationOpenBadge event={event} />
       </div>
       <p className="mt-1 text-xs text-muted-foreground">
         {formatEventTime(event.startsAt)}

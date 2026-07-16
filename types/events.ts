@@ -29,6 +29,10 @@ export interface ChurchEvent {
   usesRoster: boolean;
   rosterOpen: boolean;
   visibleToChurch: boolean;
+  /** Quando true, membros podem se inscrever. */
+  registrationOpen: boolean;
+  /** Centavos; null = inscrição gratuita (quando registrationOpen). */
+  priceCents: number | null;
   rosterSlots?: EventRosterSlot[];
   createdAt: string;
   updatedAt: string;
@@ -45,6 +49,8 @@ export interface ChurchEventDetail extends ChurchEvent {
   needsRosterFunctions?: boolean;
   /** Pode marcar disponibilidade (membro do ministério ou evento da igreja). */
   canRespondToAvailability?: boolean;
+  /** Status da inscrição do membro logado (`succeeded` / `pending` / null). */
+  myTicketStatus?: "pending" | "succeeded" | "failed" | "canceled" | "refunded" | null;
 }
 
 /** Resumo leve de uma ocorrência na série — para navegação lateral */
@@ -54,6 +60,25 @@ export interface EventSeriesOccurrence {
   endsAt: string | null;
   rosterOpen: boolean;
   usesRoster: boolean;
+}
+
+/** Inscritos na taxa do evento — só para quem gerencia. */
+export interface EventTicketRegistration {
+  id: string;
+  memberId: string | null;
+  name: string;
+  email: string | null;
+  amountCents: number;
+  status: "pending" | "succeeded" | "failed" | "canceled" | "refunded";
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EventTicketRegistrationsResponse {
+  confirmedCount: number;
+  pendingCount: number;
+  confirmedAmountCents: number;
+  registrations: EventTicketRegistration[];
 }
 
 export interface CreateChurchEventPayload {
@@ -71,6 +96,8 @@ export interface CreateChurchEventPayload {
   rosterRoles?: string[];
   rosterSlotPlan?: RosterSlotPlanItem[];
   visibleToChurch?: boolean;
+  registrationOpen?: boolean;
+  priceCents?: number | null;
 }
 
 export interface CreateChurchEventResponse extends ChurchEvent {
@@ -92,6 +119,8 @@ export interface UpdateChurchEventPayload {
   rosterRoles?: string[];
   rosterSlotPlan?: RosterSlotPlanItem[];
   visibleToChurch?: boolean;
+  registrationOpen?: boolean;
+  priceCents?: number | null;
   /** Atualiza a regra; `null` remove a repetição no escopo. */
   recurrence?: EventRecurrenceInput | null;
   scope?: EventMutationScope;

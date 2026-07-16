@@ -1,31 +1,42 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
 import { DashboardPage } from "@/components/dashboard/dashboard-shell";
-import { SettingsContent } from "@/components/dashboard/settings/settings-content";
+import { AUTH_ROUTES, settingsSectionPath } from "@/constants/routes";
+import { isSettingsSection } from "@/components/dashboard/settings/settings-nav";
 
-function SettingsPageContent() {
+function RedirectSettings() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const section = searchParams.get("section");
+    if (section && isSettingsSection(section)) {
+      router.replace(settingsSectionPath(section));
+      return;
+    }
+
+    router.replace(AUTH_ROUTES.settingsUser);
+  }, [router, searchParams]);
+
   return (
-    <DashboardPage
-      title="Configurações"
-      subtitle="Perfil e preferências"
-    >
-      <SettingsContent />
-    </DashboardPage>
+    <p className="text-sm text-muted-foreground">Redirecionando...</p>
   );
 }
 
 export default function ConfiguracoesPage() {
   return (
-    <Suspense
-      fallback={
-        <DashboardPage title="Configurações" subtitle="Perfil e preferências">
+    <DashboardPage title="Configurações" subtitle="Perfil e preferências">
+      <Suspense
+        fallback={
           <p className="text-sm text-muted-foreground">Carregando...</p>
-        </DashboardPage>
-      }
-    >
-      <SettingsPageContent />
-    </Suspense>
+        }
+      >
+        <RedirectSettings />
+      </Suspense>
+    </DashboardPage>
   );
 }

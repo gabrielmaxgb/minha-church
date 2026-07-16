@@ -119,6 +119,42 @@ export async function createPortalSession(
   );
 }
 
+/**
+ * Reconstrói o preview de cruzamento de faixa a partir do corpo de um erro
+ * 409 `TIER_UPGRADE_REQUIRED` do backend, evitando um preflight dedicado.
+ */
+export function tierCrossingPreviewFromErrorDetails(
+  details: unknown,
+): TierCrossingPreview | null {
+  if (!details || typeof details !== "object") {
+    return null;
+  }
+
+  const data = details as Record<string, unknown>;
+
+  if (typeof data.projectedTierId !== "string") {
+    return null;
+  }
+
+  return {
+    crossesTier: Boolean(data.crossesTier),
+    requiresConfirmation: Boolean(data.requiresConfirmation),
+    currentMemberCount: Number(data.currentMemberCount ?? 0),
+    projectedMemberCount: Number(data.projectedMemberCount ?? 0),
+    currentTierId: String(data.currentTierId ?? ""),
+    projectedTierId: data.projectedTierId,
+    currentTierName: String(data.currentTierName ?? ""),
+    projectedTierName: String(data.projectedTierName ?? ""),
+    currentTierMemberRange: String(data.currentTierMemberRange ?? ""),
+    projectedTierMemberRange: String(data.projectedTierMemberRange ?? ""),
+    hasActiveSubscription: Boolean(data.hasActiveSubscription),
+    interval: (data.interval as TierCrossingPreview["interval"]) ?? null,
+    currentPrice: Number(data.currentPrice ?? 0),
+    projectedPrice: Number(data.projectedPrice ?? 0),
+    priceDelta: Number(data.priceDelta ?? 0),
+  };
+}
+
 export async function fetchTierCrossingPreview(
   churchId: string,
   projectedMemberCount: number,

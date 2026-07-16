@@ -1,6 +1,7 @@
 "use client";
 
-import { Check, RotateCcw, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Check, Loader2, RotateCcw, X } from "lucide-react";
 
 import { RosterFunctionsReminder } from "@/components/dashboard/ministries/roster-functions-reminder";
 import { LockedFeatureHint } from "@/components/dashboard/locked-feature-hint";
@@ -19,12 +20,30 @@ interface EventAvailabilityPanelProps {
   availabilityMessage?: string | null;
   needsRosterFunctions?: boolean;
   ministryName?: string;
+  /** This panel is currently saving a response. */
   busy?: boolean;
+  /** Disable controls without showing a saving state (e.g. another event is saving). */
+  disabled?: boolean;
   layout?: "compact" | "default";
   className?: string;
   showHeader?: boolean;
   interactionsDisabled?: boolean;
   onRespond: (payload: EventAvailabilityPayload) => void;
+}
+
+function ActionLabel({
+  busy,
+  pending,
+  idleLabel,
+}: {
+  busy: boolean;
+  pending: boolean;
+  idleLabel: string;
+}) {
+  if (busy && pending) {
+    return "Salvando...";
+  }
+  return idleLabel;
 }
 
 export function EventAvailabilityPanel({
@@ -33,6 +52,7 @@ export function EventAvailabilityPanel({
   needsRosterFunctions = false,
   ministryName = "este ministério",
   busy = false,
+  disabled = false,
   layout = "default",
   className,
   showHeader = false,
@@ -44,27 +64,37 @@ export function EventAvailabilityPanel({
   );
   const isAvailable = availabilityStatus === "available";
   const isUnavailable = availabilityStatus === "unavailable";
-  const controlsDisabled = busy || interactionsDisabled;
+  const controlsDisabled = busy || disabled || interactionsDisabled;
+  const [pendingAction, setPendingAction] =
+    useState<ScheduleAvailabilityAction | null>(null);
 
-  function submitAvailable() {
-    onRespond({ status: "available", roleLabels: [] });
+  useEffect(() => {
+    if (!busy) {
+      setPendingAction(null);
+    }
+  }, [busy]);
+
+  function submit(status: ScheduleAvailabilityAction) {
+    setPendingAction(status);
+    onRespond({ status, roleLabels: [] });
   }
 
-  function submitUnavailable() {
-    onRespond({ status: "unavailable", roleLabels: [] });
-  }
-
-  function submitClear() {
-    onRespond({ status: "clear", roleLabels: [] });
-  }
+  const pendingAvailable =
+    pendingAction === "available" ||
+    (pendingAction === "clear" && isAvailable);
+  const pendingUnavailable =
+    pendingAction === "unavailable" ||
+    (pendingAction === "clear" && isUnavailable);
 
   return (
     <div
       className={cn(
-        "space-y-3 rounded-lg border p-4 sm:p-5",
+        "space-y-3 rounded-lg border p-4 sm:p-5 transition-opacity",
         theme.shell,
+        busy && "ring-1 ring-foreground/10",
         className,
       )}
+      aria-busy={busy || undefined}
     >
       {showHeader ? (
         <div className="space-y-1 border-b border-current/10 pb-3">
@@ -82,7 +112,17 @@ export function EventAvailabilityPanel({
       ) : null}
 
       <div className={cn("space-y-0.5", theme.statusTone)} role="status">
-        {needsRosterFunctions ? (
+        {busy ? (
+          <>
+            <p className="flex items-center gap-2 text-sm font-semibold">
+              <Loader2 className="size-3.5 shrink-0 animate-spin" aria-hidden />
+              Salvando resposta...
+            </p>
+            <p className={cn("text-xs", theme.statusHintTone)}>
+              Aguarde um instante.
+            </p>
+          </>
+        ) : needsRosterFunctions ? (
           <>
             <p className="text-sm font-semibold">Funções não configuradas</p>
             <p className={cn("text-xs", theme.statusHintTone)}>
@@ -136,10 +176,21 @@ export function EventAvailabilityPanel({
               isUnavailable && !isAvailable && theme.secondaryButton,
             )}
             aria-pressed={isAvailable}
-            onClick={() => (isAvailable ? submitClear() : submitAvailable())}
+            aria-busy={(busy && pendingAvailable) || undefined}
+            onClick={() =>
+              submit(isAvailable ? "clear" : "available")
+            }
           >
-            <Check className="size-4" />
-            Posso
+            {busy && pendingAvailable ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+            ) : (
+              <Check className="size-4" aria-hidden />
+            )}
+            <ActionLabel
+              busy={busy}
+              pending={pendingAvailable}
+              idleLabel="Posso"
+            />
           </Button>
           <Button
             type="button"
@@ -150,13 +201,22 @@ export function EventAvailabilityPanel({
               isAvailable && !isUnavailable && theme.secondaryButton,
             )}
             aria-pressed={isUnavailable}
+            aria-busy={(busy && pendingUnavailable) || undefined}
             disabled={controlsDisabled}
             onClick={() =>
-              isUnavailable ? submitClear() : submitUnavailable()
+              submit(isUnavailable ? "clear" : "unavailable")
             }
           >
-            <X className="size-4" />
-            Não posso
+            {busy && pendingUnavailable ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+            ) : (
+              <X className="size-4" aria-hidden />
+            )}
+            <ActionLabel
+              busy={busy}
+              pending={pendingUnavailable}
+              idleLabel="Não posso"
+            />
           </Button>
         </div>
       ) : (
@@ -173,10 +233,21 @@ export function EventAvailabilityPanel({
                 isUnavailable && !isAvailable && theme.secondaryButton,
               )}
               aria-pressed={isAvailable}
-              onClick={() => (isAvailable ? submitClear() : submitAvailable())}
+              aria-busy={(busy && pendingAction === "available") || undefined}
+              onClick={() =>
+                submit(isAvailable ? "clear" : "available")
+              }
             >
-              <Check className="size-3.5" />
-              Posso ir
+              {busy && pendingAction === "available" ? (
+                <Loader2 className="size-3.5 animate-spin" aria-hidden />
+              ) : (
+                <Check className="size-3.5" aria-hidden />
+              )}
+              <ActionLabel
+                busy={busy}
+                pending={pendingAction === "available"}
+                idleLabel="Posso ir"
+              />
             </Button>
             <Button
               type="button"
@@ -189,12 +260,23 @@ export function EventAvailabilityPanel({
                 isAvailable && !isUnavailable && theme.secondaryButton,
               )}
               aria-pressed={isUnavailable}
+              aria-busy={
+                (busy && pendingAction === "unavailable") || undefined
+              }
               onClick={() =>
-                isUnavailable ? submitClear() : submitUnavailable()
+                submit(isUnavailable ? "clear" : "unavailable")
               }
             >
-              <X className="size-3.5" />
-              Não posso
+              {busy && pendingAction === "unavailable" ? (
+                <Loader2 className="size-3.5 animate-spin" aria-hidden />
+              ) : (
+                <X className="size-3.5" aria-hidden />
+              )}
+              <ActionLabel
+                busy={busy}
+                pending={pendingAction === "unavailable"}
+                idleLabel="Não posso"
+              />
             </Button>
           </div>
           {availabilityStatus ? (
@@ -204,10 +286,17 @@ export function EventAvailabilityPanel({
               variant="ghost"
               disabled={controlsDisabled}
               className="w-full text-muted-foreground"
-              onClick={submitClear}
+              aria-busy={(busy && pendingAction === "clear") || undefined}
+              onClick={() => submit("clear")}
             >
-              <RotateCcw className="size-4" />
-              Limpar resposta
+              {busy && pendingAction === "clear" ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden />
+              ) : (
+                <RotateCcw className="size-4" aria-hidden />
+              )}
+              {busy && pendingAction === "clear"
+                ? "Limpando..."
+                : "Limpar resposta"}
             </Button>
           ) : null}
         </div>

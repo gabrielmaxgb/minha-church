@@ -12,7 +12,7 @@ export default function AuthLayout({
   return (
     <div className="marketing-atmosphere relative flex min-h-dvh flex-col px-4 py-6 sm:px-6 sm:py-8">
       <div
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,color-mix(in_srgb,var(--attention)_10%,transparent),transparent_55%)]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,color-mix(in_srgb,var(--attention)_12%,transparent),transparent_55%)]"
         aria-hidden
       />
 

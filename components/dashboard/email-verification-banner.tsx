@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Loader2, MailCheck, RefreshCw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { DashboardBanner } from "@/components/ui/dashboard-banner";
 import { resendVerificationEmailRequest } from "@/lib/api/auth";
 import { useAuth } from "@/providers/auth-provider";
 
@@ -68,33 +69,27 @@ export function EmailVerificationBanner() {
   }
 
   return (
-    <div className="mb-6 rounded-xl border border-attention-border bg-attention-subtle px-4 py-4 sm:px-5">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex gap-3">
-          <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-attention-mark text-attention-foreground">
-            <MailCheck className="size-4" aria-hidden />
-          </div>
-          <div className="space-y-1">
-            <p className="text-sm font-semibold text-foreground">
-              Confirme seu e-mail para liberar todos os recursos
-            </p>
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              Enviamos um link para <span className="font-medium text-foreground">{email}</span>.
-              Confirme para concluir o cadastro da igreja e usar todos os recursos do painel.
-            </p>
-            {feedback && (
-              <p className="text-sm text-success-foreground">{feedback}</p>
-            )}
-            {pendingHint && (
-              <p className="text-sm leading-relaxed text-attention-foreground">
-                {pendingHint}
-              </p>
-            )}
-            {error && <p className="text-sm text-destructive">{error}</p>}
-          </div>
-        </div>
-
-        <div className="flex flex-wrap gap-2 sm:shrink-0">
+    <DashboardBanner
+      tone="attention"
+      icon={MailCheck}
+      label="E-mail"
+      title="Confirme seu e-mail para liberar todos os recursos"
+      description={
+        <>
+          Enviamos um link para{" "}
+          <span className="font-medium text-foreground">{email}</span>. Confirme
+          para concluir o cadastro da igreja e usar todos os recursos do painel.
+          {feedback ? (
+            <p className="mt-1 text-success-foreground">{feedback}</p>
+          ) : null}
+          {pendingHint ? (
+            <p className="mt-1 text-attention-foreground">{pendingHint}</p>
+          ) : null}
+          {error ? <p className="mt-1 text-destructive">{error}</p> : null}
+        </>
+      }
+      action={
+        <>
           <Button
             type="button"
             variant="outline"
@@ -131,8 +126,8 @@ export function EmailVerificationBanner() {
               "Atualizar status"
             )}
           </Button>
-        </div>
-      </div>
-    </div>
+        </>
+      }
+    />
   );
 }

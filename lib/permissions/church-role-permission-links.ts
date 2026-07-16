@@ -9,6 +9,7 @@ export const ACTION_REQUIRES_SECTION_ACCESS: Partial<
   ministries_manage: "ministries_access",
   events_create_church_wide: "activities_access",
   communication_manage: "communication_access",
+  receivables_manage: "finances_access",
   roles_manage: "settings_access",
   memberships_manage: "settings_access",
 };
@@ -21,6 +22,7 @@ export const SECTION_ACCESS_IMPLIES_ACTIONS: Partial<
   ministries_access: ["ministries_manage"],
   activities_access: ["events_create_church_wide"],
   communication_access: ["communication_manage"],
+  finances_access: ["receivables_manage"],
   settings_access: ["roles_manage", "memberships_manage"],
 };
 

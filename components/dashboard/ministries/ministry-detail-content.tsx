@@ -37,6 +37,7 @@ import {
   useUpdateMinistry,
 } from "@/lib/api/queries";
 import {
+  MINISTRY_SETTINGS_GROUPS,
   MINISTRY_SETTINGS_SECTIONS,
   type MinistrySettingsSection,
 } from "@/lib/ministries/constants";
@@ -57,24 +58,42 @@ function SettingsNav({
   onChange: (section: MinistrySettingsSection) => void;
 }) {
   return (
-    <nav className="flex shrink-0 flex-col gap-0.5 lg:w-56">
-      {MINISTRY_SETTINGS_SECTIONS.map((item) => (
-        <button
-          key={item.id}
-          type="button"
-          onClick={() => onChange(item.id)}
-          className={cn(
-            "rounded-lg px-3 py-2 text-left transition-colors",
-            active === item.id
-              ? "bg-muted text-foreground"
-              : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
-            item.id === "advanced" && active !== "advanced" && "text-destructive/80",
-          )}
-        >
-          <span className="block text-sm font-medium">{item.label}</span>
-          <span className="mt-0.5 block text-xs opacity-80">{item.description}</span>
-        </button>
-      ))}
+    <nav className="flex shrink-0 flex-col gap-4 lg:w-56">
+      {MINISTRY_SETTINGS_GROUPS.map((group) => {
+        const items = MINISTRY_SETTINGS_SECTIONS.filter(
+          (item) => item.group === group.id,
+        );
+        return (
+          <div key={group.id} className="space-y-1">
+            <p className="px-3 text-sm font-medium text-muted-foreground">
+              {group.label}
+            </p>
+            <div className="flex flex-col gap-0.5">
+              {items.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => onChange(item.id)}
+                  className={cn(
+                    "min-h-11 rounded-lg px-3 py-2 text-left transition-colors",
+                    active === item.id
+                      ? "bg-muted text-foreground"
+                      : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+                    item.id === "advanced" &&
+                      active !== "advanced" &&
+                      "text-destructive/80",
+                  )}
+                >
+                  <span className="block text-sm font-medium">{item.label}</span>
+                  <span className="mt-0.5 block text-sm opacity-80">
+                    {item.description}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      })}
     </nav>
   );
 }

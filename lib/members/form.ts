@@ -220,8 +220,6 @@ export function formValuesToUpdatePayload(
 export const GENDER_LABELS: Record<Gender, string> = {
   male: "Masculino",
   female: "Feminino",
-  other: "Outro",
-  prefer_not_to_say: "Prefiro não informar",
 };
 
 export const MARITAL_STATUS_LABELS: Record<MaritalStatus, string> = {

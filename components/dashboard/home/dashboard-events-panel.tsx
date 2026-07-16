@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { Calendar, MapPin, Plus, Repeat } from "lucide-react";
 
+import { EventListNavActions } from "@/components/dashboard/activities/event-list-nav-actions";
+import { EventRegistrationOpenBadge } from "@/components/dashboard/activities/event-registration-open-badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LockedFeatureHint } from "@/components/dashboard/locked-feature-hint";
@@ -12,6 +14,7 @@ import {
   formatEventTime,
   formatRelativeEventDay,
 } from "@/lib/dashboard/date-utils";
+import { isEventRegistrationOpen } from "@/lib/events/registration";
 import { formatRecurrenceSummary } from "@/lib/events/recurrence";
 import { useTrialWriteGuard } from "@/lib/subscription/use-trial-write-guard";
 import { cn } from "@/lib/utils";
@@ -34,13 +37,13 @@ export function DashboardEventsPanel({
   const { writesBlocked, blockProps } = useTrialWriteGuard();
 
   return (
-    <section className="rounded-xl border border-domain-activities/20 bg-gradient-to-br from-domain-activities-subtle/50 via-card to-card">
-      <div className="flex flex-col gap-3 border-b border-domain-activities/15 px-4 py-3.5 sm:flex-row sm:items-start sm:justify-between">
+    <section className="rounded-xl border border-domain-activities/30 bg-gradient-to-br from-domain-activities-subtle via-card to-card">
+      <div className="flex flex-col gap-3 border-b border-domain-activities/20 px-4 py-3.5 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h2 className="text-sm font-medium text-domain-activities-foreground">
+          <h2 className="text-base font-medium text-domain-activities-foreground">
             Agenda da semana
           </h2>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <p className="mt-0.5 text-sm text-muted-foreground">
             Próximos cultos e encontros
           </p>
         </div>
@@ -66,10 +69,10 @@ export function DashboardEventsPanel({
               <div className="mt-4 flex flex-col items-center gap-1.5">
                 <Button size="sm" onClick={onCreateActivity} {...blockProps}>
                   <Plus className="size-4" />
-                  Criar atividade
+                  Criar evento
                 </Button>
                 {writesBlocked && (
-                  <LockedFeatureHint action="criar atividades" />
+                  <LockedFeatureHint action="criar eventos" />
                 )}
               </div>
             )}
@@ -99,20 +102,27 @@ function EventTimelineItem({
 }) {
   const chip = formatEventDateChip(event.startsAt);
   const relativeDay = formatRelativeEventDay(event.startsAt);
+  const registrationOpen = isEventRegistrationOpen(event);
 
   return (
-    <li>
+    <li
+      className={cn(
+        "flex flex-col gap-2 rounded-md px-2.5 py-2.5 sm:flex-row sm:items-center sm:gap-3",
+        registrationOpen
+          ? "bg-success-subtle/70"
+          : isNext
+            ? "bg-muted/40"
+            : null,
+      )}
+    >
       <Link
         href={activityDetailPath(event.id)}
-        className={cn(
-          "flex items-center gap-3 rounded-md px-2.5 py-2.5 transition-colors duration-150 hover:bg-muted/60",
-          isNext && "bg-muted/40",
-        )}
+        className="flex min-w-0 flex-1 items-center gap-3 transition-colors duration-150 hover:opacity-90"
       >
         <div
           className={cn(
             "flex size-10 shrink-0 flex-col items-center justify-center rounded-md border text-center leading-none",
-            isNext
+            isNext && !registrationOpen
               ? "border-foreground/15 bg-foreground text-background"
               : "border-border bg-card text-foreground",
           )}
@@ -121,7 +131,9 @@ function EventTimelineItem({
           <span
             className={cn(
               "mt-0.5 text-[9px] font-medium uppercase tracking-wide",
-              isNext ? "text-background/80" : "text-muted-foreground",
+              isNext && !registrationOpen
+                ? "text-background/80"
+                : "text-muted-foreground",
             )}
           >
             {chip.month}
@@ -145,6 +157,7 @@ function EventTimelineItem({
                 {relativeDay}
               </span>
             )}
+            <EventRegistrationOpenBadge event={event} showPrice />
           </div>
 
           <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
@@ -172,6 +185,13 @@ function EventTimelineItem({
           </div>
         </div>
       </Link>
+
+      <EventListNavActions
+        eventId={event.id}
+        startsAt={event.startsAt}
+        showOccurrence
+        className="shrink-0 sm:justify-end"
+      />
     </li>
   );
 }

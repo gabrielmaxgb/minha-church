@@ -10,7 +10,27 @@ export const PUBLIC_ROUTES = {
   forgotPassword: "/recuperar-senha",
   resetPassword: "/redefinir-senha",
   verifyEmail: "/verificar-email",
+  /** Caixa de entrada: link de confirmação já foi enviado */
+  emailSent: "/email-enviado",
 } as const;
+
+export function emailSentPath(
+  email: string,
+  options?: { from?: "register" | "login" },
+): string {
+  const params = new URLSearchParams();
+  const normalized = email.trim().toLowerCase();
+  if (normalized) {
+    params.set("email", normalized);
+  }
+  if (options?.from) {
+    params.set("from", options.from);
+  }
+  const query = params.toString();
+  return query
+    ? `${PUBLIC_ROUTES.emailSent}?${query}`
+    : PUBLIC_ROUTES.emailSent;
+}
 
 export const AUTH_ROUTES = {
   root: "/app",
@@ -22,9 +42,17 @@ export const AUTH_ROUTES = {
   /** @deprecated Use mySchedules */
   mySchedule: "/app/minhas-escalas",
   finances: "/app/financas",
+  financesContributions: "/app/financas#contribuicoes",
+  financesManualEntries: "/app/financas#caixa",
+  financesMonthly: "/app/financas#mensais",
+  tithesOfferings: "/app/dizimos-e-ofertas",
   communication: "/app/comunicacao",
+  careRequests: "/app/aconselhamentos",
+  prayerRequests: "/app/pedidos-de-oracao",
   reports: "/app/relatorios",
   settings: "/app/configuracoes",
+  settingsChurch: "/app/configuracoes/igreja",
+  settingsUser: "/app/configuracoes/usuario",
   changePassword: "/app/alterar-senha",
 } as const;
 
@@ -59,14 +87,36 @@ export function activitiesCalendarPath(dateKey: string): string {
   return `${AUTH_ROUTES.activities}?view=calendar&date=${dateKey}`;
 }
 
+export function givingFundPath(churchSlug: string, fundSlug: string): string {
+  return `/doar/${encodeURIComponent(churchSlug)}/${encodeURIComponent(fundSlug)}`;
+}
+
 export function settingsSectionPath(
   section:
     | "password-reset-requests"
     | "pending-users"
     | "ministries"
-    | "profile",
+    | "my-roles"
+    | "my-contributions"
+    | "profile"
+    | "subscription"
+    | "recebimentos"
+    | "roles"
+    | "members"
+    | "activity"
+    | "general",
 ): string {
-  return `${AUTH_ROUTES.settings}?section=${section}`;
+  const userSections = new Set([
+    "profile",
+    "ministries",
+    "my-roles",
+    "my-contributions",
+  ]);
+  const base = userSections.has(section)
+    ? AUTH_ROUTES.settingsUser
+    : AUTH_ROUTES.settingsChurch;
+
+  return `${base}?section=${section}`;
 }
 
 export const MEMBER_CREATE_ROUTE = `${AUTH_ROUTES.members}/novo` as const;

@@ -17,9 +17,21 @@ export default function ActivityDetailPage() {
       <DashboardPage
         title={event?.name ?? "Atividade"}
         subtitle={
-          event?.isChurchWide
-            ? "Atividade da igreja"
-            : event?.ministryName ?? "Detalhes do evento"
+          event
+            ? [
+                event.isChurchWide
+                  ? "Atividade da igreja"
+                  : event.ministryName,
+                new Date(event.startsAt).toLocaleDateString("pt-BR", {
+                  weekday: "short",
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                }),
+              ]
+                .filter(Boolean)
+                .join(" · ")
+            : "Detalhes do evento"
         }
         className="max-w-7xl"
       >

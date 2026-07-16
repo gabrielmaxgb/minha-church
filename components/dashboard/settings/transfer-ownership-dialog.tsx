@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
-import { AlertTriangle, Eye, EyeOff, Loader2 } from "lucide-react";
+import { AlertTriangle, Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react";
 
+import { BusyOverlay } from "@/components/ui/busy-overlay";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -71,8 +72,17 @@ export function TransferOwnershipDialog({
         role="alertdialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative z-10 w-full max-w-md rounded-xl border border-border bg-background p-6 shadow-popover"
+        className="relative z-10 w-full max-w-md overflow-hidden rounded-xl border border-border bg-background p-6 shadow-popover"
       >
+        <BusyOverlay
+          active={pending}
+          icon={ShieldCheck}
+          steps={[
+            "Transferindo a propriedade...",
+            "Atualizando sua sessão...",
+          ]}
+          hint="Isso pode levar alguns segundos — não feche esta janela."
+        />
         <div className="flex items-start gap-3">
           <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-attention-border bg-attention-subtle text-attention-foreground">
             <AlertTriangle className="size-5" aria-hidden />
@@ -88,7 +98,7 @@ export function TransferOwnershipDialog({
               <strong className="text-foreground">{membership.user.name}</strong>{" "}
               passará a ser o proprietário da igreja. Você perderá esse papel e
               receberá o cargo de{" "}
-              <strong className="text-foreground">Membro</strong>, mantendo os
+              <strong className="text-foreground">Membro/todos</strong>, mantendo os
               demais cargos que já possui.
             </p>
             <p className="mt-2 text-sm text-muted-foreground">
