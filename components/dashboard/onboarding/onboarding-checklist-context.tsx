@@ -19,45 +19,17 @@ import {
 import {
   AUTH_ROUTES,
   MEMBER_CREATE_ROUTE,
+  settingsSectionPath,
 } from "@/constants/routes";
 import {
+  useConnectStatus,
   useDashboardSummary,
+  useFiscalProfile,
   useManagedAnnouncements,
   useMinistries,
 } from "@/lib/api/queries";
+import { isOwnerOnboardingMinimumComplete } from "@/lib/payments/fiscal-profile-completeness";
 import { useAuth } from "@/providers/auth-provider";
-
-function dismissedStorageKey(churchId: string): string {
-  return `mc:onboarding-checklist:dismissed:${churchId}`;
-}
-
-function autoShownStorageKey(churchId: string): string {
-  return `mc:onboarding-checklist:auto-shown:${churchId}`;
-}
-
-function readStorage(key: string): boolean {
-  if (typeof window === "undefined") {
-    return false;
-  }
-
-  try {
-    return window.localStorage.getItem(key) === "1";
-  } catch {
-    return false;
-  }
-}
-
-function writeStorage(key: string): void {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  try {
-    window.localStorage.setItem(key, "1");
-  } catch {
-    // Ignora falhas de storage (ex.: modo privado).
-  }
-}
 
 interface OnboardingChecklistContextValue {
   openOnboarding: () => void;
@@ -105,14 +77,23 @@ export function OnboardingChecklistProvider({
   const { data: ministries, isPending: ministriesPending } = useMinistries({
     enabled: isOwner,
   });
+  const { data: connectStatus } = useConnectStatus();
+  const { data: fiscalProfile, isPending: fiscalPending } = useFiscalProfile();
 
   const isStatusReady =
-    !summaryPending && !announcementsPending && !ministriesPending;
+    !summaryPending &&
+    !announcementsPending &&
+    !ministriesPending &&
+    (!isOwner || !fiscalPending);
 
   const emailVerified = user?.emailVerified !== false;
   const hasExtraMember = (summary?.memberCount ?? 0) > 1;
   const hasAnnouncement = (announcements?.length ?? 0) > 0;
   const hasMinistry = (ministries?.length ?? 0) > 0;
+  const receivablesActive = Boolean(connectStatus?.canReceivePayments);
+  const churchProfileDone = isOwnerOnboardingMinimumComplete(
+    fiscalProfile ?? null,
+  );
 
   const steps = useMemo<OnboardingStep[]>(() => {
     const list: OnboardingStep[] = [];
@@ -130,6 +111,16 @@ export function OnboardingChecklistProvider({
     }
 
     list.push({
+      id: "church-profile",
+      title: "Complete o perfil da igreja",
+      description:
+        "WhatsApp, cidade/UF e documentos da igreja (CNPJ + CPF de quem responde, ou só CPF se não houver CNPJ).",
+      actionLabel: "Completar perfil",
+      href: settingsSectionPath("general"),
+      done: churchProfileDone,
+    });
+
+    list.push({
       id: "first-member",
       title: "Cadastre o primeiro membro",
       description:
@@ -140,8 +131,19 @@ export function OnboardingChecklistProvider({
     });
 
     list.push({
+      id: "import-members",
+      title: "Importe sua lista de membros",
+      description:
+        "Já tem uma planilha? Traga todo mundo de uma vez em poucos cliques.",
+      actionLabel: "Importar planilha",
+      href: `${AUTH_ROUTES.members}?importar=1`,
+      done: hasExtraMember,
+      optional: true,
+    });
+
+    list.push({
       id: "first-announcement",
-      title: "Publique um comunicado",
+      title: "Publique um aviso",
       description:
         "Envie um aviso para a igreja e veja como a comunicação funciona.",
       actionLabel: "Ir para comunicação",
@@ -161,48 +163,38 @@ export function OnboardingChecklistProvider({
       optional: true,
     });
 
+    if (isOwner) {
+      list.push({
+        id: "activate-receivables",
+        title: "Ative os recebimentos",
+        description:
+          "Receba dízimos e doações por Pix, cartão e boleto.",
+        actionLabel: "Ativar recebimentos",
+        href: settingsSectionPath("recebimentos"),
+        done: receivablesActive,
+        optional: true,
+      });
+    }
+
     return list;
   }, [
+    churchProfileDone,
     emailStepRelevant,
     emailVerified,
     hasAnnouncement,
     hasExtraMember,
     hasMinistry,
+    isOwner,
+    receivablesActive,
   ]);
 
-  const allDone = steps.length > 0 && steps.every((step) => step.done);
   const completedCount = steps.filter((step) => step.done).length;
 
   const [open, setOpen] = useState(false);
-  const autoOpenAttemptedRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (!isOwner || !churchId || !isStatusReady || allDone) {
-      return;
-    }
-
-    if (autoOpenAttemptedRef.current === churchId) {
-      return;
-    }
-
-    autoOpenAttemptedRef.current = churchId;
-
-    const alreadyDismissed = readStorage(dismissedStorageKey(churchId));
-    const alreadyAutoShown = readStorage(autoShownStorageKey(churchId));
-
-    if (!alreadyDismissed && !alreadyAutoShown) {
-      writeStorage(autoShownStorageKey(churchId));
-      setOpen(true);
-    }
-  }, [allDone, churchId, isOwner, isStatusReady]);
 
   const handleClose = useCallback(() => {
     setOpen(false);
-
-    if (churchId) {
-      writeStorage(dismissedStorageKey(churchId));
-    }
-  }, [churchId]);
+  }, []);
 
   const openOnboarding = useCallback(() => {
     setOpen(true);

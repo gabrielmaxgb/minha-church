@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { Calendar, Clock, ClipboardList, Eye, FileText, Loader2, MapPin, Repeat, X } from "lucide-react";
+import { Calendar, Clock, Eye, FileText, Loader2, MapPin, Repeat, Ticket, X } from "lucide-react";
 
 import { ActivityScheduleFields } from "@/components/dashboard/activities/activity-schedule-fields";
 import { EventFormSection } from "@/components/dashboard/activities/event-form-section";
+import { EventOptionCard } from "@/components/dashboard/activities/event-option-card";
 import { EventRecurrenceFields } from "@/components/dashboard/activities/event-recurrence-fields";
-import { EventRosterOptionsFields } from "@/components/dashboard/activities/event-roster-options-fields";
 import { EventVisibilityFields } from "@/components/dashboard/activities/event-visibility-fields";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,7 +30,10 @@ import {
   type EventRecurrenceFormState,
 } from "@/lib/events/recurrence";
 import type { CreateChurchEventPayload } from "@/types/events";
-import type { RosterSlotPlanItem } from "@/lib/ministries/roster";
+import {
+  applyBrlCentsMask,
+  parseBrlMaskToCents,
+} from "@/lib/utils";
 
 interface CreateActivityModalProps {
   open: boolean;
@@ -79,16 +82,13 @@ export function CreateActivityModal({
   const [startsAt, setStartsAt] = useState(initialStartsAt);
   const [endsAt, setEndsAt] = useState("");
   const [visibleToChurch, setVisibleToChurch] = useState(true);
+  const [registrationOpen, setRegistrationOpen] = useState(false);
+  const [priceReais, setPriceReais] = useState("");
   const [recurrence, setRecurrence] = useState<EventRecurrenceFormState>(
     defaultRecurrenceFormState(initialStartsAt),
   );
-  const [usesRoster, setUsesRoster] = useState(true);
-  const [rosterOpen, setRosterOpen] = useState(false);
-  const [rosterSlotPlan, setRosterSlotPlan] = useState<RosterSlotPlanItem[]>([]);
-  const [availabilityMessage, setAvailabilityMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
-
-  const isChurchWide = !ministryId;
+  const [showMoreOptions, setShowMoreOptions] = useState(false);
 
   const creatableMinistries = useMemo(() => {
     if (!permissions) {
@@ -131,12 +131,11 @@ export function CreateActivityModal({
         setStartsAt(fallbackStartsAt());
         setEndsAt("");
         setVisibleToChurch(true);
+        setRegistrationOpen(false);
+        setPriceReais("");
         setRecurrence(defaultRecurrenceFormState(fallbackStartsAt()));
-        setUsesRoster(true);
-        setRosterOpen(false);
-        setRosterSlotPlan([]);
-        setAvailabilityMessage("");
         setError(null);
+        setShowMoreOptions(false);
       }
 
       wasOpenRef.current = false;
@@ -162,12 +161,6 @@ export function CreateActivityModal({
   useEffect(() => {
     setRecurrence((current) => syncRecurrenceDaysWithStart(current, startsAt));
   }, [startsAt]);
-
-  useEffect(() => {
-    if (ministryId) {
-      setRosterSlotPlan([]);
-    }
-  }, [ministryId]);
 
   useEffect(() => {
     if (!open) {
@@ -215,6 +208,25 @@ export function CreateActivityModal({
       return;
     }
 
+    const priceCents = priceReais.trim()
+      ? parseBrlMaskToCents(priceReais)
+      : null;
+
+    if (
+      registrationOpen &&
+      priceCents != null &&
+      priceCents > 0 &&
+      priceCents < 500
+    ) {
+      setError(
+        "O preço mínimo da inscrição paga é R$ 5,00 (ou deixe vazio para gratuita).",
+      );
+      return;
+    }
+
+    const openRegistration =
+      registrationOpen || Boolean(priceCents != null && priceCents >= 500);
+
     const payload: CreateChurchEventPayload = {
       name: name.trim(),
       description: description.trim() || undefined,
@@ -224,14 +236,14 @@ export function CreateActivityModal({
       endsAt: endsAt ? new Date(endsAt).toISOString() : undefined,
       ministryId: ministryId || undefined,
       recurrence: recurrencePayload,
-      usesRoster,
-      rosterOpen: usesRoster ? rosterOpen : false,
-      rosterSlotPlan: usesRoster && isChurchWide ? rosterSlotPlan : undefined,
-      availabilityMessage:
-        usesRoster && availabilityMessage.trim()
-          ? availabilityMessage.trim()
-          : undefined,
+      // Escala fica implícita (padrão do backend). Coleta de disponibilidade
+      // e montagem da equipe acontecem na página do evento após a criação.
       ...(ministryId ? { visibleToChurch } : {}),
+      registrationOpen: openRegistration,
+      priceCents:
+        openRegistration && priceCents != null && priceCents >= 500
+          ? priceCents
+          : null,
     };
 
     try {
@@ -272,10 +284,10 @@ export function CreateActivityModal({
           </div>
           <div className="min-w-0 flex-1 pt-0.5">
             <h2 id={titleId} className="text-xl font-semibold tracking-tight">
-              Nova atividade
+              Novo evento
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Deixe sem ministério para destacar como atividade da igreja inteira.
+              Deixe sem ministério para destacar como evento da igreja inteira.
             </p>
           </div>
           <button
@@ -341,8 +353,8 @@ export function CreateActivityModal({
                   </SelectField>
                   <p className="text-xs text-muted-foreground">
                     {canSelectChurchWide
-                      ? "Atividades da igreja aparecem em destaque no painel."
-                      : "Selecione um ministério em que você pode criar atividades."}
+                      ? "Eventos da igreja aparecem em destaque no painel."
+                      : "Selecione um ministério em que você pode criar eventos."}
                   </p>
                 </div>
 
@@ -357,25 +369,6 @@ export function CreateActivityModal({
                     className="min-h-[80px] resize-y rounded-xl"
                     placeholder="Detalhes opcionais para a equipe ou participantes"
                   />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="activity-highlight-note">
-                    Recado em destaque
-                  </Label>
-                  <Textarea
-                    id="activity-highlight-note"
-                    value={highlightNote}
-                    onChange={(event) => setHighlightNote(event.target.value)}
-                    rows={2}
-                    disabled={createEvent.isPending}
-                    className="min-h-[80px] resize-y rounded-xl"
-                    placeholder="Ex.: Tema da mensagem: “A fé que move montanhas” — Pr. João"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Aparece em destaque na página do evento. Ideal para tema da
-                    palavra, pastorais ou avisos importantes.
-                  </p>
                 </div>
 
                 <div className="space-y-2">
@@ -397,7 +390,7 @@ export function CreateActivityModal({
 
             <EventFormSection
               title="Data e horário"
-              description="Quando a atividade acontece e por quanto tempo."
+              description="Quando o evento acontece e por quanto tempo."
               icon={Clock}
             >
               <ActivityScheduleFields
@@ -410,56 +403,126 @@ export function CreateActivityModal({
               />
             </EventFormSection>
 
-            <EventFormSection
-              title="Repetição"
-              description="Opcional. Crie uma série de ocorrências com a mesma configuração."
-              icon={Repeat}
-            >
-              <EventRecurrenceFields
-                value={recurrence}
-                onChange={setRecurrence}
-                startsAt={startsAt}
-                disabled={createEvent.isPending}
-              />
-            </EventFormSection>
-
-            {ministryId ? (
-              <EventFormSection
-                title="Quem pode ver"
-                description="Controle se o evento aparece na agenda geral da igreja."
-                icon={Eye}
+            <div className="rounded-xl border border-border/80">
+              <button
+                type="button"
+                className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-medium text-foreground transition-colors hover:bg-muted/40"
+                aria-expanded={showMoreOptions}
+                onClick={() => setShowMoreOptions((current) => !current)}
               >
-                <EventVisibilityFields
-                  visibleToChurch={visibleToChurch}
-                  onVisibleToChurchChange={setVisibleToChurch}
-                  disabled={createEvent.isPending}
-                />
-              </EventFormSection>
-            ) : null}
+                <span>Mais opções</span>
+                <span className="text-sm font-normal text-muted-foreground">
+                  {showMoreOptions
+                    ? "Ocultar"
+                    : "Inscrição, repetição e destaque"}
+                </span>
+              </button>
 
-            <EventFormSection
-              title="Escala da equipe"
-              description={
-                isChurchWide
-                  ? "Coleta de disponibilidade e funções opcionais para montar a escala."
-                  : "Disponibilidade e montagem de escala neste evento."
-              }
-              icon={ClipboardList}
-            >
-              <EventRosterOptionsFields
-                usesRoster={usesRoster}
-                rosterOpen={rosterOpen}
-                rosterSlotPlan={rosterSlotPlan}
-                availabilityMessage={availabilityMessage}
-                onUsesRosterChange={setUsesRoster}
-                onRosterOpenChange={setRosterOpen}
-                onRosterSlotPlanChange={setRosterSlotPlan}
-                onAvailabilityMessageChange={setAvailabilityMessage}
-                disabled={createEvent.isPending}
-                hideSlotPlan={!isChurchWide}
-                optionalSlotPlan={isChurchWide}
-              />
-            </EventFormSection>
+              {showMoreOptions ? (
+                <div className="space-y-8 border-t border-border/80 px-4 py-5">
+                  <div className="space-y-2">
+                    <Label htmlFor="activity-highlight-note">
+                      Recado em destaque
+                    </Label>
+                    <Textarea
+                      id="activity-highlight-note"
+                      value={highlightNote}
+                      onChange={(event) => setHighlightNote(event.target.value)}
+                      rows={2}
+                      disabled={createEvent.isPending}
+                      className="min-h-[80px] resize-y rounded-xl"
+                      placeholder="Ex.: Tema da mensagem: “A fé que move montanhas” — Pr. João"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Aparece em destaque na página do evento. Ideal para tema da
+                      palavra, pastorais ou avisos importantes.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <EventOptionCard
+                      type="checkbox"
+                      checked={registrationOpen}
+                      onChange={(checked) => {
+                        setRegistrationOpen(checked);
+                        if (!checked) {
+                          setPriceReais("");
+                        }
+                      }}
+                      title="Abrir inscrição"
+                      description="Membros confirmam participação na página do evento. Pode ser gratuita ou paga."
+                      icon={Ticket}
+                      disabled={createEvent.isPending}
+                      compact
+                    />
+
+                    {registrationOpen ? (
+                      <div className="space-y-2 pl-1">
+                        <Label htmlFor="activity-price">
+                          Preço da inscrição (opcional)
+                        </Label>
+                        <div className="relative">
+                          <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-muted-foreground">
+                            R$
+                          </span>
+                          <Input
+                            id="activity-price"
+                            inputMode="numeric"
+                            autoComplete="off"
+                            value={priceReais}
+                            onChange={(event) => {
+                              const digits = event.target.value.replace(
+                                /\D/g,
+                                "",
+                              );
+                              setPriceReais(
+                                digits
+                                  ? applyBrlCentsMask(event.target.value)
+                                  : "",
+                              );
+                            }}
+                            disabled={createEvent.isPending}
+                            placeholder="0,00 — vazio = gratuita"
+                            className="h-11 rounded-xl pl-10 tabular-nums"
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Vazio = inscrição gratuita. Com valor, membros pagam
+                          pela conta de recebimentos da igreja (mínimo R$ 5,00).
+                        </p>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <EventFormSection
+                    title="Repetição"
+                    description="Opcional. Crie uma série de ocorrências com a mesma configuração."
+                    icon={Repeat}
+                  >
+                    <EventRecurrenceFields
+                      value={recurrence}
+                      onChange={setRecurrence}
+                      startsAt={startsAt}
+                      disabled={createEvent.isPending}
+                    />
+                  </EventFormSection>
+
+                  {ministryId ? (
+                    <EventFormSection
+                      title="Quem pode ver"
+                      description="Controle se o evento aparece na agenda geral da igreja."
+                      icon={Eye}
+                    >
+                      <EventVisibilityFields
+                        visibleToChurch={visibleToChurch}
+                        onVisibleToChurchChange={setVisibleToChurch}
+                        disabled={createEvent.isPending}
+                      />
+                    </EventFormSection>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
           </div>
 
           <Separator />
@@ -485,7 +548,7 @@ export function CreateActivityModal({
                   Criando...
                 </>
               ) : (
-                "Criar atividade"
+                "Criar evento"
               )}
             </Button>
           </footer>

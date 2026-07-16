@@ -35,7 +35,7 @@ function formatWhen(iso: string) {
 
   return date.toLocaleString("pt-BR", {
     day: "2-digit",
-    month: "short",
+    month: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
   });

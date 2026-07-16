@@ -1,6 +1,7 @@
 /**
- * Domínios do produto — cores suaves alinhadas à vibe institucional quieta.
- * Use para nav ativa, marcas de seção e accents leves (não sidebars coloridas).
+ * Domínios do produto — metadado de rota / seção.
+ * Tinta = orientação (onde estou), não decoração.
+ * CTA/primary permanece na pedra da marca.
  */
 export type ProductDomain =
   | "home"
@@ -20,23 +21,34 @@ export const domainFromHref: Record<string, ProductDomain> = {
   "/app/atividades": "activities",
   "/app/minhas-escalas": "schedules",
   "/app/comunicacao": "communication",
+  "/app/aconselhamentos": "members",
+  "/app/pedidos-de-oracao": "communication",
   "/app/financas": "finances",
+  "/app/dizimos-e-ofertas": "finances",
   "/app/relatorios": "reports",
   "/app/configuracoes": "settings",
+  "/app/configuracoes/igreja": "settings",
+  "/app/configuracoes/usuario": "settings",
 };
 
-/** Classes Tailwind para estado ativo na nav (fundo + texto + ícone). */
+/** Classes Tailwind para estado ativo na nav (fundo + texto + borda da área). */
 export const domainNavActive: Record<ProductDomain, string> = {
-  home: "bg-domain-home-subtle text-domain-home-foreground",
-  members: "bg-domain-members-subtle text-domain-members-foreground",
-  ministries: "bg-domain-ministries-subtle text-domain-ministries-foreground",
-  activities: "bg-domain-activities-subtle text-domain-activities-foreground",
-  schedules: "bg-domain-schedules-subtle text-domain-schedules-foreground",
+  home: "border border-domain-home/30 bg-domain-home-subtle text-domain-home-foreground",
+  members:
+    "border border-domain-members/30 bg-domain-members-subtle text-domain-members-foreground",
+  ministries:
+    "border border-domain-ministries/30 bg-domain-ministries-subtle text-domain-ministries-foreground",
+  activities:
+    "border border-domain-activities/30 bg-domain-activities-subtle text-domain-activities-foreground",
+  schedules:
+    "border border-domain-schedules/30 bg-domain-schedules-subtle text-domain-schedules-foreground",
   communication:
-    "bg-domain-communication-subtle text-domain-communication-foreground",
-  finances: "bg-domain-finances-subtle text-domain-finances-foreground",
-  reports: "bg-domain-reports-subtle text-domain-reports-foreground",
-  settings: "bg-muted text-foreground",
+    "border border-domain-communication/30 bg-domain-communication-subtle text-domain-communication-foreground",
+  finances:
+    "border border-domain-finances/30 bg-domain-finances-subtle text-domain-finances-foreground",
+  reports:
+    "border border-domain-reports/30 bg-domain-reports-subtle text-domain-reports-foreground",
+  settings: "border border-border bg-muted text-foreground",
 };
 
 /** Ponto / marca lateral (ex.: bullet de seção). */
@@ -67,15 +79,15 @@ export const domainText: Record<ProductDomain, string> = {
 
 /** Fundo sutil + borda leve para cards de domínio. */
 export const domainSurface: Record<ProductDomain, string> = {
-  home: "bg-domain-home-subtle border-domain-home/20",
-  members: "bg-domain-members-subtle border-domain-members/20",
-  ministries: "bg-domain-ministries-subtle border-domain-ministries/20",
-  activities: "bg-domain-activities-subtle border-domain-activities/20",
-  schedules: "bg-domain-schedules-subtle border-domain-schedules/20",
+  home: "bg-domain-home-subtle border-domain-home/25",
+  members: "bg-domain-members-subtle border-domain-members/25",
+  ministries: "bg-domain-ministries-subtle border-domain-ministries/25",
+  activities: "bg-domain-activities-subtle border-domain-activities/25",
+  schedules: "bg-domain-schedules-subtle border-domain-schedules/25",
   communication:
-    "bg-domain-communication-subtle border-domain-communication/20",
-  finances: "bg-domain-finances-subtle border-domain-finances/20",
-  reports: "bg-domain-reports-subtle border-domain-reports/20",
+    "bg-domain-communication-subtle border-domain-communication/25",
+  finances: "bg-domain-finances-subtle border-domain-finances/25",
+  reports: "bg-domain-reports-subtle border-domain-reports/25",
   settings: "bg-muted/50 border-border",
 };
 

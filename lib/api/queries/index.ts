@@ -2,6 +2,7 @@ import { mergeQueryKeys } from "@lukemorales/query-key-factory";
 
 import { announcementsKeys } from "@/lib/api/queries/announcements.keys";
 import { auditLogsKeys } from "@/lib/api/queries/audit-logs.keys";
+import { careRequestsKeys } from "@/lib/api/queries/care-requests.keys";
 import { churchRolesKeys } from "@/lib/api/queries/church-roles.keys";
 import { dashboardKeys } from "@/lib/api/queries/dashboard.keys";
 import { eventsKeys } from "@/lib/api/queries/events.keys";
@@ -9,12 +10,16 @@ import { membersKeys } from "@/lib/api/queries/members.keys";
 import { membershipsKeys } from "@/lib/api/queries/memberships.keys";
 import { ministriesKeys } from "@/lib/api/queries/ministries.keys";
 import { billingKeys } from "@/lib/api/queries/billing.keys";
+import { notificationsKeys } from "@/lib/api/queries/notifications.keys";
+import { paymentsKeys } from "@/lib/api/queries/payments.keys";
+import { prayerRequestsKeys } from "@/lib/api/queries/prayer-requests.keys";
 import { pricingKeys } from "@/lib/api/queries/pricing.keys";
 import { rosterKeys } from "@/lib/api/queries/roster.keys";
 
 export const queries = mergeQueryKeys(
   pricingKeys,
   billingKeys,
+  paymentsKeys,
   dashboardKeys,
   eventsKeys,
   membersKeys,
@@ -24,6 +29,9 @@ export const queries = mergeQueryKeys(
   churchRolesKeys,
   auditLogsKeys,
   announcementsKeys,
+  careRequestsKeys,
+  prayerRequestsKeys,
+  notificationsKeys,
 );
 
 export { dashboardKeys } from "@/lib/api/queries/dashboard.keys";
@@ -32,7 +40,12 @@ export { membersKeys } from "@/lib/api/queries/members.keys";
 export { membershipsKeys } from "@/lib/api/queries/memberships.keys";
 export { ministriesKeys } from "@/lib/api/queries/ministries.keys";
 export { pricingKeys } from "@/lib/api/queries/pricing.keys";
-export { useChurchEvent, useChurchEvents, useEventSeriesOccurrences } from "@/lib/api/queries/use-church-events";
+export {
+  useChurchEvent,
+  useChurchEvents,
+  useEventSeriesOccurrences,
+  useEventTicketRegistrations,
+} from "@/lib/api/queries/use-church-events";
 export {
 	useCreateChurchEvent,
 	useDeleteChurchEvent,
@@ -122,9 +135,65 @@ export {
   useBillingPortal,
   useSubscriptionSummary,
 } from "@/lib/api/queries/use-billing";
+export { paymentsKeys } from "@/lib/api/queries/payments.keys";
+export {
+  resolvePaymentsError,
+  useConnectStatus,
+  useCreateFinanceEntry,
+  useCreateGivingFund,
+  useCreateMemberGivingCheckout,
+  useDeleteFinanceEntry,
+  useDeleteGivingFund,
+  useExportFinanceEntries,
+  useExportGivingDonations,
+  useFinanceEntries,
+  useFinanceEntriesSummary,
+  useFiscalProfile,
+  useGivingDonations,
+  useMyGivingDonations,
+  useMyGivingSubscriptions,
+  useCancelMyGivingSubscription,
+  useGivingSubscriptions,
+  useCancelGivingSubscriptionAsTreasurer,
+  useGivingFunds,
+  useMemberGivingFunds,
+  usePaymentsSummary,
+  useRefundGivingDonation,
+  useOpenExpressDashboard,
+  useResumeConnectOnboarding,
+  useStartConnectOnboarding,
+  useSyncConnectAccount,
+  useUpdateFinanceEntry,
+  useUpdateGivingFund,
+  useUpsertFiscalProfile,
+} from "@/lib/api/queries/use-payments";
 export { rosterKeys, worshipKeys } from "@/lib/api/queries/roster.keys";
 export { useMySchedules, useMyWorshipSchedule } from "@/lib/api/queries/use-my-schedules";
 export {
   useRespondToRosterAvailability,
   useRespondToWorshipAvailability,
 } from "@/lib/api/queries/use-respond-worship-availability";
+export { careRequestsKeys } from "@/lib/api/queries/care-requests.keys";
+export {
+  useAckCareViewedMine,
+  useCareInbox,
+  useCareInboxPendingCount,
+  useCareRecipients,
+  useCareViewedMineCount,
+  useCreateCareRequest,
+  useMarkCareRequestViewed,
+  useMyCareRequests,
+} from "@/lib/api/queries/use-care-requests";
+export { prayerRequestsKeys } from "@/lib/api/queries/prayer-requests.keys";
+export {
+  useArchivePrayerRequest,
+  useCreatePrayerRequest,
+  useDeletePrayerRequest,
+  usePrayerRequests,
+  useTogglePrayerRequestPray,
+} from "@/lib/api/queries/use-prayer-requests";
+export { notificationsKeys } from "@/lib/api/queries/notifications.keys";
+export {
+  useMarkNotificationRead,
+  useNotificationInbox,
+} from "@/lib/api/queries/use-notifications";

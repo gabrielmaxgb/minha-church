@@ -20,17 +20,23 @@ export interface UserPermissions {
     ministryIds: string[];
   };
   schedules: { access: boolean };
-  finances: { access: boolean };
+  finances: { access: boolean; manage: boolean };
   communication: { access: boolean; manage: boolean };
   reports: { access: boolean };
   settings: { access: boolean };
   roles: { manage: boolean };
   memberships: { manage: boolean };
+  counseling: { receive: boolean };
 }
 
 export type SubscriptionStatus =
   | "trialing"
   | "active"
+  | "past_due"
+  | "canceled";
+
+export type SubscriptionLockReason =
+  | "trial_expired"
   | "past_due"
   | "canceled";
 
@@ -46,6 +52,8 @@ export interface Church {
   trialDaysRemaining?: number | null;
   /** true quando o trial expirou e recursos de gestão estão bloqueados. */
   featuresLocked?: boolean;
+  /** Motivo do bloqueio, para copy por status. */
+  lockReason?: SubscriptionLockReason | null;
 }
 
 export interface User {
@@ -125,6 +133,18 @@ export interface UpdateProfilePayload {
   name?: string;
   email?: string | null;
   phone?: string | null;
+  phoneSecondary?: string | null;
+  birthDate?: string | null;
+  gender?: "male" | "female" | null;
+  maritalStatus?: "single" | "married" | "divorced" | "widowed" | null;
+  weddingAnniversary?: string | null;
+  street?: string | null;
+  number?: string | null;
+  complement?: string | null;
+  neighborhood?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zipCode?: string | null;
 }
 
 export interface AuthResponse {
@@ -150,4 +170,6 @@ export type ChurchPermissionKey =
   | "reports_access"
   | "settings_access"
   | "roles_manage"
-  | "memberships_manage";
+  | "memberships_manage"
+  | "counseling_receive"
+  | "receivables_manage";

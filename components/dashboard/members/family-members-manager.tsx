@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Loader2, UserMinus, UserPlus } from "lucide-react";
+import { Loader2, UserMinus, UserPlus, Users } from "lucide-react";
 
+import { BusyOverlay } from "@/components/ui/busy-overlay";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { TypeaheadMultiSelect } from "@/components/ui/typeahead-multi-select";
@@ -56,6 +57,8 @@ export function FamilyMembersManager({
   }, [membersData, inFamilyIds]);
 
   const busy = setFamily.isPending;
+  const isAdding = busy && removingId === null;
+  const addCount = selectedIds.length;
 
   async function handleAdd() {
     if (selectedIds.length === 0) {
@@ -64,11 +67,25 @@ export function FamilyMembersManager({
     }
 
     setError(null);
+    const pendingIds = [...selectedIds];
 
     try {
-      for (const memberId of selectedIds) {
-        await setFamily.mutateAsync({ memberId, familyId });
+      const result = await setFamily.mutateAsync({
+        memberIds: pendingIds,
+        familyId,
+      });
+
+      if (result.failedCount > 0) {
+        const succeeded = new Set(result.succeededIds);
+        setSelectedIds(pendingIds.filter((id) => !succeeded.has(id)));
+        setError(
+          result.firstError
+            ? `${result.succeededIds.length} adicionados. ${result.failedCount} falharam: ${result.firstError}`
+            : `${result.succeededIds.length} adicionados. ${result.failedCount} não puderam ser vinculados.`,
+        );
+        return;
       }
+
       setSelectedIds([]);
     } catch (addError) {
       setError(
@@ -97,7 +114,20 @@ export function FamilyMembersManager({
   }
 
   return (
-    <div className="rounded-2xl border border-border/60 bg-card px-4 py-4 sm:px-5">
+    <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-card px-4 py-4 sm:px-5">
+      <BusyOverlay
+        active={isAdding}
+        icon={Users}
+        steps={
+          addCount > 1
+            ? ([
+                `Vinculando ${addCount} pessoas...`,
+                "Atualizando o grafo...",
+              ] as const)
+            : (["Vinculando à família...", "Atualizando o grafo..."] as const)
+        }
+      />
+
       <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm font-semibold text-foreground">
@@ -173,12 +203,14 @@ export function FamilyMembersManager({
             disabled={busy || selectedIds.length === 0}
             onClick={() => void handleAdd()}
           >
-            {busy && !removingId ? (
+            {isAdding ? (
               <Loader2 className="size-3.5 animate-spin" />
             ) : (
               <UserPlus className="size-3.5" />
             )}
-            Adicionar à família
+            {addCount > 1
+              ? `Adicionar ${addCount} à família`
+              : "Adicionar à família"}
           </Button>
         </div>
       ) : null}

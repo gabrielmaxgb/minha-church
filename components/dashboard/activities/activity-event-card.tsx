@@ -3,10 +3,13 @@
 import Link from "next/link";
 import { Calendar, MapPin, Pencil, Repeat, Sparkles } from "lucide-react";
 
+import { EventListNavActions } from "@/components/dashboard/activities/event-list-nav-actions";
+import { EventRegistrationOpenBadge } from "@/components/dashboard/activities/event-registration-open-badge";
 import { HoverLift } from "@/components/motion/dashboard-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { activityDetailPath } from "@/constants/routes";
+import { isEventRegistrationOpen } from "@/lib/events/registration";
 import { cn, formatDateTime } from "@/lib/utils";
 import { formatRecurrenceSummary } from "@/lib/events/recurrence";
 import type { ChurchEvent } from "@/types/events";
@@ -28,19 +31,25 @@ export function ActivityEventCard({
   manageBlockTitle,
   onEdit,
 }: ActivityEventCardProps) {
+  const registrationOpen = isEventRegistrationOpen(event);
+
   return (
     <HoverLift>
-      <Link href={activityDetailPath(event.id)} className="block">
-        <article
-          className={cn(
-            "rounded-xl border bg-card p-5 transition-shadow duration-150 hover:shadow-elevated",
-            highlighted
+      <article
+        className={cn(
+          "rounded-xl border bg-card p-5 transition-shadow duration-150 hover:shadow-elevated",
+          registrationOpen
+            ? "border-success/25 bg-success-subtle/50"
+            : highlighted
               ? "border-primary/15 bg-muted/20"
               : "border-border/70",
-          )}
-        >
+        )}
+      >
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0">
+          <Link
+            href={activityDetailPath(event.id)}
+            className="min-w-0 flex-1 transition-colors hover:text-foreground"
+          >
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="font-medium tracking-tight text-foreground">
                 {event.name}
@@ -57,6 +66,7 @@ export function ActivityEventCard({
                   Recorrente
                 </Badge>
               )}
+              <EventRegistrationOpenBadge event={event} showPrice />
             </div>
             {event.description && (
               <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
@@ -68,12 +78,17 @@ export function ActivityEventCard({
                 {formatRecurrenceSummary(event.recurrence, event.startsAt)}
               </p>
             )}
-          </div>
+          </Link>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
             {!event.isChurchWide && event.ministryName && (
               <Badge variant="secondary">{event.ministryName}</Badge>
             )}
+            <EventListNavActions
+              eventId={event.id}
+              startsAt={event.startsAt}
+              showOccurrence
+            />
             {canManage && onEdit && (
               <Button
                 type="button"
@@ -82,11 +97,7 @@ export function ActivityEventCard({
                 className="shrink-0"
                 disabled={manageActionsBlocked}
                 title={manageActionsBlocked ? manageBlockTitle : undefined}
-                onClick={(clickEvent) => {
-                  clickEvent.preventDefault();
-                  clickEvent.stopPropagation();
-                  onEdit(event);
-                }}
+                onClick={() => onEdit(event)}
               >
                 <Pencil className="size-4" />
                 Editar
@@ -95,7 +106,10 @@ export function ActivityEventCard({
           </div>
         </div>
 
-        <div className="mt-4 flex flex-col gap-2 border-t border-border/50 pt-4 text-sm text-muted-foreground sm:flex-row sm:gap-6">
+        <Link
+          href={activityDetailPath(event.id)}
+          className="mt-4 flex flex-col gap-2 border-t border-border/50 pt-4 text-sm text-muted-foreground transition-colors hover:text-foreground sm:flex-row sm:gap-6"
+        >
           <span className="inline-flex items-center gap-2">
             <span className="flex size-7 items-center justify-center rounded-lg bg-muted/80">
               <Calendar className="size-3.5 shrink-0 text-foreground/70" />
@@ -118,9 +132,8 @@ export function ActivityEventCard({
               {event.location}
             </span>
           )}
-        </div>
+        </Link>
       </article>
-      </Link>
     </HoverLift>
   );
 }

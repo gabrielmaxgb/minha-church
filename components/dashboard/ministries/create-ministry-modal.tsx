@@ -5,6 +5,7 @@ import { Layers, Loader2, X } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch } from "react-hook-form";
 
+import { BusyOverlay } from "@/components/ui/busy-overlay";
 import { Button } from "@/components/ui/button";
 import { FormAlert, FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
@@ -139,10 +140,18 @@ export function CreateMinistryModal({ open, onClose }: CreateMinistryModalProps)
         aria-labelledby={titleId}
         aria-describedby={descriptionId}
         className={cn(
-          "relative z-10 flex max-h-[min(92dvh,640px)] w-full max-w-lg flex-col",
+          "relative z-10 flex max-h-[min(92dvh,640px)] w-full max-w-lg flex-col overflow-hidden",
           "rounded-t-xl border border-border bg-background shadow-popover sm:rounded-xl",
         )}
       >
+        <BusyOverlay
+          active={createMinistry.isPending}
+          icon={Layers}
+          steps={[
+            "Criando o ministério...",
+            "Preparando a equipe...",
+          ]}
+        />
         <header className="flex items-start gap-4 px-6 pb-4 pt-6">
           <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             <Layers className="size-5" aria-hidden />

@@ -4,6 +4,7 @@ import { useEffect, useId, useMemo, useState } from "react";
 import { Loader2, UserPlus, X } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { BusyOverlay } from "@/components/ui/busy-overlay";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -179,8 +180,16 @@ export function AddMinistryMemberModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative z-10 flex w-full max-w-3xl flex-col rounded-t-xl border border-border bg-background shadow-popover sm:max-h-[min(90dvh,720px)] sm:rounded-xl"
+        className="relative z-10 flex w-full max-w-3xl flex-col overflow-hidden rounded-t-xl border border-border bg-background shadow-popover sm:max-h-[min(90dvh,720px)] sm:rounded-xl"
       >
+        <BusyOverlay
+          active={assignMembers.isPending}
+          icon={UserPlus}
+          steps={[
+            "Vinculando membros ao ministério...",
+            "Atualizando a equipe...",
+          ]}
+        />
         <header className="flex items-start gap-4 px-8 pb-5 pt-8">
           <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             <UserPlus className="size-5" aria-hidden />

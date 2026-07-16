@@ -121,6 +121,13 @@ export function canCreateMinistryActivity(
   permissions: UserPermissions,
   ministryId: string,
 ) {
+  // Alinhado ao backend (`canManageMinistryEvents`): quem cria eventos da
+  // igreja (owner / events_create_church_wide) pode em qualquer ministério,
+  // sem depender da lista cached de ministryIds na sessão.
+  if (permissions.activities.createChurchWide) {
+    return true;
+  }
+
   return permissions.activities.ministryIds.includes(ministryId);
 }
 
@@ -237,7 +244,25 @@ export function canAccessNav(
 export function canAccessNavItem(
   permissions: UserPermissions,
   item: DashboardNavItem,
+  options?: {
+    isActiveAdultMember?: boolean;
+    isActiveMember?: boolean;
+    isOwner?: boolean;
+  },
 ): boolean {
+  // Owner always has full product access — never hide nav behind role/member gates.
+  if (options?.isOwner) {
+    return true;
+  }
+
+  if (item.access === "activeAdultMember") {
+    return Boolean(options?.isActiveAdultMember);
+  }
+
+  if (item.access === "activeMember") {
+    return Boolean(options?.isActiveMember);
+  }
+
   if (!item.permission) {
     return true;
   }
@@ -247,16 +272,21 @@ export function canAccessNavItem(
 
 export function getFirstAccessibleRoute(
   permissions: UserPermissions,
+  options?: {
+    isActiveAdultMember?: boolean;
+    isActiveMember?: boolean;
+    isOwner?: boolean;
+  },
 ): string {
   const items = [...dashboardNavItems, ...dashboardSecondaryNavItems];
 
   for (const item of items) {
-    if (canAccessNavItem(permissions, item)) {
+    if (canAccessNavItem(permissions, item, options)) {
       return item.href;
     }
   }
 
-  return AUTH_ROUTES.settings;
+  return AUTH_ROUTES.settingsUser;
 }
 
 export type RoutePermission =
@@ -274,7 +304,12 @@ export type RoutePermission =
 export function hasRoutePermission(
   permissions: UserPermissions,
   permission: RoutePermission,
+  options?: { isOwner?: boolean },
 ) {
+  if (options?.isOwner) {
+    return true;
+  }
+
   switch (permission) {
     case "dashboard":
       return permissions.dashboard.access;

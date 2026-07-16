@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 
 import { SubscribePricingModal } from "@/components/billing/subscribe-pricing-modal";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 
 interface SubscribePricingTriggerProps {
@@ -17,6 +18,8 @@ interface SubscribePricingTriggerProps {
     | "ghost"
     | "destructive"
     | "link";
+  /** CTA claro sobre fundo escuro (banners de assinatura). */
+  inverted?: boolean;
   /** Chamado ao abrir a modal (ex.: fechar outra modal por baixo). */
   onOpen?: () => void;
 }
@@ -24,8 +27,9 @@ interface SubscribePricingTriggerProps {
 export function SubscribePricingTrigger({
   children,
   className,
-  size = "sm",
+  size = "default",
   variant = "default",
+  inverted = false,
   onOpen,
 }: SubscribePricingTriggerProps) {
   const { user } = useAuth();
@@ -46,7 +50,12 @@ export function SubscribePricingTrigger({
         type="button"
         size={size}
         variant={variant}
-        className={className}
+        className={cn(
+          "min-w-40 font-semibold shadow-xs",
+          inverted &&
+            "bg-[#f4f4f1] text-[#1a1a18] hover:bg-white",
+          className,
+        )}
         onClick={handleOpen}
       >
         {children}

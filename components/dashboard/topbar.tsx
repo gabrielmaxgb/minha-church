@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { NotificationsBell } from "@/components/dashboard/notifications-bell";
 import { OnboardingHeaderButton } from "@/components/dashboard/onboarding/onboarding-header-button";
+import { TrialStatusHeaderChip } from "@/components/dashboard/trial-status-header-chip";
 import { formatUserAccessLabel } from "@/lib/user-display";
 import { getUserLoginLabel } from "@/lib/user-profile";
 import { formatMemberCountLabel } from "@/lib/pricing";
@@ -38,12 +39,15 @@ export function DashboardTopbar({
     user,
     church,
     churches,
+    permissions,
     logout,
     switchChurch,
     isSwitchingChurch,
   } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [churchMenuOpen, setChurchMenuOpen] = useState(false);
+  const canAccessChurchSettings =
+    Boolean(user?.isOwner) || Boolean(permissions?.settings.access);
 
   const churchLabel =
     church?.memberCount != null
@@ -78,6 +82,7 @@ export function DashboardTopbar({
         </div>
 
         <div className="flex h-9 items-center gap-1.5 sm:gap-2">
+          <TrialStatusHeaderChip />
           <NotificationsBell />
           <OnboardingHeaderButton />
 
@@ -165,17 +170,27 @@ export function DashboardTopbar({
                     onClick={() => setMenuOpen(false)}
                   />
                   <div className="absolute right-0 z-20 mt-1.5 w-56 rounded-lg border border-border bg-popover p-1 shadow-popover">
-                    <div className="border-b border-border px-2.5 py-2">
-                      <p className="text-sm font-medium">{user.name}</p>
-                      <p className="text-xs text-muted-foreground">
+                    <div className="min-w-0 border-b border-border px-2.5 py-2">
+                      <p className="truncate text-sm font-medium">{user.name}</p>
+                      <p className="truncate text-xs text-muted-foreground">
                         {getUserLoginLabel(user)}
                       </p>
-                      <p className="mt-1 text-xs text-muted-foreground">
+                      <p className="mt-1 truncate text-xs text-muted-foreground">
                         {formatUserAccessLabel(user)}
                       </p>
                     </div>
+                    {canAccessChurchSettings ? (
+                      <Link
+                        href={AUTH_ROUTES.settingsChurch}
+                        className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm transition-colors hover:bg-muted"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        <Church className="size-4" />
+                        Configurações da igreja
+                      </Link>
+                    ) : null}
                     <Link
-                      href={AUTH_ROUTES.settings}
+                      href={AUTH_ROUTES.settingsUser}
                       className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm transition-colors hover:bg-muted"
                       onClick={() => setMenuOpen(false)}
                     >

@@ -44,8 +44,8 @@ export function ProfileMinistriesSettings() {
   return (
     <div>
       <SettingsSectionHeader
-        title="Ministérios e Grupos de serviço"
-        description="Escolha em quais funções você pode servir em cada ministério."
+        title="Funções de serviço"
+        description="Escolha em quais funções você pode servir em cada ministério ou grupo."
       />
 
       {showBanner && notifications ? (

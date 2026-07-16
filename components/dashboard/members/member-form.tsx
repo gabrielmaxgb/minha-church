@@ -36,6 +36,11 @@ interface MemberFormProps {
   disabled?: boolean;
   showStatus?: boolean;
   requireLogin?: boolean;
+  /**
+   * Quando true, impede promover para "Membro ativo" (conta da igreja bloqueada).
+   * Mantém a opção se o status atual já for active (edição).
+   */
+  blockActivePromotion?: boolean;
 }
 
 function FormSection({
@@ -89,6 +94,7 @@ export function MemberForm({
   disabled = false,
   showStatus = true,
   requireLogin = false,
+  blockActivePromotion = false,
 }: MemberFormProps) {
   const {
     register,
@@ -106,6 +112,13 @@ export function MemberForm({
   const createFamily = useCreateFamily();
   const [newFamilyName, setNewFamilyName] = useState("");
   const [showNewFamily, setShowNewFamily] = useState(false);
+  const [showMoreDetails, setShowMoreDetails] = useState(false);
+
+  useEffect(() => {
+    if (blockActivePromotion && status === "active") {
+      setValue("status", "visitor", { shouldDirty: true, shouldValidate: true });
+    }
+  }, [blockActivePromotion, status, setValue]);
 
   useEffect(() => {
     if (maritalStatus !== "married") {
@@ -160,9 +173,11 @@ export function MemberForm({
             label="Status"
             htmlFor="member-status"
             hint={
-              status === "active"
-                ? "Membros ativos recebem acesso ao painel (e-mail ou CPF obrigatório)."
-                : "Visitantes e inativos ficam só no cadastro pastoral, sem login."
+              blockActivePromotion
+                ? "Com a assinatura bloqueada, só é possível cadastrar visitante ou inativo — sem acesso ao painel."
+                : status === "active"
+                  ? "Membros ativos recebem acesso ao painel (e-mail ou CPF obrigatório)."
+                  : "Visitantes e inativos ficam só no cadastro pastoral, sem login."
             }
           >
             <SelectField
@@ -172,8 +187,15 @@ export function MemberForm({
             >
               {(Object.keys(MEMBER_STATUS_FORM_LABELS) as MemberStatus[]).map(
                 (item) => (
-                  <option key={item} value={item}>
+                  <option
+                    key={item}
+                    value={item}
+                    disabled={blockActivePromotion && item === "active"}
+                  >
                     {MEMBER_STATUS_FORM_LABELS[item]}
+                    {blockActivePromotion && item === "active"
+                      ? " (requer assinatura)"
+                      : ""}
                   </option>
                 ),
               )}
@@ -245,16 +267,36 @@ export function MemberForm({
             {...register("phone")}
           />
         </FormField>
-
-        <FormField label="Telefone secundário" htmlFor="member-phone-secondary">
-          <Input
-            id="member-phone-secondary"
-            placeholder="Opcional"
-            disabled={disabled}
-            {...register("phoneSecondary")}
-          />
-        </FormField>
       </FormSection>
+
+      <div className="rounded-lg border border-border bg-card">
+        <button
+          type="button"
+          className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left sm:px-6"
+          aria-expanded={showMoreDetails}
+          onClick={() => setShowMoreDetails((current) => !current)}
+        >
+          <div className="min-w-0">
+            <p className="text-sm font-medium tracking-tight">Mais detalhes</p>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              Família, endereço, dados pessoais e histórico na igreja
+            </p>
+          </div>
+          <span className="shrink-0 text-sm text-muted-foreground">
+            {showMoreDetails ? "Ocultar" : "Mostrar"}
+          </span>
+        </button>
+
+        {showMoreDetails ? (
+          <div className="space-y-5 border-t border-border p-5 sm:p-6">
+            <FormField label="Telefone secundário" htmlFor="member-phone-secondary">
+              <Input
+                id="member-phone-secondary"
+                placeholder="Opcional"
+                disabled={disabled}
+                {...register("phoneSecondary")}
+              />
+            </FormField>
 
       <FormSection
         icon={IdCard}
@@ -271,6 +313,7 @@ export function MemberForm({
                 value={field.value}
                 onChange={field.onChange}
                 disabled={disabled}
+                toYear={new Date().getFullYear()}
               />
             )}
           />
@@ -601,6 +644,9 @@ export function MemberForm({
           />
         </FormField>
       </FormSection>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

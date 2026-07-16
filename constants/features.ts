@@ -94,13 +94,13 @@ export const resourceSections = [
   {
     id: "financas",
     domain: "finances" as const,
-    title: "Prestação de contas (em breve)",
+    title: "Recebimentos e prestação de contas",
     description:
-      "O módulo financeiro ainda está em construção. A landing não promete o que o produto ainda não entrega.",
+      "Receba dízimos e doações online, registre entradas e saídas manuais e exporte o histórico para assembleia.",
     items: [
-      "Registro de entradas e saídas",
-      "Relatórios para liderança",
-      "Exportação para prestação de contas",
+      "Fundos de cobrança e página pública de doação",
+      "Histórico, filtros e exportação CSV",
+      "Livro-caixa com lançamentos manuais",
     ],
   },
   {

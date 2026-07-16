@@ -13,15 +13,18 @@ export function EventHighlightNote({ note, className }: EventHighlightNoteProps)
   }
 
   return (
-    <div
+    <aside
       className={cn(
-        "rounded-xl border-l-4 border-primary bg-primary/5 px-5 py-4",
+        "rounded-2xl border border-amber-500/25 bg-amber-500/5 px-5 py-4",
         className,
       )}
     >
-      <p className="whitespace-pre-line text-base font-medium leading-relaxed text-foreground">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-800/80 dark:text-amber-300/90">
+        Destaque
+      </p>
+      <p className="mt-1.5 whitespace-pre-line text-sm font-medium leading-relaxed text-foreground">
         {trimmed}
       </p>
-    </div>
+    </aside>
   );
 }

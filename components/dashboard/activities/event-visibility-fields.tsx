@@ -19,7 +19,7 @@ const CARD_OPTIONS = [
     value: true,
     title: "Exibir para a igreja inteira",
     description:
-      "Aparece em Atividades e no painel para quem tem acesso à agenda.",
+      "Aparece em Eventos e Atividades e no painel para quem tem acesso à agenda.",
     icon: Globe,
   },
   {

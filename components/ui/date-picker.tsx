@@ -2,12 +2,11 @@
 
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { formatDisplayDate } from "@/lib/activities/datetime";
 import {
   buildMonthGrid,
-  formatMonthTitle,
   getWeekdayLabels,
   isSameMonth,
   isToday,
@@ -23,6 +22,19 @@ import {
   type DropdownPosition,
 } from "./dropdown-position";
 
+const MONTH_OPTIONS = Array.from({ length: 12 }, (_, month) => ({
+  value: month,
+  label: new Intl.DateTimeFormat("pt-BR", { month: "short" })
+    .format(new Date(2020, month, 1))
+    .replace(".", "")
+    .replace(/^./, (char) => char.toUpperCase()),
+  longLabel: new Intl.DateTimeFormat("pt-BR", { month: "long" })
+    .format(new Date(2020, month, 1))
+    .replace(/^./, (char) => char.toUpperCase()),
+}));
+
+type CaptionMode = "days" | "months" | "years";
+
 interface DatePickerProps {
   id?: string;
   value: string;
@@ -30,6 +42,10 @@ interface DatePickerProps {
   disabled?: boolean;
   required?: boolean;
   className?: string;
+  /** Inclusive lower bound for the year picker. Defaults to 100 years ago. */
+  fromYear?: number;
+  /** Inclusive upper bound for the year picker. Defaults to 10 years ahead. */
+  toYear?: number;
 }
 
 export function DatePicker({
@@ -39,6 +55,8 @@ export function DatePicker({
   disabled = false,
   required = false,
   className,
+  fromYear,
+  toYear,
 }: DatePickerProps) {
   const generatedId = useId();
   const triggerId = id ?? generatedId;
@@ -46,10 +64,22 @@ export function DatePicker({
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const yearListRef = useRef<HTMLDivElement>(null);
 
-  const initial = value ? parseDateKey(value) : new Date();
+  const now = new Date();
+  const minYear = fromYear ?? now.getFullYear() - 100;
+  const maxYear = toYear ?? now.getFullYear() + 10;
+  const yearOptions = Array.from(
+    { length: Math.max(0, maxYear - minYear) + 1 },
+    (_, index) => maxYear - index,
+  );
+
+  const initial = value ? parseDateKey(value) : now;
   const [open, setOpen] = useState(false);
-  const [viewYear, setViewYear] = useState(initial.getFullYear());
+  const [captionMode, setCaptionMode] = useState<CaptionMode>("days");
+  const [viewYear, setViewYear] = useState(() =>
+    Math.min(maxYear, Math.max(minYear, initial.getFullYear())),
+  );
   const [viewMonth, setViewMonth] = useState(initial.getMonth());
   const [dropdownPosition, setDropdownPosition] =
     useState<DropdownPosition | null>(null);
@@ -65,9 +95,17 @@ export function DatePicker({
     }
 
     const selected = parseDateKey(value);
-    setViewYear(selected.getFullYear());
+    setViewYear(
+      Math.min(maxYear, Math.max(minYear, selected.getFullYear())),
+    );
     setViewMonth(selected.getMonth());
-  }, [value]);
+  }, [value, minYear, maxYear]);
+
+  useEffect(() => {
+    if (!open) {
+      setCaptionMode("days");
+    }
+  }, [open]);
 
   useLayoutEffect(() => {
     if (!open || !triggerRef.current) {
@@ -99,6 +137,17 @@ export function DatePicker({
     };
   }, [open]);
 
+  useLayoutEffect(() => {
+    if (captionMode !== "years" || !yearListRef.current) {
+      return;
+    }
+
+    const selected = yearListRef.current.querySelector<HTMLElement>(
+      '[data-selected="true"]',
+    );
+    selected?.scrollIntoView({ block: "center" });
+  }, [captionMode, viewYear]);
+
   useEffect(() => {
     if (!open) {
       return;
@@ -119,6 +168,11 @@ export function DatePicker({
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
+        if (captionMode !== "days") {
+          setCaptionMode("days");
+          return;
+        }
+
         setOpen(false);
         triggerRef.current?.focus();
       }
@@ -131,10 +185,13 @@ export function DatePicker({
       document.removeEventListener("mousedown", handlePointerDown);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [open]);
+  }, [open, captionMode]);
 
   function goToPreviousMonth() {
     if (viewMonth === 0) {
+      if (viewYear <= minYear) {
+        return;
+      }
       setViewYear((year) => year - 1);
       setViewMonth(11);
       return;
@@ -145,6 +202,9 @@ export function DatePicker({
 
   function goToNextMonth() {
     if (viewMonth === 11) {
+      if (viewYear >= maxYear) {
+        return;
+      }
       setViewYear((year) => year + 1);
       setViewMonth(0);
       return;
@@ -159,6 +219,12 @@ export function DatePicker({
     triggerRef.current?.focus();
   }
 
+  const canGoPrevious =
+    viewYear > minYear || (viewYear === minYear && viewMonth > 0);
+  const canGoNext =
+    viewYear < maxYear || (viewYear === maxYear && viewMonth < 11);
+  const monthLabel = MONTH_OPTIONS[viewMonth]?.longLabel ?? "";
+
   const grid = buildMonthGrid(viewYear, viewMonth);
   const dropdownStyle = dropdownPosition
     ? dropdownPositionToStyle(dropdownPosition)
@@ -172,93 +238,205 @@ export function DatePicker({
         role="dialog"
         aria-label="Selecionar data"
         style={dropdownStyle}
-        className="overflow-y-auto overscroll-contain rounded-2xl border border-border bg-background p-3 shadow-lg"
+        className="overflow-hidden rounded-2xl border border-border bg-background p-3 shadow-lg"
       >
-        <div className="mb-3 flex items-center justify-between gap-2">
+        <div className="mb-3 flex items-center gap-1">
           <button
             type="button"
             onClick={goToPreviousMonth}
-            className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            disabled={!canGoPrevious || captionMode !== "days"}
+            className="shrink-0 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
             aria-label="Mês anterior"
           >
             <ChevronLeft className="size-4" />
           </button>
-          <p className="text-sm font-semibold tracking-tight">
-            {formatMonthTitle(viewYear, viewMonth)}
-          </p>
+
+          <div className="flex min-w-0 flex-1 items-center justify-center gap-1">
+            <button
+              type="button"
+              onClick={() =>
+                setCaptionMode((mode) =>
+                  mode === "months" ? "days" : "months",
+                )
+              }
+              aria-expanded={captionMode === "months"}
+              className={cn(
+                "inline-flex items-center gap-1 rounded-lg px-2 py-1 text-sm font-semibold tracking-tight transition-colors",
+                captionMode === "months"
+                  ? "bg-muted text-foreground"
+                  : "text-foreground hover:bg-muted",
+              )}
+            >
+              <span className="capitalize">{monthLabel}</span>
+              <ChevronDown
+                className={cn(
+                  "size-3.5 text-muted-foreground transition-transform",
+                  captionMode === "months" && "rotate-180",
+                )}
+                aria-hidden
+              />
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                setCaptionMode((mode) => (mode === "years" ? "days" : "years"))
+              }
+              aria-expanded={captionMode === "years"}
+              className={cn(
+                "inline-flex items-center gap-1 rounded-lg px-2 py-1 text-sm font-semibold tracking-tight transition-colors",
+                captionMode === "years"
+                  ? "bg-muted text-foreground"
+                  : "text-foreground hover:bg-muted",
+              )}
+            >
+              {viewYear}
+              <ChevronDown
+                className={cn(
+                  "size-3.5 text-muted-foreground transition-transform",
+                  captionMode === "years" && "rotate-180",
+                )}
+                aria-hidden
+              />
+            </button>
+          </div>
+
           <button
             type="button"
             onClick={goToNextMonth}
-            className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            disabled={!canGoNext || captionMode !== "days"}
+            className="shrink-0 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
             aria-label="Próximo mês"
           >
             <ChevronRight className="size-4" />
           </button>
         </div>
 
-        <div className="mb-1 grid grid-cols-7 gap-1">
-          {getWeekdayLabels().map((label) => (
-            <div
-              key={label}
-              className="py-1 text-center text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
-            >
-              {label}
-            </div>
-          ))}
-        </div>
+        {captionMode === "months" ? (
+          <div className="grid grid-cols-3 gap-1.5 py-1">
+            {MONTH_OPTIONS.map((month) => {
+              const selected = month.value === viewMonth;
 
-        <div className="grid grid-cols-7 gap-1">
-          {grid.map((day) => {
-            const dateKey = toDateKey(day);
-            const selected = value === dateKey;
-            const inMonth = isSameMonth(day, viewYear, viewMonth);
-            const today = isToday(day);
+              return (
+                <button
+                  key={month.value}
+                  type="button"
+                  onClick={() => {
+                    setViewMonth(month.value);
+                    setCaptionMode("days");
+                  }}
+                  className={cn(
+                    "rounded-xl px-2 py-2.5 text-sm font-medium transition-colors",
+                    selected
+                      ? "bg-foreground text-background"
+                      : "text-foreground hover:bg-muted",
+                  )}
+                >
+                  {month.label}
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
 
-            return (
-              <button
-                key={dateKey}
-                type="button"
-                onClick={() => selectDay(day)}
-                className={cn(
-                  "flex size-9 items-center justify-center rounded-lg text-sm transition-colors",
-                  !inMonth && "text-muted-foreground/50",
-                  inMonth && !selected && "text-foreground hover:bg-muted",
-                  today && !selected && "ring-1 ring-inset ring-border",
-                  selected && "bg-foreground text-background hover:bg-foreground",
-                )}
-              >
-                {day.getDate()}
-              </button>
-            );
-          })}
-        </div>
-
-        <div
-          className={cn(
-            "mt-3 flex items-center border-t border-border/60 pt-3",
-            required ? "justify-end" : "justify-between",
-          )}
-        >
-          {!required && (
-            <button
-              type="button"
-              className="text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-              onClick={() => {
-                onChange("");
-                setOpen(false);
-              }}
-            >
-              Limpar
-            </button>
-          )}
-          <button
-            type="button"
-            className="text-xs font-medium text-foreground transition-colors hover:text-foreground/80"
-            onClick={() => selectDay(new Date())}
+        {captionMode === "years" ? (
+          <div
+            ref={yearListRef}
+            className="grid max-h-[16.5rem] grid-cols-3 gap-1.5 overflow-y-auto overscroll-contain py-1"
           >
-            Hoje
-          </button>
-        </div>
+            {yearOptions.map((year) => {
+              const selected = year === viewYear;
+
+              return (
+                <button
+                  key={year}
+                  type="button"
+                  data-selected={selected || undefined}
+                  onClick={() => {
+                    setViewYear(year);
+                    setCaptionMode("days");
+                  }}
+                  className={cn(
+                    "rounded-xl px-2 py-2.5 text-sm font-medium transition-colors",
+                    selected
+                      ? "bg-foreground text-background"
+                      : "text-foreground hover:bg-muted",
+                  )}
+                >
+                  {year}
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
+
+        {captionMode === "days" ? (
+          <>
+            <div className="mb-1 grid grid-cols-7 gap-1">
+              {getWeekdayLabels().map((label) => (
+                <div
+                  key={label}
+                  className="py-1 text-center text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                >
+                  {label}
+                </div>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-7 gap-1">
+              {grid.map((day) => {
+                const dateKey = toDateKey(day);
+                const selected = value === dateKey;
+                const inMonth = isSameMonth(day, viewYear, viewMonth);
+                const today = isToday(day);
+
+                return (
+                  <button
+                    key={dateKey}
+                    type="button"
+                    onClick={() => selectDay(day)}
+                    className={cn(
+                      "flex size-9 items-center justify-center rounded-lg text-sm transition-colors",
+                      !inMonth && "text-muted-foreground/50",
+                      inMonth && !selected && "text-foreground hover:bg-muted",
+                      today && !selected && "ring-1 ring-inset ring-border",
+                      selected &&
+                        "bg-foreground text-background hover:bg-foreground",
+                    )}
+                  >
+                    {day.getDate()}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div
+              className={cn(
+                "mt-3 flex items-center border-t border-border/60 pt-3",
+                required ? "justify-end" : "justify-between",
+              )}
+            >
+              {!required && (
+                <button
+                  type="button"
+                  className="text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                  onClick={() => {
+                    onChange("");
+                    setOpen(false);
+                  }}
+                >
+                  Limpar
+                </button>
+              )}
+              <button
+                type="button"
+                className="text-xs font-medium text-foreground transition-colors hover:text-foreground/80"
+                onClick={() => selectDay(new Date())}
+              >
+                Hoje
+              </button>
+            </div>
+          </>
+        ) : null}
       </div>
     ) : null;
 

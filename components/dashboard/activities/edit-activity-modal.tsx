@@ -3,7 +3,6 @@
 import { useEffect, useId, useMemo, useState } from "react";
 import {
   Calendar,
-  ClipboardList,
   Clock,
   Eye,
   FileText,
@@ -11,6 +10,7 @@ import {
   MapPin,
   Repeat,
   Sparkles,
+  Ticket,
   Trash2,
   X,
 } from "lucide-react";
@@ -18,8 +18,8 @@ import {
 import { ActivityScheduleFields } from "@/components/dashboard/activities/activity-schedule-fields";
 import { EventFormSection } from "@/components/dashboard/activities/event-form-section";
 import { EventMutationScopeFields } from "@/components/dashboard/activities/event-mutation-scope-fields";
+import { EventOptionCard } from "@/components/dashboard/activities/event-option-card";
 import { EventRecurrenceFields } from "@/components/dashboard/activities/event-recurrence-fields";
-import { EventRosterOptionsFields } from "@/components/dashboard/activities/event-roster-options-fields";
 import { EventVisibilityFields } from "@/components/dashboard/activities/event-visibility-fields";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -40,11 +40,12 @@ import {
   type EventRecurrenceFormState,
 } from "@/lib/events/recurrence";
 import {
-  rosterSlotPlanEqual,
-  rosterSlotsToPlan,
-  type RosterSlotPlanItem,
-} from "@/lib/ministries/roster";
-import { cn, formatDateTime } from "@/lib/utils";
+  applyBrlCentsMask,
+  cn,
+  formatBrlCentsMask,
+  formatDateTime,
+  parseBrlMaskToCents,
+} from "@/lib/utils";
 import type { ChurchEvent, EventMutationScope } from "@/types/events";
 
 interface EditActivityModalProps {
@@ -89,11 +90,9 @@ export function EditActivityModal({
   const [location, setLocation] = useState("");
   const [startsAt, setStartsAt] = useState("");
   const [endsAt, setEndsAt] = useState("");
-  const [usesRoster, setUsesRoster] = useState(false);
-  const [rosterOpen, setRosterOpen] = useState(false);
-  const [rosterSlotPlan, setRosterSlotPlan] = useState<RosterSlotPlanItem[]>([]);
-  const [availabilityMessage, setAvailabilityMessage] = useState("");
   const [visibleToChurch, setVisibleToChurch] = useState(true);
+  const [registrationOpen, setRegistrationOpen] = useState(false);
+  const [priceReais, setPriceReais] = useState("");
   const [recurrence, setRecurrence] = useState<EventRecurrenceFormState>(
     defaultRecurrenceFormState(new Date().toISOString()),
   );
@@ -129,14 +128,7 @@ export function EditActivityModal({
       startsAt !== toDatetimeLocalValue(event.startsAt) ||
       (endsAt || "") !==
         (event.endsAt ? toDatetimeLocalValue(event.endsAt) : "") ||
-      usesRoster !== event.usesRoster ||
-      rosterOpen !== event.rosterOpen ||
       visibleToChurch !== (event.visibleToChurch ?? true) ||
-      !rosterSlotPlanEqual(
-        rosterSlotPlan,
-        rosterSlotsToPlan(event.rosterSlots ?? []),
-      ) ||
-      (availabilityMessage.trim() || "") !== (event.availabilityMessage ?? "") ||
       recurrenceChanged
     );
   }, [
@@ -147,10 +139,6 @@ export function EditActivityModal({
     location,
     startsAt,
     endsAt,
-    usesRoster,
-    rosterOpen,
-    rosterSlotPlan,
-    availabilityMessage,
     visibleToChurch,
     recurrenceChanged,
   ]);
@@ -163,10 +151,6 @@ export function EditActivityModal({
       setLocation("");
       setStartsAt("");
       setEndsAt("");
-      setUsesRoster(false);
-      setRosterOpen(false);
-      setRosterSlotPlan([]);
-      setAvailabilityMessage("");
       setVisibleToChurch(true);
       setRecurrence(defaultRecurrenceFormState(new Date().toISOString()));
       setInitialRecurrence(defaultRecurrenceFormState(new Date().toISOString()));
@@ -189,11 +173,16 @@ export function EditActivityModal({
     setLocation(event.location ?? "");
     setStartsAt(nextStarts);
     setEndsAt(event.endsAt ? toDatetimeLocalValue(event.endsAt) : "");
-    setUsesRoster(event.usesRoster);
-    setRosterOpen(event.rosterOpen);
     setVisibleToChurch(event.visibleToChurch ?? true);
-    setRosterSlotPlan(rosterSlotsToPlan(event.rosterSlots ?? []));
-    setAvailabilityMessage(event.availabilityMessage ?? "");
+    setRegistrationOpen(
+      event.registrationOpen ??
+        Boolean(event.priceCents && event.priceCents > 0),
+    );
+    setPriceReais(
+      event.priceCents && event.priceCents > 0
+        ? formatBrlCentsMask(event.priceCents)
+        : "",
+    );
     setRecurrence(nextRecurrence);
     setInitialRecurrence(nextRecurrence);
     setError(null);
@@ -268,6 +257,25 @@ export function EditActivityModal({
           : buildRecurrencePayload(recurrence)
         : undefined;
 
+      const priceCents = priceReais.trim()
+        ? parseBrlMaskToCents(priceReais)
+        : null;
+
+      if (
+        registrationOpen &&
+        priceCents != null &&
+        priceCents > 0 &&
+        priceCents < 500
+      ) {
+        setError(
+          "O preço mínimo da inscrição paga é R$ 5,00 (ou deixe vazio para gratuita).",
+        );
+        return;
+      }
+
+      const openRegistration =
+        registrationOpen || Boolean(priceCents != null && priceCents >= 500);
+
       await updateEvent.mutateAsync({
         name: name.trim(),
         description: description.trim() || null,
@@ -275,13 +283,12 @@ export function EditActivityModal({
         location: location.trim() || null,
         startsAt: new Date(startsAt).toISOString(),
         endsAt: endsAt ? new Date(endsAt).toISOString() : null,
-        usesRoster,
         visibleToChurch: event.ministryId ? visibleToChurch : undefined,
-        rosterOpen: usesRoster ? rosterOpen : false,
-        rosterSlotPlan: usesRoster ? rosterSlotPlan : [],
-        availabilityMessage: usesRoster
-          ? availabilityMessage.trim() || null
-          : null,
+        registrationOpen: openRegistration,
+        priceCents:
+          openRegistration && priceCents != null && priceCents >= 500
+            ? priceCents
+            : null,
         ...(recurrencePayload !== undefined
           ? { recurrence: recurrencePayload }
           : {}),
@@ -461,6 +468,58 @@ export function EditActivityModal({
                   />
                 </Field>
 
+                <div className="space-y-3">
+                  <EventOptionCard
+                    type="checkbox"
+                    checked={registrationOpen}
+                    onChange={(checked) => {
+                      setRegistrationOpen(checked);
+                      if (!checked) {
+                        setPriceReais("");
+                      }
+                    }}
+                    title="Abrir inscrição"
+                    description="Membros confirmam participação na página do evento. Pode ser gratuita ou paga."
+                    icon={Ticket}
+                    disabled={isPending}
+                    compact
+                  />
+
+                  {registrationOpen ? (
+                    <Field
+                      label="Preço da inscrição (opcional)"
+                      htmlFor="edit-activity-price"
+                      hint="Vazio = inscrição gratuita. Com valor, pagamento via Stripe Connect (mínimo R$ 5,00)."
+                    >
+                      <div className="relative">
+                        <span className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-sm text-muted-foreground">
+                          R$
+                        </span>
+                        <Input
+                          id="edit-activity-price"
+                          inputMode="numeric"
+                          autoComplete="off"
+                          value={priceReais}
+                          onChange={(inputEvent) => {
+                            const digits = inputEvent.target.value.replace(
+                              /\D/g,
+                              "",
+                            );
+                            setPriceReais(
+                              digits
+                                ? applyBrlCentsMask(inputEvent.target.value)
+                                : "",
+                            );
+                          }}
+                          placeholder="0,00 — vazio = gratuita"
+                          disabled={isPending}
+                          className="h-12 rounded-xl border-border/80 bg-background pl-11 pr-4 text-base tabular-nums"
+                        />
+                      </div>
+                    </Field>
+                  ) : null}
+                </div>
+
                 <Field label="Local" htmlFor="edit-activity-location">
                   <div className="relative">
                     <MapPin className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -525,30 +584,6 @@ export function EditActivityModal({
               </EventFormSection>
             )}
 
-            <EventFormSection
-              title="Escala da equipe"
-              description={
-                event.isChurchWide
-                  ? "Coleta de disponibilidade e funções opcionais para montar a escala."
-                  : "Disponibilidade, funções e montagem de escala neste evento."
-              }
-              icon={ClipboardList}
-            >
-              <EventRosterOptionsFields
-                usesRoster={usesRoster}
-                rosterOpen={rosterOpen}
-                rosterSlotPlan={rosterSlotPlan}
-                availabilityMessage={availabilityMessage}
-                onUsesRosterChange={setUsesRoster}
-                onRosterOpenChange={setRosterOpen}
-                onRosterSlotPlanChange={setRosterSlotPlan}
-                onAvailabilityMessageChange={setAvailabilityMessage}
-                disabled={isPending}
-                hideSlotPlan={Boolean(event.ministryId)}
-                optionalSlotPlan={event.isChurchWide}
-              />
-            </EventFormSection>
-
             {isRecurring && (
               <EventFormSection
                 title="Alcance das alterações"
@@ -585,7 +620,7 @@ export function EditActivityModal({
                       <p className="text-sm leading-relaxed text-muted-foreground">
                         {isRecurring
                           ? "Escolha se a exclusão vale só para esta ocorrência ou para mais eventos da série."
-                          : "A atividade deixará de aparecer em Atividades e no painel do ministério."}
+                          : "A atividade deixará de aparecer em Eventos e Atividades e no painel do ministério."}
                       </p>
                     </div>
 

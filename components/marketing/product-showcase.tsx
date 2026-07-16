@@ -10,13 +10,13 @@ import {
   ClipboardList,
   Layers,
   LayoutDashboard,
-  MapPin,
-  Plus,
+  Megaphone,
   Repeat,
   Settings,
-  Sparkles,
   UserCheck,
+  UserPlus,
   Users,
+  Wallet,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -59,7 +59,7 @@ const primaryNav: {
   },
   {
     id: "activities",
-    label: "Atividades",
+    label: "Eventos e Atividades",
     icon: Calendar,
     domainClass:
       "bg-domain-activities-subtle text-domain-activities-foreground",
@@ -164,92 +164,318 @@ function MockTopbar({ title, subtitle }: { title: string; subtitle?: string }) {
   );
 }
 
-function MockDashboardHero({ compact }: { compact?: boolean }) {
+function MockDashboardHero() {
   return (
-    <section className="space-y-3">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0 space-y-1">
-          <p className="text-[10px] text-muted-foreground">
-            domingo, 6 de julho · Igreja Esperança
-          </p>
-          <p className="text-base font-semibold tracking-tight">
-            Boa noite, Samuel
-          </p>
-          <p className="text-[10px] text-muted-foreground">
-            O essencial da sua semana
-          </p>
-        </div>
-        {!compact && (
-          <span className="inline-flex items-center gap-1 rounded-md bg-foreground px-2.5 py-1.5 text-[10px] font-medium text-background">
-            <Plus className="size-3" />
-            Nova atividade
-          </span>
-        )}
-      </div>
+    <section className="min-w-0 space-y-1">
+      <p className="text-[10px] text-muted-foreground">
+        domingo, 6 de julho · Igreja Esperança
+      </p>
+      <p className="text-base font-semibold tracking-tight">
+        Boa noite, Samuel
+      </p>
+      <p className="text-[10px] text-muted-foreground">
+        O essencial da sua semana
+      </p>
+    </section>
+  );
+}
 
-      <div className="rounded-lg border border-border bg-card p-3">
-        <div className="flex items-start gap-3">
-          <div className="flex size-11 shrink-0 flex-col items-center justify-center rounded-md bg-foreground text-background">
-            <span className="text-sm font-semibold leading-none">6</span>
-            <span className="mt-0.5 text-[8px] font-medium uppercase tracking-wide opacity-80">
-              jul
-            </span>
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-[10px] font-medium text-muted-foreground">
-                Próximo culto
+const priorityTones: Record<
+  "attention" | "schedules" | "communication",
+  { shell: string; icon: string }
+> = {
+  attention: {
+    shell: "border-attention-border bg-attention-subtle/80",
+    icon: "bg-attention-mark text-attention-foreground",
+  },
+  schedules: {
+    shell:
+      "border-attention-border/70 bg-gradient-to-br from-attention-subtle/70 via-card to-card",
+    icon: "bg-attention-mark text-attention-foreground",
+  },
+  communication: {
+    shell:
+      "border-domain-communication/25 bg-gradient-to-br from-domain-communication-subtle/70 via-card to-card",
+    icon: "bg-domain-communication/15 text-domain-communication-foreground",
+  },
+};
+
+const priorities: {
+  tone: keyof typeof priorityTones;
+  icon: typeof ClipboardList;
+  title: string;
+  description: string;
+}[] = [
+  {
+    tone: "schedules",
+    icon: ClipboardList,
+    title: "Escala do Culto de Domingo",
+    description: "3 pessoas ainda não responderam",
+  },
+  {
+    tone: "attention",
+    icon: UserCheck,
+    title: "1 acesso pendente",
+    description: "Aprovar entrada de membro",
+  },
+  {
+    tone: "communication",
+    icon: Megaphone,
+    title: "Comunicado do ensaio",
+    description: "Publicar para o Louvor",
+  },
+];
+
+function MockPriorities() {
+  return (
+    <section className="flex h-full flex-col rounded-xl border border-border bg-card p-4">
+      <div>
+        <p className="text-sm font-medium tracking-tight">
+          3 coisas pedem você hoje
+        </p>
+        <p className="mt-0.5 text-[10px] text-muted-foreground">
+          Resolva estas primeiro — o restante pode esperar
+        </p>
+      </div>
+      <ul className="mt-3 flex flex-col gap-1.5">
+        {priorities.map((item, index) => {
+          const tone = priorityTones[item.tone];
+          return (
+            <li
+              key={item.title}
+              className={cn(
+                "flex items-center gap-2.5 rounded-xl border px-2.5 py-2",
+                tone.shell,
+              )}
+            >
+              <span
+                className={cn(
+                  "flex size-7 shrink-0 items-center justify-center rounded-md",
+                  tone.icon,
+                )}
+              >
+                <item.icon className="size-3.5" strokeWidth={2} />
               </span>
-              <span className="rounded-md bg-attention-subtle px-1.5 py-0.5 text-[9px] font-medium text-attention-foreground">
-                Amanhã · 19:00
-              </span>
-            </div>
-            <p className="mt-0.5 truncate text-sm font-medium">Culto de Domingo</p>
-            <p className="mt-1 inline-flex items-center gap-1 text-[10px] text-muted-foreground">
-              <MapPin className="size-3" />
-              Templo principal · Louvor com 3 aguardando resposta
-            </p>
-          </div>
-          <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[9px] font-medium tabular-nums text-muted-foreground">
+                    {index + 1}.
+                  </span>
+                  <span className="truncate text-[11px] font-semibold">
+                    {item.title}
+                  </span>
+                </div>
+                <p className="truncate text-[9px] text-muted-foreground">
+                  {item.description}
+                </p>
+              </div>
+              <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" />
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
+const weekDensity = [
+  { label: "dom", count: 2, isToday: true },
+  { label: "seg", count: 0 },
+  { label: "ter", count: 1 },
+  { label: "qua", count: 1 },
+  { label: "qui", count: 2 },
+  { label: "sex", count: 0 },
+  { label: "sáb", count: 3 },
+];
+
+function MockWeekPulse() {
+  const maxCount = Math.max(...weekDensity.map((day) => day.count), 1);
+  const total = weekDensity.reduce((sum, day) => sum + day.count, 0);
+
+  return (
+    <section className="flex h-full flex-col rounded-xl border border-domain-activities/20 bg-gradient-to-br from-domain-activities-subtle via-card to-card p-4">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-domain-activities-foreground">
+            Ritmo da semana
+          </p>
+          <p className="mt-0.5 text-[10px] text-muted-foreground">
+            Eventos por dia na agenda
+          </p>
         </div>
+        <span className="shrink-0 rounded-md bg-domain-activities/15 px-2 py-1 text-[9px] font-medium tabular-nums text-domain-activities-foreground">
+          {total} no total
+        </span>
+      </div>
+      <div className="mt-4 flex flex-1 items-end gap-1.5">
+        {weekDensity.map((day) => {
+          const heightPct =
+            day.count === 0
+              ? 8
+              : Math.max(18, (day.count / maxCount) * 100);
+
+          return (
+            <div
+              key={day.label}
+              className="flex min-w-0 flex-1 flex-col items-center gap-1.5"
+            >
+              <div className="flex h-16 w-full items-end justify-center">
+                <div
+                  className={cn(
+                    "w-full max-w-[1.75rem] rounded-md",
+                    day.count === 0
+                      ? "bg-muted"
+                      : day.isToday
+                        ? "bg-domain-activities"
+                        : "bg-domain-activities/55",
+                  )}
+                  style={{ height: `${heightPct}%` }}
+                />
+              </div>
+              <div className="text-center leading-none">
+                <p
+                  className={cn(
+                    "text-[9px] font-medium capitalize",
+                    day.isToday
+                      ? "text-domain-activities-foreground"
+                      : "text-muted-foreground",
+                  )}
+                >
+                  {day.label}
+                </p>
+                <p className="mt-0.5 text-[9px] tabular-nums text-muted-foreground">
+                  {day.count}
+                </p>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </section>
   );
 }
 
-function MockPendencias() {
+const actionTones: Record<
+  "members" | "activities" | "communication" | "ministries" | "finances" | "schedules",
+  { shell: string; icon: string }
+> = {
+  members: {
+    shell: "border-domain-members/25 bg-domain-members-subtle/70",
+    icon: "bg-domain-members/20 text-domain-members-foreground",
+  },
+  activities: {
+    shell: "border-domain-activities/25 bg-domain-activities-subtle/70",
+    icon: "bg-domain-activities/20 text-domain-activities-foreground",
+  },
+  communication: {
+    shell: "border-domain-communication/25 bg-domain-communication-subtle/70",
+    icon: "bg-domain-communication/20 text-domain-communication-foreground",
+  },
+  ministries: {
+    shell: "border-domain-ministries/25 bg-domain-ministries-subtle/70",
+    icon: "bg-domain-ministries/20 text-domain-ministries-foreground",
+  },
+  finances: {
+    shell: "border-domain-finances/25 bg-domain-finances-subtle/70",
+    icon: "bg-domain-finances/20 text-domain-finances-foreground",
+  },
+  schedules: {
+    shell: "border-attention-border bg-attention-subtle/80",
+    icon: "bg-attention-mark text-attention-foreground",
+  },
+};
+
+const quickActions: {
+  tone: keyof typeof actionTones;
+  icon: typeof Users;
+  label: string;
+  description: string;
+}[] = [
+  {
+    tone: "members",
+    icon: UserPlus,
+    label: "Cadastrar membro",
+    description: "Novo cadastro pastoral",
+  },
+  {
+    tone: "activities",
+    icon: Calendar,
+    label: "Nova atividade",
+    description: "Evento ou encontro",
+  },
+  {
+    tone: "communication",
+    icon: Megaphone,
+    label: "Novo comunicado",
+    description: "Aviso para a igreja",
+  },
+  {
+    tone: "ministries",
+    icon: Layers,
+    label: "Ministérios",
+    description: "Equipes e cargos",
+  },
+  {
+    tone: "finances",
+    icon: Wallet,
+    label: "Finanças",
+    description: "Recebimentos e doações",
+  },
+  {
+    tone: "schedules",
+    icon: ClipboardList,
+    label: "Escalas",
+    description: "Sua disponibilidade",
+  },
+];
+
+function MockQuickActions({ compact }: { compact?: boolean }) {
+  const items = compact ? quickActions.slice(0, 4) : quickActions;
+
   return (
-    <section className="rounded-lg border border-border bg-card p-4">
-      <div className="mb-3">
-        <p className="text-sm font-medium tracking-tight">Antes do culto</p>
+    <section className="space-y-2.5">
+      <div>
+        <p className="text-sm font-medium tracking-tight">Ações rápidas</p>
         <p className="mt-0.5 text-[10px] text-muted-foreground">
-          O que ainda precisa de resposta.
+          Atalhos do dia a dia da igreja
         </p>
       </div>
-      <ul className="space-y-1.5">
-        <li className="flex items-start gap-2.5 rounded-md border border-attention-border bg-attention-subtle px-2.5 py-2">
-          <ClipboardList className="mt-0.5 size-3.5 shrink-0 text-attention-foreground" />
-          <div className="min-w-0">
-            <p className="text-[11px] font-medium">3 escalas sem resposta</p>
-            <p className="text-[9px] text-muted-foreground">
-              Louvor · Fechar escala
-            </p>
-          </div>
-        </li>
-        <li className="flex items-start gap-2.5 rounded-md border border-border px-2.5 py-2">
-          <UserCheck className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
-          <div className="min-w-0">
-            <p className="text-[11px] font-medium">1 acesso pendente</p>
-            <p className="text-[9px] text-muted-foreground">Aprovar entrada</p>
-          </div>
-        </li>
-        <li className="flex items-start gap-2.5 rounded-md border border-border px-2.5 py-2">
-          <Bell className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
-          <div className="min-w-0">
-            <p className="text-[11px] font-medium">Comunicado do ensaio</p>
-            <p className="text-[9px] text-muted-foreground">Publicar para Louvor</p>
-          </div>
-        </li>
+      <ul
+        className={cn(
+          "grid gap-2",
+          compact ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3",
+        )}
+      >
+        {items.map((action) => {
+          const tone = actionTones[action.tone];
+          return (
+            <li
+              key={action.label}
+              className={cn(
+                "flex items-center gap-2.5 rounded-xl border px-2.5 py-2 shadow-xs",
+                tone.shell,
+              )}
+            >
+              <span
+                className={cn(
+                  "flex size-7 shrink-0 items-center justify-center rounded-md",
+                  tone.icon,
+                )}
+              >
+                <action.icon className="size-3.5" strokeWidth={2.25} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[11px] font-semibold tracking-tight">
+                  {action.label}
+                </p>
+                <p className="truncate text-[9px] text-muted-foreground">
+                  {action.description}
+                </p>
+              </div>
+              <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" />
+            </li>
+          );
+        })}
       </ul>
     </section>
   );
@@ -259,63 +485,130 @@ function MockEventsPanel({ compact }: { compact?: boolean }) {
   const items = compact ? upcomingEvents.slice(0, 2) : upcomingEvents;
 
   return (
-    <section className="rounded-lg border border-border bg-card p-4">
-      <div className="mb-3 flex items-start justify-between gap-2">
-        <div>
-          <p className="text-sm font-medium tracking-tight">Agenda</p>
+    <section className="rounded-xl border border-domain-activities/20 bg-gradient-to-br from-domain-activities-subtle/50 via-card to-card">
+      <div className="flex items-start justify-between gap-2 border-b border-domain-activities/15 px-4 py-3">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-domain-activities-foreground">
+            Agenda da semana
+          </p>
           <p className="mt-0.5 text-[10px] text-muted-foreground">
-            Próximas atividades da igreja.
+            Próximos cultos e encontros
           </p>
         </div>
-        <span className="rounded-md border border-border px-2 py-1 text-[9px] font-medium">
+        <span className="shrink-0 rounded-md border border-border bg-card px-2 py-1 text-[9px] font-medium">
           Ver todas
         </span>
       </div>
-      <ol className="divide-y divide-border">
-        {items.map((event) => (
-          <li key={event.name} className="flex items-center gap-3 py-2 first:pt-0 last:pb-0">
-            <div className="flex size-9 shrink-0 flex-col items-center justify-center rounded-md bg-muted text-[9px] font-semibold leading-tight">
-              <span>{event.day}</span>
-              <span className="text-muted-foreground">{event.month}</span>
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-1">
-                <p className="truncate text-[11px] font-medium">{event.name}</p>
-                {event.recurring && (
-                  <Repeat className="size-2.5 text-muted-foreground" />
+      <ol className="space-y-0.5 p-2">
+        {items.map((event, index) => {
+          const isNext = index === 0;
+          return (
+            <li
+              key={event.name}
+              className={cn(
+                "flex items-center gap-3 rounded-md px-2.5 py-2",
+                isNext && "bg-muted/40",
+              )}
+            >
+              <div
+                className={cn(
+                  "flex size-9 shrink-0 flex-col items-center justify-center rounded-md border text-center leading-none",
+                  isNext
+                    ? "border-foreground/15 bg-foreground text-background"
+                    : "border-border bg-card text-foreground",
                 )}
-                {event.churchWide && (
-                  <Sparkles className="size-2.5 text-muted-foreground" />
-                )}
+              >
+                <span className="text-[11px] font-semibold">{event.day}</span>
+                <span
+                  className={cn(
+                    "mt-0.5 text-[8px] font-medium uppercase tracking-wide",
+                    isNext ? "text-background/80" : "text-muted-foreground",
+                  )}
+                >
+                  {event.month}
+                </span>
               </div>
-              <p className="text-[9px] text-muted-foreground">
-                {event.time}
-                {event.ministry ? ` · ${event.ministry}` : ""}
-              </p>
-            </div>
-            {event.relative && (
-              <span className="shrink-0 text-[9px] font-medium text-muted-foreground">
-                {event.relative}
-              </span>
-            )}
-          </li>
-        ))}
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <p className="truncate text-[11px] font-medium">
+                    {event.name}
+                  </p>
+                  {event.relative && (
+                    <span className="shrink-0 rounded-md bg-muted px-1.5 py-0.5 text-[9px] font-medium text-muted-foreground">
+                      {event.relative}
+                    </span>
+                  )}
+                </div>
+                <div className="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[9px] text-muted-foreground">
+                  <span className="inline-flex items-center gap-1">
+                    <Calendar className="size-2.5 shrink-0" />
+                    {event.time}
+                  </span>
+                  {event.recurring && (
+                    <span className="inline-flex items-center gap-1">
+                      <Repeat className="size-2.5 shrink-0" />
+                      Semanal
+                    </span>
+                  )}
+                  {event.churchWide ? (
+                    <span>Igreja</span>
+                  ) : event.ministry ? (
+                    <span className="truncate">{event.ministry}</span>
+                  ) : null}
+                </div>
+              </div>
+            </li>
+          );
+        })}
       </ol>
     </section>
   );
 }
 
+const mockAnnouncements = [
+  { title: "Ensaio de louvor — quinta 20h", body: "Louvor · Publicado ontem" },
+  {
+    title: "Reunião de líderes — sábado",
+    body: "Liderança · Publicado há 2 dias",
+  },
+  {
+    title: "Campanha do agasalho começa domingo",
+    body: "Igreja · Publicado há 3 dias",
+  },
+];
+
 function MockCommunication() {
   return (
-    <section className="rounded-lg border border-border bg-card p-4">
-      <p className="text-sm font-medium tracking-tight">Comunicação</p>
-      <p className="mt-0.5 text-[10px] text-muted-foreground">
-        Último aviso publicado
-      </p>
-      <p className="mt-3 text-[11px] font-medium">Ensaio de louvor — quinta 20h</p>
-      <p className="mt-0.5 text-[9px] text-muted-foreground">
-        Louvor · Publicado ontem
-      </p>
+    <section className="rounded-xl border border-domain-communication/20 bg-gradient-to-br from-domain-communication-subtle/70 via-card to-card">
+      <div className="flex items-start justify-between gap-2 border-b border-domain-communication/15 px-4 py-3">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-domain-communication-foreground">
+            Quadro de avisos
+          </p>
+          <p className="mt-0.5 text-[10px] text-muted-foreground">
+            Comunicados publicados para a igreja
+          </p>
+        </div>
+        <span className="shrink-0 rounded-md border border-border bg-card px-2 py-1 text-[9px] font-medium">
+          Ver tudo
+        </span>
+      </div>
+      <ul className="divide-y divide-border/70">
+        {mockAnnouncements.map((item) => (
+          <li
+            key={item.title}
+            className="flex items-start gap-3 px-4 py-2.5"
+          >
+            <Megaphone className="mt-0.5 size-3.5 shrink-0 text-domain-communication-foreground" />
+            <div className="min-w-0">
+              <p className="truncate text-[11px] font-medium">{item.title}</p>
+              <p className="truncate text-[9px] text-muted-foreground">
+                {item.body}
+              </p>
+            </div>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }
@@ -323,17 +616,26 @@ function MockCommunication() {
 function DashboardView({ compact }: { compact?: boolean }) {
   return (
     <div className="space-y-3">
-      <MockDashboardHero compact={compact} />
+      <MockDashboardHero />
+      <div
+        className={cn(
+          "grid gap-3",
+          compact ? "grid-cols-1" : "lg:grid-cols-2 lg:items-stretch",
+        )}
+      >
+        <MockPriorities />
+        <MockWeekPulse />
+      </div>
+      <MockQuickActions compact={compact} />
       <div
         className={cn(
           "grid gap-3",
           compact ? "grid-cols-1" : "lg:grid-cols-2",
         )}
       >
-        <MockPendencias />
         <MockEventsPanel compact={compact} />
+        {!compact ? <MockCommunication /> : null}
       </div>
-      {!compact ? <MockCommunication /> : null}
     </div>
   );
 }
@@ -445,7 +747,7 @@ const viewMeta: Record<
     subtitle: "Equipes e cargos",
   },
   activities: {
-    title: "Atividades",
+    title: "Eventos e Atividades",
     subtitle: "Agenda da igreja",
   },
   schedules: {

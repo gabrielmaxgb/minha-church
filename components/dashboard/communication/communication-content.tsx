@@ -169,21 +169,16 @@ export function CommunicationContent() {
             <div className="flex items-center gap-2">
               <Button
                 type="button"
-                variant="ghost"
-                size="sm"
+                variant="outline"
                 onClick={() => setGuideOpen(true)}
                 className="text-muted-foreground hover:text-foreground"
               >
                 <HelpCircle className="size-4" />
+                Ajuda
               </Button>
-              <Button
-                type="button"
-                size="sm"
-                onClick={openCompose}
-                {...blockProps}
-              >
+              <Button type="button" onClick={openCompose} {...blockProps}>
                 <Plus className="size-4" />
-                Novo comunicado
+                Novo aviso
               </Button>
             </div>
             {writesBlocked && (
@@ -223,7 +218,7 @@ export function CommunicationContent() {
               {...blockProps}
             >
               <Plus className="size-4" />
-              Criar comunicado
+              Criar aviso
             </Button>
           )}
         </div>

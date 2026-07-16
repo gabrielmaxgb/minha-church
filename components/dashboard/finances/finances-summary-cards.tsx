@@ -1,0 +1,84 @@
+"use client";
+
+import { useMemo } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useFinanceEntriesSummary } from "@/lib/api/queries";
+import type { PaymentsSummary } from "@/lib/api/payments";
+import { formatCurrency } from "@/lib/utils";
+
+function currentMonthRange(): { from: string; to: string } {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), 1);
+  const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+  return {
+    from: start.toISOString(),
+    to: end.toISOString(),
+  };
+}
+
+export function FinancesSummaryCards({
+  summary,
+  isPending,
+}: {
+  summary: PaymentsSummary | undefined;
+  isPending: boolean;
+}) {
+  const monthRange = useMemo(() => currentMonthRange(), []);
+  const ledgerSummary = useFinanceEntriesSummary(monthRange);
+
+  if (isPending) {
+    return (
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Skeleton className="h-24 rounded-xl" />
+        <Skeleton className="h-24 rounded-xl" />
+        <Skeleton className="h-24 rounded-xl" />
+        <Skeleton className="h-24 rounded-xl" />
+      </div>
+    );
+  }
+
+  const cards = [
+    {
+      label: "Entradas (mês)",
+      value: formatCurrency(
+        (ledgerSummary.data?.incomeCents ?? 0) / 100 +
+          (ledgerSummary.data?.onlineDonationCents ?? 0) / 100,
+      ),
+      hint: "Manuais + contribuições online",
+    },
+    {
+      label: "Saídas (mês)",
+      value: formatCurrency((ledgerSummary.data?.expenseCents ?? 0) / 100),
+      hint: "Lançamentos manuais",
+    },
+    {
+      label: "Saldo (mês)",
+      value: formatCurrency((ledgerSummary.data?.balanceCents ?? 0) / 100),
+      hint: "Entradas menos saídas",
+    },
+    {
+      label: "Fundos ativos",
+      value: String(summary?.activeFundsCount ?? 0),
+      hint: `${summary?.memberFundsCount ?? 0} membros · ${summary?.publicFundsCount ?? 0} públicos`,
+    },
+  ];
+
+  return (
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      {cards.map((card) => (
+        <div
+          key={card.label}
+          className="rounded-xl border border-border bg-card px-4 py-4"
+        >
+          <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            {card.label}
+          </p>
+          <p className="mt-2 text-2xl font-semibold tracking-tight tabular-nums text-foreground">
+            {card.value}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">{card.hint}</p>
+        </div>
+      ))}
+    </div>
+  );
+}

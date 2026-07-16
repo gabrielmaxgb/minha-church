@@ -6,6 +6,7 @@ import type {
 	ChurchEventDetail,
 	CreateChurchEventPayload,
 	EventSeriesOccurrence,
+	EventTicketRegistrationsResponse,
 	UpdateChurchEventPayload,
 } from "@/types/events";
 import type { EventRosterAssignment } from "@/types/ministries";
@@ -63,6 +64,31 @@ async function fetchEventSeriesOccurrences(
 		buildTenantPath(churchId, `/events/series/${seriesId}/occurrences`),
 		{ churchId },
 	);
+}
+
+async function fetchEventTicketRegistrations(
+	churchId: string,
+	eventId: string,
+): Promise<EventTicketRegistrationsResponse> {
+	return apiClient<EventTicketRegistrationsResponse>(
+		buildTenantPath(churchId, `/events/${eventId}/ticket-registrations`),
+		{ churchId },
+	);
+}
+
+async function registerForFreeEvent(
+	churchId: string,
+	eventId: string,
+): Promise<{
+	id: string;
+	status: "succeeded" | "pending" | "failed" | "canceled" | "refunded";
+	amountCents: number;
+}> {
+	return apiClient(buildTenantPath(churchId, `/events/${eventId}/register`), {
+		churchId,
+		method: "POST",
+		body: JSON.stringify({}),
+	});
 }
 
 async function createChurchEvent(
@@ -182,6 +208,10 @@ export const eventsKeys = createQueryKeys("events", {
 		queryKey: [churchId, "series", seriesId],
 		queryFn: () => fetchEventSeriesOccurrences(churchId, seriesId),
 	}),
+	ticketRegistrations: (churchId: string, eventId: string) => ({
+		queryKey: [churchId, eventId, "ticket-registrations"],
+		queryFn: () => fetchEventTicketRegistrations(churchId, eventId),
+	}),
 });
 
 export {
@@ -190,6 +220,8 @@ export {
 	fetchChurchEvent,
 	fetchChurchEvents,
 	fetchEventSeriesOccurrences,
+	fetchEventTicketRegistrations,
+	registerForFreeEvent,
 	removeEventRoster,
 	setEventRosterCollection,
 	updateChurchEvent,

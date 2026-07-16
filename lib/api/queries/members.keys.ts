@@ -7,6 +7,10 @@ import type {
   UpdateMemberPayload,
 } from "@/lib/members/form";
 import type {
+  ImportMembersRequest,
+  ImportMembersResult,
+} from "@/lib/members/import";
+import type {
   CreateMemberResponse,
   Family,
   FamilyGraph,
@@ -98,6 +102,20 @@ async function createMember(
     method: "POST",
     body: JSON.stringify(payload),
   });
+}
+
+async function importMembers(
+  churchId: string,
+  payload: ImportMembersRequest,
+): Promise<ImportMembersResult> {
+  return apiClient<ImportMembersResult>(
+    buildTenantPath(churchId, "/members/import"),
+    {
+      churchId,
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
 }
 
 async function updateMember(
@@ -262,6 +280,7 @@ export {
   fetchMembers,
   fetchMyMember,
   fetchMyMinistryNotifications,
+  importMembers,
   receiveMember,
   removeMemberMinistry,
   updateMember,
