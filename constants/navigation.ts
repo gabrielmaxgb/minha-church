@@ -18,6 +18,8 @@ export const footerNavLinks: NavLink[] = [
   { label: "Sobre", href: PUBLIC_ROUTES.about },
   { label: "FAQ", href: PUBLIC_ROUTES.faq },
   { label: "Segurança", href: PUBLIC_ROUTES.security },
+  { label: "Termos de Uso", href: PUBLIC_ROUTES.terms },
+  { label: "Privacidade", href: PUBLIC_ROUTES.privacy },
 ];
 
 export const siteConfig = {

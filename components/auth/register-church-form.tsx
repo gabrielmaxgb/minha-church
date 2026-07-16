@@ -377,12 +377,21 @@ export function RegisterChurchForm() {
                     <span className="text-sm leading-relaxed text-foreground">
                       Li e aceito os{" "}
                       <Link
-                        href={PUBLIC_ROUTES.security}
+                        href={PUBLIC_ROUTES.terms}
                         className="font-medium underline-offset-4 hover:underline"
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        Termos de Uso e Política de Privacidade
+                        Termos de Uso
+                      </Link>{" "}
+                      e a{" "}
+                      <Link
+                        href={PUBLIC_ROUTES.privacy}
+                        className="font-medium underline-offset-4 hover:underline"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Política de Privacidade
                       </Link>
                       .
                     </span>

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Container } from "@/components/layout/container";
 import { Logo } from "@/components/layout/logo";
 import { Separator } from "@/components/ui/separator";
+import { legalMeta } from "@/constants/legal";
 import { footerNavLinks, siteConfig } from "@/constants/navigation";
 
 export function Footer() {
@@ -36,6 +37,9 @@ export function Footer() {
 
         <p className="text-sm text-muted-foreground">
           © {year} {siteConfig.name}. Todos os direitos reservados.
+          <span className="mt-1 block text-xs sm:mt-0 sm:ml-1 sm:inline">
+            {legalMeta.legalName} · CNPJ {legalMeta.cnpj}
+          </span>
         </p>
       </Container>
     </footer>

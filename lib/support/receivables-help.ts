@@ -14,7 +14,7 @@ export function getSupportWhatsAppDigits(): string | null {
 
 export function getSupportEmail(): string {
   return (
-    process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim() || "suporte@minhachurch.com"
+    process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim() || "gmaxgomes@gmail.com"
   );
 }
 

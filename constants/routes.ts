@@ -5,6 +5,8 @@ export const PUBLIC_ROUTES = {
   about: "/sobre",
   faq: "/faq",
   security: "/seguranca",
+  terms: "/termos",
+  privacy: "/privacidade",
   login: "/login",
   register: "/cadastro",
   forgotPassword: "/recuperar-senha",

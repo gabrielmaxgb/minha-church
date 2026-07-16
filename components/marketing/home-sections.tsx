@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Clock3 } from "lucide-react";
 
 import {
   homeBenefits,
@@ -21,32 +21,119 @@ import { fadeInUp } from "@/lib/motion";
 import { domainMark, domainSurface, domainText } from "@/lib/ui/domain-theme";
 import { cn } from "@/lib/utils";
 
+const sundayPending = [
+  { name: "Ana Silva", role: "Vocal", initials: "AS" },
+  { name: "Carlos Mendes", role: "Violão", initials: "CM" },
+  { name: "João Pereira", role: "Recepção", initials: "JP" },
+] as const;
+
+const sundaySignals = [
+  "Horário e local no mesmo lugar",
+  "Ministério e função visíveis",
+  "Quem ainda não respondeu, em destaque",
+] as const;
+
 function SundayPreviewCard({ className }: { className?: string }) {
   return (
     <div
-      className={
-        className ??
-        "rounded-lg border border-domain-activities/20 bg-domain-activities-subtle p-5 text-left sm:p-6"
-      }
+      className={cn(
+        "relative overflow-hidden rounded-2xl border border-domain-activities/25 bg-card shadow-popover",
+        className,
+      )}
     >
-      <p className="text-xs font-medium text-domain-activities-foreground">
-        Próximo culto
-      </p>
-      <p className="mt-2 text-lg font-semibold tracking-tight text-foreground">
-        Culto de Domingo · 19:00
-      </p>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Louvor · Templo principal
-      </p>
-      <div className="mt-5 border-t border-border pt-4">
-        <p className="text-xs font-medium text-attention-foreground">
-          3 voluntários ainda não responderam
-        </p>
-        <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-          <li>Ana Silva — vocal</li>
-          <li>Carlos Mendes — violão</li>
-          <li>João Pereira — recepção</li>
-        </ul>
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-domain-activities-subtle to-transparent"
+        aria-hidden
+      />
+
+      <div className="relative border-b border-border/70 px-4 py-3 sm:px-5">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-[11px] font-semibold tracking-[0.14em] text-domain-activities-foreground uppercase">
+            Próximo culto
+          </p>
+          <span className="rounded-full bg-attention-subtle px-2.5 py-0.5 text-[11px] font-medium text-attention-foreground">
+            Em 2 dias
+          </span>
+        </div>
+      </div>
+
+      <div className="relative space-y-4 px-4 py-4 sm:px-5 sm:py-5">
+        <div className="flex items-start gap-3.5">
+          <time
+            dateTime="2026-07-19T19:00"
+            className="flex w-14 shrink-0 flex-col items-center justify-center rounded-xl border border-domain-activities/20 bg-domain-activities-subtle py-2 text-center"
+            aria-label="19 de julho"
+          >
+            <span className="text-[1.45rem] font-semibold leading-none tracking-tight text-foreground">
+              19
+            </span>
+            <span className="mt-1 text-[10px] font-semibold tracking-[0.12em] text-domain-activities-foreground uppercase">
+              Jul
+            </span>
+          </time>
+
+          <div className="min-w-0 flex-1 pt-0.5">
+            <p className="text-lg font-semibold tracking-tight text-foreground">
+              Culto de Domingo
+            </p>
+            <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+              <span className="inline-flex items-center gap-1 font-medium tabular-nums text-foreground">
+                <Clock3 className="size-3.5 opacity-70" aria-hidden />
+                19:00
+              </span>
+              <span className="text-border" aria-hidden>
+                ·
+              </span>
+              <span>Louvor</span>
+              <span className="text-border" aria-hidden>
+                ·
+              </span>
+              <span>Templo principal</span>
+            </p>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-attention-border bg-attention-subtle/80 p-3.5">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-semibold text-attention-foreground">
+              3 ainda não responderam
+            </p>
+            <span
+              className="flex size-2 shrink-0 rounded-full bg-attention-solid"
+              aria-hidden
+            />
+          </div>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Sem isso, a escala do culto não fecha.
+          </p>
+
+          <ul className="mt-3 space-y-2">
+            {sundayPending.map((person) => (
+              <li
+                key={person.name}
+                className="flex items-center gap-2.5 rounded-lg border border-border/70 bg-card/90 px-2.5 py-2"
+              >
+                <span
+                  className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-semibold tracking-wide text-foreground"
+                  aria-hidden
+                >
+                  {person.initials}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-foreground">
+                    {person.name}
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {person.role}
+                  </p>
+                </div>
+                <span className="shrink-0 rounded-md bg-attention-subtle px-2 py-0.5 text-[11px] font-medium text-attention-foreground">
+                  Aguardando
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </div>
   );
@@ -102,18 +189,46 @@ export function HeroSection() {
 export function OperationDemoSection() {
   // No mobile o card já aparece no hero; aqui reforça a narrativa só no desktop.
   return (
-    <section className="hidden border-b border-border py-14 sm:py-20 lg:block">
+    <section className="hidden border-b border-border bg-gradient-to-b from-domain-activities-subtle/35 via-background to-background py-16 lg:block lg:py-24">
       <Container>
-        <MotionSection variants={fadeInUp}>
-          <div className="grid items-center gap-14 lg:grid-cols-2">
-            <div className="max-w-md">
-              <Heading as="h2">Um domingo organizado, sem correria</Heading>
-              <p className="mt-3 text-base leading-relaxed text-muted-foreground">
-                Horário, ministério e quem ainda não confirmou — o essencial
-                para abrir as portas com tranquilidade.
-              </p>
-            </div>
-            <SundayPreviewCard />
+        <MotionSection
+          variants={fadeInUp}
+          className="grid items-center gap-10 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] xl:gap-14"
+        >
+          <div className="max-w-lg">
+            <p className="text-[11px] font-semibold tracking-[0.16em] text-domain-activities-foreground uppercase">
+              Antes do culto
+            </p>
+            <Heading as="h2" className="mt-3 text-balance">
+              Um domingo organizado, sem correria
+            </Heading>
+            <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+              Horário, ministério e quem ainda não confirmou — o essencial para
+              abrir as portas com tranquilidade.
+            </p>
+
+            <ul className="mt-8 space-y-3">
+              {sundaySignals.map((signal) => (
+                <li
+                  key={signal}
+                  className="flex items-start gap-3 text-sm text-foreground"
+                >
+                  <span
+                    className="mt-1.5 size-1.5 shrink-0 rounded-full bg-domain-activities"
+                    aria-hidden
+                  />
+                  <span className="leading-snug">{signal}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="relative">
+            <div
+              className="pointer-events-none absolute -inset-6 rounded-[2rem] bg-domain-activities-subtle/50 blur-2xl"
+              aria-hidden
+            />
+            <SundayPreviewCard className="relative mx-auto max-w-md xl:ml-auto xl:mr-0" />
           </div>
         </MotionSection>
       </Container>

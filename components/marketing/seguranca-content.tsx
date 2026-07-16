@@ -60,7 +60,14 @@ export function SegurancaContent() {
             <p className="mt-4 leading-relaxed text-muted-foreground">
               Estamos em conformidade com a Lei Geral de Proteção de Dados. Você
               controla quem acessa informações de membros, finanças e
-              comunicação.
+              comunicação. Detalhes do tratamento de dados estão na{" "}
+              <Link
+                href={PUBLIC_ROUTES.privacy}
+                className="font-medium text-foreground underline-offset-4 hover:underline"
+              >
+                Política de Privacidade
+              </Link>
+              .
             </p>
             <Link
               href={PUBLIC_ROUTES.faq}
