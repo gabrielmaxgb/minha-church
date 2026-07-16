@@ -13,6 +13,7 @@ import {
   deleteGivingFund,
   downloadFinanceEntriesCsv,
   downloadGivingDonationsCsv,
+  openExpressDashboard,
   refundGivingDonation,
   resumeConnectOnboarding,
   startConnectOnboarding,
@@ -626,6 +627,27 @@ export function useResumeConnectOnboarding() {
     },
     onSuccess: ({ url }) => {
       window.location.assign(url);
+    },
+  });
+}
+
+/** Login link one-shot para o Express Dashboard da conta conectada. */
+export function useOpenExpressDashboard() {
+  const { church } = useAuth();
+
+  return useMutation({
+    mutationFn: async () => {
+      if (!church?.id) {
+        throw new Error("Igreja não encontrada.");
+      }
+
+      return openExpressDashboard(church.id);
+    },
+    onSuccess: ({ url }) => {
+      const opened = window.open(url, "_blank", "noopener,noreferrer");
+      if (!opened) {
+        window.location.assign(url);
+      }
     },
   });
 }

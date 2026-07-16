@@ -159,6 +159,7 @@ export {
   useMemberGivingFunds,
   usePaymentsSummary,
   useRefundGivingDonation,
+  useOpenExpressDashboard,
   useResumeConnectOnboarding,
   useStartConnectOnboarding,
   useSyncConnectAccount,

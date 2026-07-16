@@ -212,6 +212,19 @@ export async function resumeConnectOnboarding(
   );
 }
 
+export async function openExpressDashboard(
+  churchId: string,
+): Promise<ConnectLinkResponse> {
+  return apiClient<ConnectLinkResponse>(
+    `/churches/${churchId}/payments/connect/dashboard-link`,
+    {
+      method: "POST",
+      body: JSON.stringify({}),
+      churchId,
+    },
+  );
+}
+
 export async function syncConnectAccount(
   churchId: string,
 ): Promise<ConnectStatus> {
