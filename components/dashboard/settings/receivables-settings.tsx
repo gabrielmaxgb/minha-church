@@ -24,6 +24,7 @@ import {
   resolvePaymentsError,
   useConnectStatus,
   useFiscalProfile,
+  useOpenExpressDashboard,
   useResumeConnectOnboarding,
   useStartConnectOnboarding,
   useSyncConnectAccount,
@@ -88,6 +89,7 @@ function ConnectOnboardingCard({
   const { user, church } = useAuth();
   const start = useStartConnectOnboarding();
   const resume = useResumeConnectOnboarding();
+  const openDashboard = useOpenExpressDashboard();
   const sync = useSyncConnectAccount();
   const [actionError, setActionError] = useState<string | null>(null);
   const [leavingToStripe, setLeavingToStripe] = useState(false);
@@ -95,7 +97,11 @@ function ConnectOnboardingCard({
   const onboardingStatus = status?.onboardingStatus ?? "none";
   const meta = STATUS_META[onboardingStatus];
   const redirecting =
-    leavingToStripe || start.isPending || resume.isPending;
+    leavingToStripe ||
+    start.isPending ||
+    resume.isPending ||
+    openDashboard.isPending;
+  const canOpenExpressDashboard = Boolean(status?.detailsSubmitted);
   const needsFiscalGate =
     onboardingStatus === "none" ||
     (onboardingStatus === "created" && !status?.hasAccount);
@@ -126,6 +132,15 @@ function ConnectOnboardingCard({
       await resume.mutateAsync();
     } catch (error) {
       setLeavingToStripe(false);
+      setActionError(resolvePaymentsError(error));
+    }
+  };
+
+  const handleOpenDashboard = async () => {
+    setActionError(null);
+    try {
+      await openDashboard.mutateAsync();
+    } catch (error) {
       setActionError(resolvePaymentsError(error));
     }
   };
@@ -329,6 +344,26 @@ function ConnectOnboardingCard({
                 <RefreshCw className="size-4" aria-hidden />
               )}
               Atualizar situação
+            </Button>
+          )}
+
+          {canOpenExpressDashboard && (
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full gap-2 sm:w-auto"
+              disabled={redirecting || openDashboard.isPending}
+              aria-busy={openDashboard.isPending}
+              onClick={() => void handleOpenDashboard()}
+            >
+              {openDashboard.isPending ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden />
+              ) : (
+                <ExternalLink className="size-4" aria-hidden />
+              )}
+              {openDashboard.isPending
+                ? "Abrindo painel Stripe…"
+                : "Abrir painel Stripe"}
             </Button>
           )}
         </div>
