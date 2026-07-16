@@ -26,6 +26,10 @@ import { EventOptionCard } from "@/components/dashboard/activities/event-option-
 import { EventRecurrenceFields } from "@/components/dashboard/activities/event-recurrence-fields";
 import { EventRegistrationOpenBadge } from "@/components/dashboard/activities/event-registration-open-badge";
 import { EventVisibilityFields } from "@/components/dashboard/activities/event-visibility-fields";
+import {
+  PaidRegistrationReceivablesHint,
+  usePaidEventRegistrationGate,
+} from "@/components/dashboard/activities/paid-registration-receivables-gate";
 import { LargeModalShell } from "@/components/dashboard/activities/large-modal-shell";
 import { TrialExpiredWriteModal } from "@/components/dashboard/trial-expired-write-modal";
 import { Badge } from "@/components/ui/badge";
@@ -52,6 +56,7 @@ import {
   type EventRecurrenceFormState,
 } from "@/lib/events/recurrence";
 import {
+  canCreateChurchWideActivity,
   canManageActivity,
   canManageEventRoster,
 } from "@/lib/permissions";
@@ -83,6 +88,8 @@ export function ActivityEventModal({
 }: ActivityEventModalProps) {
   const titleId = useId();
   const { user, permissions } = useAuth();
+  const canSelectChurchWide =
+    permissions !== null && canCreateChurchWideActivity(permissions);
   const { writesBlocked, guardWrite, paywallAction, closePaywall } =
     useTrialWriteGuard();
   const { data: event, isLoading, isError } = useChurchEvent(eventId ?? "");
@@ -109,6 +116,11 @@ export function ActivityEventModal({
   const [scopeDialog, setScopeDialog] = useState<"edit" | "delete" | null>(null);
 
   const updateEvent = useUpdateChurchEvent(eventId ?? "");
+  const {
+    canChargePaidRegistration,
+    receivablesHref,
+    isPending: connectPending,
+  } = usePaidEventRegistrationGate();
   const deleteEvent = useDeleteChurchEvent(eventId ?? "");
 
   const isRecurring = Boolean(event?.recurrenceSeriesId && event?.recurrence);
@@ -243,6 +255,23 @@ export function ActivityEventModal({
       return;
     }
 
+    const existingPaid =
+      event.priceCents != null && event.priceCents >= 500
+        ? event.priceCents
+        : null;
+    const isNewPaidPrice =
+      priceCents != null &&
+      priceCents >= 500 &&
+      priceCents !== existingPaid;
+
+    if (isNewPaidPrice && !canChargePaidRegistration) {
+      setError(
+        "Ative os recebimentos da igreja antes de abrir inscrição paga.",
+      );
+      setScopeDialog(null);
+      return;
+    }
+
     const openRegistration =
       registrationOpen || Boolean(priceCents != null && priceCents >= 500);
 
@@ -266,7 +295,10 @@ export function ActivityEventModal({
         location: location.trim() || null,
         startsAt: new Date(startsAt).toISOString(),
         endsAt: endsAt ? new Date(endsAt).toISOString() : null,
-        visibleToChurch: event.ministryId ? visibleToChurch : undefined,
+        visibleToChurch:
+          event.ministryId && canSelectChurchWide
+            ? visibleToChurch
+            : undefined,
         registrationOpen: openRegistration,
         priceCents:
           openRegistration && priceCents != null && priceCents >= 500
@@ -643,15 +675,23 @@ export function ActivityEventModal({
                                 : "",
                             );
                           }}
-                          disabled={isPending}
+                          disabled={
+                            isPending || !canChargePaidRegistration
+                          }
                           placeholder="0,00 — vazio = gratuita"
                           className="h-11 rounded-xl pl-10 tabular-nums"
                         />
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        Vazio = inscrição gratuita. Com valor, pagamento via
-                        Stripe Connect (mínimo R$ 5,00).
-                      </p>
+                      {!canChargePaidRegistration && !connectPending ? (
+                        <PaidRegistrationReceivablesHint
+                          href={receivablesHref}
+                        />
+                      ) : (
+                        <p className="text-xs text-muted-foreground">
+                          Vazio = inscrição gratuita. Com valor, pagamento via
+                          Stripe Connect (mínimo R$ 5,00).
+                        </p>
+                      )}
                     </div>
                   ) : null}
                 </div>
@@ -705,7 +745,7 @@ export function ActivityEventModal({
               />
             </EventFormSection>
 
-            {event.ministryId ? (
+            {event.ministryId && canSelectChurchWide ? (
               <EventFormSection
                 title="Quem pode ver"
                 description="Visibilidade na agenda da igreja."
@@ -714,6 +754,7 @@ export function ActivityEventModal({
                 <EventVisibilityFields
                   visibleToChurch={visibleToChurch}
                   onVisibleToChurchChange={setVisibleToChurch}
+                  allowChurchWideVisibility={canSelectChurchWide}
                   disabled={isPending}
                 />
               </EventFormSection>

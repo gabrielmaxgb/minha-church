@@ -12,6 +12,11 @@ interface EventVisibilityFieldsProps {
   className?: string;
   /** cards = formulários; inline = seletor compacto na página do evento */
   layout?: "cards" | "inline";
+  /**
+   * Quem não tem `events_create_church_wide` não pode exibir o evento
+   * na agenda geral da igreja — a opção some da seleção.
+   */
+  allowChurchWideVisibility?: boolean;
 }
 
 const CARD_OPTIONS = [
@@ -42,7 +47,14 @@ export function EventVisibilityFields({
   disabled,
   className,
   layout = "cards",
+  allowChurchWideVisibility = true,
 }: EventVisibilityFieldsProps) {
+  // Sem permissão church-wide, a única opção possível é "só ministério" —
+  // não há seleção a oferecer (o caller esconde a seção inteira).
+  if (!allowChurchWideVisibility) {
+    return null;
+  }
+
   if (layout === "inline") {
     return (
       <div

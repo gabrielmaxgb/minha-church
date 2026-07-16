@@ -8,6 +8,10 @@ import { EventFormSection } from "@/components/dashboard/activities/event-form-s
 import { EventOptionCard } from "@/components/dashboard/activities/event-option-card";
 import { EventRecurrenceFields } from "@/components/dashboard/activities/event-recurrence-fields";
 import { EventVisibilityFields } from "@/components/dashboard/activities/event-visibility-fields";
+import {
+  PaidRegistrationReceivablesHint,
+  usePaidEventRegistrationGate,
+} from "@/components/dashboard/activities/paid-registration-receivables-gate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -72,6 +76,11 @@ export function CreateActivityModal({
   const canList = canListMinistries(permissions);
   const { data: ministries } = useMinistries({ enabled: open && canList });
   const createEvent = useCreateChurchEvent();
+  const {
+    canChargePaidRegistration,
+    receivablesHref,
+    isPending: connectPending,
+  } = usePaidEventRegistrationGate();
 
   const [name, setName] = useState("");
   const [ministryId, setMinistryId] = useState(defaultMinistryId);
@@ -81,7 +90,7 @@ export function CreateActivityModal({
   const initialStartsAt = defaultStartsAtValue ?? fallbackStartsAt();
   const [startsAt, setStartsAt] = useState(initialStartsAt);
   const [endsAt, setEndsAt] = useState("");
-  const [visibleToChurch, setVisibleToChurch] = useState(true);
+  const [visibleToChurch, setVisibleToChurch] = useState(false);
   const [registrationOpen, setRegistrationOpen] = useState(false);
   const [priceReais, setPriceReais] = useState("");
   const [recurrence, setRecurrence] = useState<EventRecurrenceFormState>(
@@ -130,7 +139,7 @@ export function CreateActivityModal({
         setLocation("");
         setStartsAt(fallbackStartsAt());
         setEndsAt("");
-        setVisibleToChurch(true);
+        setVisibleToChurch(false);
         setRegistrationOpen(false);
         setPriceReais("");
         setRecurrence(defaultRecurrenceFormState(fallbackStartsAt()));
@@ -145,8 +154,9 @@ export function CreateActivityModal({
     const nextStartsAt = defaultStartsAtValue ?? fallbackStartsAt();
 
     wasOpenRef.current = true;
-    // Sem contexto de ministério, o padrão é "Igreja inteira" (church-wide).
+    // Sem permissão church-wide, não deixa ministryId vazio (seria evento da igreja).
     setMinistryId(defaultMinistryId);
+    setVisibleToChurch(canSelectChurchWide);
     setStartsAt(nextStartsAt);
     setRecurrence(defaultRecurrenceFormState(nextStartsAt));
 
@@ -156,7 +166,24 @@ export function CreateActivityModal({
     return () => {
       document.body.style.overflow = previousOverflow;
     };
-  }, [open, defaultMinistryId, defaultStartsAtValue]);
+  }, [open, defaultMinistryId, defaultStartsAtValue, canSelectChurchWide]);
+
+  useEffect(() => {
+    if (!open || canSelectChurchWide || ministryId) {
+      return;
+    }
+
+    const firstMinistryId = creatableMinistries[0]?.id;
+    if (firstMinistryId) {
+      setMinistryId(firstMinistryId);
+    }
+  }, [open, canSelectChurchWide, ministryId, creatableMinistries]);
+
+  useEffect(() => {
+    if (!canSelectChurchWide && visibleToChurch) {
+      setVisibleToChurch(false);
+    }
+  }, [canSelectChurchWide, visibleToChurch]);
 
   useEffect(() => {
     setRecurrence((current) => syncRecurrenceDaysWithStart(current, startsAt));
@@ -201,6 +228,11 @@ export function CreateActivityModal({
       return;
     }
 
+    if (!canSelectChurchWide && !ministryId) {
+      setError("Selecione um ministério para criar o evento.");
+      return;
+    }
+
     const recurrencePayload = buildRecurrencePayload(recurrence);
 
     if (recurrence.endType === "on_date" && recurrence.repeatMode !== "none" && !recurrence.endDate) {
@@ -224,6 +256,17 @@ export function CreateActivityModal({
       return;
     }
 
+    if (
+      priceCents != null &&
+      priceCents >= 500 &&
+      !canChargePaidRegistration
+    ) {
+      setError(
+        "Ative os recebimentos da igreja antes de abrir inscrição paga.",
+      );
+      return;
+    }
+
     const openRegistration =
       registrationOpen || Boolean(priceCents != null && priceCents >= 500);
 
@@ -238,7 +281,9 @@ export function CreateActivityModal({
       recurrence: recurrencePayload,
       // Escala fica implícita (padrão do backend). Coleta de disponibilidade
       // e montagem da equipe acontecem na página do evento após a criação.
-      ...(ministryId ? { visibleToChurch } : {}),
+      ...(ministryId
+        ? { visibleToChurch: canSelectChurchWide ? visibleToChurch : false }
+        : {}),
       registrationOpen: openRegistration,
       priceCents:
         openRegistration && priceCents != null && priceCents >= 500
@@ -287,7 +332,9 @@ export function CreateActivityModal({
               Novo evento
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Deixe sem ministério para destacar como evento da igreja inteira.
+              {canSelectChurchWide
+                ? "Deixe sem ministério para destacar como evento da igreja inteira."
+                : "Escolha um ministério em que você pode criar eventos."}
             </p>
           </div>
           <button
@@ -481,15 +528,25 @@ export function CreateActivityModal({
                                   : "",
                               );
                             }}
-                            disabled={createEvent.isPending}
+                            disabled={
+                              createEvent.isPending ||
+                              !canChargePaidRegistration
+                            }
                             placeholder="0,00 — vazio = gratuita"
                             className="h-11 rounded-xl pl-10 tabular-nums"
                           />
                         </div>
-                        <p className="text-xs text-muted-foreground">
-                          Vazio = inscrição gratuita. Com valor, membros pagam
-                          pela conta de recebimentos da igreja (mínimo R$ 5,00).
-                        </p>
+                        {!canChargePaidRegistration && !connectPending ? (
+                          <PaidRegistrationReceivablesHint
+                            href={receivablesHref}
+                          />
+                        ) : (
+                          <p className="text-xs text-muted-foreground">
+                            Vazio = inscrição gratuita. Com valor, membros pagam
+                            pela conta de recebimentos da igreja (mínimo R$
+                            5,00).
+                          </p>
+                        )}
                       </div>
                     ) : null}
                   </div>
@@ -507,7 +564,7 @@ export function CreateActivityModal({
                     />
                   </EventFormSection>
 
-                  {ministryId ? (
+                  {ministryId && canSelectChurchWide ? (
                     <EventFormSection
                       title="Quem pode ver"
                       description="Controle se o evento aparece na agenda geral da igreja."
@@ -516,6 +573,7 @@ export function CreateActivityModal({
                       <EventVisibilityFields
                         visibleToChurch={visibleToChurch}
                         onVisibleToChurchChange={setVisibleToChurch}
+                        allowChurchWideVisibility={canSelectChurchWide}
                         disabled={createEvent.isPending}
                       />
                     </EventFormSection>

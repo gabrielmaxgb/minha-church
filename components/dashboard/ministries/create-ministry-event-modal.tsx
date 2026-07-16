@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateMinistryEvent } from "@/lib/api/queries";
+import { canCreateChurchWideActivity } from "@/lib/permissions";
 import {
   buildRecurrencePayload,
   defaultRecurrenceFormState,
@@ -20,6 +21,7 @@ import {
   type EventRecurrenceFormState,
 } from "@/lib/events/recurrence";
 import type { CreateMinistryEventPayload } from "@/types/ministries";
+import { useAuth } from "@/providers/auth-provider";
 
 interface CreateMinistryEventModalProps {
   ministryId: string;
@@ -51,13 +53,16 @@ export function CreateMinistryEventModal({
   defaultStartsAtValue,
 }: CreateMinistryEventModalProps) {
   const titleId = useId();
+  const { permissions } = useAuth();
+  const canSelectChurchWide =
+    permissions !== null && canCreateChurchWideActivity(permissions);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [highlightNote, setHighlightNote] = useState("");
   const [location, setLocation] = useState("");
   const [startsAt, setStartsAt] = useState(defaultStartsAtValue ?? defaultStartsAt);
   const [endsAt, setEndsAt] = useState("");
-  const [visibleToChurch, setVisibleToChurch] = useState(true);
+  const [visibleToChurch, setVisibleToChurch] = useState(false);
   const [recurrence, setRecurrence] = useState<EventRecurrenceFormState>(
     defaultRecurrenceFormState(defaultStartsAtValue ?? defaultStartsAt()),
   );
@@ -72,7 +77,7 @@ export function CreateMinistryEventModal({
       setLocation("");
       setStartsAt(defaultStartsAtValue ?? defaultStartsAt());
       setEndsAt("");
-      setVisibleToChurch(true);
+      setVisibleToChurch(false);
       setRecurrence(
         defaultRecurrenceFormState(defaultStartsAtValue ?? defaultStartsAt()),
       );
@@ -82,6 +87,7 @@ export function CreateMinistryEventModal({
 
     const nextStartsAt = defaultStartsAtValue ?? defaultStartsAt();
     setStartsAt(nextStartsAt);
+    setVisibleToChurch(canSelectChurchWide);
     setRecurrence(defaultRecurrenceFormState(nextStartsAt));
 
     const previousOverflow = document.body.style.overflow;
@@ -90,11 +96,17 @@ export function CreateMinistryEventModal({
     return () => {
       document.body.style.overflow = previousOverflow;
     };
-  }, [open, defaultStartsAtValue]);
+  }, [open, defaultStartsAtValue, canSelectChurchWide]);
 
   useEffect(() => {
     setRecurrence((current) => syncRecurrenceDaysWithStart(current, startsAt));
   }, [startsAt]);
+
+  useEffect(() => {
+    if (!canSelectChurchWide && visibleToChurch) {
+      setVisibleToChurch(false);
+    }
+  }, [canSelectChurchWide, visibleToChurch]);
 
   useEffect(() => {
     if (!open) {
@@ -140,7 +152,7 @@ export function CreateMinistryEventModal({
       startsAt: new Date(startsAt).toISOString(),
       endsAt: endsAt ? new Date(endsAt).toISOString() : undefined,
       recurrence: recurrencePayload,
-      visibleToChurch,
+      visibleToChurch: canSelectChurchWide ? visibleToChurch : false,
     };
 
     try {
@@ -305,17 +317,20 @@ export function CreateMinistryEventModal({
               />
             </EventFormSection>
 
-            <EventFormSection
-              title="Quem pode ver"
-              description="Controle se o evento aparece na agenda geral da igreja."
-              icon={Eye}
-            >
-              <EventVisibilityFields
-                visibleToChurch={visibleToChurch}
-                onVisibleToChurchChange={setVisibleToChurch}
-                disabled={createEvent.isPending}
-              />
-            </EventFormSection>
+            {canSelectChurchWide ? (
+              <EventFormSection
+                title="Quem pode ver"
+                description="Controle se o evento aparece na agenda geral da igreja."
+                icon={Eye}
+              >
+                <EventVisibilityFields
+                  visibleToChurch={visibleToChurch}
+                  onVisibleToChurchChange={setVisibleToChurch}
+                  allowChurchWideVisibility={canSelectChurchWide}
+                  disabled={createEvent.isPending}
+                />
+              </EventFormSection>
+            ) : null}
           </div>
 
           <Separator />

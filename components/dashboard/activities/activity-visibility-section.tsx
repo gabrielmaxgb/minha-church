@@ -14,6 +14,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useUpdateChurchEvent } from "@/lib/api/queries";
+import { canCreateChurchWideActivity } from "@/lib/permissions";
+import { useAuth } from "@/providers/auth-provider";
 import type { ChurchEventDetail } from "@/types/events";
 
 interface ActivityVisibilitySectionProps {
@@ -26,6 +28,9 @@ export function ActivityVisibilitySection({
   event,
   inline = false,
 }: ActivityVisibilitySectionProps) {
+  const { permissions } = useAuth();
+  const canSelectChurchWide =
+    permissions !== null && canCreateChurchWideActivity(permissions);
   const updateEvent = useUpdateChurchEvent(event.id);
   const [visibleToChurch, setVisibleToChurch] = useState(event.visibleToChurch);
   const [error, setError] = useState<string | null>(null);
@@ -34,6 +39,10 @@ export function ActivityVisibilitySection({
     setVisibleToChurch(event.visibleToChurch);
     setError(null);
   }, [event.id, event.visibleToChurch]);
+
+  if (!canSelectChurchWide) {
+    return null;
+  }
 
   const dirty = visibleToChurch !== event.visibleToChurch;
 
@@ -65,6 +74,7 @@ export function ActivityVisibilitySection({
               layout="inline"
               visibleToChurch={visibleToChurch}
               onVisibleToChurchChange={setVisibleToChurch}
+              allowChurchWideVisibility={canSelectChurchWide}
               disabled={updateEvent.isPending}
             />
             {dirty && (
@@ -122,6 +132,7 @@ export function ActivityVisibilitySection({
           <EventVisibilityFields
             visibleToChurch={visibleToChurch}
             onVisibleToChurchChange={setVisibleToChurch}
+            allowChurchWideVisibility={canSelectChurchWide}
             disabled={updateEvent.isPending}
           />
         </EventFormSection>

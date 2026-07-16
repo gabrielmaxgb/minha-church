@@ -21,6 +21,10 @@ import { EventMutationScopeFields } from "@/components/dashboard/activities/even
 import { EventOptionCard } from "@/components/dashboard/activities/event-option-card";
 import { EventRecurrenceFields } from "@/components/dashboard/activities/event-recurrence-fields";
 import { EventVisibilityFields } from "@/components/dashboard/activities/event-visibility-fields";
+import {
+  PaidRegistrationReceivablesHint,
+  usePaidEventRegistrationGate,
+} from "@/components/dashboard/activities/paid-registration-receivables-gate";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,6 +51,8 @@ import {
   parseBrlMaskToCents,
 } from "@/lib/utils";
 import type { ChurchEvent, EventMutationScope } from "@/types/events";
+import { canCreateChurchWideActivity } from "@/lib/permissions";
+import { useAuth } from "@/providers/auth-provider";
 
 interface EditActivityModalProps {
   event: ChurchEvent | null;
@@ -84,13 +90,16 @@ export function EditActivityModal({
   onDeleted,
 }: EditActivityModalProps) {
   const titleId = useId();
+  const { permissions } = useAuth();
+  const canSelectChurchWide =
+    permissions !== null && canCreateChurchWideActivity(permissions);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [highlightNote, setHighlightNote] = useState("");
   const [location, setLocation] = useState("");
   const [startsAt, setStartsAt] = useState("");
   const [endsAt, setEndsAt] = useState("");
-  const [visibleToChurch, setVisibleToChurch] = useState(true);
+  const [visibleToChurch, setVisibleToChurch] = useState(false);
   const [registrationOpen, setRegistrationOpen] = useState(false);
   const [priceReais, setPriceReais] = useState("");
   const [recurrence, setRecurrence] = useState<EventRecurrenceFormState>(
@@ -106,6 +115,11 @@ export function EditActivityModal({
   const [deleteScope, setDeleteScope] = useState<EventMutationScope>("this");
 
   const updateEvent = useUpdateChurchEvent(event?.id ?? "");
+  const {
+    canChargePaidRegistration,
+    receivablesHref,
+    isPending: connectPending,
+  } = usePaidEventRegistrationGate();
   const deleteEvent = useDeleteChurchEvent(event?.id ?? "");
   const isPending = updateEvent.isPending || deleteEvent.isPending;
   const isRecurring = Boolean(event?.recurrenceSeriesId && event?.recurrence);
@@ -273,6 +287,22 @@ export function EditActivityModal({
         return;
       }
 
+      const existingPaid =
+        event.priceCents != null && event.priceCents >= 500
+          ? event.priceCents
+          : null;
+      const isNewPaidPrice =
+        priceCents != null &&
+        priceCents >= 500 &&
+        priceCents !== existingPaid;
+
+      if (isNewPaidPrice && !canChargePaidRegistration) {
+        setError(
+          "Ative os recebimentos da igreja antes de abrir inscrição paga.",
+        );
+        return;
+      }
+
       const openRegistration =
         registrationOpen || Boolean(priceCents != null && priceCents >= 500);
 
@@ -283,7 +313,10 @@ export function EditActivityModal({
         location: location.trim() || null,
         startsAt: new Date(startsAt).toISOString(),
         endsAt: endsAt ? new Date(endsAt).toISOString() : null,
-        visibleToChurch: event.ministryId ? visibleToChurch : undefined,
+        visibleToChurch:
+          event.ministryId && canSelectChurchWide
+            ? visibleToChurch
+            : undefined,
         registrationOpen: openRegistration,
         priceCents:
           openRegistration && priceCents != null && priceCents >= 500
@@ -489,7 +522,11 @@ export function EditActivityModal({
                     <Field
                       label="Preço da inscrição (opcional)"
                       htmlFor="edit-activity-price"
-                      hint="Vazio = inscrição gratuita. Com valor, pagamento via Stripe Connect (mínimo R$ 5,00)."
+                      hint={
+                        canChargePaidRegistration
+                          ? "Vazio = inscrição gratuita. Com valor, pagamento via Stripe Connect (mínimo R$ 5,00)."
+                          : undefined
+                      }
                     >
                       <div className="relative">
                         <span className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-sm text-muted-foreground">
@@ -512,10 +549,15 @@ export function EditActivityModal({
                             );
                           }}
                           placeholder="0,00 — vazio = gratuita"
-                          disabled={isPending}
+                          disabled={isPending || !canChargePaidRegistration}
                           className="h-12 rounded-xl border-border/80 bg-background pl-11 pr-4 text-base tabular-nums"
                         />
                       </div>
+                      {!canChargePaidRegistration && !connectPending ? (
+                        <PaidRegistrationReceivablesHint
+                          href={receivablesHref}
+                        />
+                      ) : null}
                     </Field>
                   ) : null}
                 </div>
@@ -570,7 +612,7 @@ export function EditActivityModal({
               />
             </EventFormSection>
 
-            {event.ministryId && (
+            {event.ministryId && canSelectChurchWide && (
               <EventFormSection
                 title="Quem pode ver"
                 description="Controle se o evento aparece na agenda geral da igreja."
@@ -579,6 +621,7 @@ export function EditActivityModal({
                 <EventVisibilityFields
                   visibleToChurch={visibleToChurch}
                   onVisibleToChurchChange={setVisibleToChurch}
+                  allowChurchWideVisibility={canSelectChurchWide}
                   disabled={isPending}
                 />
               </EventFormSection>
