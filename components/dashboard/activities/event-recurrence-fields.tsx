@@ -12,6 +12,7 @@ import {
   WEEKDAY_OPTIONS,
   type EventRecurrenceFormState,
 } from "@/lib/events/recurrence";
+import { FormMessage } from "@/components/ui/form-field";
 import { cn } from "@/lib/utils";
 
 interface EventRecurrenceFieldsProps {
@@ -19,6 +20,8 @@ interface EventRecurrenceFieldsProps {
   onChange: (value: EventRecurrenceFormState) => void;
   startsAt: string;
   disabled?: boolean;
+  idPrefix?: string;
+  endDateError?: string;
 }
 
 export function EventRecurrenceFields({
@@ -26,6 +29,8 @@ export function EventRecurrenceFields({
   onChange,
   startsAt,
   disabled = false,
+  idPrefix = "event",
+  endDateError,
 }: EventRecurrenceFieldsProps) {
   const isRecurring = value.repeatMode !== "none";
   const startDate = new Date(startsAt);
@@ -55,7 +60,7 @@ export function EventRecurrenceFields({
       <div className="space-y-2">
         <Label htmlFor="event-repeat-mode">Frequência</Label>
         <SelectField
-          id="event-repeat-mode"
+          id={`${idPrefix}-repeat-mode`}
           value={value.repeatMode}
           onChange={(event) =>
             update({
@@ -78,7 +83,7 @@ export function EventRecurrenceFields({
             <div className="space-y-2">
               <Label htmlFor="event-repeat-interval">A cada</Label>
               <Input
-                id="event-repeat-interval"
+                id={`${idPrefix}-repeat-interval`}
                 type="number"
                 min={1}
                 max={99}
@@ -154,14 +159,19 @@ export function EventRecurrenceFields({
                 label="Em"
               >
                 <DatePicker
+                  id={`${idPrefix}-recurrence-end-date`}
                   value={value.endDate}
                   onChange={(endDate) =>
                     update({ endDate, endType: "on_date" })
                   }
                   disabled={disabled || value.endType !== "on_date"}
-                  className="min-w-[12rem] max-w-[16rem]"
+                  className={cn(
+                    "min-w-[12rem] max-w-[16rem]",
+                    endDateError && "border-destructive/50",
+                  )}
                 />
               </EndOption>
+              {endDateError ? <FormMessage>{endDateError}</FormMessage> : null}
               <EndOption
                 checked={value.endType === "after_count"}
                 onChange={() => update({ endType: "after_count" })}

@@ -37,6 +37,7 @@ import {
   type GivingCheckoutSession,
 } from "@/lib/api/payments";
 import { eventsKeys, registerForFreeEvent } from "@/lib/api/queries/events.keys";
+import { eventRegistrationCopy } from "@/lib/events/member-response-copy";
 import { resolveGivingStripeError } from "@/lib/payments/giving-stripe-errors";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
@@ -85,9 +86,9 @@ export function EventTicketCheckout({
     churchName: church?.name ?? "Sua igreja",
     fundName: eventName,
     fundDescription: isPaid
-      ? "Taxa de inscrição para confirmar sua participação neste evento."
-      : "Confirme sua participação gratuita neste evento.",
-    eyebrow: "Inscrição no evento",
+      ? eventRegistrationCopy.paymentDescription
+      : eventRegistrationCopy.paymentDescriptionFree,
+    eyebrow: eventRegistrationCopy.paymentEyebrow,
   };
 
   useEffect(() => {
@@ -190,15 +191,15 @@ export function EventTicketCheckout({
     return (
       <TicketStatusCard
         tone="success"
-        title="Você já está inscrito"
+        title={eventRegistrationCopy.confirmedTitle}
         description={
           dense
             ? isPaid
-              ? "Inscrição confirmada — não precisa pagar de novo."
-              : "Inscrição confirmada."
+              ? eventRegistrationCopy.confirmedPaidDense
+              : eventRegistrationCopy.confirmedFreeDense
             : isPaid
-              ? "Sua inscrição paga neste evento já está confirmada. Não é necessário pagar de novo."
-              : "Sua inscrição neste evento já está confirmada."
+              ? eventRegistrationCopy.confirmedPaid
+              : eventRegistrationCopy.confirmedFree
         }
         amountCents={isPaid ? priceCents : null}
         dense={dense}
@@ -271,9 +272,16 @@ export function EventTicketCheckout({
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <p className="text-sm font-semibold tracking-tight text-foreground">
-                    {isPaid ? "Taxa de inscrição" : "Inscrição"}
-                  </p>
+                  <div>
+                    <p className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+                      {eventRegistrationCopy.eyebrow}
+                    </p>
+                    <p className="mt-0.5 text-sm font-semibold tracking-tight text-foreground">
+                      {isPaid
+                        ? eventRegistrationCopy.titlePaid
+                        : eventRegistrationCopy.titleFree}
+                    </p>
+                  </div>
                   <p className="shrink-0 text-sm font-semibold tabular-nums tracking-tight text-foreground">
                     {isPaid && priceCents != null
                       ? formatBrlFromCents(priceCents)
@@ -283,11 +291,11 @@ export function EventTicketCheckout({
                 <p className="mt-0.5 text-sm leading-snug text-muted-foreground">
                   {dense
                     ? isPaid
-                      ? "Pague para confirmar participação."
-                      : "Confirme sua participação neste evento."
+                      ? eventRegistrationCopy.subtitlePaidDense
+                      : eventRegistrationCopy.subtitleFreeDense
                     : isPaid
-                      ? "Pague para confirmar sua participação neste evento."
-                      : "Confirme gratuitamente sua participação neste evento."}
+                      ? eventRegistrationCopy.subtitlePaid
+                      : eventRegistrationCopy.subtitleFree}
                 </p>
                 {error ? (
                   <div className="mt-2">
@@ -303,8 +311,10 @@ export function EventTicketCheckout({
                 >
                   {starting ? <Loader2 className="size-4 animate-spin" /> : null}
                   {isPaid && priceCents != null
-                    ? `Continuar · ${formatBrlFromCents(priceCents)}`
-                    : "Confirmar inscrição"}
+                    ? eventRegistrationCopy.confirmPaid(
+                        formatBrlFromCents(priceCents),
+                      )
+                    : eventRegistrationCopy.confirmFree}
                 </Button>
               </div>
             </div>

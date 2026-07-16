@@ -13,6 +13,7 @@ import {
   usePaidEventRegistrationGate,
 } from "@/components/dashboard/activities/paid-registration-receivables-gate";
 import { Button } from "@/components/ui/button";
+import { FormAlert, FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SelectField } from "@/components/ui/select-field";
@@ -27,6 +28,14 @@ import {
 import { TrialExpiredWriteModal } from "@/components/dashboard/trial-expired-write-modal";
 import { useTrialWriteGuard } from "@/lib/subscription/use-trial-write-guard";
 import { useAuth } from "@/providers/auth-provider";
+import {
+  applyActivityFormFieldErrors,
+  activityFormErrorsNeedMoreOptions,
+  activityFormFieldIds,
+  mapActivityFormApiError,
+  type ActivityFormField,
+  type ActivityFormFieldErrors,
+} from "@/lib/events/activity-form-errors";
 import {
   buildRecurrencePayload,
   defaultRecurrenceFormState,
@@ -96,8 +105,35 @@ export function CreateActivityModal({
   const [recurrence, setRecurrence] = useState<EventRecurrenceFormState>(
     defaultRecurrenceFormState(initialStartsAt),
   );
-  const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<ActivityFormFieldErrors>({});
   const [showMoreOptions, setShowMoreOptions] = useState(false);
+  const fieldIds = useMemo(() => activityFormFieldIds("activity"), []);
+
+  function clearFieldError(field: ActivityFormField) {
+    setFieldErrors((current) => {
+      if (!current[field]) {
+        return current;
+      }
+
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+  }
+
+  function setFormFieldErrors(errors: ActivityFormFieldErrors) {
+    setFieldErrors(errors);
+
+    if (errors.price) {
+      setRegistrationOpen(true);
+    }
+
+    if (activityFormErrorsNeedMoreOptions(errors)) {
+      setShowMoreOptions(true);
+    }
+
+    applyActivityFormFieldErrors(errors, fieldIds);
+  }
 
   const creatableMinistries = useMemo(() => {
     if (!permissions) {
@@ -143,7 +179,7 @@ export function CreateActivityModal({
         setRegistrationOpen(false);
         setPriceReais("");
         setRecurrence(defaultRecurrenceFormState(fallbackStartsAt()));
-        setError(null);
+        setFieldErrors({});
         setShowMoreOptions(false);
       }
 
@@ -221,22 +257,26 @@ export function CreateActivityModal({
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setError(null);
+    setFieldErrors({});
 
     if (!name.trim()) {
-      setError("Informe o nome da atividade.");
+      setFormFieldErrors({ name: "Informe o nome da atividade." });
       return;
     }
 
     if (!canSelectChurchWide && !ministryId) {
-      setError("Selecione um ministério para criar o evento.");
+      setFormFieldErrors({
+        ministryId: "Selecione um ministério para criar o evento.",
+      });
       return;
     }
 
     const recurrencePayload = buildRecurrencePayload(recurrence);
 
     if (recurrence.endType === "on_date" && recurrence.repeatMode !== "none" && !recurrence.endDate) {
-      setError("Informe a data final da repetição.");
+      setFormFieldErrors({
+        recurrenceEndDate: "Informe a data final da repetição.",
+      });
       return;
     }
 
@@ -250,9 +290,10 @@ export function CreateActivityModal({
       priceCents > 0 &&
       priceCents < 500
     ) {
-      setError(
-        "O preço mínimo da inscrição paga é R$ 5,00 (ou deixe vazio para gratuita).",
-      );
+      setFormFieldErrors({
+        price:
+          "O preço mínimo da inscrição paga é R$ 5,00 (ou deixe vazio para gratuita).",
+      });
       return;
     }
 
@@ -261,9 +302,10 @@ export function CreateActivityModal({
       priceCents >= 500 &&
       !canChargePaidRegistration
     ) {
-      setError(
-        "Ative os recebimentos da igreja antes de abrir inscrição paga.",
-      );
+      setFormFieldErrors({
+        price:
+          "Ative os recebimentos da igreja antes de abrir inscrição paga.",
+      });
       return;
     }
 
@@ -295,11 +337,11 @@ export function CreateActivityModal({
       await createEvent.mutateAsync(payload);
       onClose();
     } catch (submitError) {
-      setError(
+      const message =
         submitError instanceof Error
           ? submitError.message
-          : "Não foi possível criar a atividade.",
-      );
+          : "Não foi possível criar a atividade.";
+      setFormFieldErrors(mapActivityFormApiError(message));
     }
   }
 
@@ -350,43 +392,54 @@ export function CreateActivityModal({
 
         <Separator />
 
-        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col" noValidate>
           <div className="space-y-8 overflow-y-auto px-6 py-6">
-            {error && (
-              <div
-                role="alert"
-                className="rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2.5 text-sm text-destructive"
-              >
-                {error}
-              </div>
-            )}
-
             <EventFormSection
               title="Informações básicas"
               description="Nome, ministério e detalhes que aparecem na agenda."
               icon={FileText}
             >
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="activity-name">Nome</Label>
+                <FormField
+                  label="Nome"
+                  htmlFor={fieldIds.name}
+                  error={fieldErrors.name}
+                  required
+                >
                   <Input
-                    id="activity-name"
+                    id={fieldIds.name}
                     value={name}
-                    onChange={(event) => setName(event.target.value)}
+                    onChange={(event) => {
+                      setName(event.target.value);
+                      clearFieldError("name");
+                    }}
                     placeholder="Ex.: Culto de domingo, Conferência, Ensaio"
                     disabled={createEvent.isPending}
                     autoFocus
+                    aria-invalid={fieldErrors.name ? true : undefined}
                     className="h-11 rounded-xl"
                   />
-                </div>
+                </FormField>
 
-                <div className="space-y-2">
-                  <Label htmlFor="activity-ministry">Ministério</Label>
+                <FormField
+                  label="Ministério"
+                  htmlFor={fieldIds.ministryId}
+                  error={fieldErrors.ministryId}
+                  hint={
+                    canSelectChurchWide
+                      ? "Eventos da igreja aparecem em destaque no painel."
+                      : "Selecione um ministério em que você pode criar eventos."
+                  }
+                >
                   <SelectField
-                    id="activity-ministry"
+                    id={fieldIds.ministryId}
                     value={ministryId}
-                    onChange={(event) => setMinistryId(event.target.value)}
+                    onChange={(event) => {
+                      setMinistryId(event.target.value);
+                      clearFieldError("ministryId");
+                    }}
                     disabled={createEvent.isPending}
+                    aria-invalid={fieldErrors.ministryId ? true : undefined}
                     className="h-11 rounded-xl"
                   >
                     {canSelectChurchWide && (
@@ -398,12 +451,7 @@ export function CreateActivityModal({
                       </option>
                     ))}
                   </SelectField>
-                  <p className="text-xs text-muted-foreground">
-                    {canSelectChurchWide
-                      ? "Eventos da igreja aparecem em destaque no painel."
-                      : "Selecione um ministério em que você pode criar eventos."}
-                  </p>
-                </div>
+                </FormField>
 
                 <div className="space-y-2">
                   <Label htmlFor="activity-description">Descrição do evento</Label>
@@ -492,6 +540,7 @@ export function CreateActivityModal({
                       checked={registrationOpen}
                       onChange={(checked) => {
                         setRegistrationOpen(checked);
+                        clearFieldError("price");
                         if (!checked) {
                           setPriceReais("");
                         }
@@ -504,20 +553,27 @@ export function CreateActivityModal({
                     />
 
                     {registrationOpen ? (
-                      <div className="space-y-2 pl-1">
-                        <Label htmlFor="activity-price">
-                          Preço da inscrição (opcional)
-                        </Label>
-                        <div className="relative">
-                          <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-muted-foreground">
+                      <FormField
+                        label="Preço da inscrição (opcional)"
+                        htmlFor={fieldIds.price}
+                        error={fieldErrors.price}
+                        hint={
+                          canChargePaidRegistration
+                            ? "Vazio = inscrição gratuita. Com valor, membros pagam pela conta de recebimentos da igreja (mínimo R$ 5,00)."
+                            : undefined
+                        }
+                      >
+                        <div className="relative pl-1">
+                          <span className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-sm text-muted-foreground">
                             R$
                           </span>
                           <Input
-                            id="activity-price"
+                            id={fieldIds.price}
                             inputMode="numeric"
                             autoComplete="off"
                             value={priceReais}
                             onChange={(event) => {
+                              clearFieldError("price");
                               const digits = event.target.value.replace(
                                 /\D/g,
                                 "",
@@ -533,21 +589,18 @@ export function CreateActivityModal({
                               !canChargePaidRegistration
                             }
                             placeholder="0,00 — vazio = gratuita"
+                            aria-invalid={fieldErrors.price ? true : undefined}
                             className="h-11 rounded-xl pl-10 tabular-nums"
                           />
                         </div>
-                        {!canChargePaidRegistration && !connectPending ? (
+                        {!fieldErrors.price &&
+                        !canChargePaidRegistration &&
+                        !connectPending ? (
                           <PaidRegistrationReceivablesHint
                             href={receivablesHref}
                           />
-                        ) : (
-                          <p className="text-xs text-muted-foreground">
-                            Vazio = inscrição gratuita. Com valor, membros pagam
-                            pela conta de recebimentos da igreja (mínimo R$
-                            5,00).
-                          </p>
-                        )}
-                      </div>
+                        ) : null}
+                      </FormField>
                     ) : null}
                   </div>
 
@@ -558,9 +611,14 @@ export function CreateActivityModal({
                   >
                     <EventRecurrenceFields
                       value={recurrence}
-                      onChange={setRecurrence}
+                      onChange={(next) => {
+                        setRecurrence(next);
+                        clearFieldError("recurrenceEndDate");
+                      }}
                       startsAt={startsAt}
                       disabled={createEvent.isPending}
+                      idPrefix="activity"
+                      endDateError={fieldErrors.recurrenceEndDate}
                     />
                   </EventFormSection>
 
@@ -585,7 +643,14 @@ export function CreateActivityModal({
 
           <Separator />
 
-          <footer className="flex flex-col-reverse gap-2 px-6 py-4 sm:flex-row sm:justify-end">
+          <footer className="flex flex-col gap-3 px-6 py-4">
+            {fieldErrors.root ? (
+              <FormAlert className="sm:ml-auto sm:max-w-md">
+                {fieldErrors.root}
+              </FormAlert>
+            ) : null}
+
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button
               type="button"
               variant="outline"
@@ -609,6 +674,7 @@ export function CreateActivityModal({
                 "Criar evento"
               )}
             </Button>
+            </div>
           </footer>
         </form>
       </div>

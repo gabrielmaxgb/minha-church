@@ -138,7 +138,7 @@ export function EventRosterSlotsEditor({
           </p>
           <p className="mt-0.5 text-xs text-muted-foreground">
             {optional
-              ? "A equipe marca apenas se pode ir; você escolhe a função ao montar a escala."
+              ? "A equipe marca se pode servir; você escolhe a função ao montar a escala."
               : "Defina as funções necessárias nesta data."}
           </p>
         </div>

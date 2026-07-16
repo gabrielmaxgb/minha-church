@@ -16,6 +16,7 @@ interface ActivityAvailabilitySectionProps {
   interactionsDisabled?: boolean;
   dense?: boolean;
   flush?: boolean;
+  registrationAlsoOpen?: boolean;
 }
 
 export function ActivityAvailabilitySection({
@@ -23,6 +24,7 @@ export function ActivityAvailabilitySection({
   interactionsDisabled = false,
   dense = false,
   flush = false,
+  registrationAlsoOpen = false,
 }: ActivityAvailabilitySectionProps) {
   const updateChurchAvailability = useUpdateChurchEventAvailability(event.id);
   const updateMinistryAvailability = useUpdateEventAvailability(
@@ -76,6 +78,7 @@ export function ActivityAvailabilitySection({
 
       <EventAvailabilityPanel
         showHeader
+        registrationAlsoOpen={registrationAlsoOpen}
         layout={dense ? "compact" : "default"}
         className={cn(
           dense && "h-full",

@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, Loader2, RotateCcw, X } from "lucide-react";
+import { Check, ClipboardList, Loader2, RotateCcw, X } from "lucide-react";
 
 import { RosterFunctionsReminder } from "@/components/dashboard/ministries/roster-functions-reminder";
 import { LockedFeatureHint } from "@/components/dashboard/locked-feature-hint";
 import { Button } from "@/components/ui/button";
+import { rosterAvailabilityCopy } from "@/lib/events/member-response-copy";
 import { getAvailabilityTheme } from "@/lib/my-schedule/availability-theme";
 import type { ScheduleAvailabilityAction } from "@/lib/my-schedule/event-display";
 import { cn } from "@/lib/utils";
@@ -27,6 +28,8 @@ interface EventAvailabilityPanelProps {
   layout?: "compact" | "default";
   className?: string;
   showHeader?: boolean;
+  /** When registration is also open on the same page, clarify the distinction. */
+  registrationAlsoOpen?: boolean;
   interactionsDisabled?: boolean;
   onRespond: (payload: EventAvailabilityPayload) => void;
 }
@@ -56,6 +59,7 @@ export function EventAvailabilityPanel({
   layout = "default",
   className,
   showHeader = false,
+  registrationAlsoOpen = false,
   interactionsDisabled = false,
   onRespond,
 }: EventAvailabilityPanelProps) {
@@ -86,6 +90,10 @@ export function EventAvailabilityPanel({
     pendingAction === "unavailable" ||
     (pendingAction === "clear" && isUnavailable);
 
+  const subtitle = registrationAlsoOpen
+    ? rosterAvailabilityCopy.subtitleWithRegistration
+    : rosterAvailabilityCopy.subtitle;
+
   return (
     <div
       className={cn(
@@ -97,14 +105,34 @@ export function EventAvailabilityPanel({
       aria-busy={busy || undefined}
     >
       {showHeader ? (
-        <div className="space-y-1 border-b border-current/10 pb-3">
-          <h3 className="text-sm font-semibold tracking-tight">
-            Você pode ir?
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            A coleta está aberta. Informe se pode servir neste dia.
-          </p>
-        </div>
+        layout === "compact" ? (
+          <div className="flex items-start gap-3 border-b border-current/10 pb-3">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted/70 text-foreground">
+              <ClipboardList className="size-4" aria-hidden />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+                {rosterAvailabilityCopy.eyebrow}
+              </p>
+              <h3 className="mt-0.5 text-sm font-semibold tracking-tight text-foreground">
+                {rosterAvailabilityCopy.title}
+              </h3>
+              <p className="mt-0.5 text-sm leading-snug text-muted-foreground">
+                {subtitle}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-1 border-b border-current/10 pb-3">
+            <p className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+              {rosterAvailabilityCopy.eyebrow}
+            </p>
+            <h3 className="text-sm font-semibold tracking-tight">
+              {rosterAvailabilityCopy.title}
+            </h3>
+            <p className="text-sm text-muted-foreground">{subtitle}</p>
+          </div>
+        )
       ) : null}
 
       {interactionsDisabled ? (
@@ -116,17 +144,19 @@ export function EventAvailabilityPanel({
           <>
             <p className="flex items-center gap-2 text-sm font-semibold">
               <Loader2 className="size-3.5 shrink-0 animate-spin" aria-hidden />
-              Salvando resposta...
+              {rosterAvailabilityCopy.status.saving}
             </p>
             <p className={cn("text-xs", theme.statusHintTone)}>
-              Aguarde um instante.
+              {rosterAvailabilityCopy.status.savingHint}
             </p>
           </>
         ) : needsRosterFunctions ? (
           <>
-            <p className="text-sm font-semibold">Funções não configuradas</p>
+            <p className="text-sm font-semibold">
+              {rosterAvailabilityCopy.setup.functionsTitle}
+            </p>
             <p className={cn("text-xs", theme.statusHintTone)}>
-              Cadastre suas funções no perfil antes de responder.
+              {rosterAvailabilityCopy.setup.functionsHint}
             </p>
           </>
         ) : (
@@ -152,7 +182,7 @@ export function EventAvailabilityPanel({
               theme.messageLabel,
             )}
           >
-            Mensagem do líder
+            {rosterAvailabilityCopy.leaderMessageLabel}
           </p>
           <p className="mt-1 whitespace-pre-wrap">{availabilityMessage.trim()}</p>
         </div>
@@ -189,7 +219,7 @@ export function EventAvailabilityPanel({
             <ActionLabel
               busy={busy}
               pending={pendingAvailable}
-              idleLabel="Posso"
+              idleLabel={rosterAvailabilityCopy.buttons.available}
             />
           </Button>
           <Button
@@ -215,7 +245,7 @@ export function EventAvailabilityPanel({
             <ActionLabel
               busy={busy}
               pending={pendingUnavailable}
-              idleLabel="Não posso"
+              idleLabel={rosterAvailabilityCopy.buttons.unavailable}
             />
           </Button>
         </div>
@@ -246,7 +276,7 @@ export function EventAvailabilityPanel({
               <ActionLabel
                 busy={busy}
                 pending={pendingAction === "available"}
-                idleLabel="Posso ir"
+                idleLabel={rosterAvailabilityCopy.buttons.available}
               />
             </Button>
             <Button
@@ -275,7 +305,7 @@ export function EventAvailabilityPanel({
               <ActionLabel
                 busy={busy}
                 pending={pendingAction === "unavailable"}
-                idleLabel="Não posso"
+                idleLabel={rosterAvailabilityCopy.buttons.unavailable}
               />
             </Button>
           </div>
@@ -296,7 +326,7 @@ export function EventAvailabilityPanel({
               )}
               {busy && pendingAction === "clear"
                 ? "Limpando..."
-                : "Limpar resposta"}
+                : rosterAvailabilityCopy.buttons.clear}
             </Button>
           ) : null}
         </div>

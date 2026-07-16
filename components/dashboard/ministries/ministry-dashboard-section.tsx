@@ -136,7 +136,7 @@ export function MinistryDashboardSection({
               Minhas escalas
             </span>
             <span className="mt-1 block text-sm leading-relaxed text-muted-foreground">
-              Veja suas escalas, responda se pode ir e ajude o líder a montar
+              Veja suas escalas, diga se pode servir e ajude o líder a montar
               a equipe.
             </span>
           </span>

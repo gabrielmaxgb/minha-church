@@ -5,6 +5,7 @@ import { Check, Loader2, RotateCcw, X } from "lucide-react";
 
 import { RosterFunctionsReminder } from "@/components/dashboard/ministries/roster-functions-reminder";
 import { Button } from "@/components/ui/button";
+import { rosterAvailabilityCopy } from "@/lib/events/member-response-copy";
 import { getAvailabilityTheme } from "@/lib/my-schedule/availability-theme";
 import type { ScheduleAvailabilityAction } from "@/lib/my-schedule/event-display";
 import { cn } from "@/lib/utils";
@@ -64,17 +65,19 @@ export function OccurrenceAvailabilityActions({
           <>
             <p className="flex items-center gap-2 text-sm font-semibold">
               <Loader2 className="size-3.5 shrink-0 animate-spin" aria-hidden />
-              Salvando resposta...
+              {rosterAvailabilityCopy.status.saving}
             </p>
             <p className={cn("text-xs", theme.statusHintTone)}>
-              Aguarde um instante.
+              {rosterAvailabilityCopy.status.savingHint}
             </p>
           </>
         ) : needsRosterFunctions ? (
           <>
-            <p className="text-sm font-semibold">Funções não configuradas</p>
+            <p className="text-sm font-semibold">
+              {rosterAvailabilityCopy.setup.functionsTitle}
+            </p>
             <p className={cn("text-xs", theme.statusHintTone)}>
-              Cadastre suas funções no perfil antes de responder.
+              {rosterAvailabilityCopy.setup.functionsHint}
             </p>
           </>
         ) : (
@@ -113,7 +116,7 @@ export function OccurrenceAvailabilityActions({
             ) : (
               <Check className="size-4" aria-hidden />
             )}
-            {busy && pendingAvailable ? "Salvando..." : "Posso"}
+            {busy && pendingAvailable ? "Salvando..." : rosterAvailabilityCopy.buttons.available}
           </Button>
           <Button
             type="button"
@@ -133,7 +136,7 @@ export function OccurrenceAvailabilityActions({
             ) : (
               <X className="size-4" aria-hidden />
             )}
-            {busy && pendingUnavailable ? "Salvando..." : "Não posso"}
+            {busy && pendingUnavailable ? "Salvando..." : rosterAvailabilityCopy.buttons.unavailable}
           </Button>
         </div>
       ) : (
@@ -160,7 +163,7 @@ export function OccurrenceAvailabilityActions({
               )}
               {busy && pendingAction === "available"
                 ? "Salvando..."
-                : "Posso ir"}
+                : rosterAvailabilityCopy.buttons.available}
             </Button>
             <Button
               type="button"
@@ -185,7 +188,7 @@ export function OccurrenceAvailabilityActions({
               )}
               {busy && pendingAction === "unavailable"
                 ? "Salvando..."
-                : "Não posso"}
+                : rosterAvailabilityCopy.buttons.unavailable}
             </Button>
           </div>
           {availabilityStatus ? (
@@ -205,7 +208,7 @@ export function OccurrenceAvailabilityActions({
               )}
               {busy && pendingAction === "clear"
                 ? "Limpando..."
-                : "Limpar resposta"}
+                : rosterAvailabilityCopy.buttons.clear}
             </Button>
           ) : null}
         </>

@@ -614,12 +614,12 @@ function NotificationsPanel({
                       Escalas aguardando resposta
                     </p>
                     <p className="mt-1 text-sm font-medium leading-snug">
-                      Precisamos da sua disponibilidade
+                      Diga se pode servir na escala
                     </p>
                     <p className="mt-0.5 text-xs text-muted-foreground">
                       {pendingScheduleCount} evento
-                      {pendingScheduleCount === 1 ? "" : "s"} sem sua resposta.
-                      Sem isso, o líder não consegue fechar a escala.
+                      {pendingScheduleCount === 1 ? "" : "s"} aguardando sua
+                      resposta sobre servir na equipe.
                     </p>
                     <Button
                       variant="outline"

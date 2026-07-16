@@ -52,11 +52,11 @@ export function ScheduleBanner() {
                 Escalas aguardando resposta
               </p>
               <p className="mt-1 text-lg font-semibold tracking-tight text-foreground sm:text-xl">
-                Precisamos da sua disponibilidade
+                Diga se pode servir na escala
               </p>
               <p className="mt-1 text-sm text-muted-foreground">
-                {pending} evento{pending === 1 ? "" : "s"} sem sua resposta. Sem
-                isso, o líder não consegue fechar a escala.
+                {pending} evento{pending === 1 ? "" : "s"} aguardando sua
+                resposta sobre servir na equipe.
               </p>
             </div>
           </div>

@@ -167,7 +167,7 @@ function RegistrationManagerCard({
   });
 
   const meta = !open
-    ? "Membros não conseguem se inscrever enquanto estiver fechada."
+    ? "Enquanto fechada, membros não conseguem confirmar presença."
     : isPending
       ? "Carregando…"
       : `${data?.confirmedCount ?? 0} confirmada${(data?.confirmedCount ?? 0) === 1 ? "" : "s"}${(data?.pendingCount ?? 0) > 0 ? ` · ${data?.pendingCount} aguardando` : ""}${paid && (data?.confirmedAmountCents ?? 0) > 0 ? ` · ${formatCurrency((data?.confirmedAmountCents ?? 0) / 100)}` : ""}`;
@@ -195,7 +195,7 @@ function RegistrationManagerCard({
               ? paid && event.priceCents != null
                 ? `Taxa de ${formatCurrency(event.priceCents / 100)}. Feche quando quiser encerrar novas entradas.`
                 : "Inscrição gratuita. Feche quando quiser encerrar novas entradas."
-              : "Abra para membros confirmarem participação (gratuita). Para cobrar, edite o preço."}
+              : "Se este evento exige inscrição para que membros possam participar, abra as inscrições. É gratuita por padrão; para cobrar, edite o preço."}
           </p>
           <p className="mt-1.5 text-xs tabular-nums text-muted-foreground">
             {meta}
@@ -422,7 +422,6 @@ export function ActivityDetailContent({ eventId }: ActivityDetailContentProps) {
   const showAvailabilityPanel = Boolean(
     event?.usesRoster &&
       event.rosterOpen &&
-      !canManageRoster &&
       event.canRespondToAvailability,
   );
   const hasRegistration = event ? isEventRegistrationOpen(event) : false;
@@ -596,6 +595,7 @@ export function ActivityDetailContent({ eventId }: ActivityDetailContentProps) {
                     <ActivityAvailabilitySection
                       event={event}
                       interactionsDisabled={writesBlocked}
+                      registrationAlsoOpen={hasRegistration}
                       dense
                       flush
                     />

@@ -6,6 +6,7 @@ import { Check, ChevronRight, Loader2, RotateCcw, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { settingsSectionPath } from "@/constants/routes";
+import { rosterAvailabilityCopy } from "@/lib/events/member-response-copy";
 import type { ScheduleAvailabilityAction } from "@/lib/my-schedule/event-display";
 import { pendingNotificationStyles } from "@/lib/ui/notification-styles";
 import { cn } from "@/lib/utils";
@@ -20,11 +21,10 @@ export function AvailabilityFunctionsGate({
   return (
     <div className={cn(pendingNotificationStyles.banner.compact, className)}>
       <p className="text-sm font-medium text-foreground">
-        Cadastre suas funções antes de responder
+        {rosterAvailabilityCopy.setup.functionsGateTitle}
       </p>
       <p className="mt-1 text-xs text-muted-foreground">
-        Em Configurações → Ministérios, informe pelo menos uma função para o
-        líder saber como você pode servir.
+        {rosterAvailabilityCopy.setup.functionsGateHint}
       </p>
       <Button
         type="button"
@@ -100,7 +100,7 @@ export function AvailabilityRespondActions({
             )}
             {busy && pendingAction === "available"
               ? "Salvando..."
-              : "Sim, posso ir"}
+              : rosterAvailabilityCopy.buttons.availableEmphasis}
           </Button>
           <Button
             type="button"
@@ -118,7 +118,7 @@ export function AvailabilityRespondActions({
             )}
             {busy && pendingAction === "unavailable"
               ? "Salvando..."
-              : "Não posso"}
+              : rosterAvailabilityCopy.buttons.unavailable}
           </Button>
         </div>
       </div>
@@ -154,7 +154,7 @@ export function AvailabilityRespondActions({
           ) : (
             <Check className="size-4" aria-hidden />
           )}
-          {busy && pendingAvailable ? "Salvando..." : "Posso"}
+          {busy && pendingAvailable ? "Salvando..." : rosterAvailabilityCopy.buttons.available}
         </Button>
         <Button
           type="button"
@@ -169,7 +169,7 @@ export function AvailabilityRespondActions({
           ) : (
             <X className="size-4" aria-hidden />
           )}
-          {busy && pendingUnavailable ? "Salvando..." : "Não posso"}
+          {busy && pendingUnavailable ? "Salvando..." : rosterAvailabilityCopy.buttons.unavailable}
         </Button>
       </div>
     );
@@ -191,7 +191,7 @@ export function AvailabilityRespondActions({
           ) : (
             <Check className="size-3.5" aria-hidden />
           )}
-          {busy && pendingAction === "available" ? "Salvando..." : "Posso ir"}
+          {busy && pendingAction === "available" ? "Salvando..." : rosterAvailabilityCopy.buttons.available}
         </Button>
         <Button
           type="button"
@@ -209,7 +209,7 @@ export function AvailabilityRespondActions({
           )}
           {busy && pendingAction === "unavailable"
             ? "Salvando..."
-            : "Não posso"}
+            : rosterAvailabilityCopy.buttons.unavailable}
         </Button>
       </div>
       {showClear && availabilityStatus && (
@@ -229,7 +229,7 @@ export function AvailabilityRespondActions({
           )}
           {busy && pendingAction === "clear"
             ? "Limpando..."
-            : "Desfazer resposta"}
+            : rosterAvailabilityCopy.buttons.undo}
         </Button>
       )}
     </div>

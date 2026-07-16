@@ -277,14 +277,14 @@ export function WorshipAvailabilitySection({
         <div className="grid gap-2 sm:grid-cols-3">
           <div className="rounded-xl border border-success/30 bg-success-subtle px-3 py-2.5">
             <p className="text-xs font-medium text-success-foreground">
-              Posso ir
+              Podem servir
             </p>
             <p className="mt-0.5 text-lg font-semibold tabular-nums">
               {data.summary.available}
             </p>
           </div>
           <div className="rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2.5">
-            <p className="text-xs font-medium text-destructive">Não posso</p>
+            <p className="text-xs font-medium text-destructive">Não podem servir</p>
             <p className="mt-0.5 text-lg font-semibold tabular-nums">
               {data.summary.unavailable}
             </p>
@@ -306,7 +306,7 @@ export function WorshipAvailabilitySection({
             Coleta de disponibilidade aberta
           </h4>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Marque se pode ir em cada data. Suas funções ficam em Configurações
+            Marque se pode servir em cada data. Suas funções ficam em Configurações
             → Ministérios.
           </p>
         </div>
@@ -318,8 +318,8 @@ export function WorshipAvailabilitySection({
               Nenhum evento aberto no momento
             </p>
             <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
-              Quando o líder abrir a coleta de disponibilidade de um evento, ele aparece aqui para
-              você responder.
+              Quando o líder abrir a coleta para a equipe, o evento aparece aqui
+              para você dizer se pode servir.
             </p>
           </div>
         ) : (

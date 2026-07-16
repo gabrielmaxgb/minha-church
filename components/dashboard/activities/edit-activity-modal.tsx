@@ -27,14 +27,21 @@ import {
 } from "@/components/dashboard/activities/paid-registration-receivables-gate";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { FormAlert, FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   useDeleteChurchEvent,
   useUpdateChurchEvent,
 } from "@/lib/api/queries";
 import { toDatetimeLocalValue } from "@/lib/activities/datetime";
+import {
+  applyActivityFormFieldErrors,
+  activityFormFieldIds,
+  mapActivityFormApiError,
+  type ActivityFormField,
+  type ActivityFormFieldErrors,
+} from "@/lib/events/activity-form-errors";
 import {
   buildRecurrencePayload,
   defaultRecurrenceFormState,
@@ -59,28 +66,6 @@ interface EditActivityModalProps {
   open: boolean;
   onClose: () => void;
   onDeleted?: () => void;
-}
-
-function Field({
-  label,
-  htmlFor,
-  hint,
-  children,
-}: {
-  label: string;
-  htmlFor: string;
-  hint?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="space-y-2.5">
-      <Label htmlFor={htmlFor} className="text-sm font-medium">
-        {label}
-      </Label>
-      {children}
-      {hint && <p className="text-xs leading-relaxed text-muted-foreground">{hint}</p>}
-    </div>
-  );
 }
 
 export function EditActivityModal({
@@ -109,8 +94,31 @@ export function EditActivityModal({
     useState<EventRecurrenceFormState>(
       defaultRecurrenceFormState(new Date().toISOString()),
     );
-  const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<ActivityFormFieldErrors>({});
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const fieldIds = useMemo(() => activityFormFieldIds("edit-activity"), []);
+
+  function clearFieldError(field: ActivityFormField) {
+    setFieldErrors((current) => {
+      if (!current[field]) {
+        return current;
+      }
+
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+  }
+
+  function setFormFieldErrors(errors: ActivityFormFieldErrors) {
+    setFieldErrors(errors);
+
+    if (errors.price) {
+      setRegistrationOpen(true);
+    }
+
+    applyActivityFormFieldErrors(errors, fieldIds);
+  }
   const [editScope, setEditScope] = useState<EventMutationScope>("this");
   const [deleteScope, setDeleteScope] = useState<EventMutationScope>("this");
 
@@ -168,7 +176,7 @@ export function EditActivityModal({
       setVisibleToChurch(true);
       setRecurrence(defaultRecurrenceFormState(new Date().toISOString()));
       setInitialRecurrence(defaultRecurrenceFormState(new Date().toISOString()));
-      setError(null);
+      setFieldErrors({});
       setConfirmDelete(false);
       setEditScope("this");
       setDeleteScope("this");
@@ -199,7 +207,7 @@ export function EditActivityModal({
     );
     setRecurrence(nextRecurrence);
     setInitialRecurrence(nextRecurrence);
-    setError(null);
+    setFieldErrors({});
     setConfirmDelete(false);
     setEditScope("this");
     setDeleteScope("this");
@@ -244,14 +252,14 @@ export function EditActivityModal({
 
   async function handleSubmit(submitEvent: React.FormEvent<HTMLFormElement>) {
     submitEvent.preventDefault();
-    setError(null);
+    setFieldErrors({});
 
     if (!event) {
       return;
     }
 
     if (!name.trim()) {
-      setError("Informe o nome da atividade.");
+      setFormFieldErrors({ name: "Informe o nome da atividade." });
       return;
     }
 
@@ -260,7 +268,9 @@ export function EditActivityModal({
       recurrence.repeatMode !== "none" &&
       !recurrence.endDate
     ) {
-      setError("Informe a data final da repetição.");
+      setFormFieldErrors({
+        recurrenceEndDate: "Informe a data final da repetição.",
+      });
       return;
     }
 
@@ -281,9 +291,10 @@ export function EditActivityModal({
         priceCents > 0 &&
         priceCents < 500
       ) {
-        setError(
-          "O preço mínimo da inscrição paga é R$ 5,00 (ou deixe vazio para gratuita).",
-        );
+        setFormFieldErrors({
+          price:
+            "O preço mínimo da inscrição paga é R$ 5,00 (ou deixe vazio para gratuita).",
+        });
         return;
       }
 
@@ -297,9 +308,10 @@ export function EditActivityModal({
         priceCents !== existingPaid;
 
       if (isNewPaidPrice && !canChargePaidRegistration) {
-        setError(
-          "Ative os recebimentos da igreja antes de abrir inscrição paga.",
-        );
+        setFormFieldErrors({
+          price:
+            "Ative os recebimentos da igreja antes de abrir inscrição paga.",
+        });
         return;
       }
 
@@ -337,27 +349,27 @@ export function EditActivityModal({
       });
       onClose();
     } catch (submitError) {
-      setError(
+      const message =
         submitError instanceof Error
           ? submitError.message
-          : "Não foi possível salvar a atividade.",
-      );
+          : "Não foi possível salvar a atividade.";
+      setFormFieldErrors(mapActivityFormApiError(message));
     }
   }
 
   async function handleDelete() {
-    setError(null);
+    setFieldErrors({});
 
     try {
       await deleteEvent.mutateAsync(isRecurring ? deleteScope : "this");
       onClose();
       onDeleted?.();
     } catch (deleteError) {
-      setError(
+      const message =
         deleteError instanceof Error
           ? deleteError.message
-          : "Não foi possível excluir a atividade.",
-      );
+          : "Não foi possível excluir a atividade.";
+      setFormFieldErrors({ root: message });
     }
   }
 
@@ -440,36 +452,36 @@ export function EditActivityModal({
           </div>
         </header>
 
-        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col" noValidate>
           <div className="space-y-10 overflow-y-auto px-6 py-8 sm:px-8">
-            {error && (
-              <div
-                role="alert"
-                className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3.5 text-sm text-destructive"
-              >
-                {error}
-              </div>
-            )}
-
             <EventFormSection
               title="Informações principais"
               description="Nome, descrição e local onde a atividade acontece."
               icon={FileText}
             >
               <div className="space-y-6">
-                <Field label="Nome da atividade" htmlFor="edit-activity-name">
+                <FormField
+                  label="Nome da atividade"
+                  htmlFor={fieldIds.name}
+                  error={fieldErrors.name}
+                  required
+                >
                   <Input
-                    id="edit-activity-name"
+                    id={fieldIds.name}
                     value={name}
-                    onChange={(inputEvent) => setName(inputEvent.target.value)}
+                    onChange={(inputEvent) => {
+                      setName(inputEvent.target.value);
+                      clearFieldError("name");
+                    }}
                     placeholder="Ex.: Culto de domingo, Ensaio de louvor"
                     disabled={isPending}
                     autoFocus
+                    aria-invalid={fieldErrors.name ? true : undefined}
                     className="h-12 rounded-xl border-border/80 bg-background px-4 text-base"
                   />
-                </Field>
+                </FormField>
 
-                <Field
+                <FormField
                   label="Descrição do evento"
                   htmlFor="edit-activity-description"
                   hint="Opcional. Use para orientar a equipe ou os participantes."
@@ -483,9 +495,9 @@ export function EditActivityModal({
                     disabled={isPending}
                     className="min-h-[120px] resize-y rounded-xl border-border/80 bg-background px-4 py-3 text-base leading-relaxed"
                   />
-                </Field>
+                </FormField>
 
-                <Field
+                <FormField
                   label="Recado em destaque"
                   htmlFor="edit-activity-highlight-note"
                   hint="Opcional. Aparece em destaque na página do evento para quem acessa — ideal para tema da palavra, pastorais ou avisos importantes."
@@ -499,7 +511,7 @@ export function EditActivityModal({
                     disabled={isPending}
                     className="min-h-[92px] resize-y rounded-xl border-border/80 bg-background px-4 py-3 text-base leading-relaxed"
                   />
-                </Field>
+                </FormField>
 
                 <div className="space-y-3">
                   <EventOptionCard
@@ -507,6 +519,7 @@ export function EditActivityModal({
                     checked={registrationOpen}
                     onChange={(checked) => {
                       setRegistrationOpen(checked);
+                      clearFieldError("price");
                       if (!checked) {
                         setPriceReais("");
                       }
@@ -519,9 +532,10 @@ export function EditActivityModal({
                   />
 
                   {registrationOpen ? (
-                    <Field
+                    <FormField
                       label="Preço da inscrição (opcional)"
-                      htmlFor="edit-activity-price"
+                      htmlFor={fieldIds.price}
+                      error={fieldErrors.price}
                       hint={
                         canChargePaidRegistration
                           ? "Vazio = inscrição gratuita. Com valor, pagamento via Stripe Connect (mínimo R$ 5,00)."
@@ -533,11 +547,12 @@ export function EditActivityModal({
                           R$
                         </span>
                         <Input
-                          id="edit-activity-price"
+                          id={fieldIds.price}
                           inputMode="numeric"
                           autoComplete="off"
                           value={priceReais}
                           onChange={(inputEvent) => {
+                            clearFieldError("price");
                             const digits = inputEvent.target.value.replace(
                               /\D/g,
                               "",
@@ -550,19 +565,22 @@ export function EditActivityModal({
                           }}
                           placeholder="0,00 — vazio = gratuita"
                           disabled={isPending || !canChargePaidRegistration}
+                          aria-invalid={fieldErrors.price ? true : undefined}
                           className="h-12 rounded-xl border-border/80 bg-background pl-11 pr-4 text-base tabular-nums"
                         />
                       </div>
-                      {!canChargePaidRegistration && !connectPending ? (
+                      {!fieldErrors.price &&
+                      !canChargePaidRegistration &&
+                      !connectPending ? (
                         <PaidRegistrationReceivablesHint
                           href={receivablesHref}
                         />
                       ) : null}
-                    </Field>
+                    </FormField>
                   ) : null}
                 </div>
 
-                <Field label="Local" htmlFor="edit-activity-location">
+                <FormField label="Local" htmlFor="edit-activity-location">
                   <div className="relative">
                     <MapPin className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
@@ -574,7 +592,7 @@ export function EditActivityModal({
                       className="h-12 rounded-xl border-border/80 bg-background pl-11 pr-4 text-base"
                     />
                   </div>
-                </Field>
+                </FormField>
               </div>
             </EventFormSection>
 
@@ -606,9 +624,14 @@ export function EditActivityModal({
             >
               <EventRecurrenceFields
                 value={recurrence}
-                onChange={setRecurrence}
+                onChange={(next) => {
+                  setRecurrence(next);
+                  clearFieldError("recurrenceEndDate");
+                }}
                 startsAt={startsAt}
                 disabled={isPending}
+                idPrefix="edit-activity"
+                endDateError={fieldErrors.recurrenceEndDate}
               />
             </EventFormSection>
 
@@ -723,7 +746,14 @@ export function EditActivityModal({
             </EventFormSection>
           </div>
 
-          <footer className="flex flex-col-reverse gap-3 border-t border-border/80 bg-muted/20 px-6 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+          <footer className="flex flex-col gap-3 border-t border-border/80 bg-muted/20 px-6 py-5 sm:px-8">
+            {fieldErrors.root ? (
+              <FormAlert className="sm:ml-auto sm:max-w-md">
+                {fieldErrors.root}
+              </FormAlert>
+            ) : null}
+
+            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="hidden text-sm text-muted-foreground sm:block">
               {hasChanges
                 ? "Você tem alterações pendentes."
@@ -754,6 +784,7 @@ export function EditActivityModal({
                   "Salvar alterações"
                 )}
               </Button>
+            </div>
             </div>
           </footer>
         </form>

@@ -1,3 +1,4 @@
+import { rosterAvailabilityCopy } from "@/lib/events/member-response-copy";
 import type { EventAvailabilityStatus } from "@/lib/ministries/roster";
 
 export function getAvailabilityTheme(
@@ -6,8 +7,8 @@ export function getAvailabilityTheme(
   if (status === "available") {
     return {
       shell: "border-success/30 bg-success-subtle",
-      statusTitle: "Você marcou: posso ir",
-      statusHint: "Sua disponibilidade foi registrada.",
+      statusTitle: rosterAvailabilityCopy.status.availableTitle,
+      statusHint: rosterAvailabilityCopy.status.availableHint,
       statusTone: "text-success-foreground",
       statusHintTone: "text-muted-foreground",
       roleActive: "border-success bg-success text-white",
@@ -24,8 +25,8 @@ export function getAvailabilityTheme(
   if (status === "unavailable") {
     return {
       shell: "border-destructive/35 bg-destructive/8",
-      statusTitle: "Você marcou: não posso ir",
-      statusHint: "O líder já sabe que você não está disponível neste dia.",
+      statusTitle: rosterAvailabilityCopy.status.unavailableTitle,
+      statusHint: rosterAvailabilityCopy.status.unavailableHint,
       statusTone: "text-destructive",
       statusHintTone: "text-destructive/80",
       roleActive:
@@ -42,8 +43,8 @@ export function getAvailabilityTheme(
 
   return {
     shell: "border-attention-border bg-attention-subtle",
-    statusTitle: "Ainda não respondeu",
-    statusHint: "Escolha se pode ir neste dia.",
+    statusTitle: rosterAvailabilityCopy.status.pendingTitle,
+    statusHint: rosterAvailabilityCopy.status.pendingHint,
     statusTone: "text-attention-foreground",
     statusHintTone: "text-muted-foreground",
     roleActive: "border-foreground bg-foreground text-background",

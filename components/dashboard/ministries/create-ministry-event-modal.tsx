@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { Calendar, Clock, Eye, FileText, Loader2, MapPin, Repeat, X } from "lucide-react";
 
 import { ActivityScheduleFields } from "@/components/dashboard/activities/activity-schedule-fields";
@@ -8,12 +8,20 @@ import { EventFormSection } from "@/components/dashboard/activities/event-form-s
 import { EventRecurrenceFields } from "@/components/dashboard/activities/event-recurrence-fields";
 import { EventVisibilityFields } from "@/components/dashboard/activities/event-visibility-fields";
 import { Button } from "@/components/ui/button";
+import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateMinistryEvent } from "@/lib/api/queries";
 import { canCreateChurchWideActivity } from "@/lib/permissions";
+import {
+  applyActivityFormFieldErrors,
+  activityFormFieldIds,
+  mapActivityFormApiError,
+  type ActivityFormField,
+  type ActivityFormFieldErrors,
+} from "@/lib/events/activity-form-errors";
 import {
   buildRecurrencePayload,
   defaultRecurrenceFormState,
@@ -66,8 +74,26 @@ export function CreateMinistryEventModal({
   const [recurrence, setRecurrence] = useState<EventRecurrenceFormState>(
     defaultRecurrenceFormState(defaultStartsAtValue ?? defaultStartsAt()),
   );
-  const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<ActivityFormFieldErrors>({});
   const createEvent = useCreateMinistryEvent(ministryId);
+  const fieldIds = useMemo(() => activityFormFieldIds("ministry-event"), []);
+
+  function clearFieldError(field: ActivityFormField) {
+    setFieldErrors((current) => {
+      if (!current[field]) {
+        return current;
+      }
+
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+  }
+
+  function setFormFieldErrors(errors: ActivityFormFieldErrors) {
+    setFieldErrors(errors);
+    applyActivityFormFieldErrors(errors, fieldIds);
+  }
 
   useEffect(() => {
     if (!open) {
@@ -81,7 +107,7 @@ export function CreateMinistryEventModal({
       setRecurrence(
         defaultRecurrenceFormState(defaultStartsAtValue ?? defaultStartsAt()),
       );
-      setError(null);
+      setFieldErrors({});
       return;
     }
 
@@ -130,17 +156,19 @@ export function CreateMinistryEventModal({
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setError(null);
+    setFieldErrors({});
 
     if (!name.trim()) {
-      setError("Informe o nome do evento.");
+      setFormFieldErrors({ name: "Informe o nome do evento." });
       return;
     }
 
     const recurrencePayload = buildRecurrencePayload(recurrence);
 
     if (recurrence.endType === "on_date" && recurrence.repeatMode !== "none" && !recurrence.endDate) {
-      setError("Informe a data final da repetição.");
+      setFormFieldErrors({
+        recurrenceEndDate: "Informe a data final da repetição.",
+      });
       return;
     }
 
@@ -159,11 +187,11 @@ export function CreateMinistryEventModal({
       await createEvent.mutateAsync(payload);
       onClose();
     } catch (submitError) {
-      setError(
+      const message =
         submitError instanceof Error
           ? submitError.message
-          : "Não foi possível criar o evento.",
-      );
+          : "Não foi possível criar o evento.";
+      setFormFieldErrors(mapActivityFormApiError(message));
     }
   }
 
@@ -212,35 +240,34 @@ export function CreateMinistryEventModal({
 
         <Separator />
 
-        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col" noValidate>
           <div className="space-y-8 overflow-y-auto px-6 py-6">
-            {error && (
-              <div
-                role="alert"
-                className="rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2.5 text-sm text-destructive"
-              >
-                {error}
-              </div>
-            )}
-
             <EventFormSection
               title="Informações básicas"
               description="Nome e detalhes que a equipe verá na agenda do ministério."
               icon={FileText}
             >
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="event-name">Nome do evento</Label>
+                <FormField
+                  label="Nome do evento"
+                  htmlFor={fieldIds.name}
+                  error={fieldErrors.name}
+                  required
+                >
                   <Input
-                    id="event-name"
+                    id={fieldIds.name}
                     value={name}
-                    onChange={(event) => setName(event.target.value)}
+                    onChange={(event) => {
+                      setName(event.target.value);
+                      clearFieldError("name");
+                    }}
                     placeholder="Ex.: Ensaio, Culto de jovens"
                     disabled={createEvent.isPending}
                     autoFocus
+                    aria-invalid={fieldErrors.name ? true : undefined}
                     className="h-11 rounded-xl"
                   />
-                </div>
+                </FormField>
 
                 <div className="space-y-2">
                   <Label htmlFor="event-description">Descrição</Label>
@@ -311,9 +338,14 @@ export function CreateMinistryEventModal({
             >
               <EventRecurrenceFields
                 value={recurrence}
-                onChange={setRecurrence}
+                onChange={(next) => {
+                  setRecurrence(next);
+                  clearFieldError("recurrenceEndDate");
+                }}
                 startsAt={startsAt}
                 disabled={createEvent.isPending}
+                idPrefix="ministry-event"
+                endDateError={fieldErrors.recurrenceEndDate}
               />
             </EventFormSection>
 

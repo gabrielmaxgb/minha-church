@@ -140,7 +140,6 @@ export function ActivityEventModal({
   const showAvailabilityPanel = Boolean(
     event?.usesRoster &&
       event.rosterOpen &&
-      !canManageRoster &&
       event.canRespondToAvailability,
   );
   const isPending = updateEvent.isPending || deleteEvent.isPending;
