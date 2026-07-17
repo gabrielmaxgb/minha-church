@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { FloatingSaveBar } from "@/components/ui/floating-save-bar";
-import { AlertTriangle, RefreshCw } from "lucide-react";
+import { ArrowRightLeft, RefreshCw } from "lucide-react";
 import { MemberDetailButton } from "@/components/dashboard/members/member-detail-link";
 import { AUTH_ROUTES } from "@/constants/routes";
 import {
@@ -20,6 +20,12 @@ import { useAuth } from "@/providers/auth-provider";
 import type { ChurchMembership } from "@/types/church-memberships";
 
 import {
+  MembershipRoleBadges,
+  MembershipRolePicker,
+  MembershipUserAvatar,
+  type RoleHolderInfo,
+} from "./membership-role-picker";
+import {
   SettingsAlert,
   SettingsEmptyState,
   SettingsExpandableRow,
@@ -29,13 +35,20 @@ import {
   SettingsPanel,
   SettingsSectionHeader,
   SettingsSidebarToolbar,
-  SettingsToggleRow,
 } from "./settings-shared";
 import { TransferOwnershipDialog } from "./transfer-ownership-dialog";
+import { TransferSingleHolderRoleDialog } from "./transfer-single-holder-role-dialog";
 
 const MEMBERSHIPS_REFRESH_COOLDOWN_MS = 5_000;
 
 type RoleFilter = "all" | "owner" | "none" | string;
+
+type PendingSingleHolderTransfer = {
+  membership: ChurchMembership;
+  roleId: string;
+  roleName: string;
+  currentHolderName: string;
+};
 
 function roleIdsEqual(a: string[], b: string[]) {
   if (a.length !== b.length) {
@@ -46,18 +59,6 @@ function roleIdsEqual(a: string[], b: string[]) {
   const sortedB = [...b].sort();
 
   return sortedA.every((id, index) => id === sortedB[index]);
-}
-
-function formatMembershipLabel(membership: ChurchMembership) {
-  if (membership.isOwner) {
-    return "Proprietário";
-  }
-
-  if (membership.roles.length === 0) {
-    return "Sem cargo";
-  }
-
-  return membership.roles.map((role) => role.name).join(", ");
 }
 
 function matchesSearch(membership: ChurchMembership, query: string) {
@@ -87,7 +88,10 @@ function matchesRoleFilter(
   }
 
   if (roleFilter === "none") {
-    return !membership.isOwner && membership.roles.length === 0;
+    return (
+      !membership.isOwner &&
+      membership.roles.every((role) => role.systemKey === "member")
+    );
   }
 
   return membership.roles.some((role) => role.id === roleFilter);
@@ -118,6 +122,8 @@ export function ChurchMembershipsSettings() {
     null,
   );
   const [transferError, setTransferError] = useState<string | null>(null);
+  const [pendingSingleHolderTransfer, setPendingSingleHolderTransfer] =
+    useState<PendingSingleHolderTransfer | null>(null);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
   const [expandedUserIds, setExpandedUserIds] = useState<Set<string>>(
@@ -212,6 +218,27 @@ export function ChurchMembershipsSettings() {
     });
   }, [filteredMemberships]);
 
+  const holdersByRoleId = useMemo(() => {
+    const map: Record<string, RoleHolderInfo | undefined> = {};
+
+    for (const membership of sortedMemberships) {
+      const roleIds =
+        drafts[membership.userId] ??
+        membership.roles.map((role) => role.id);
+
+      for (const roleId of roleIds) {
+        if (!map[roleId]) {
+          map[roleId] = {
+            userId: membership.userId,
+            name: membership.user.name,
+          };
+        }
+      }
+    }
+
+    return map;
+  }, [drafts, sortedMemberships]);
+
   if (!canManage) {
     return null;
   }
@@ -257,18 +284,24 @@ export function ChurchMembershipsSettings() {
     });
   }
 
-  function toggleRole(membership: ChurchMembership, roleId: string) {
-    const role = assignableRoles?.find((item) => item.id === roleId);
+  function findSingleHolderOfRole(
+    roleId: string,
+    excludeUserId: string,
+  ): ChurchMembership | null {
+    for (const other of sortedMemberships) {
+      if (other.userId === excludeUserId) {
+        continue;
+      }
 
-    if (role?.systemKey === "member") {
-      return;
+      if (getDraftRoleIds(other).includes(roleId)) {
+        return other;
+      }
     }
 
-    const current = getDraftRoleIds(membership);
-    const next = current.includes(roleId)
-      ? current.filter((id) => id !== roleId)
-      : [...current, roleId];
+    return null;
+  }
 
+  function applyRoleDraft(membership: ChurchMembership, next: string[]) {
     setDrafts((currentDrafts) => {
       const serverIds = membership.roles.map((role) => role.id);
 
@@ -280,6 +313,52 @@ export function ChurchMembershipsSettings() {
 
       return { ...currentDrafts, [membership.userId]: next };
     });
+  }
+
+  function toggleRole(membership: ChurchMembership, roleId: string) {
+    const role = assignableRoles?.find((item) => item.id === roleId);
+
+    if (role?.systemKey === "member") {
+      return;
+    }
+
+    const current = getDraftRoleIds(membership);
+    const isRemoving = current.includes(roleId);
+
+    if (!isRemoving && role?.singleHolder) {
+      const currentHolder = findSingleHolderOfRole(roleId, membership.userId);
+
+      if (currentHolder) {
+        setPendingSingleHolderTransfer({
+          membership,
+          roleId,
+          roleName: role.name,
+          currentHolderName: currentHolder.user.name,
+        });
+        return;
+      }
+    }
+
+    const next = isRemoving
+      ? current.filter((id) => id !== roleId)
+      : [...current, roleId];
+
+    applyRoleDraft(membership, next);
+  }
+
+  function confirmSingleHolderTransfer() {
+    if (!pendingSingleHolderTransfer) {
+      return;
+    }
+
+    const { membership, roleId } = pendingSingleHolderTransfer;
+    const current = getDraftRoleIds(membership);
+
+    if (!current.includes(roleId)) {
+      applyRoleDraft(membership, [...current, roleId]);
+    }
+
+    setPendingSingleHolderTransfer(null);
   }
 
   function discardChanges(membership: ChurchMembership) {
@@ -391,8 +470,8 @@ export function ChurchMembershipsSettings() {
         title="Usuários"
         description={
           church?.memberCount != null
-            ? `Pessoas com login no painel (cargos e permissões). A lista de membros cadastrados tem ${church.memberCount} pessoa${church.memberCount === 1 ? "" : "s"} — veja em Membros no menu lateral.`
-            : "Pessoas com login no painel. Defina cargos e permissões; o proprietário pode transferir a propriedade da igreja."
+            ? `Quem tem login no painel. Atribua cargos e permissões. Há ${church.memberCount} membro${church.memberCount === 1 ? "" : "s"} cadastrado${church.memberCount === 1 ? "" : "s"} em Membros.`
+            : "Quem tem login no painel. Atribua cargos; o dono pode transferir a propriedade."
         }
       />
 
@@ -459,15 +538,17 @@ export function ChurchMembershipsSettings() {
               >
                 Sem cargo
               </SettingsFilterPill>
-              {sortedRoles.map((role) => (
-                <SettingsFilterPill
-                  key={role.id}
-                  active={roleFilter === role.id}
-                  onClick={() => setRoleFilter(role.id)}
-                >
-                  {role.name}
-                </SettingsFilterPill>
-              ))}
+              {sortedRoles
+                .filter((role) => role.systemKey !== "member")
+                .map((role) => (
+                  <SettingsFilterPill
+                    key={role.id}
+                    active={roleFilter === role.id}
+                    onClick={() => setRoleFilter(role.id)}
+                  >
+                    {role.name}
+                  </SettingsFilterPill>
+                ))}
             </SettingsFilterPills>
           </SettingsListFilters>
 
@@ -484,129 +565,124 @@ export function ChurchMembershipsSettings() {
                   user?.isOwner,
                 );
                 const isSaving = savingUserId === membership.userId;
+                const draftRoleIds = getDraftRoleIds(membership);
+                const draftRoles = (assignableRoles ?? []).filter((role) =>
+                  draftRoleIds.includes(role.id),
+                );
+                const displayRoles = dirty ? draftRoles : membership.roles;
 
                 return (
                   <SettingsExpandableRow
                     key={membership.id}
                     title={membership.user.name}
                     subtitle={membership.user.email}
-                    badge={formatMembershipLabel(membership)}
+                    leading={
+                      <MembershipUserAvatar
+                        name={membership.user.name}
+                        isOwner={membership.isOwner}
+                      />
+                    }
+                    meta={
+                      <MembershipRoleBadges
+                        roles={displayRoles}
+                        isOwner={membership.isOwner}
+                      />
+                    }
                     expanded={expanded}
                     dirty={dirty}
                     onToggle={() => toggleExpanded(membership.userId)}
                   >
-                    {membership.memberName && (
-                      <p className="mb-3 inline-flex items-center gap-1 text-xs text-muted-foreground">
-                        <span>Membro vinculado: {membership.memberName}</span>
-                        <MemberDetailButton
-                          memberId={membership.memberId}
-                          memberName={membership.memberName}
-                          className="size-7"
+                    <div className="space-y-4">
+                      {(membership.memberName ||
+                        (membership.isOwner &&
+                          membership.userId !== user?.id) ||
+                        (membership.userId === user?.id &&
+                          user?.isOwner)) && (
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-muted-foreground">
+                          {membership.memberName && (
+                            <span className="inline-flex items-center gap-1">
+                              Membro: {membership.memberName}
+                              <MemberDetailButton
+                                memberId={membership.memberId}
+                                memberName={membership.memberName}
+                                className="size-6"
+                              />
+                            </span>
+                          )}
+                          {membership.userId === user?.id && user?.isOwner && (
+                            <span>
+                              Você é o dono — para transferir, abra outra
+                              pessoa.
+                            </span>
+                          )}
+                          {membership.isOwner &&
+                            membership.userId !== user?.id && (
+                              <span>
+                                Dono da igreja · cargos extras são opcionais
+                              </span>
+                            )}
+                        </div>
+                      )}
+
+                      {!canEdit ? (
+                        membership.userId === user?.id &&
+                        user?.isOwner ? null : (
+                          <p className="text-sm text-muted-foreground">
+                            {membership.userId === user?.id
+                              ? "Você não pode alterar o próprio acesso."
+                              : "Você não pode alterar o acesso deste usuário."}
+                          </p>
+                        )
+                      ) : assignableRoles && assignableRoles.length > 0 ? (
+                        <MembershipRolePicker
+                          roles={assignableRoles}
+                          selectedRoleIds={draftRoleIds}
+                          disabled={isSaving}
+                          holdersByRoleId={holdersByRoleId}
+                          currentUserId={membership.userId}
+                          onToggle={(roleId) =>
+                            toggleRole(membership, roleId)
+                          }
                         />
-                      </p>
-                    )}
+                      ) : (
+                        <p className="text-sm text-muted-foreground">
+                          Nenhum cargo disponível para atribuir.
+                        </p>
+                      )}
 
-                    {membership.userId === user?.id && user?.isOwner && (
-                      <p className="mb-3 rounded-lg border border-attention-border bg-attention-subtle px-3 py-2 text-xs text-muted-foreground">
-                        Você é o proprietário desta igreja. Para transferir a
-                        propriedade, escolha outra pessoa na lista abaixo.
-                      </p>
-                    )}
-
-                    {membership.isOwner && membership.userId !== user?.id && (
-                      <p className="mb-3 rounded-lg bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-                        Proprietário da igreja — cargos adicionais são opcionais.
-                      </p>
-                    )}
-
-                    {user?.isOwner &&
-                      !membership.isOwner &&
-                      membership.userId !== user.id && (
-                        <div className="mb-4 rounded-lg border border-attention-border bg-attention-subtle p-3">
-                          {membership.canReceiveOwnership ? (
-                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                              <div className="min-w-0">
-                                <p className="text-xs font-medium text-attention-foreground">
-                                  Transferir propriedade
-                                </p>
-                                <p className="mt-0.5 text-xs text-muted-foreground">
-                                  Você deixa de ser o dono desta igreja. Ação
-                                  irreversível sem nova transferência.
-                                </p>
-                              </div>
-                              <Button
+                      {user?.isOwner &&
+                        !membership.isOwner &&
+                        membership.userId !== user.id && (
+                          <div className="border-t border-border/50 pt-3">
+                            {membership.canReceiveOwnership ? (
+                              <button
                                 type="button"
-                                size="sm"
                                 disabled={
                                   transferOwnership.isPending ||
                                   isSaving ||
                                   Boolean(savingUserId)
                                 }
                                 onClick={() => {
-                                setTransferError(null);
-                                setTransferTarget(membership);
-                              }}
-                                className="shrink-0 border border-attention-border bg-attention-mark text-attention-foreground hover:bg-attention-emphasis/40"
+                                  setTransferError(null);
+                                  setTransferTarget(membership);
+                                }}
+                                className="inline-flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-attention-foreground disabled:opacity-50"
                               >
-                                <AlertTriangle className="size-3.5" />
-                                Transferir propriedade
-                              </Button>
-                            </div>
-                          ) : (
-                            <p className="text-sm text-muted-foreground">
-                              Para receber a propriedade, cadastre um e-mail no
-                              perfil do membro vinculado a este acesso.
-                            </p>
-                          )}
-                        </div>
-                      )}
-
-                    {!canEdit ? (
-                      membership.userId === user?.id && user?.isOwner ? null : (
-                        <p className="text-sm text-muted-foreground">
-                          {membership.userId === user?.id
-                            ? "Você não pode alterar o próprio acesso."
-                            : "Você não pode alterar o acesso deste usuário."}
-                        </p>
-                      )
-                    ) : assignableRoles && assignableRoles.length > 0 ? (
-                      <>
-                      {assignableRoles.length > 1 && (
-                        <p className="mb-2 text-xs text-muted-foreground">
-                          Pode marcar mais de um cargo. As permissões se somam:
-                          a pessoa recebe tudo o que qualquer um dos cargos
-                          liberar.
-                        </p>
-                      )}
-                      <div className="divide-y divide-border/50 rounded-lg border border-border/60 bg-card px-2">
-                        {assignableRoles.map((role) => {
-                          const isBaselineMember = role.systemKey === "member";
-
-                          return (
-                            <SettingsToggleRow
-                              key={role.id}
-                              label={role.name}
-                              description={
-                                isBaselineMember
-                                  ? "Atribuído automaticamente a quem tem login (Membro/todos)."
-                                  : undefined
-                              }
-                              checked={getDraftRoleIds(membership).includes(
-                                role.id,
-                              )}
-                              disabled={isSaving || isBaselineMember}
-                              onChange={() => toggleRole(membership, role.id)}
-                            />
-                          );
-                        })}
-                      </div>
-                      </>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">
-                        Nenhum cargo disponível para atribuir.
-                      </p>
-                    )}
-
+                                <ArrowRightLeft
+                                  className="size-3.5"
+                                  aria-hidden
+                                />
+                                Transferir propriedade da igreja…
+                              </button>
+                            ) : (
+                              <p className="text-xs text-muted-foreground">
+                                Para receber a propriedade, cadastre um e-mail
+                                no perfil do membro vinculado.
+                              </p>
+                            )}
+                          </div>
+                        )}
+                    </div>
                   </SettingsExpandableRow>
                 );
               })
@@ -648,6 +724,17 @@ export function ChurchMembershipsSettings() {
           setTransferError(null);
         }}
         onConfirm={(password) => void handleConfirmTransfer(password)}
+      />
+
+      <TransferSingleHolderRoleDialog
+        open={Boolean(pendingSingleHolderTransfer)}
+        roleName={pendingSingleHolderTransfer?.roleName ?? ""}
+        currentHolderName={
+          pendingSingleHolderTransfer?.currentHolderName ?? ""
+        }
+        newHolderName={pendingSingleHolderTransfer?.membership.user.name ?? ""}
+        onCancel={() => setPendingSingleHolderTransfer(null)}
+        onConfirm={confirmSingleHolderTransfer}
       />
     </div>
   );

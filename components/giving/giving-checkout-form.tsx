@@ -313,7 +313,11 @@ function CheckoutPaymentStep({
             locale: "pt-BR",
           }}
         >
-          <ConfirmPaymentForm fund={fund} donationId={session.donationId} />
+          <ConfirmPaymentForm
+            fund={fund}
+            donationId={session.donationId}
+            receiptToken={session.receiptToken}
+          />
         </Elements>
 
         <div className="flex items-start gap-3 text-muted-foreground lg:hidden">
@@ -333,9 +337,11 @@ function CheckoutPaymentStep({
 function ConfirmPaymentForm({
   fund,
   donationId,
+  receiptToken,
 }: {
   fund: PublicGivingFund;
   donationId: string;
+  receiptToken: string;
 }) {
   const stripe = useStripe();
   const elements = useElements();
@@ -350,7 +356,7 @@ function ConfirmPaymentForm({
     setSubmitting(true);
     setError(null);
 
-    const returnUrl = `${window.location.origin}${givingFundPath(fund.churchSlug, fund.fundSlug)}/obrigado?donationId=${encodeURIComponent(donationId)}`;
+    const returnUrl = `${window.location.origin}${givingFundPath(fund.churchSlug, fund.fundSlug)}/obrigado?donationId=${encodeURIComponent(donationId)}&rt=${encodeURIComponent(receiptToken)}`;
 
     const result = await stripe.confirmPayment({
       elements,

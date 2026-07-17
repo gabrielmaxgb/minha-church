@@ -411,6 +411,8 @@ export interface CreateGivingCheckoutInput {
 
 export interface GivingCheckoutSession {
   donationId: string;
+  /** Token de recibo (obrigatório para GET público do recibo). */
+  receiptToken: string;
   subscriptionId?: string | null;
   mode?: "payment" | "subscription";
   clientSecret: string;
@@ -477,9 +479,11 @@ export interface GivingDonationReceipt {
 
 export async function fetchGivingDonationReceipt(
   donationId: string,
+  receiptToken: string,
 ): Promise<GivingDonationReceipt> {
+  const token = encodeURIComponent(receiptToken);
   return apiClient<GivingDonationReceipt>(
-    `/public/giving/donations/${encodeURIComponent(donationId)}/receipt`,
+    `/public/giving/donations/${encodeURIComponent(donationId)}/receipt?token=${token}`,
     { skipAuth: true },
   );
 }

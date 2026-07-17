@@ -5,6 +5,7 @@ export interface ChurchMembershipRole {
   isSystem: boolean;
   systemKey?: string;
   sortOrder?: number;
+  singleHolder?: boolean;
 }
 
 export interface ChurchMembership {
@@ -27,7 +28,6 @@ export interface ChurchMembership {
 
 export interface UpdateMembershipPayload {
   roleIds?: string[];
-  isOwner?: boolean;
 }
 
 export interface PendingAccessUser {

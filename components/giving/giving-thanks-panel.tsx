@@ -98,6 +98,7 @@ function OutcomeIcon({ kind }: { kind: Copy["icon"] }) {
 
 export function GivingThanksPanel({
   donationId,
+  receiptToken,
   backHref,
   backLabel,
   retryHref,
@@ -109,6 +110,7 @@ export function GivingThanksPanel({
   className,
 }: {
   donationId: string | null | undefined;
+  receiptToken: string | null | undefined;
   backHref: string;
   backLabel: string;
   retryHref?: string;
@@ -121,13 +123,13 @@ export function GivingThanksPanel({
 }) {
   const [receipt, setReceipt] = useState<GivingDonationReceipt | null>(null);
   const [outcome, setOutcome] = useState<GivingDonationOutcome | null>(
-    donationId ? null : "incomplete",
+    donationId && receiptToken ? null : "incomplete",
   );
-  const [loading, setLoading] = useState(Boolean(donationId));
+  const [loading, setLoading] = useState(Boolean(donationId && receiptToken));
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!donationId) {
+    if (!donationId || !receiptToken) {
       setOutcome("incomplete");
       setLoading(false);
       return;
@@ -138,7 +140,7 @@ export function GivingThanksPanel({
 
     const load = async () => {
       try {
-        const next = await fetchGivingDonationReceipt(donationId);
+        const next = await fetchGivingDonationReceipt(donationId, receiptToken);
         if (cancelled) return;
 
         setReceipt(next);
@@ -175,7 +177,7 @@ export function GivingThanksPanel({
     return () => {
       cancelled = true;
     };
-  }, [donationId]);
+  }, [donationId, receiptToken]);
 
   const resolvedOutcome = outcome ?? "incomplete";
   const copy = copyForOutcome(resolvedOutcome, receipt);

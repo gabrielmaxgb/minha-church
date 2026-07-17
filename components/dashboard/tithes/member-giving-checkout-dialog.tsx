@@ -331,7 +331,10 @@ function MemberPaymentStep({
             locale: "pt-BR",
           }}
         >
-          <MemberConfirmPaymentForm donationId={session.donationId} />
+          <MemberConfirmPaymentForm
+            donationId={session.donationId}
+            receiptToken={session.receiptToken}
+          />
         </Elements>
 
         <div className="flex items-start gap-3 text-muted-foreground lg:hidden">
@@ -348,7 +351,13 @@ function MemberPaymentStep({
   );
 }
 
-function MemberConfirmPaymentForm({ donationId }: { donationId: string }) {
+function MemberConfirmPaymentForm({
+  donationId,
+  receiptToken,
+}: {
+  donationId: string;
+  receiptToken: string;
+}) {
   const stripe = useStripe();
   const elements = useElements();
   const [submitting, setSubmitting] = useState(false);
@@ -362,7 +371,7 @@ function MemberConfirmPaymentForm({ donationId }: { donationId: string }) {
     setSubmitting(true);
     setError(null);
 
-    const returnUrl = `${window.location.origin}${AUTH_ROUTES.tithesOfferings}/obrigado?donationId=${encodeURIComponent(donationId)}`;
+    const returnUrl = `${window.location.origin}${AUTH_ROUTES.tithesOfferings}/obrigado?donationId=${encodeURIComponent(donationId)}&rt=${encodeURIComponent(receiptToken)}`;
 
     const result = await stripe.confirmPayment({
       elements,

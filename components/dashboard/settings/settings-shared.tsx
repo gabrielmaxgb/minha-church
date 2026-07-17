@@ -193,6 +193,8 @@ export function SettingsExpandableRow({
   title,
   subtitle,
   badge,
+  meta,
+  leading,
   expanded,
   dirty,
   onToggle,
@@ -201,30 +203,38 @@ export function SettingsExpandableRow({
   title: string;
   subtitle?: string;
   badge?: string;
+  meta?: React.ReactNode;
+  leading?: React.ReactNode;
   expanded: boolean;
   dirty?: boolean;
   onToggle: () => void;
   children: React.ReactNode;
 }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-border/70 bg-card transition-colors duration-200 hover:border-border">
+    <div
+      className={cn(
+        "overflow-hidden rounded-xl border bg-card transition-all duration-200",
+        expanded
+          ? "border-border shadow-sm"
+          : "border-border/70 hover:border-border",
+        dirty && "ring-1 ring-attention-border/60",
+      )}
+    >
       <button
         type="button"
         onClick={onToggle}
-        className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-muted/20"
+        aria-expanded={expanded}
+        className="flex w-full items-center gap-3 px-3.5 py-3 text-left transition-colors hover:bg-muted/20 sm:px-4 sm:py-3.5"
       >
-        <ChevronDown
-          className={cn(
-            "size-4 shrink-0 text-muted-foreground transition-transform duration-200",
-            !expanded && "-rotate-90",
-          )}
-        />
+        {leading}
         <div className="min-w-0 flex-1">
           <span className="flex items-center gap-2">
-            <span className="truncate font-medium">{title}</span>
+            <span className="truncate text-sm font-medium tracking-tight">
+              {title}
+            </span>
             {dirty && (
               <span
-                className="size-1.5 shrink-0 rounded-full bg-attention-emphasis"
+                className="size-1.5 shrink-0 rounded-full bg-attention-solid"
                 aria-label="Alterações não salvas"
               />
             )}
@@ -235,14 +245,21 @@ export function SettingsExpandableRow({
             </span>
           )}
         </div>
-        {badge && (
-          <span className="hidden shrink-0 rounded-lg border border-border/70 bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-muted-foreground sm:inline">
-            {badge}
-          </span>
-        )}
+        {meta ??
+          (badge ? (
+            <span className="hidden max-w-40 shrink-0 truncate rounded-lg border border-border/70 bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-muted-foreground sm:inline">
+              {badge}
+            </span>
+          ) : null)}
+        <ChevronDown
+          className={cn(
+            "size-4 shrink-0 text-muted-foreground transition-transform duration-200",
+            !expanded && "-rotate-90",
+          )}
+        />
       </button>
       {expanded && (
-        <div className="border-t border-border/70 bg-muted/10 px-4 py-4">
+        <div className="border-t border-border/70 bg-linear-to-b from-muted/20 to-transparent px-3.5 py-4 sm:px-4">
           {children}
         </div>
       )}

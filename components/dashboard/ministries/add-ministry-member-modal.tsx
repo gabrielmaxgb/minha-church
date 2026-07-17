@@ -63,7 +63,9 @@ export function AddMinistryMemberModal({
         value: member.id,
         label: member.name,
         description: member.email ?? member.phone ?? undefined,
-        searchText: [member.email, member.phone, member.cpf].filter(Boolean).join(" "),
+        searchText: [member.email, member.phone, member.cpf]
+          .filter(Boolean)
+          .join(" "),
       })),
     [availableMembers],
   );
