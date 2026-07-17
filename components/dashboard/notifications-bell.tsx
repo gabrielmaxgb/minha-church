@@ -72,6 +72,8 @@ function inboxTypeIcon(type: InboxNotificationType) {
       return ClipboardList;
     case "pending_access":
       return Users;
+    case "giving_donation_refunded":
+      return CreditCard;
     case "account_linked":
     default:
       return UserCheck;
@@ -166,36 +168,30 @@ function NotificationsPanel({
   const {
     data: passwordResetRequests,
     isLoading: passwordResetLoading,
-    isError: passwordResetError,
   } = usePasswordResetRequests({ poll: open && canManage });
   const {
     data: schedules,
     isLoading: schedulesLoading,
-    isError: schedulesError,
   } = useMySchedules();
   const {
     data: ministryNotifications,
     isLoading: ministryNotificationsLoading,
-    isError: ministryNotificationsError,
   } = useMyMinistryNotifications();
   const {
     data: unreadAnnouncements,
     isLoading: announcementsLoading,
-    isError: announcementsError,
   } = useAnnouncementsUnreadCount({
     enabled: open && hasCommunicationAccess,
   });
   const {
     data: carePending,
     isLoading: carePendingLoading,
-    isError: carePendingError,
   } = useCareInboxPendingCount({
     enabled: open && canReceiveCare,
   });
   const {
     data: careViewed,
     isLoading: careViewedLoading,
-    isError: careViewedError,
   } = useCareViewedMineCount({
     enabled: open,
   });
@@ -203,6 +199,7 @@ function NotificationsPanel({
     data: inbox,
     isLoading: inboxLoading,
     isError: inboxError,
+    refetch: refetchInbox,
   } = useNotificationInbox({
     enabled: open,
     poll: open,
@@ -215,6 +212,13 @@ function NotificationsPanel({
     ...billingKeys.tierCrossingNotices(churchId ?? "unknown"),
     enabled: open && Boolean(churchId) && canMembers,
   });
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    void refetchInbox();
+  }, [open, refetchInbox]);
 
   const markNoticeRead = useMutation({
     mutationFn: async (noticeId: string) => {
@@ -272,14 +276,14 @@ function NotificationsPanel({
     (canReceiveCare && carePendingLoading) ||
     careViewedLoading ||
     inboxLoading;
-  const isError =
-    (canManage && passwordResetError) ||
-    (hasSchedulesAccess && schedulesError) ||
-    ministryNotificationsError ||
-    (hasCommunicationAccess && announcementsError) ||
-    (canReceiveCare && carePendingError) ||
-    careViewedError ||
-    inboxError;
+  // Não misturar falha de outras fontes com o inbox — senão o sino some
+  // mesmo com registration_open gravado no banco.
+  const showInboxError = inboxError && unreadInboxItems.length === 0;
+  const showEmpty =
+    !isLoading &&
+    !showInboxError &&
+    count === 0 &&
+    unreadInboxItems.length === 0;
 
   useEffect(() => {
     if (!open) {
@@ -344,13 +348,13 @@ function NotificationsPanel({
             </p>
           )}
 
-          {isError && (
+          {showInboxError && (
             <p className="px-4 py-8 text-center text-sm text-muted-foreground">
               Não foi possível carregar as notificações.
             </p>
           )}
 
-          {!isLoading && !isError && count === 0 && (
+          {showEmpty && (
             <div className="px-4 py-8 text-center">
               <Bell className="mx-auto size-7 text-muted-foreground/40" aria-hidden />
               <p className="mt-2 text-sm font-medium">Tudo em dia</p>
@@ -358,7 +362,6 @@ function NotificationsPanel({
           )}
 
           {!isLoading &&
-            !isError &&
             unreadInboxItems.map((item) => {
               const Icon = inboxTypeIcon(item.type);
               const body = resolveInboxNotificationBody(item);
@@ -412,7 +415,6 @@ function NotificationsPanel({
             })}
 
           {!isLoading &&
-            !isError &&
             announcementCount > 0 && (
               <div className="border-b border-border/70 px-4 py-3 last:border-b-0">
                 <div className="flex items-start gap-3">
@@ -448,7 +450,7 @@ function NotificationsPanel({
               </div>
             )}
 
-          {!isLoading && !isError && carePendingCount > 0 && (
+          {!isLoading && carePendingCount > 0 && (
             <div className="border-b border-border/70 px-4 py-3 last:border-b-0">
               <div className="flex items-start gap-3">
                 <div className={pendingNotificationStyles.icon.sm}>
@@ -483,7 +485,7 @@ function NotificationsPanel({
             </div>
           )}
 
-          {!isLoading && !isError && careViewedCount > 0 && (
+          {!isLoading && careViewedCount > 0 && (
             <div className="border-b border-border/70 px-4 py-3 last:border-b-0">
               <div className="flex items-start gap-3">
                 <div className={pendingNotificationStyles.icon.sm}>
@@ -521,7 +523,7 @@ function NotificationsPanel({
             </div>
           )}
 
-          {!isLoading && !isError && tierPendingCount > 0 && pendingTier && (
+          {!isLoading && tierPendingCount > 0 && pendingTier && (
             <div className="border-b border-border/70 px-4 py-3 last:border-b-0">
               <div className="flex items-start gap-3">
                 <div className={pendingNotificationStyles.icon.sm}>
@@ -557,7 +559,6 @@ function NotificationsPanel({
           )}
 
           {!isLoading &&
-            !isError &&
             tierNoticeCount > 0 &&
             staffNotices?.map((notice) => (
               <div
@@ -601,7 +602,6 @@ function NotificationsPanel({
             ))}
 
           {!isLoading &&
-            !isError &&
             pendingScheduleCount > 0 && (
               <div className="border-b border-border/70 px-4 py-3 last:border-b-0">
                 <div className="flex items-start gap-3">
@@ -638,7 +638,6 @@ function NotificationsPanel({
             )}
 
           {!isLoading &&
-            !isError &&
             passwordResetRequests?.map((request) => (
               <div
                 key={request.id}
@@ -678,7 +677,6 @@ function NotificationsPanel({
             ))}
 
           {!isLoading &&
-            !isError &&
             ministryCount > 0 &&
             ministryNotifications && (
               <div className="border-b border-border/70 px-4 py-3 last:border-b-0">

@@ -2,7 +2,8 @@ export type InboxNotificationType =
   | "registration_open"
   | "schedule_roster_assigned"
   | "account_linked"
-  | "pending_access";
+  | "pending_access"
+  | "giving_donation_refunded";
 
 export interface InboxNotificationItem {
   id: string;

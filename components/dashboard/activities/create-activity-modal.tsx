@@ -99,7 +99,7 @@ export function CreateActivityModal({
   const initialStartsAt = defaultStartsAtValue ?? fallbackStartsAt();
   const [startsAt, setStartsAt] = useState(initialStartsAt);
   const [endsAt, setEndsAt] = useState("");
-  const [visibleToChurch, setVisibleToChurch] = useState(false);
+  const [visibleToChurch, setVisibleToChurch] = useState(true);
   const [registrationOpen, setRegistrationOpen] = useState(false);
   const [priceReais, setPriceReais] = useState("");
   const [recurrence, setRecurrence] = useState<EventRecurrenceFormState>(

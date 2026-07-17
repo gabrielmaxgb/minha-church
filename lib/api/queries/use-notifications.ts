@@ -17,9 +17,10 @@ export function useNotificationInbox(options?: {
   return useQuery({
     ...notificationsKeys.inbox(churchId ?? "unknown"),
     enabled: Boolean(churchId) && (options?.enabled ?? true),
-    staleTime: 30_000,
-    refetchInterval: options?.poll ? 60_000 : false,
-    retry: false,
+    staleTime: 15_000,
+    refetchOnMount: "always",
+    refetchInterval: options?.poll ? 30_000 : false,
+    retry: 1,
   });
 }
 

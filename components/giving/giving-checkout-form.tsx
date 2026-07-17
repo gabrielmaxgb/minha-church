@@ -222,8 +222,8 @@ export function GivingCheckoutForm({ fund }: { fund: PublicGivingFund }) {
                 Contribuir mensalmente
               </span>
               <span className="mt-0.5 block text-muted-foreground">
-                Cobrança recorrente no cartão. Pix e boleto ficam só na doação
-                avulsa.
+                Cobrança recorrente no cartão de crédito. Pix e boleto ficam só
+                na doação avulsa.
               </span>
             </span>
           </label>
@@ -301,7 +301,14 @@ function CheckoutPaymentStep({
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
             {fund.fundName} · {formatBrlFromCents(session.amountCents)}
+            {session.mode === "subscription" ? " /mês" : ""}
           </p>
+          {session.mode === "subscription" ? (
+            <p className="mt-2 text-sm text-muted-foreground">
+              Use um <span className="font-medium text-foreground">cartão de crédito</span>.
+              Débito costuma falhar nas cobranças mensais automáticas.
+            </p>
+          ) : null}
         </div>
 
         <Elements

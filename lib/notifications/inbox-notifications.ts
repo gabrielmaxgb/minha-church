@@ -9,6 +9,7 @@ const TYPE_LABELS: Record<InboxNotificationType, string> = {
   schedule_roster_assigned: "Escala",
   account_linked: "Acesso",
   pending_access: "Acesso pendente",
+  giving_donation_refunded: "Estorno",
 };
 
 export function inboxNotificationTypeLabel(
