@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { Loader2, Trash2 } from "lucide-react";
 
 import { MinistryRoleToggles } from "@/components/dashboard/ministries/ministry-role-toggles";
-import { MinistryTagSection } from "@/components/dashboard/ministries/ministry-member-tags";
 import { Button } from "@/components/ui/button";
 import { FormAlert } from "@/components/ui/form-field";
 import { Label } from "@/components/ui/label";
@@ -66,21 +65,20 @@ function MinistryRoleRow({
         </Button>
       </div>
 
-      <MinistryTagSection title="Cargos">
-        <MinistryRoleToggles
-          roles={roles}
-          selectedRoleIds={selectedRoleIds}
-          disabled={disabled}
-          isUpdating={isUpdating}
-          onToggle={(roleId, checked) => {
-            const next = checked
-              ? [...selectedRoleIds, roleId]
-              : selectedRoleIds.filter((id) => id !== roleId);
+      <MinistryRoleToggles
+        roles={roles}
+        selectedRoleIds={selectedRoleIds}
+        disabled={disabled}
+        isUpdating={isUpdating}
+        emphasizeEmpty={selectedRoleIds.length === 0}
+        onToggle={(roleId, checked) => {
+          const next = checked
+            ? [...selectedRoleIds, roleId]
+            : selectedRoleIds.filter((id) => id !== roleId);
 
-            onRolesChange(next);
-          }}
-        />
-      </MinistryTagSection>
+          onRolesChange(next);
+        }}
+      />
     </div>
   );
 }
@@ -239,21 +237,19 @@ export function MemberMinistriesSection({
             </div>
 
             {newMinistryId && (
-              <div className="space-y-2">
-                <Label>Cargos no ministério</Label>
-                <MinistryRoleToggles
-                  roles={newMinistryRoles}
-                  selectedRoleIds={newRoleIds}
-                  disabled={disabled || isBusy}
-                  onToggle={(roleId, checked) => {
-                    setNewRoleIds((current) =>
-                      checked
-                        ? [...current, roleId]
-                        : current.filter((id) => id !== roleId),
-                    );
-                  }}
-                />
-              </div>
+              <MinistryRoleToggles
+                roles={newMinistryRoles}
+                selectedRoleIds={newRoleIds}
+                disabled={disabled || isBusy}
+                emphasizeEmpty={newRoleIds.length === 0}
+                onToggle={(roleId, checked) => {
+                  setNewRoleIds((current) =>
+                    checked
+                      ? [...current, roleId]
+                      : current.filter((id) => id !== roleId),
+                  );
+                }}
+              />
             )}
           </div>
 

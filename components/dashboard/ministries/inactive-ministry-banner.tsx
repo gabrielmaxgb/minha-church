@@ -5,7 +5,6 @@ import { Loader2, Power, PowerOff } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { DashboardBanner } from "@/components/ui/dashboard-banner";
-import { cn } from "@/lib/utils";
 
 interface InactiveMinistryBannerProps {
   ministryName?: string | null;
@@ -57,7 +56,7 @@ export function InactiveMinistryBanner({
           </Button>
         ) : undefined
       }
-      className={cn("mb-0", className)}
+      className={className}
     />
   );
 }

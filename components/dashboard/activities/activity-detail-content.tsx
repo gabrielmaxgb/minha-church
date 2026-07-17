@@ -493,7 +493,7 @@ export function ActivityDetailContent({ eventId }: ActivityDetailContentProps) {
 
   return (
     <>
-      <div className="space-y-4">
+      <div className="flex flex-col gap-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Link
             href={AUTH_ROUTES.activities}
@@ -542,7 +542,7 @@ export function ActivityDetailContent({ eventId }: ActivityDetailContentProps) {
 
         <div
           className={cn(
-            "space-y-4",
+            "flex flex-col gap-4",
             ministryInactive && "pointer-events-none select-none opacity-60",
           )}
           aria-hidden={ministryInactive || undefined}

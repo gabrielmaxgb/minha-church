@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { ExternalLink, Loader2 } from "lucide-react";
 import { useEffect } from "react";
 
 import { StripeBrandInline } from "@/components/brand/stripe-mark";
@@ -313,11 +313,7 @@ export function SubscriptionSettings() {
                 data.canManageBilling && (
                   <Button
                     type="button"
-                    variant={
-                      data.subscriptionStatus === "past_due"
-                        ? "default"
-                        : "outline"
-                    }
+                    variant="default"
                     className="w-full gap-2 sm:w-auto"
                     disabled={portalLoading}
                     onClick={() => void openPortal()}
@@ -329,10 +325,13 @@ export function SubscriptionSettings() {
                   >
                     {portalLoading ? (
                       <Loader2 className="size-4 animate-spin" />
-                    ) : data.subscriptionStatus === "past_due" ? (
-                      "Atualizar pagamento"
                     ) : (
-                      "Gerenciar assinatura do Minha Church"
+                      <>
+                        {data.subscriptionStatus === "past_due"
+                          ? "Atualizar pagamento"
+                          : "Gerenciar assinatura do Minha Church"}
+                        <ExternalLink className="size-3.5 opacity-80" aria-hidden />
+                      </>
                     )}
                   </Button>
                 )}

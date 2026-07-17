@@ -30,9 +30,13 @@ export function SystemBannersHost() {
   return (
     <>
       {needsEmailVerify ? (
-        <EmailVerificationBanner />
+        <div className="mb-6">
+          <EmailVerificationBanner />
+        </div>
       ) : needsTrialBanner ? (
-        <TrialStatusBanner />
+        <div className="mb-6">
+          <TrialStatusBanner />
+        </div>
       ) : null}
       {/* Modal soft no 1º acesso; lembrete persistente fica nas prioridades do Início */}
       <SoftOnboardingHost showBanner={false} />

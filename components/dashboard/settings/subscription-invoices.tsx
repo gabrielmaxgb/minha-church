@@ -108,7 +108,7 @@ export function SubscriptionInvoicesSection({
                 {viewUrl ? (
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="default"
                     size="sm"
                     className="w-full gap-2 sm:w-auto"
                     asChild
@@ -116,7 +116,7 @@ export function SubscriptionInvoicesSection({
                     <a href={viewUrl} target="_blank" rel="noopener noreferrer">
                       <FileText className="size-4" />
                       Ver fatura
-                      <ExternalLink className="size-3.5 opacity-60" />
+                      <ExternalLink className="size-3.5 opacity-80" />
                     </a>
                   </Button>
                 ) : null}

@@ -75,8 +75,8 @@ export function TransferSingleHolderRoleDialog({
           Passar “{roleName}” adiante?
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          Este cargo é titular único — só uma pessoa por vez. Ao confirmar e
-          salvar, ele muda de mãos.
+          Este cargo é titular único — só uma pessoa por vez. Ao confirmar, ele
+          sai de quem tem hoje e passa para a nova pessoa.
         </p>
 
         <div className="mt-4 flex items-center gap-2 rounded-xl border border-border/70 bg-muted/30 p-3">

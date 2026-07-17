@@ -52,6 +52,12 @@ interface CreateActivityModalProps {
   open: boolean;
   onClose: () => void;
   defaultMinistryId?: string;
+  /**
+   * Trava o ministério (ex.: tela do ministério). Esconde o seletor e usa
+   * o mesmo formulário de criação (inclui inscrição).
+   */
+  fixedMinistryId?: string;
+  fixedMinistryName?: string;
   /** Valor `datetime-local` inicial (ex.: dia clicado no calendário). */
   defaultStartsAtValue?: string;
   /** Nomes conhecidos sem listar ministérios (ex.: vindos dos eventos). */
@@ -76,14 +82,20 @@ export function CreateActivityModal({
   open,
   onClose,
   defaultMinistryId = "",
+  fixedMinistryId,
+  fixedMinistryName,
   defaultStartsAtValue,
   knownMinistryNames = {},
 }: CreateActivityModalProps) {
   const titleId = useId();
   const { permissions } = useAuth();
   const { writesBlocked } = useTrialWriteGuard();
+  const lockedMinistryId = fixedMinistryId?.trim() || "";
+  const initialMinistryId = lockedMinistryId || defaultMinistryId;
   const canList = canListMinistries(permissions);
-  const { data: ministries } = useMinistries({ enabled: open && canList });
+  const { data: ministries } = useMinistries({
+    enabled: open && canList && !lockedMinistryId,
+  });
   const createEvent = useCreateChurchEvent();
   const {
     canChargePaidRegistration,
@@ -92,7 +104,7 @@ export function CreateActivityModal({
   } = usePaidEventRegistrationGate();
 
   const [name, setName] = useState("");
-  const [ministryId, setMinistryId] = useState(defaultMinistryId);
+  const [ministryId, setMinistryId] = useState(initialMinistryId);
   const [description, setDescription] = useState("");
   const [highlightNote, setHighlightNote] = useState("");
   const [location, setLocation] = useState("");
@@ -169,7 +181,7 @@ export function CreateActivityModal({
     if (!open) {
       if (wasOpenRef.current) {
         setName("");
-        setMinistryId(defaultMinistryId);
+        setMinistryId(initialMinistryId);
         setDescription("");
         setHighlightNote("");
         setLocation("");
@@ -191,7 +203,7 @@ export function CreateActivityModal({
 
     wasOpenRef.current = true;
     // Sem permissão church-wide, não deixa ministryId vazio (seria evento da igreja).
-    setMinistryId(defaultMinistryId);
+    setMinistryId(initialMinistryId);
     setVisibleToChurch(canSelectChurchWide);
     setStartsAt(nextStartsAt);
     setRecurrence(defaultRecurrenceFormState(nextStartsAt));
@@ -202,10 +214,10 @@ export function CreateActivityModal({
     return () => {
       document.body.style.overflow = previousOverflow;
     };
-  }, [open, defaultMinistryId, defaultStartsAtValue, canSelectChurchWide]);
+  }, [open, initialMinistryId, defaultStartsAtValue, canSelectChurchWide]);
 
   useEffect(() => {
-    if (!open || canSelectChurchWide || ministryId) {
+    if (!open || lockedMinistryId || canSelectChurchWide || ministryId) {
       return;
     }
 
@@ -213,7 +225,13 @@ export function CreateActivityModal({
     if (firstMinistryId) {
       setMinistryId(firstMinistryId);
     }
-  }, [open, canSelectChurchWide, ministryId, creatableMinistries]);
+  }, [
+    open,
+    lockedMinistryId,
+    canSelectChurchWide,
+    ministryId,
+    creatableMinistries,
+  ]);
 
   useEffect(() => {
     if (!canSelectChurchWide && visibleToChurch) {
@@ -264,7 +282,7 @@ export function CreateActivityModal({
       return;
     }
 
-    if (!canSelectChurchWide && !ministryId) {
+    if (!canSelectChurchWide && !ministryId && !lockedMinistryId) {
       setFormFieldErrors({
         ministryId: "Selecione um ministério para criar o evento.",
       });
@@ -312,6 +330,8 @@ export function CreateActivityModal({
     const openRegistration =
       registrationOpen || Boolean(priceCents != null && priceCents >= 500);
 
+    const resolvedMinistryId = lockedMinistryId || ministryId;
+
     const payload: CreateChurchEventPayload = {
       name: name.trim(),
       description: description.trim() || undefined,
@@ -319,11 +339,11 @@ export function CreateActivityModal({
       location: location.trim() || undefined,
       startsAt: new Date(startsAt).toISOString(),
       endsAt: endsAt ? new Date(endsAt).toISOString() : undefined,
-      ministryId: ministryId || undefined,
+      ministryId: resolvedMinistryId || undefined,
       recurrence: recurrencePayload,
       // Escala fica implícita (padrão do backend). Coleta de disponibilidade
       // e montagem da equipe acontecem na página do evento após a criação.
-      ...(ministryId
+      ...(resolvedMinistryId
         ? { visibleToChurch: canSelectChurchWide ? visibleToChurch : false }
         : {}),
       registrationOpen: openRegistration,
@@ -374,9 +394,18 @@ export function CreateActivityModal({
               Novo evento
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              {canSelectChurchWide
-                ? "Deixe sem ministério para destacar como evento da igreja inteira."
-                : "Escolha um ministério em que você pode criar eventos."}
+              {lockedMinistryId ? (
+                <>
+                  Criar evento para{" "}
+                  <span className="font-medium text-foreground">
+                    {fixedMinistryName?.trim() || "este ministério"}
+                  </span>
+                </>
+              ) : canSelectChurchWide ? (
+                "Deixe sem ministério para destacar como evento da igreja inteira."
+              ) : (
+                "Escolha um ministério em que você pode criar eventos."
+              )}
             </p>
           </div>
           <button
@@ -396,7 +425,11 @@ export function CreateActivityModal({
           <div className="space-y-8 overflow-y-auto px-6 py-6">
             <EventFormSection
               title="Informações básicas"
-              description="Nome, ministério e detalhes que aparecem na agenda."
+              description={
+                lockedMinistryId
+                  ? "Nome e detalhes que a equipe verá na agenda do ministério."
+                  : "Nome, ministério e detalhes que aparecem na agenda."
+              }
               icon={FileText}
             >
               <div className="space-y-4">
@@ -421,37 +454,39 @@ export function CreateActivityModal({
                   />
                 </FormField>
 
-                <FormField
-                  label="Ministério"
-                  htmlFor={fieldIds.ministryId}
-                  error={fieldErrors.ministryId}
-                  hint={
-                    canSelectChurchWide
-                      ? "Eventos da igreja aparecem em destaque no painel."
-                      : "Selecione um ministério em que você pode criar eventos."
-                  }
-                >
-                  <SelectField
-                    id={fieldIds.ministryId}
-                    value={ministryId}
-                    onChange={(event) => {
-                      setMinistryId(event.target.value);
-                      clearFieldError("ministryId");
-                    }}
-                    disabled={createEvent.isPending}
-                    aria-invalid={fieldErrors.ministryId ? true : undefined}
-                    className="h-11 rounded-xl"
+                {!lockedMinistryId ? (
+                  <FormField
+                    label="Ministério"
+                    htmlFor={fieldIds.ministryId}
+                    error={fieldErrors.ministryId}
+                    hint={
+                      canSelectChurchWide
+                        ? "Eventos da igreja aparecem em destaque no painel."
+                        : "Selecione um ministério em que você pode criar eventos."
+                    }
                   >
-                    {canSelectChurchWide && (
-                      <option value="">Igreja inteira (destaque)</option>
-                    )}
-                    {creatableMinistries.map((ministry) => (
-                      <option key={ministry.id} value={ministry.id}>
-                        {ministry.name}
-                      </option>
-                    ))}
-                  </SelectField>
-                </FormField>
+                    <SelectField
+                      id={fieldIds.ministryId}
+                      value={ministryId}
+                      onChange={(event) => {
+                        setMinistryId(event.target.value);
+                        clearFieldError("ministryId");
+                      }}
+                      disabled={createEvent.isPending}
+                      aria-invalid={fieldErrors.ministryId ? true : undefined}
+                      className="h-11 rounded-xl"
+                    >
+                      {canSelectChurchWide && (
+                        <option value="">Igreja inteira (destaque)</option>
+                      )}
+                      {creatableMinistries.map((ministry) => (
+                        <option key={ministry.id} value={ministry.id}>
+                          {ministry.name}
+                        </option>
+                      ))}
+                    </SelectField>
+                  </FormField>
+                ) : null}
 
                 <div className="space-y-2">
                   <Label htmlFor="activity-description">Descrição do evento</Label>

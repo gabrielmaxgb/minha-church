@@ -5,11 +5,10 @@ import {
   ArrowRight,
   Building2,
   Info,
-  Loader2,
   RefreshCw,
 } from "lucide-react";
 
-import { StripeBrandInline, StripeWordmark, stripeOutlineButtonClassName } from "@/components/brand/stripe-mark";
+import { StripeBrandInline } from "@/components/brand/stripe-mark";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FormAlert } from "@/components/ui/form-field";
@@ -23,10 +22,8 @@ import type {
 import {
   resolvePaymentsError,
   useConnectPayoutsOverview,
-  useOpenExpressDashboard,
 } from "@/lib/api/queries";
 import { cn, formatCurrency } from "@/lib/utils";
-import { useAuth } from "@/providers/auth-provider";
 
 const PAYOUT_STATUS_LABEL: Record<ConnectPayoutStatus, string> = {
   paid: "No banco",
@@ -77,10 +74,7 @@ function formatCreatedAt(iso: string): string {
 }
 
 export function ConnectPayoutsPanel() {
-  const { user } = useAuth();
-  const isOwner = Boolean(user?.isOwner);
   const overviewQuery = useConnectPayoutsOverview();
-  const openDashboard = useOpenExpressDashboard();
 
   if (overviewQuery.isPending) {
     return (
@@ -129,45 +123,23 @@ export function ConnectPayoutsPanel() {
             banco da igreja.
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="gap-1.5"
-            disabled={overviewQuery.isFetching}
-            onClick={() => void overviewQuery.refetch()}
-          >
-            <RefreshCw
-              className={cn(
-                "size-3.5",
-                overviewQuery.isFetching && "animate-spin",
-              )}
-              aria-hidden
-            />
-            Atualizar
-          </Button>
-          {isOwner ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className={stripeOutlineButtonClassName()}
-              disabled={openDashboard.isPending}
-              onClick={() => openDashboard.mutate()}
-              aria-label="Abrir painel Stripe"
-            >
-              {openDashboard.isPending ? (
-                <Loader2 className="size-3.5 animate-spin text-stripe" />
-              ) : (
-                <>
-                  <span>Painel</span>
-                  <StripeWordmark size="md" title={false} />
-                </>
-              )}
-            </Button>
-          ) : null}
-        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="gap-1.5"
+          disabled={overviewQuery.isFetching}
+          onClick={() => void overviewQuery.refetch()}
+        >
+          <RefreshCw
+            className={cn(
+              "size-3.5",
+              overviewQuery.isFetching && "animate-spin",
+            )}
+            aria-hidden
+          />
+          Atualizar
+        </Button>
       </div>
 
       <div
@@ -272,30 +244,11 @@ export function ConnectPayoutsPanel() {
 
         {overview.hasMore ? (
           <p className="text-xs text-muted-foreground">
-            Mostrando os repasses mais recentes.{" "}
-            {isOwner ? (
-              <>
-                O histórico completo fica no painel{" "}
-                <StripeBrandInline />.
-              </>
-            ) : (
-              <>
-                Peça ao responsável pela conta para abrir o painel{" "}
-                <StripeBrandInline /> se precisar do histórico completo.
-              </>
-            )}
+            Mostrando os repasses mais recentes. O histórico completo fica no
+            painel <StripeBrandInline /> (botão no topo da página).
           </p>
         ) : null}
       </section>
-
-      {openDashboard.isError ? (
-        <FormAlert>
-          {resolvePaymentsError(
-            openDashboard.error,
-            "Não foi possível abrir o painel Stripe.",
-          )}
-        </FormAlert>
-      ) : null}
     </div>
   );
 }

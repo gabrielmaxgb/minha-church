@@ -88,7 +88,7 @@ export function DashboardBanner({
   return (
     <div
       className={cn(
-        "relative mb-6 overflow-hidden rounded-2xl border px-4 py-4 sm:px-5",
+        "relative overflow-hidden rounded-2xl border px-4 py-4 sm:px-5",
         styles.shell,
         className,
       )}

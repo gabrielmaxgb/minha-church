@@ -1,16 +1,16 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronDown, Search, Trash2 } from "lucide-react";
+import { Search, Trash2 } from "lucide-react";
 
 import { MemberDetailButton } from "@/components/dashboard/members/member-detail-link";
 import { MinistryRoleToggles } from "@/components/dashboard/ministries/ministry-role-toggles";
 import {
-  MemberMinistryTagsSummary,
   MinistryCargoBadge,
   MinistryFunctionBadge,
   MinistryTagSection,
 } from "@/components/dashboard/ministries/ministry-member-tags";
+import { TransferSingleHolderRoleDialog } from "@/components/dashboard/settings/transfer-single-holder-role-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
@@ -18,6 +18,14 @@ import { cn } from "@/lib/utils";
 import type { MinistryMember, MinistryRole } from "@/types/ministries";
 
 type RoleFilter = "all" | "none" | string;
+
+type PendingSingleHolderTransfer = {
+  member: MinistryMember;
+  roleId: string;
+  roleName: string;
+  currentHolderName: string;
+  nextRoleIds: string[];
+};
 
 interface MinistryMembersListProps {
   members: MinistryMember[];
@@ -66,7 +74,8 @@ export function MinistryMembersList({
 }: MinistryMembersListProps) {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [pendingTransfer, setPendingTransfer] =
+    useState<PendingSingleHolderTransfer | null>(null);
   const debouncedSearch = useDebouncedValue(search.trim(), 200);
 
   const filteredMembers = useMemo(
@@ -79,22 +88,86 @@ export function MinistryMembersList({
     [members, debouncedSearch, roleFilter],
   );
 
-  function toggleExpanded(memberId: string) {
-    setExpandedIds((current) => {
-      const next = new Set(current);
+  const holdersByRoleId = useMemo(() => {
+    const holders: Record<
+      string,
+      { memberId: string; name: string } | undefined
+    > = {};
 
-      if (next.has(memberId)) {
-        next.delete(memberId);
-      } else {
-        next.add(memberId);
+    for (const member of members) {
+      for (const role of member.roles) {
+        if (!holders[role.id]) {
+          holders[role.id] = {
+            memberId: member.memberId,
+            name: member.memberName,
+          };
+        }
       }
+    }
 
-      return next;
-    });
-  }
+    return holders;
+  }, [members]);
 
   const hasActiveFilters =
     debouncedSearch.length > 0 || roleFilter !== "all";
+
+  function findSingleHolderOfRole(
+    roleId: string,
+    excludeMemberId: string,
+  ): MinistryMember | null {
+    for (const other of members) {
+      if (other.memberId === excludeMemberId) {
+        continue;
+      }
+
+      if (other.roles.some((role) => role.id === roleId)) {
+        return other;
+      }
+    }
+
+    return null;
+  }
+
+  function handleToggleRole(
+    member: MinistryMember,
+    roleId: string,
+    checked: boolean,
+  ) {
+    const selectedRoleIds = member.roles.map((role) => role.id);
+    const next = checked
+      ? [...selectedRoleIds, roleId]
+      : selectedRoleIds.filter((id) => id !== roleId);
+
+    if (checked) {
+      const role = roles.find((item) => item.id === roleId);
+
+      if (role?.singleHolder) {
+        const currentHolder = findSingleHolderOfRole(roleId, member.memberId);
+
+        if (currentHolder) {
+          setPendingTransfer({
+            member,
+            roleId,
+            roleName: role.name,
+            currentHolderName: currentHolder.memberName,
+            nextRoleIds: next,
+          });
+          return;
+        }
+      }
+    }
+
+    onToggleRoles(member.memberId, next);
+  }
+
+  function confirmSingleHolderTransfer() {
+    if (!pendingTransfer) {
+      return;
+    }
+
+    onToggleRoles(pendingTransfer.member.memberId, pendingTransfer.nextRoleIds);
+    setPendingTransfer(null);
+  }
 
   return (
     <div className="space-y-4">
@@ -156,55 +229,38 @@ export function MinistryMembersList({
           </p>
         </div>
       ) : (
-        <ul className="space-y-2">
+        <ul className="space-y-3">
           {filteredMembers.map((member) => {
-            const isExpanded = expandedIds.has(member.id);
+            const selectedRoleIds = member.roles.map((role) => role.id);
+            const hasNoCargo = selectedRoleIds.length === 0;
+            const hasFunctions = (member.instruments?.length ?? 0) > 0;
 
             return (
               <li
                 key={member.id}
-                className="overflow-hidden rounded-lg border border-border bg-card"
+                className={cn(
+                  "overflow-hidden rounded-lg border bg-card p-3 sm:p-4",
+                  canManage && hasNoCargo
+                    ? "border-attention-border"
+                    : "border-border",
+                )}
               >
-                <div className="flex items-start gap-2 p-3">
-                  <button
-                    type="button"
-                    onClick={() => toggleExpanded(member.id)}
-                    className="flex min-w-0 flex-1 items-start gap-3 rounded-md text-left transition-colors"
-                    aria-expanded={isExpanded}
-                  >
-                    <span
-                      className={cn(
-                        "mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md border border-border/70 bg-muted/40 text-muted-foreground transition-transform duration-200",
-                        isExpanded && "rotate-180",
-                      )}
-                    >
-                      <ChevronDown className="size-4" />
-                    </span>
-
-                    <span className="min-w-0 flex-1">
-                      <span className="block font-medium text-foreground">
-                        {member.memberName}
-                      </span>
-                      <span className="mt-0.5 block truncate text-sm text-muted-foreground">
-                        {member.memberEmail ||
-                          member.memberPhone ||
-                          "Sem contato"}
-                      </span>
-                      {!isExpanded && (
-                        <MemberMinistryTagsSummary
-                          className="mt-2"
-                          roles={member.roles}
-                          instruments={member.instruments}
-                        />
-                      )}
-                    </span>
-                  </button>
+                <div className="flex items-start gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-foreground">
+                      {member.memberName}
+                    </p>
+                    <p className="mt-0.5 truncate text-sm text-muted-foreground">
+                      {member.memberEmail ||
+                        member.memberPhone ||
+                        "Sem contato"}
+                    </p>
+                  </div>
 
                   <div className="flex shrink-0 items-center gap-0.5">
                     <MemberDetailButton
                       memberId={member.memberId}
                       memberName={member.memberName}
-                      stopPropagation
                     />
                     {canManage ? (
                       <Button
@@ -215,6 +271,7 @@ export function MinistryMembersList({
                         disabled={isRemoving}
                         onClick={() => onRemove(member.memberId)}
                         aria-label={`Remover ${member.memberName} do ministério`}
+                        title="Remover do ministério"
                       >
                         <Trash2 className="size-4" />
                       </Button>
@@ -222,24 +279,22 @@ export function MinistryMembersList({
                   </div>
                 </div>
 
-                {isExpanded && (
-                  <div className="space-y-4 border-t border-border/60 px-3 pb-3 pt-3">
+                <div className="mt-3 space-y-3">
+                  {canManage ? (
+                    <MinistryRoleToggles
+                      roles={roles}
+                      selectedRoleIds={selectedRoleIds}
+                      isUpdating={isUpdatingRoles}
+                      emphasizeEmpty={hasNoCargo}
+                      holdersByRoleId={holdersByRoleId}
+                      currentMemberId={member.memberId}
+                      onToggle={(roleId, checked) =>
+                        handleToggleRole(member, roleId, checked)
+                      }
+                    />
+                  ) : (
                     <MinistryTagSection title="Cargos">
-                      {canManage ? (
-                        <MinistryRoleToggles
-                          roles={roles}
-                          selectedRoleIds={member.roles.map((role) => role.id)}
-                          isUpdating={isUpdatingRoles}
-                          onToggle={(roleId, checked) => {
-                            const currentIds = member.roles.map((role) => role.id);
-                            const next = checked
-                              ? [...currentIds, roleId]
-                              : currentIds.filter((id) => id !== roleId);
-
-                            onToggleRoles(member.memberId, next);
-                          }}
-                        />
-                      ) : member.roles.length > 0 ? (
+                      {member.roles.length > 0 ? (
                         <div className="flex flex-wrap gap-1.5">
                           {member.roles.map((role) => (
                             <MinistryCargoBadge key={role.id} size="md">
@@ -253,34 +308,43 @@ export function MinistryMembersList({
                         </p>
                       )}
                     </MinistryTagSection>
+                  )}
 
-                    {(member.instruments?.length ?? 0) > 0 && (
-                      <MinistryTagSection
-                        title="Funções de serviço"
-                        hint={
-                          canManage
-                            ? "O membro define as funções no perfil, em Ministérios e Grupos de serviço."
-                            : undefined
-                        }
-                      >
-                        <div className="flex flex-wrap gap-1.5">
-                          {member.instruments.map((instrument) => (
-                            <MinistryFunctionBadge
-                              key={instrument}
-                              label={instrument}
-                              size="md"
-                            />
-                          ))}
-                        </div>
-                      </MinistryTagSection>
-                    )}
-                  </div>
-                )}
+                  {hasFunctions ? (
+                    <MinistryTagSection
+                      title="Funções de serviço"
+                      hint={
+                        canManage
+                          ? "O membro define as funções no perfil, em Ministérios e Grupos de serviço."
+                          : undefined
+                      }
+                    >
+                      <div className="flex flex-wrap gap-1.5">
+                        {member.instruments.map((instrument) => (
+                          <MinistryFunctionBadge
+                            key={instrument}
+                            label={instrument}
+                            size="md"
+                          />
+                        ))}
+                      </div>
+                    </MinistryTagSection>
+                  ) : null}
+                </div>
               </li>
             );
           })}
         </ul>
       )}
+
+      <TransferSingleHolderRoleDialog
+        open={Boolean(pendingTransfer)}
+        roleName={pendingTransfer?.roleName ?? ""}
+        currentHolderName={pendingTransfer?.currentHolderName ?? ""}
+        newHolderName={pendingTransfer?.member.memberName ?? ""}
+        onCancel={() => setPendingTransfer(null)}
+        onConfirm={confirmSingleHolderTransfer}
+      />
     </div>
   );
 }

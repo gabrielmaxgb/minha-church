@@ -253,7 +253,7 @@ export function MinistryDetailContent({
   const navGroups = buildMinistryNavGroups();
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <Link
         href={AUTH_ROUTES.ministries}
         className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"

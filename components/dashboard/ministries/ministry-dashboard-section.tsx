@@ -322,11 +322,10 @@ export function MinistryMembersSection({
           <div>
             <CardTitle>Equipe do ministério</CardTitle>
             <CardDescription>
-              Membros vinculados a este ministério.{" "}
-              <strong className="font-medium text-foreground">Cargos</strong>{" "}
-              definem liderança (atribuídos aqui);{" "}
-              <strong className="font-medium text-foreground">funções</strong>{" "}
-              vêm do perfil de cada membro.
+              Toque nos cargos de cada pessoa para atribuir. Pode marcar mais de
+              um.{" "}
+              <strong className="font-medium text-foreground">Funções</strong>{" "}
+              (ex.: instrumento) vêm do perfil do membro.
             </CardDescription>
           </div>
           {canManage && (
