@@ -51,12 +51,15 @@ interface CreateCareRequestModalProps {
   recipient: CareRequestRecipient | null;
   open: boolean;
   onClose: () => void;
+  /** Chamado quando o pedido é criado com sucesso (antes do auto-close). */
+  onCreated?: () => void;
 }
 
 export function CreateCareRequestModal({
   recipient,
   open,
   onClose,
+  onCreated,
 }: CreateCareRequestModalProps) {
   const titleId = useId();
   const descriptionId = useId();
@@ -125,6 +128,7 @@ export function CreateCareRequestModal({
         message: message.trim() || undefined,
       });
       setPhase("success");
+      onCreated?.();
     } catch (submitError) {
       setError(
         submitError instanceof Error

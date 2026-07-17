@@ -10,7 +10,6 @@ export default function NovoMembroPage() {
       <DashboardPage
         title="Adicionar membro"
         subtitle="Cadastro de visitante ou membro"
-        className="max-w-3xl"
       >
         <CreateMemberContent />
       </DashboardPage>

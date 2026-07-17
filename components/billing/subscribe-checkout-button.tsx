@@ -1,8 +1,9 @@
 "use client";
 
 import { type ReactNode } from "react";
-import { CreditCard, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
+import { StripeBrandInline, StripeMarkIcon } from "@/components/brand/stripe-mark";
 import { BusyOverlay } from "@/components/ui/busy-overlay";
 import { Button } from "@/components/ui/button";
 import { useSubscribeCheckout } from "@/lib/billing/use-subscribe-checkout";
@@ -40,10 +41,13 @@ export function SubscribeCheckoutButton({
       <BusyOverlay
         active={loading}
         variant="fullscreen"
-        icon={CreditCard}
+        icon={StripeMarkIcon}
         steps={[
           "Abrindo o checkout seguro...",
-          "Redirecionando ao Stripe...",
+          <>
+            Redirecionando ao <StripeBrandInline />
+            ...
+          </>,
         ]}
         hint="Você será levado à página de pagamento em instantes."
       />

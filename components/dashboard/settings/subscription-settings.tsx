@@ -1,8 +1,9 @@
 "use client";
 
-import { CreditCard, ExternalLink, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
 
+import { StripeBrandInline } from "@/components/brand/stripe-mark";
 import { SubscribePricingTrigger } from "@/components/billing/subscribe-pricing-trigger";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -204,9 +205,9 @@ export function SubscriptionSettings() {
               <p className="mt-2 pl-2 text-muted-foreground">
                 Mudou de ideia? Abra{" "}
                 <span className="font-medium text-foreground">
-                  Gerenciar assinatura
+                  Gerenciar assinatura do Minha Church
                 </span>{" "}
-                para reativar no Stripe.
+                para reativar no <StripeBrandInline />.
               </p>
             </div>
           )}
@@ -320,18 +321,19 @@ export function SubscriptionSettings() {
                     className="w-full gap-2 sm:w-auto"
                     disabled={portalLoading}
                     onClick={() => void openPortal()}
+                    aria-label={
+                      data.subscriptionStatus === "past_due"
+                        ? "Atualizar pagamento"
+                        : "Gerenciar assinatura do Minha Church"
+                    }
                   >
                     {portalLoading ? (
                       <Loader2 className="size-4 animate-spin" />
+                    ) : data.subscriptionStatus === "past_due" ? (
+                      "Atualizar pagamento"
                     ) : (
-                      <CreditCard className="size-4" />
+                      "Gerenciar assinatura do Minha Church"
                     )}
-                    {data.subscriptionStatus === "past_due"
-                      ? "Atualizar pagamento"
-                      : isCancelScheduled(data)
-                        ? "Gerenciar no Stripe"
-                        : "Gerenciar assinatura"}
-                    <ExternalLink className="size-3.5 opacity-60" />
                   </Button>
                 )}
             </div>
@@ -349,9 +351,9 @@ export function SubscriptionSettings() {
             }
           />
 
-          <p className="text-xs text-muted-foreground">
-            A gestão de cartão e cancelamento é feita com segurança pelo Stripe.
-            Você volta para esta página após concluir.
+          <p className="inline-flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
+            A gestão de cartão e cancelamento é feita com segurança pelo{" "}
+            <StripeBrandInline />. Você volta para esta página após concluir.
           </p>
         </div>
       )}

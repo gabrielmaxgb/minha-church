@@ -13,8 +13,10 @@ import {
   deleteGivingFund,
   downloadFinanceEntriesCsv,
   downloadGivingDonationsCsv,
+  downloadEventTicketPurchasesCsv,
   openExpressDashboard,
   refundGivingDonation,
+  refundEventTicketPurchase,
   resumeConnectOnboarding,
   startConnectOnboarding,
   syncConnectAccount,
@@ -24,6 +26,7 @@ import {
   type ConnectStatus,
   type CreateFinanceEntryInput,
   type CreateGivingFundInput,
+  type FetchEventTicketPurchasesParams,
   type FetchFinanceEntriesParams,
   type FetchGivingDonationsParams,
   type UpdateFinanceEntryInput,
@@ -48,6 +51,25 @@ export function useConnectStatus(options?: { enabled?: boolean }) {
     ...paymentsKeys.connectStatus(churchId ?? ""),
     enabled,
     staleTime: 15_000,
+    refetchOnWindowFocus: true,
+  });
+}
+
+export function useConnectPayoutsOverview(options?: { enabled?: boolean }) {
+  const { church, permissions, user } = useAuth();
+  const churchId = church?.id;
+  const canAccess = Boolean(
+    churchId &&
+      (user?.isOwner ||
+        permissions?.finances.access ||
+        permissions?.finances.manage),
+  );
+  const enabled = (options?.enabled ?? true) && canAccess;
+
+  return useQuery({
+    ...paymentsKeys.connectPayouts(churchId ?? ""),
+    enabled,
+    staleTime: 30_000,
     refetchOnWindowFocus: true,
   });
 }
@@ -132,6 +154,28 @@ export function useGivingDonations(
   });
 }
 
+export function useEventTicketPurchases(
+  params: FetchEventTicketPurchasesParams = {},
+  options?: { enabled?: boolean },
+) {
+  const { church, permissions, user } = useAuth();
+  const churchId = church?.id;
+  const canAccess = Boolean(
+    churchId &&
+      (user?.isOwner ||
+        permissions?.finances.access ||
+        permissions?.finances.manage),
+  );
+  const enabled = (options?.enabled ?? true) && canAccess;
+
+  return useQuery({
+    ...paymentsKeys.eventTicketPurchases(churchId ?? "", params),
+    enabled,
+    staleTime: 15_000,
+    refetchOnWindowFocus: true,
+  });
+}
+
 export function useRefundGivingDonation() {
   const { church } = useAuth();
   const queryClient = useQueryClient();
@@ -158,6 +202,9 @@ export function useRefundGivingDonation() {
       });
       void queryClient.invalidateQueries({
         queryKey: paymentsKeys.paymentsSummary(church.id).queryKey,
+      });
+      void queryClient.invalidateQueries({
+        queryKey: paymentsKeys.financeEntriesSummary._def,
       });
       // Otimista: atualiza qualquer lista em cache com o item estornado.
       queryClient.setQueriesData(
@@ -191,6 +238,63 @@ export function useRefundGivingDonation() {
   });
 }
 
+export function useRefundEventTicketPurchase() {
+  const { church } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (ticketId: string) => {
+      if (!church?.id) {
+        throw new Error("Igreja não encontrada.");
+      }
+
+      return refundEventTicketPurchase(church.id, ticketId);
+    },
+    onSuccess: (ticket) => {
+      if (!church?.id) {
+        return;
+      }
+
+      void queryClient.invalidateQueries({
+        queryKey: paymentsKeys.eventTicketPurchases._def,
+      });
+      void queryClient.invalidateQueries({
+        queryKey: paymentsKeys.paymentsSummary(church.id).queryKey,
+      });
+      void queryClient.invalidateQueries({
+        queryKey: paymentsKeys.financeEntriesSummary._def,
+      });
+      queryClient.setQueriesData(
+        { queryKey: paymentsKeys.eventTicketPurchases._def },
+        (current: unknown) => {
+          if (
+            !current ||
+            typeof current !== "object" ||
+            !("items" in current) ||
+            !Array.isArray((current as { items: unknown }).items)
+          ) {
+            return current;
+          }
+
+          const list = current as {
+            items: Array<{ id: string; status: string }>;
+            page: number;
+            limit: number;
+            total: number;
+          };
+
+          return {
+            ...list,
+            items: list.items.map((item) =>
+              item.id === ticket.id ? { ...item, ...ticket } : item,
+            ),
+          };
+        },
+      );
+    },
+  });
+}
+
 export function useExportGivingDonations() {
   const { church } = useAuth();
 
@@ -201,6 +305,20 @@ export function useExportGivingDonations() {
       }
 
       await downloadGivingDonationsCsv(church.id, params);
+    },
+  });
+}
+
+export function useExportEventTicketPurchases() {
+  const { church } = useAuth();
+
+  return useMutation({
+    mutationFn: async (params: FetchEventTicketPurchasesParams = {}) => {
+      if (!church?.id) {
+        throw new Error("Igreja não encontrada.");
+      }
+
+      await downloadEventTicketPurchasesCsv(church.id, params);
     },
   });
 }

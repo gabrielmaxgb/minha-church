@@ -46,6 +46,11 @@
   /* Faixa escura de CTA de assinatura (estável em light/dark) */
   --billing-banner: #1a1a18;
   --billing-banner-foreground: #f4f4f1;
+  /* Stripe brand — CTAs e menções de processador (não é cor de produto Minha Church) */
+  --stripe: #635bff;
+  --stripe-foreground: #635bff;
+  --stripe-subtle: color-mix(in srgb, var(--stripe) 8%, var(--card));
+  --stripe-border: color-mix(in srgb, var(--stripe) 22%, var(--border));
   --border: #d8d8d3;
   --input: #d0d0cb;
   --ring: #5c5c58;
@@ -131,6 +136,10 @@
   --billing-emphasis: color-mix(in srgb, var(--billing) 40%, transparent);
   --billing-banner: #1a1a18;
   --billing-banner-foreground: #f4f4f1;
+  --stripe: #7a73ff;
+  --stripe-foreground: #9b96ff;
+  --stripe-subtle: color-mix(in srgb, var(--stripe) 14%, var(--card));
+  --stripe-border: color-mix(in srgb, var(--stripe) 28%, var(--border));
   --border: #2e2e2b;
   --input: #353532;
   --ring: #8a8a84;
@@ -210,6 +219,10 @@
   --color-billing-emphasis: var(--billing-emphasis);
   --color-billing-banner: var(--billing-banner);
   --color-billing-banner-foreground: var(--billing-banner-foreground);
+  --color-stripe: var(--stripe);
+  --color-stripe-foreground: var(--stripe-foreground);
+  --color-stripe-subtle: var(--stripe-subtle);
+  --color-stripe-border: var(--stripe-border);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -256,6 +269,8 @@
   /* Syne: wordmark do logo + H1 do hero marketing apenas */
   .font-display {
     font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+    /* Syne tem descendentes profundos (g, j, y) — leading curto corta a perna. */
+    line-height: 1.2;
   }
 
   .page-title {
@@ -263,7 +278,7 @@
     font-size: 1.5rem;
     font-weight: 600;
     letter-spacing: -0.02em;
-    line-height: 1.2;
+    line-height: 1.25;
   }
 
   .hero-display {
@@ -271,7 +286,10 @@
     font-size: clamp(1.75rem, 4vw, 2.75rem);
     font-weight: 600;
     letter-spacing: -0.03em;
-    line-height: 1.12;
+    /* 1.12 cortava j/g; Syne precisa de folga nos descendentes. */
+    line-height: 1.22;
+    overflow: visible;
+    padding-block: 0.06em;
   }
 
   .shadow-xs {

@@ -13,6 +13,7 @@ import {
   Sparkles,
 } from "lucide-react";
 
+import { StripeBrandInline, StripeWordmark, stripeOutlineButtonClassName } from "@/components/brand/stripe-mark";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FormAlert } from "@/components/ui/form-field";
@@ -254,7 +255,7 @@ function ConnectOnboardingCard({
             </Button>
             <p className="mt-2 text-xs text-muted-foreground">
               Guardamos só a identidade fiscal da igreja no Minha Church.
-              Endereço completo o Stripe coleta no cadastro.
+              Endereço completo o <StripeBrandInline /> coleta no cadastro.
             </p>
           </div>
         )}
@@ -281,7 +282,8 @@ function ConnectOnboardingCard({
 
         {onboardingStatus === "rejected" && (
           <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm">
-            O Stripe não aprovou esta conta de recebimentos. Entre em contato com
+            O <StripeBrandInline /> não aprovou esta conta de recebimentos. Entre
+            em contato com
             o suporte para entender os próximos passos.
           </div>
         )}
@@ -351,19 +353,21 @@ function ConnectOnboardingCard({
             <Button
               type="button"
               variant="outline"
-              className="w-full gap-2 sm:w-auto"
+              className={stripeOutlineButtonClassName("w-full sm:w-auto")}
               disabled={redirecting || openDashboard.isPending}
               aria-busy={openDashboard.isPending}
+              aria-label="Abrir painel Stripe"
               onClick={() => void handleOpenDashboard()}
             >
               {openDashboard.isPending ? (
-                <Loader2 className="size-4 animate-spin" aria-hidden />
+                <Loader2 className="size-4 animate-spin text-stripe" aria-hidden />
               ) : (
-                <ExternalLink className="size-4" aria-hidden />
+                <>
+                  <span>Abrir painel</span>
+                  <StripeWordmark size="md" title={false} />
+                </>
               )}
-              {openDashboard.isPending
-                ? "Abrindo painel Stripe…"
-                : "Abrir painel Stripe"}
+              {openDashboard.isPending ? "Abrindo…" : null}
             </Button>
           )}
         </div>
@@ -417,12 +421,12 @@ function ConnectOnboardingCard({
           </p>
         )}
 
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs leading-relaxed text-muted-foreground">
           O cadastro, a verificação de identidade e o processamento dos
-          pagamentos são feitos com segurança pelo Stripe. As tarifas de
-          processamento são cobradas pelo Stripe e o Minha Church não adiciona
-          nenhuma taxa por transação neste momento. Pix, cartão e boleto só ficam
-          disponíveis após a aprovação da conta.
+          pagamentos são feitos com segurança pelo <StripeBrandInline />. As
+          tarifas de processamento são cobradas pelo <StripeBrandInline /> e o
+          Minha Church não adiciona nenhuma taxa por transação neste momento.
+          Pix, cartão e boleto só ficam disponíveis após a aprovação da conta.
         </p>
       </div>
     </SettingsPanel>
@@ -451,7 +455,12 @@ export function ReceivablesSettings() {
       <div>
         <SettingsSectionHeader
           title="Recebimentos"
-          description="Conecte a conta bancária da igreja ao Stripe para receber dízimos, ofertas e doações."
+          description={
+            <>
+              Conecte a conta bancária da igreja ao <StripeBrandInline /> para
+              receber dízimos, ofertas e doações.
+            </>
+          }
         />
         <SettingsPanel>
           <div className="space-y-3 px-5 py-6 text-center">
@@ -477,7 +486,12 @@ export function ReceivablesSettings() {
     <div>
       <SettingsSectionHeader
         title="Recebimentos"
-        description="Conecte a conta bancária da igreja ao Stripe para receber dízimos, ofertas e doações."
+        description={
+          <>
+            Conecte a conta bancária da igreja ao <StripeBrandInline /> para
+            receber dízimos, ofertas e doações.
+          </>
+        }
       />
 
       {isTrialing && (

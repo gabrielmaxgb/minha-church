@@ -33,7 +33,6 @@ export default function ActivityDetailPage() {
                 .join(" · ")
             : "Detalhes do evento"
         }
-        className="max-w-7xl"
       >
         <ActivityDetailContent eventId={eventId} />
       </DashboardPage>

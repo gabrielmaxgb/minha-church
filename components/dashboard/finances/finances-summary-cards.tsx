@@ -52,14 +52,15 @@ export function FinancesSummaryCards() {
       label: "Entradas (mês)",
       value: formatCurrency(
         (ledgerSummary.data?.incomeCents ?? 0) / 100 +
-          (ledgerSummary.data?.onlineDonationCents ?? 0) / 100,
+          (ledgerSummary.data?.onlineDonationCents ?? 0) / 100 +
+          (ledgerSummary.data?.eventTicketCents ?? 0) / 100,
       ),
-      hint: "Manuais + contribuições online",
+      hint: "Manuais + contribuições + inscrições",
     },
     {
       label: "Saídas (mês)",
       value: formatCurrency((ledgerSummary.data?.expenseCents ?? 0) / 100),
-      hint: "Lançamentos manuais",
+      hint: "Só lançamentos manuais (gastos)",
     },
     {
       label: "Saldo (mês)",

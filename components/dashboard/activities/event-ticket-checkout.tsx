@@ -18,6 +18,7 @@ import {
   X,
 } from "lucide-react";
 
+import { StripeBrandInline } from "@/components/brand/stripe-mark";
 import {
   GivingShell,
   GivingTrustFooter,
@@ -508,8 +509,8 @@ function EventTicketPaymentStep({
         <div className="flex items-start gap-3 text-muted-foreground lg:hidden">
           <ShieldCheck className="mt-0.5 size-4 shrink-0 text-[var(--giving-trust)]" />
           <p className="text-xs leading-relaxed">
-            Dados do cartão tratados pelo Stripe. A cobrança vai para a conta
-            da igreja.
+            Dados do cartão tratados pelo <StripeBrandInline />. A cobrança vai
+            para a conta da igreja.
           </p>
         </div>
 

@@ -3,6 +3,8 @@
 import { motion, useReducedMotion } from "motion/react";
 import type { Variants } from "motion/react";
 
+import { cn } from "@/lib/utils";
+
 interface MotionSectionProps {
   children: React.ReactNode;
   className?: string;
@@ -18,7 +20,7 @@ export function MotionSection({
 
   return (
     <motion.section
-      className={className}
+      className={cn("overflow-visible", className)}
       initial={shouldReduceMotion ? false : "hidden"}
       whileInView={shouldReduceMotion ? undefined : "visible"}
       viewport={{ once: true, margin: "-80px" }}
@@ -40,7 +42,7 @@ export function MotionDiv({ children, className, variants }: MotionDivProps) {
 
   return (
     <motion.div
-      className={className}
+      className={cn("overflow-visible", className)}
       initial={shouldReduceMotion ? false : "hidden"}
       animate={shouldReduceMotion ? undefined : "visible"}
       variants={variants}

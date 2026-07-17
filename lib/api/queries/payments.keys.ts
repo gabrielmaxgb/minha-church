@@ -2,9 +2,11 @@ import { createQueryKeys } from "@lukemorales/query-key-factory";
 
 import {
   fetchConnectStatus,
+  fetchConnectPayoutsOverview,
   fetchFiscalProfile,
   fetchFinanceEntries,
   fetchFinanceEntriesSummary,
+  fetchEventTicketPurchases,
   fetchGivingDonations,
   fetchGivingFunds,
   fetchMemberGivingFunds,
@@ -12,6 +14,7 @@ import {
   fetchMyGivingSubscriptions,
   fetchGivingSubscriptions,
   fetchPaymentsSummary,
+  type FetchEventTicketPurchasesParams,
   type FetchFinanceEntriesParams,
   type FetchGivingDonationsParams,
 } from "@/lib/api/payments";
@@ -20,6 +23,10 @@ export const paymentsKeys = createQueryKeys("payments", {
   connectStatus: (churchId: string) => ({
     queryKey: [churchId, "connect-status"],
     queryFn: () => fetchConnectStatus(churchId),
+  }),
+  connectPayouts: (churchId: string) => ({
+    queryKey: [churchId, "connect-payouts"],
+    queryFn: () => fetchConnectPayoutsOverview(churchId, { limit: 25 }),
   }),
   fiscalProfile: (churchId: string) => ({
     queryKey: [churchId, "fiscal-profile"],
@@ -43,6 +50,13 @@ export const paymentsKeys = createQueryKeys("payments", {
   ) => ({
     queryKey: [churchId, "giving-donations", params],
     queryFn: () => fetchGivingDonations(churchId, params),
+  }),
+  eventTicketPurchases: (
+    churchId: string,
+    params: FetchEventTicketPurchasesParams = {},
+  ) => ({
+    queryKey: [churchId, "event-ticket-purchases", params],
+    queryFn: () => fetchEventTicketPurchases(churchId, params),
   }),
   myGivingDonations: (churchId: string) => ({
     queryKey: [churchId, "my-giving-donations"],

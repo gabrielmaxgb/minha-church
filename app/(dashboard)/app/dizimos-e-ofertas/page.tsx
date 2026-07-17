@@ -11,7 +11,6 @@ export default function TithesOfferingsPage() {
     <DashboardPage
       title="Dízimos e ofertas"
       subtitle="Contribua com os fundos da igreja, com registro na sua ficha"
-      className="max-w-3xl"
     >
       <TithesOfferingsGate>
         <TithesOfferingsContent />

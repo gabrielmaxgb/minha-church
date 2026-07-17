@@ -32,6 +32,7 @@ import {
 } from "@/components/dashboard/activities/paid-registration-receivables-gate";
 import { LargeModalShell } from "@/components/dashboard/activities/large-modal-shell";
 import { TrialExpiredWriteModal } from "@/components/dashboard/trial-expired-write-modal";
+import { StripeBrandInline } from "@/components/brand/stripe-mark";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -687,8 +688,8 @@ export function ActivityEventModal({
                         />
                       ) : (
                         <p className="text-xs text-muted-foreground">
-                          Vazio = inscrição gratuita. Com valor, pagamento via
-                          Stripe Connect (mínimo R$ 5,00).
+                          Vazio = inscrição gratuita. Com valor, pagamento via{" "}
+                          <StripeBrandInline /> Connect (mínimo R$ 5,00).
                         </p>
                       )}
                     </div>

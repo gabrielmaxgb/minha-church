@@ -9,7 +9,6 @@ export default function CareRequestsPage() {
     <DashboardPage
       title="Aconselhamentos e visitas"
       subtitle="Peça apoio pastoral e acompanhe suas solicitações"
-      className="max-w-3xl"
     >
       <RequireActiveAdultMember>
         <CareRequestsContent />

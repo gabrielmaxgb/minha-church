@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { ShieldCheck } from "lucide-react";
 
+import { StripeBrandInline } from "@/components/brand/stripe-mark";
 import { FormAlert, FormField } from "@/components/ui/form-field";
 import { FloatingSaveBar } from "@/components/ui/floating-save-bar";
 import { Input } from "@/components/ui/input";
@@ -442,7 +443,8 @@ export function ChurchFiscalProfileForm({
           <ShieldCheck className="mt-0.5 size-4 shrink-0" aria-hidden />
           <p>
             Usamos esses dados para identificar a igreja e liberar recebimentos.
-            Só compartilhamos com o Stripe, que processa os pagamentos.
+            Só compartilhamos com o <StripeBrandInline />, que processa os
+            pagamentos.
           </p>
         </div>
       </form>

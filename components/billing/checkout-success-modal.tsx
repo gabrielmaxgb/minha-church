@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { StripeBrandInline } from "@/components/brand/stripe-mark";
 import {
   getTierBillingComparison,
   getTierMonthlyPrice,
@@ -153,8 +154,8 @@ export function CheckoutSuccessModal({
 
             <div className="px-6 py-8">
               <p className="text-center text-sm text-muted-foreground">
-                Seu pagamento no Stripe foi concluído. Aguarde enquanto liberamos
-                o painel.
+                Seu pagamento no <StripeBrandInline /> foi concluído. Aguarde
+                enquanto liberamos o painel.
               </p>
             </div>
           </>
@@ -173,9 +174,9 @@ export function CheckoutSuccessModal({
                       Pagamento recebido, confirmação pendente
                     </h2>
                     <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                      Seu pagamento foi processado pelo Stripe, mas não
-                      conseguimos confirmar a assinatura agora. Seu acesso pode
-                      ser liberado em instantes.
+                      Seu pagamento foi processado pelo <StripeBrandInline />,
+                      mas não conseguimos confirmar a assinatura agora. Seu
+                      acesso pode ser liberado em instantes.
                     </p>
                   </div>
                 </div>
@@ -325,8 +326,8 @@ export function CheckoutSuccessModal({
               </InfoRow>
 
               <InfoRow icon={Mail} title="Comprovante">
-                O Stripe enviou o recibo do pagamento para o e-mail usado no
-                checkout. Guarde-o para seu controle financeiro.
+                O <StripeBrandInline /> enviou o recibo do pagamento para o
+                e-mail usado no checkout. Guarde-o para seu controle financeiro.
               </InfoRow>
 
               <InfoRow icon={CreditCard} title="Forma de pagamento">
@@ -335,7 +336,7 @@ export function CheckoutSuccessModal({
                 <span className="font-medium text-foreground">
                   Configurações → Assinatura
                 </span>{" "}
-                e abra a gestão pelo Stripe.
+                e abra a gestão pelo <StripeBrandInline />.
               </InfoRow>
             </div>
 

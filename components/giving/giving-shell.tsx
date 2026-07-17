@@ -4,6 +4,8 @@ import type { ReactNode } from "react";
 import { Lock, ShieldCheck } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 
+import { StripeBrandInline } from "@/components/brand/stripe-mark";
+
 export type GivingShellBrand = {
   churchName: string;
   fundName: string;
@@ -15,9 +17,11 @@ export type GivingShellBrand = {
 export function GivingTrustFooter() {
   return (
     <div className="mt-8 flex flex-col gap-3 border-t border-border pt-5 text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex items-center gap-2 text-xs">
+      <div className="flex flex-wrap items-center gap-2 text-xs">
         <Lock className="size-3.5 shrink-0" aria-hidden />
-        <span>Pagamento criptografado · processado pelo Stripe</span>
+        <span className="inline-flex flex-wrap items-center gap-1">
+          Pagamento criptografado · processado pelo <StripeBrandInline />
+        </span>
       </div>
       <p className="text-xs text-muted-foreground">Minha Church</p>
     </div>
@@ -52,7 +56,7 @@ export function GivingShell({
           <p className="text-xs font-medium tracking-wide text-[var(--giving-paper)]/55 uppercase">
             {brand.eyebrow ?? "Contribuição segura"}
           </p>
-          <h1 className="font-display mt-6 max-w-md text-3xl leading-tight font-bold tracking-tight sm:text-4xl">
+          <h1 className="font-display mt-6 max-w-md text-3xl font-bold tracking-tight sm:text-4xl">
             {brand.churchName}
           </h1>
           <div className="mt-6 h-px w-14 bg-[var(--giving-trust)]" />
@@ -77,7 +81,7 @@ export function GivingShell({
               <ShieldCheck className="mt-0.5 size-4 shrink-0 text-[var(--giving-trust)]" />
               <p className="text-sm leading-relaxed">
                 Os dados do cartão não passam pelo Minha Church. A cobrança é
-                feita na conta Stripe da própria igreja.
+                feita na conta <StripeBrandInline /> da própria igreja.
               </p>
             </div>
           </div>

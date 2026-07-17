@@ -1,6 +1,7 @@
 "use client";
 
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { useState } from "react";
+import { ChevronDown, Search, SlidersHorizontal, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +20,6 @@ interface AnnouncementFiltersProps {
   announcements: Announcement[];
   filters: AnnouncementFiltersState;
   canManage?: boolean;
-  /** Quando definido, limita os chips de ministério aos IDs permitidos. */
   allowedMinistryIds?: ReadonlySet<string> | null;
   onChange: (filters: AnnouncementFiltersState) => void;
 }
@@ -39,6 +39,13 @@ export function AnnouncementFiltersBar({
   const hasChurchWide = announcements.some(
     (announcement) => announcement.audienceType === "church_wide",
   );
+  const hasAudienceOptions = hasChurchWide || ministries.length > 0;
+  const hasAdvancedDefaults =
+    filters.priority !== "all" ||
+    filters.audience !== "all" ||
+    (canManage && filters.status !== "all");
+
+  const [advancedOpen, setAdvancedOpen] = useState(hasAdvancedDefaults);
 
   function patch(partial: Partial<AnnouncementFiltersState>) {
     onChange({ ...filters, ...partial });
@@ -46,14 +53,12 @@ export function AnnouncementFiltersBar({
 
   function clearFilters() {
     onChange(DEFAULT_ANNOUNCEMENT_FILTERS);
+    setAdvancedOpen(false);
   }
 
   return (
-    <section
-      aria-label="Filtros de comunicados"
-      className="overflow-hidden rounded-lg border border-border/70 bg-muted/20"
-    >
-      <div className="flex flex-col gap-3 border-b border-border/60 px-3 py-3 sm:flex-row sm:items-center sm:px-4">
+    <section aria-label="Filtros de comunicados" className="space-y-3">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <div className="relative min-w-0 flex-1">
           <Search
             className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
@@ -62,11 +67,11 @@ export function AnnouncementFiltersBar({
           <Input
             value={filters.search}
             onChange={(event) => patch({ search: event.target.value })}
-            placeholder="Buscar por título ou conteúdo..."
-            className="h-10 border-border/60 bg-background/80 pl-9 pr-9 shadow-none focus-visible:bg-background"
+            placeholder="Buscar avisos..."
+            className="h-11 rounded-xl border-border/80 bg-card pl-9 pr-9 shadow-xs focus-visible:ring-domain-communication/30"
             aria-label="Buscar comunicados"
           />
-          {filters.search && (
+          {filters.search ? (
             <button
               type="button"
               onClick={() => patch({ search: "" })}
@@ -75,137 +80,156 @@ export function AnnouncementFiltersBar({
             >
               <X className="size-3.5" />
             </button>
-          )}
+          ) : null}
         </div>
 
-        <div className="flex items-center justify-between gap-2 sm:justify-end">
-          <div className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className={cn(
+              "h-11 gap-1.5 rounded-xl border-border/80 bg-card shadow-xs",
+              (advancedOpen || hasAdvancedDefaults) &&
+                "border-domain-communication/35 bg-domain-communication-subtle text-domain-communication-foreground",
+            )}
+            aria-expanded={advancedOpen}
+            onClick={() => setAdvancedOpen((open) => !open)}
+          >
             <SlidersHorizontal className="size-3.5" aria-hidden />
-            <span className="font-medium uppercase tracking-[0.12em]">
-              Filtros
-            </span>
-            {activeCount > 0 && (
-              <span className="rounded-full bg-primary/12 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-primary">
+            Filtros
+            {activeCount > 0 ? (
+              <span className="rounded-full bg-domain-communication px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-white">
                 {activeCount}
               </span>
-            )}
-          </div>
+            ) : null}
+            <ChevronDown
+              className={cn(
+                "size-3.5 opacity-60 transition-transform",
+                advancedOpen && "rotate-180",
+              )}
+              aria-hidden
+            />
+          </Button>
 
-          {activeCount > 0 && (
+          {activeCount > 0 ? (
             <Button
               type="button"
               variant="ghost"
               size="sm"
               onClick={clearFilters}
-              className="h-8 px-2.5 text-xs text-muted-foreground hover:text-foreground"
+              className="h-11 px-3 text-muted-foreground hover:text-foreground"
             >
               Limpar
             </Button>
-          )}
+          ) : null}
         </div>
       </div>
 
-      <div className="space-y-3 px-3 py-3 sm:px-4 sm:py-3.5">
-        <FilterRow label="Leitura">
-          <FilterPill
-            active={filters.read === "all"}
-            onClick={() => patch({ read: "all" })}
-          >
-            Todos
-          </FilterPill>
-          <FilterPill
-            active={filters.read === "unread"}
-            onClick={() => patch({ read: "unread" })}
-            accent="primary"
-          >
-            Não lidos
-          </FilterPill>
-          <FilterPill
-            active={filters.read === "read"}
-            onClick={() => patch({ read: "read" })}
-          >
-            Lidos
-          </FilterPill>
-        </FilterRow>
-
-        {canManage && (
-          <FilterRow label="Status">
-            <StatusPill
-              active={filters.status === "all"}
-              onClick={() => patch({ status: "all" })}
-              value="all"
-            />
-            <StatusPill
-              active={filters.status === "published"}
-              onClick={() => patch({ status: "published" })}
-              value="published"
-            />
-            <StatusPill
-              active={filters.status === "scheduled"}
-              onClick={() => patch({ status: "scheduled" })}
-              value="scheduled"
-            />
-            <StatusPill
-              active={filters.status === "expired"}
-              onClick={() => patch({ status: "expired" })}
-              value="expired"
-            />
-          </FilterRow>
-        )}
-
-        <FilterRow label="Prioridade">
-          <PriorityPill
-            active={filters.priority === "all"}
-            onClick={() => patch({ priority: "all" })}
-            value="all"
-          />
-          <PriorityPill
-            active={filters.priority === "important"}
-            onClick={() => patch({ priority: "important" })}
-            value="important"
-          />
-          <PriorityPill
-            active={filters.priority === "urgent"}
-            onClick={() => patch({ priority: "urgent" })}
-            value="urgent"
-          />
-        </FilterRow>
-
-        {(hasChurchWide || ministries.length > 0) && (
-          <FilterRow label="Destinatário">
-            <FilterPill
-              active={filters.audience === "all"}
-              onClick={() => patch({ audience: "all" })}
-            >
-              Todos
-            </FilterPill>
-            {hasChurchWide && (
-              <FilterPill
-                active={filters.audience === "church_wide"}
-                onClick={() => patch({ audience: "church_wide" })}
-                accent="primary"
-              >
-                Igreja inteira
-              </FilterPill>
-            )}
-            {ministries.map((ministry) => (
-              <FilterPill
-                key={ministry.id}
-                active={filters.audience === ministry.id}
-                onClick={() => patch({ audience: ministry.id })}
-                accent="muted"
-              >
-                {ministry.name}
-              </FilterPill>
-            ))}
-          </FilterRow>
-        )}
+      {/* Linha mental rápida: leitura primeiro */}
+      <div
+        className="inline-flex max-w-full flex-wrap rounded-xl border border-border/80 bg-muted/30 p-1"
+        role="group"
+        aria-label="Filtrar por leitura"
+      >
+        <QuickPill
+          active={filters.read === "all"}
+          onClick={() => patch({ read: "all" })}
+        >
+          Todos
+        </QuickPill>
+        <QuickPill
+          active={filters.read === "unread"}
+          onClick={() => patch({ read: "unread" })}
+        >
+          Não lidos
+        </QuickPill>
+        <QuickPill
+          active={filters.read === "read"}
+          onClick={() => patch({ read: "read" })}
+        >
+          Lidos
+        </QuickPill>
       </div>
+
+      {advancedOpen ? (
+        <div className="space-y-3 rounded-2xl border border-border/80 bg-card p-3.5 shadow-xs sm:p-4">
+          {canManage ? (
+            <FilterGroup label="Status">
+              {(
+                [
+                  "all",
+                  "published",
+                  "scheduled",
+                  "expired",
+                ] as AnnouncementStatusFilter[]
+              ).map((value) => (
+                <QuickPill
+                  key={value}
+                  active={filters.status === value}
+                  onClick={() => patch({ status: value })}
+                >
+                  {STATUS_LABELS[value]}
+                </QuickPill>
+              ))}
+            </FilterGroup>
+          ) : null}
+
+          <FilterGroup label="Prioridade">
+            {(
+              ["all", "important", "urgent"] as AnnouncementPriorityFilter[]
+            ).map((value) => (
+              <QuickPill
+                key={value}
+                active={filters.priority === value}
+                onClick={() => patch({ priority: value })}
+                tone={
+                  value === "urgent"
+                    ? "urgent"
+                    : value === "important"
+                      ? "important"
+                      : "default"
+                }
+              >
+                {PRIORITY_LABELS[value]}
+              </QuickPill>
+            ))}
+          </FilterGroup>
+
+          {hasAudienceOptions ? (
+            <FilterGroup label="Para quem">
+              <QuickPill
+                active={filters.audience === "all"}
+                onClick={() => patch({ audience: "all" })}
+              >
+                Todos
+              </QuickPill>
+              {hasChurchWide ? (
+                <QuickPill
+                  active={filters.audience === "church_wide"}
+                  onClick={() => patch({ audience: "church_wide" })}
+                >
+                  Igreja inteira
+                </QuickPill>
+              ) : null}
+              {ministries.map((ministry) => (
+                <QuickPill
+                  key={ministry.id}
+                  active={filters.audience === ministry.id}
+                  onClick={() => patch({ audience: ministry.id })}
+                >
+                  {ministry.name}
+                </QuickPill>
+              ))}
+            </FilterGroup>
+          ) : null}
+        </div>
+      ) : null}
     </section>
   );
 }
 
-function FilterRow({
+function FilterGroup({
   label,
   children,
 }: {
@@ -213,37 +237,37 @@ function FilterRow({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-3">
-      <p className="shrink-0 pt-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground sm:w-24">
-        {label}
-      </p>
-      <div className="flex min-w-0 flex-1 flex-wrap gap-1.5">{children}</div>
+    <div className="space-y-2">
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      <div className="flex flex-wrap gap-1.5">{children}</div>
     </div>
   );
 }
 
-function FilterPill({
+function QuickPill({
   active,
   onClick,
-  accent,
   children,
+  tone = "default",
 }: {
   active: boolean;
   onClick: () => void;
-  accent?: "primary" | "muted";
   children: React.ReactNode;
+  tone?: "default" | "important" | "urgent";
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
-        "rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-200",
+        "rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
         active
-          ? accent === "muted"
-            ? "border-border bg-muted text-foreground"
-            : "border-primary/25 bg-primary text-primary-foreground"
-          : "border-border/70 bg-background/70 text-muted-foreground hover:border-border hover:bg-background hover:text-foreground",
+          ? tone === "urgent"
+            ? "bg-destructive/10 text-destructive"
+            : tone === "important"
+              ? "bg-attention-subtle text-attention-foreground"
+              : "bg-background text-foreground shadow-soft"
+          : "text-muted-foreground hover:text-foreground",
       )}
     >
       {children}
@@ -258,61 +282,9 @@ const STATUS_LABELS: Record<AnnouncementStatusFilter, string> = {
   expired: "Expirados",
 };
 
-function StatusPill({
-  active,
-  onClick,
-  value,
-}: {
-  active: boolean;
-  onClick: () => void;
-  value: AnnouncementStatusFilter;
-}) {
-  return (
-    <FilterPill
-      active={active}
-      onClick={onClick}
-      accent={value === "scheduled" ? "primary" : undefined}
-    >
-      {STATUS_LABELS[value]}
-    </FilterPill>
-  );
-}
-
 const PRIORITY_LABELS: Record<AnnouncementPriorityFilter, string> = {
   all: "Todas",
   normal: "Normal",
   important: "Importante",
   urgent: "Urgente",
 };
-
-function PriorityPill({
-  active,
-  onClick,
-  value,
-}: {
-  active: boolean;
-  onClick: () => void;
-  value: AnnouncementPriorityFilter;
-}) {
-  const urgent = value === "urgent";
-  const important = value === "important";
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-200",
-        active
-          ? urgent
-            ? "border-destructive/25 bg-destructive/10 text-destructive"
-            : important
-              ? "border-attention-border bg-attention-subtle text-attention-foreground"
-              : "border-primary/25 bg-primary text-primary-foreground"
-          : "border-border/70 bg-background/70 text-muted-foreground hover:border-border hover:bg-background hover:text-foreground",
-      )}
-    >
-      {PRIORITY_LABELS[value]}
-    </button>
-  );
-}

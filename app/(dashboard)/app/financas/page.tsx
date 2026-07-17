@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   ArrowRight,
+  Building2,
   Landmark,
   Loader2,
   Lock,
@@ -14,7 +15,9 @@ import {
 } from "lucide-react";
 
 import { RequirePermission } from "@/components/auth/require-permission";
+import { StripeWordmark, stripeOutlineButtonClassName } from "@/components/brand/stripe-mark";
 import { DashboardPage } from "@/components/dashboard/dashboard-shell";
+import { ConnectPayoutsPanel } from "@/components/dashboard/finances/connect-payouts-panel";
 import { FinanceEntriesPanel } from "@/components/dashboard/finances/finance-entries-panel";
 import { FinancesSummaryCards } from "@/components/dashboard/finances/finances-summary-cards";
 import { GivingDonationsPanel } from "@/components/dashboard/finances/giving-donations-panel";
@@ -23,14 +26,25 @@ import { GivingSubscriptionsPanel } from "@/components/dashboard/finances/giving
 import { SubscribePricingTrigger } from "@/components/billing/subscribe-pricing-trigger";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { FormAlert } from "@/components/ui/form-field";
 import { AUTH_ROUTES, settingsSectionPath } from "@/constants/routes";
-import { useConnectStatus, usePaymentsSummary } from "@/lib/api/queries";
+import {
+  resolvePaymentsError,
+  useConnectStatus,
+  useOpenExpressDashboard,
+  usePaymentsSummary,
+} from "@/lib/api/queries";
 import type { ConnectOnboardingStatus } from "@/lib/api/payments";
 import { useFeatureLock } from "@/lib/subscription/use-feature-lock";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 
-type FinancesTab = "fundos" | "contribuicoes" | "mensais" | "caixa";
+type FinancesTab =
+  | "fundos"
+  | "contribuicoes"
+  | "mensais"
+  | "repasses"
+  | "caixa";
 
 function parseFinancesHash(hash: string): FinancesTab {
   if (hash === "#contribuicoes") {
@@ -39,7 +53,14 @@ function parseFinancesHash(hash: string): FinancesTab {
   if (hash === "#mensais") {
     return "mensais";
   }
-  if (hash === "#movimentacoes" || hash === "#lancamentos-manuais" || hash === "#caixa") {
+  if (hash === "#repasses") {
+    return "repasses";
+  }
+  if (
+    hash === "#movimentacoes" ||
+    hash === "#lancamentos-manuais" ||
+    hash === "#caixa"
+  ) {
     return "caixa";
   }
   return "fundos";
@@ -51,6 +72,8 @@ function financesHashForTab(tab: FinancesTab): string {
       return "#contribuicoes";
     case "mensais":
       return "#mensais";
+    case "repasses":
+      return "#repasses";
     case "caixa":
       return "#caixa";
     default:
@@ -143,6 +166,7 @@ function FinancesManageTabs({
     { id: "fundos", label: "Fundos", icon: PiggyBank },
     { id: "contribuicoes", label: "Entradas", icon: Receipt },
     { id: "mensais", label: "Recorrentes", icon: RefreshCw },
+    { id: "repasses", label: "Repasses", icon: Building2 },
     { id: "caixa", label: "Lançamentos manuais", icon: NotebookPen },
   ];
 
@@ -205,7 +229,7 @@ function FinancesManageSection() {
         <div>
           <h2 className="text-lg font-semibold tracking-tight">Gestão</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            Dinheiro que a igreja recebe e registra.
+            Do recebimento ao banco — e o caixa que você registra à mão.
           </p>
         </div>
         <FinancesManageTabs value={tab} onChange={selectTab} />
@@ -222,6 +246,8 @@ function FinancesManageSection() {
           <GivingDonationsPanel embedded />
         ) : tab === "mensais" ? (
           <GivingSubscriptionsPanel />
+        ) : tab === "repasses" ? (
+          <ConnectPayoutsPanel />
         ) : (
           <FinanceEntriesPanel embedded />
         )}
@@ -237,6 +263,11 @@ function FinancesContent() {
   const canManage = isOwner || Boolean(permissions?.finances.manage);
   const { data: connect, isPending: connectPending } = useConnectStatus();
   const { data: summary } = usePaymentsSummary();
+  const openDashboard = useOpenExpressDashboard();
+  const canOpenStripeDashboard = Boolean(
+    isOwner &&
+      (summary?.canReceivePayments || connect?.detailsSubmitted),
+  );
 
   if (locked) {
     return <FinancesLockedCard isOwner={isOwner} />;
@@ -279,23 +310,55 @@ function FinancesContent() {
 
   return (
     <div className="space-y-10">
-      <div className="flex flex-wrap items-center gap-2">
-        {summary?.canReceivePayments ? (
-          <Badge variant="success">Conta ativa</Badge>
-        ) : (
-          <Badge variant="outline">Recebimentos indisponíveis</Badge>
-        )}
-        <p className="text-sm text-muted-foreground">
-          Resumo dos fundos e contribuições. Membros doam em{" "}
-          <Link
-            href={AUTH_ROUTES.tithesOfferings}
-            className="font-medium text-foreground underline underline-offset-2"
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          {summary?.canReceivePayments ? (
+            <Badge variant="success">Conta ativa</Badge>
+          ) : (
+            <Badge variant="outline">Recebimentos indisponíveis</Badge>
+          )}
+          <p className="text-sm text-muted-foreground">
+            Resumo dos fundos e contribuições. Membros doam em{" "}
+            <Link
+              href={AUTH_ROUTES.tithesOfferings}
+              className="font-medium text-foreground underline underline-offset-2"
+            >
+              Dízimos e ofertas
+            </Link>
+            .
+          </p>
+        </div>
+        {canOpenStripeDashboard ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className={stripeOutlineButtonClassName()}
+            disabled={openDashboard.isPending}
+            onClick={() => openDashboard.mutate()}
+            aria-label="Abrir painel Stripe"
           >
-            Dízimos e ofertas
-          </Link>
-          .
-        </p>
+            {openDashboard.isPending ? (
+              <Loader2 className="size-3.5 animate-spin text-stripe" aria-hidden />
+            ) : (
+              <>
+                <span>Painel</span>
+                <StripeWordmark size="md" title={false} />
+              </>
+            )}
+            {openDashboard.isPending ? "Abrindo…" : null}
+          </Button>
+        ) : null}
       </div>
+
+      {openDashboard.isError ? (
+        <FormAlert>
+          {resolvePaymentsError(
+            openDashboard.error,
+            "Não foi possível abrir o painel Stripe.",
+          )}
+        </FormAlert>
+      ) : null}
 
       <FinancesSummaryCards />
 

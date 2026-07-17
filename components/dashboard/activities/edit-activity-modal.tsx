@@ -25,6 +25,7 @@ import {
   PaidRegistrationReceivablesHint,
   usePaidEventRegistrationGate,
 } from "@/components/dashboard/activities/paid-registration-receivables-gate";
+import { StripeBrandInline } from "@/components/brand/stripe-mark";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FormAlert, FormField } from "@/components/ui/form-field";
@@ -537,9 +538,12 @@ export function EditActivityModal({
                       htmlFor={fieldIds.price}
                       error={fieldErrors.price}
                       hint={
-                        canChargePaidRegistration
-                          ? "Vazio = inscrição gratuita. Com valor, pagamento via Stripe Connect (mínimo R$ 5,00)."
-                          : undefined
+                        canChargePaidRegistration ? (
+                          <>
+                            Vazio = inscrição gratuita. Com valor, pagamento via{" "}
+                            <StripeBrandInline /> Connect (mínimo R$ 5,00).
+                          </>
+                        ) : undefined
                       }
                     >
                       <div className="relative">

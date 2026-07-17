@@ -7,7 +7,7 @@ import { DashboardPage } from "@/components/dashboard/dashboard-shell";
 export default function DashboardHomePage() {
   return (
     <RequirePermission permission="dashboard">
-      <DashboardPage title="Dashboard" className="max-w-7xl">
+      <DashboardPage title="Dashboard">
         <DashboardHomeContent />
       </DashboardPage>
     </RequirePermission>

@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { ChevronDown, Loader2, RefreshCw, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -12,8 +13,8 @@ export function SettingsSectionHeader({
   action,
 }: {
   title: string;
-  description?: string;
-  action?: React.ReactNode;
+  description?: ReactNode;
+  action?: ReactNode;
 }) {
   return (
     <div className="mb-5 flex items-start justify-between gap-3">
@@ -21,9 +22,9 @@ export function SettingsSectionHeader({
         <h2 className="text-lg font-semibold tracking-tight">
           {title}
         </h2>
-        {description && (
+        {description ? (
           <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-        )}
+        ) : null}
       </div>
       {action ? <div className="shrink-0">{action}</div> : null}
     </div>

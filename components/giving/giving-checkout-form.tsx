@@ -9,6 +9,7 @@ import {
 } from "@stripe/react-stripe-js";
 import { Loader2, ShieldCheck } from "lucide-react";
 
+import { StripeBrandInline } from "@/components/brand/stripe-mark";
 import {
   GivingShell,
   GivingTrustFooter,
@@ -195,8 +196,8 @@ export function GivingCheckoutForm({ fund }: { fund: PublicGivingFund }) {
           Nome e e-mail (se informados) ficam registrados para a igreja
           identificar a contribuição e, quando possível, enviar comprovante.
           A igreja é a controladora desses dados; o Minha Church opera a
-          plataforma. Cartão e dados de pagamento são tratados pelo Stripe.
-          Veja a{" "}
+          plataforma. Cartão e dados de pagamento são tratados pelo{" "}
+          <StripeBrandInline />. Veja a{" "}
           <a
             href={PUBLIC_ROUTES.privacy}
             target="_blank"
@@ -244,8 +245,8 @@ export function GivingCheckoutForm({ fund }: { fund: PublicGivingFund }) {
         <div className="flex items-start gap-3 text-muted-foreground lg:hidden">
           <ShieldCheck className="mt-0.5 size-4 shrink-0 text-[var(--giving-trust)]" />
           <p className="text-xs leading-relaxed">
-            Dados do cartão tratados pelo Stripe. A cobrança vai para a conta
-            da igreja.
+            Dados do cartão tratados pelo <StripeBrandInline />. A cobrança vai
+            para a conta da igreja.
           </p>
         </div>
 
@@ -330,8 +331,8 @@ function CheckoutPaymentStep({
         <div className="flex items-start gap-3 text-muted-foreground lg:hidden">
           <ShieldCheck className="mt-0.5 size-4 shrink-0 text-[var(--giving-trust)]" />
           <p className="text-xs leading-relaxed">
-            Dados do cartão tratados pelo Stripe. A cobrança vai para a conta
-            da igreja.
+            Dados do cartão tratados pelo <StripeBrandInline />. A cobrança vai
+            para a conta da igreja.
           </p>
         </div>
 

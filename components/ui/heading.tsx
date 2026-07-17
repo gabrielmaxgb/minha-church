@@ -3,10 +3,10 @@ import { cn } from "@/lib/utils";
 type HeadingLevel = "h1" | "h2" | "h3" | "h4";
 
 const styles: Record<HeadingLevel, string> = {
-  h1: "text-3xl font-semibold tracking-tight sm:text-4xl lg:text-[2.75rem] lg:leading-[1.1]",
-  h2: "text-xl font-semibold tracking-tight sm:text-2xl",
-  h3: "text-base font-semibold tracking-tight",
-  h4: "text-sm font-medium tracking-tight",
+  h1: "text-3xl font-semibold tracking-tight sm:text-4xl lg:text-[2.75rem] lg:leading-[1.2]",
+  h2: "text-xl font-semibold tracking-tight sm:text-2xl leading-snug",
+  h3: "text-base font-semibold tracking-tight leading-snug",
+  h4: "text-sm font-medium tracking-tight leading-snug",
 };
 
 interface HeadingProps extends React.HTMLAttributes<HTMLHeadingElement> {

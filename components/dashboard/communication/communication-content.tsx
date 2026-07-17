@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { HelpCircle, Inbox, Megaphone, Pin, Plus, SearchX } from "lucide-react";
 
+import { LockedFeatureHint } from "@/components/dashboard/locked-feature-hint";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -20,8 +21,6 @@ import {
 } from "@/lib/communication/announcement-filters";
 import { canManageCommunication } from "@/lib/permissions";
 import { useTrialWriteGuard } from "@/lib/subscription/use-trial-write-guard";
-import { LockedFeatureHint } from "@/components/dashboard/locked-feature-hint";
-import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 import type { Announcement } from "@/types/announcements";
 
@@ -119,12 +118,12 @@ export function CommunicationContent() {
             icon: Megaphone,
             title: "Nenhum comunicado ainda",
             description:
-              "Crie o primeiro comunicado para avisar a igreja ou ministérios específicos.",
+              "Crie o primeiro aviso para a igreja ou para um ministério.",
           }
         : {
             icon: Inbox,
-            title: "Sem comunicados por enquanto",
-            description: "Novos avisos da liderança aparecerão aqui.",
+            title: "Sem avisos por enquanto",
+            description: "Quando a liderança publicar, aparece aqui.",
           },
     [canManage],
   );
@@ -151,21 +150,18 @@ export function CommunicationContent() {
   const EmptyIcon = emptyState.icon;
 
   return (
-    <div className="space-y-5">
-      <div
-        className={cn(
-          "flex flex-wrap items-center gap-3",
-          canManage ? "justify-end" : "justify-between",
-        )}
-      >
-        {!canManage && (
+    <div className="space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
           <p className="text-sm text-muted-foreground">
-            Avisos da liderança para você.
+            {canManage
+              ? "Publique e acompanhe o que a igreja precisa saber."
+              : "Avisos da liderança para você."}
           </p>
-        )}
+        </div>
 
-        {canManage && (
-          <div className="flex flex-col items-end gap-1.5">
+        {canManage ? (
+          <div className="flex flex-col items-stretch gap-1.5 sm:items-end">
             <div className="flex items-center gap-2">
               <Button
                 type="button"
@@ -181,35 +177,35 @@ export function CommunicationContent() {
                 Novo aviso
               </Button>
             </div>
-            {writesBlocked && (
+            {writesBlocked ? (
               <LockedFeatureHint action="criar ou editar comunicados" />
-            )}
+            ) : null}
           </div>
-        )}
+        ) : null}
       </div>
 
       {activeQuery.isLoading ? (
         <div className="space-y-3">
-          <Skeleton className="h-28 w-full rounded-lg" />
-          <Skeleton className="h-28 w-full rounded-lg" />
-          <Skeleton className="h-28 w-full rounded-lg" />
+          <Skeleton className="h-11 w-full rounded-xl" />
+          <Skeleton className="h-28 w-full rounded-2xl" />
+          <Skeleton className="h-28 w-full rounded-2xl" />
         </div>
       ) : activeQuery.isError ? (
-        <div className="rounded-lg border border-destructive/25 bg-destructive/5 p-6 text-center text-sm text-destructive">
+        <div className="rounded-2xl border border-destructive/25 bg-destructive/5 p-6 text-center text-sm text-destructive">
           Não foi possível carregar os comunicados. Tente novamente.
         </div>
       ) : announcements.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-border/70 bg-muted/10 px-6 py-14 text-center">
-          <div className="flex size-12 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-            <EmptyIcon className="size-6" aria-hidden />
+        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border/80 bg-muted/10 px-6 py-14 text-center">
+          <div className="flex size-12 items-center justify-center rounded-2xl bg-domain-communication-subtle text-domain-communication-foreground">
+            <EmptyIcon className="size-5" aria-hidden />
           </div>
           <div>
-            <p className="font-medium">{emptyState.title}</p>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="font-medium text-foreground">{emptyState.title}</p>
+            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
               {emptyState.description}
             </p>
           </div>
-          {canManage && (
+          {canManage ? (
             <Button
               type="button"
               size="sm"
@@ -220,10 +216,10 @@ export function CommunicationContent() {
               <Plus className="size-4" />
               Criar aviso
             </Button>
-          )}
+          ) : null}
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-6">
           <AnnouncementFiltersBar
             announcements={announcements}
             filters={filters}
@@ -232,25 +228,28 @@ export function CommunicationContent() {
             onChange={setFilters}
           />
 
-          {activeFilterCount > 0 && (
-            <p className="px-0.5 text-xs text-muted-foreground">
+          {activeFilterCount > 0 ? (
+            <p className="text-xs text-muted-foreground">
               {filteredAnnouncements.length === announcements.length
-                ? `${announcements.length} comunicado${announcements.length === 1 ? "" : "s"}`
-                : `${filteredAnnouncements.length} de ${announcements.length} comunicado${announcements.length === 1 ? "" : "s"}`}
-              {pinnedAnnouncements.length > 0 &&
-                ` · ${pinnedAnnouncements.length} fixado${pinnedAnnouncements.length === 1 ? "" : "s"}`}
+                ? `${announcements.length} aviso${announcements.length === 1 ? "" : "s"}`
+                : `${filteredAnnouncements.length} de ${announcements.length}`}
+              {pinnedAnnouncements.length > 0
+                ? ` · ${pinnedAnnouncements.length} fixado${pinnedAnnouncements.length === 1 ? "" : "s"}`
+                : null}
             </p>
-          )}
+          ) : null}
 
           {filteredAnnouncements.length === 0 ? (
-            <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-border/70 bg-muted/10 px-6 py-12 text-center">
-              <div className="flex size-11 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+            <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border/80 bg-muted/10 px-6 py-12 text-center">
+              <div className="flex size-11 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
                 <SearchX className="size-5" aria-hidden />
               </div>
               <div>
-                <p className="font-medium">Nenhum comunicado encontrado</p>
+                <p className="font-medium text-foreground">
+                  Nenhum aviso encontrado
+                </p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Ajuste os filtros ou limpe a busca para ver mais resultados.
+                  Ajuste a busca ou limpe os filtros.
                 </p>
               </div>
               <Button
@@ -263,25 +262,29 @@ export function CommunicationContent() {
               </Button>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-8">
               {pinnedAnnouncements.length > 0 ? (
                 <section
                   aria-labelledby="pinned-announcements-heading"
-                  className="rounded-lg border border-primary/20 bg-primary/[0.04] p-3 sm:p-4"
+                  className="space-y-3"
                 >
-                  <header className="mb-3 flex items-center gap-2 px-0.5 sm:px-1">
-                    <span className="inline-flex size-6 items-center justify-center rounded-md bg-primary/12 text-primary">
+                  <header className="flex items-center gap-2.5">
+                    <span className="flex size-8 items-center justify-center rounded-lg bg-domain-communication-subtle text-domain-communication-foreground">
                       <Pin className="size-3.5" aria-hidden />
                     </span>
-                    <h2
-                      id="pinned-announcements-heading"
-                      className="text-xs font-semibold uppercase tracking-[0.12em] text-primary"
-                    >
-                      Fixados
-                    </h2>
-                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium tabular-nums text-primary">
-                      {pinnedAnnouncements.length}
-                    </span>
+                    <div className="min-w-0">
+                      <h2
+                        id="pinned-announcements-heading"
+                        className="text-sm font-semibold tracking-tight text-foreground"
+                      >
+                        Precisam da sua atenção
+                      </h2>
+                      <p className="text-xs text-muted-foreground">
+                        {pinnedAnnouncements.length === 1
+                          ? "1 aviso fixado"
+                          : `${pinnedAnnouncements.length} avisos fixados`}
+                      </p>
+                    </div>
                   </header>
 
                   <div className="space-y-2.5">
@@ -306,20 +309,23 @@ export function CommunicationContent() {
                       ? "recent-announcements-heading"
                       : undefined
                   }
+                  className="space-y-3"
                 >
                   {pinnedAnnouncements.length > 0 ? (
-                    <header className="mb-3 flex items-center gap-3">
+                    <header>
                       <h2
                         id="recent-announcements-heading"
-                        className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground"
+                        className="text-sm font-semibold tracking-tight text-foreground"
                       >
-                        Recentes
+                        Demais avisos
                       </h2>
-                      <div className="h-px flex-1 bg-border/70" aria-hidden />
+                      <p className="text-xs text-muted-foreground">
+                        Mais recentes primeiro
+                      </p>
                     </header>
                   ) : null}
 
-                  <div className="space-y-3">
+                  <div className="space-y-2.5">
                     {regularAnnouncements.map((announcement) => (
                       <AnnouncementCard
                         key={announcement.id}
@@ -338,20 +344,20 @@ export function CommunicationContent() {
         </div>
       )}
 
-      {canManage && (
+      {canManage ? (
         <AnnouncementDecisionGuide
           open={guideOpen}
           onClose={() => setGuideOpen(false)}
         />
-      )}
+      ) : null}
 
-      {canManage && (
+      {canManage ? (
         <AnnouncementComposerModal
           open={composerOpen}
           announcement={editing}
           onClose={() => setComposerOpen(false)}
         />
-      )}
+      ) : null}
 
       <ConfirmDeleteAnnouncementDialog
         announcement={toDelete}

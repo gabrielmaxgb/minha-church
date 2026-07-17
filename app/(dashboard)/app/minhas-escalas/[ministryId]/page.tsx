@@ -21,7 +21,6 @@ export default function MyScheduleMinistryPage() {
       <DashboardPage
         title={ministryName ?? "Minhas escalas"}
         subtitle="Calendário, disponibilidade e escalas confirmadas"
-        className="max-w-5xl"
       >
         <MyScheduleMinistryContent ministryId={ministryId} />
       </DashboardPage>

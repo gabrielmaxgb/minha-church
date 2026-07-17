@@ -67,7 +67,7 @@ export function SettingsContent({ area }: { area: SettingsArea }) {
   );
 
   return (
-    <div className="flex flex-col gap-6 lg:flex-row lg:gap-10">
+    <div className="flex flex-col gap-6 md:grid md:grid-cols-[14rem_minmax(0,1fr)] md:items-start md:gap-8">
       <SettingsNav
         items={navItems}
         active={active}

@@ -159,7 +159,14 @@ export function DashboardQuickActions({
             : "As tarefas mais comuns da secretaria"}
         </p>
       </div>
-      <ul className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+      <ul
+        className={cn(
+          "grid gap-2.5",
+          visibleActions.length === 1
+            ? "grid-cols-1"
+            : "grid-cols-1 sm:grid-cols-2",
+        )}
+      >
         {visibleActions.map((action) => {
           const content = (
             <>

@@ -16,8 +16,8 @@ export default function TithesOfferingsThanksPage({ searchParams }: PageProps) {
   const { donationId, rt } = use(searchParams);
 
   return (
-    <DashboardPage title="Contribuição" className="max-w-lg">
-      <div className="giving-root">
+    <DashboardPage title="Contribuição">
+      <div className="giving-root mx-auto max-w-lg">
         <GivingThanksPanel
           donationId={donationId}
           receiptToken={rt}

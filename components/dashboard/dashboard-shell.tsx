@@ -157,7 +157,9 @@ export function DashboardPage({
 }: DashboardPageProps) {
   return (
     <DashboardShell title={title} subtitle={subtitle}>
-      <div className={cn("mx-auto max-w-6xl", className)}>{children}</div>
+      <div className={cn("mx-auto w-full", className, "max-w-6xl")}>
+        {children}
+      </div>
     </DashboardShell>
   );
 }

@@ -10,7 +10,6 @@ export default function MySchedulesPage() {
       <DashboardPage
         title="Minhas escalas"
         subtitle="Escolha um ministério para ver calendário e escalas"
-        className="max-w-5xl"
       >
         <MyScheduleContent />
       </DashboardPage>

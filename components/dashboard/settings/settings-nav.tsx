@@ -1,8 +1,26 @@
 "use client";
 
 import { useMemo } from "react";
+import {
+  BadgeCheck,
+  Building2,
+  CreditCard,
+  HandCoins,
+  History,
+  KeyRound,
+  Layers,
+  Shield,
+  User,
+  UserPlus,
+  Users,
+  Wallet,
+  type LucideIcon,
+} from "lucide-react";
 
-import { cn } from "@/lib/utils";
+import {
+  SideRailNav,
+  type SideRailItem,
+} from "@/components/dashboard/side-rail-nav";
 import { canManageChurchMemberships } from "@/lib/church-memberships/constants";
 import { canManageChurchRoles } from "@/lib/permissions";
 import { useAuth } from "@/providers/auth-provider";
@@ -29,80 +47,106 @@ export interface SettingsNavItem {
   label: string;
   description: string;
   area: SettingsArea;
+  shortLabel?: string;
+  icon?: LucideIcon;
 }
 
 const ALL_ITEMS: SettingsNavItem[] = [
   {
     id: "general",
     label: "Geral",
-    description: "Dados e identificação da igreja",
+    shortLabel: "Geral",
+    description: "Dados da igreja",
     area: "church",
+    icon: Building2,
   },
   {
     id: "subscription",
     label: "Assinatura",
+    shortLabel: "Plano",
     description: "Plano e cobrança",
     area: "church",
+    icon: CreditCard,
   },
   {
     id: "recebimentos",
     label: "Recebimentos",
-    description: "Dízimos, doações e eventos",
+    shortLabel: "Receber",
+    description: "Dízimos e doações",
     area: "church",
+    icon: Wallet,
   },
   {
     id: "roles",
     label: "Cargos",
+    shortLabel: "Cargos",
     description: "Permissões por cargo",
     area: "church",
+    icon: Shield,
   },
   {
     id: "members",
     label: "Usuários",
+    shortLabel: "Usuários",
     description: "Acesso e cargos",
     area: "church",
+    icon: Users,
   },
   {
     id: "pending-users",
-    label: "Últimos usuários adicionados",
-    description: "Senhas temporárias pendentes",
+    label: "Últimos usuários",
+    shortLabel: "Pendentes",
+    description: "Senhas temporárias",
     area: "church",
+    icon: UserPlus,
   },
   {
     id: "password-reset-requests",
     label: "Solicitações de senha",
+    shortLabel: "Senhas",
     description: "Recuperação sem e-mail",
     area: "church",
+    icon: KeyRound,
   },
   {
     id: "activity",
     label: "Atividade",
+    shortLabel: "Atividade",
     description: "Histórico de mudanças",
     area: "church",
+    icon: History,
   },
   {
     id: "profile",
     label: "Perfil",
+    shortLabel: "Perfil",
     description: "Seus dados pessoais",
     area: "user",
+    icon: User,
   },
   {
     id: "my-roles",
     label: "Meus cargos",
+    shortLabel: "Cargos",
     description: "Igreja e ministérios",
     area: "user",
+    icon: BadgeCheck,
   },
   {
     id: "my-contributions",
     label: "Minhas contribuições",
-    description: "Ofertas e doações que você fez",
+    shortLabel: "Doações",
+    description: "Ofertas e doações",
     area: "user",
+    icon: HandCoins,
   },
   {
     id: "ministries",
     label: "Funções de serviço",
-    description: "Onde você pode servir na escala",
+    shortLabel: "Servir",
+    description: "Onde você pode servir",
     area: "user",
+    icon: Layers,
   },
 ];
 
@@ -151,8 +195,6 @@ export function useSettingsNav(
           );
         }
 
-        // Conta travada: manter só Assinatura (para reativar) e Geral
-        // (leitura), e apenas para quem pode acessar as configs da igreja.
         if (!canAccessChurchSettings) {
           return false;
         }
@@ -217,27 +259,22 @@ export function SettingsNav({
   active: SettingsSection;
   onChange: (section: SettingsSection) => void;
 }) {
+  const railItems: SideRailItem<SettingsSection>[] = items.map((item) => ({
+    id: item.id,
+    label: item.label,
+    shortLabel: item.shortLabel ?? item.label,
+    hint: item.description,
+    icon: item.icon,
+  }));
+
   return (
-    <nav className="flex shrink-0 flex-col gap-0.5 sm:w-48">
-      {items.map((item) => (
-        <button
-          key={item.id}
-          type="button"
-          onClick={() => onChange(item.id)}
-          className={cn(
-            "rounded-lg px-3 py-2.5 text-left transition-colors",
-            active === item.id
-              ? "bg-muted text-foreground"
-              : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
-          )}
-        >
-          <span className="block text-sm font-medium">{item.label}</span>
-          <span className="mt-0.5 block text-xs opacity-80">
-            {item.description}
-          </span>
-        </button>
-      ))}
-    </nav>
+    <SideRailNav
+      items={railItems}
+      active={active}
+      onChange={onChange}
+      tone="settings"
+      ariaLabel="Seções de configurações"
+    />
   );
 }
 
@@ -246,7 +283,11 @@ export function getDefaultSection(
   area: SettingsArea,
 ): SettingsSection {
   if (area === "user") {
-    return items.find((item) => item.id === "profile")?.id ?? items[0]?.id ?? "profile";
+    return (
+      items.find((item) => item.id === "profile")?.id ??
+      items[0]?.id ??
+      "profile"
+    );
   }
 
   return (

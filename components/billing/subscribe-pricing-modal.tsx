@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Check, CreditCard, Loader2, Sparkles, X } from "lucide-react";
+import { Check, Loader2, Sparkles, X } from "lucide-react";
 
+import { StripeBrandInline, StripeMarkIcon } from "@/components/brand/stripe-mark";
 import { BusyOverlay } from "@/components/ui/busy-overlay";
 import { Button } from "@/components/ui/button";
 import {
@@ -189,10 +190,13 @@ export function SubscribePricingModal({
       >
         <BusyOverlay
           active={loading}
-          icon={CreditCard}
+          icon={StripeMarkIcon}
           steps={[
             "Abrindo o checkout seguro...",
-            "Redirecionando ao Stripe...",
+            <>
+              Redirecionando ao <StripeBrandInline />
+              ...
+            </>,
           ]}
           hint="Você será levado à página de pagamento em instantes."
         />

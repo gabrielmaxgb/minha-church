@@ -23,7 +23,6 @@ export default function ChangePasswordPage() {
     <DashboardPage
       title="Alterar senha"
       subtitle="Atualize sua senha de acesso"
-      className="max-w-4xl"
     >
       <ChangePasswordContent variant="voluntary" />
     </DashboardPage>

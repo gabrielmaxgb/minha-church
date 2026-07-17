@@ -9,6 +9,7 @@ import {
 } from "@stripe/react-stripe-js";
 import { Loader2, ShieldCheck, X } from "lucide-react";
 
+import { StripeBrandInline } from "@/components/brand/stripe-mark";
 import {
   GivingShell,
   GivingTrustFooter,
@@ -256,8 +257,9 @@ export function MemberGivingCheckoutDialog({
                 <div className="flex items-start gap-3 text-muted-foreground lg:hidden">
                   <ShieldCheck className="mt-0.5 size-4 shrink-0 text-[var(--giving-trust)]" />
                   <p className="text-xs leading-relaxed">
-                    Dados do cartão tratados pelo Stripe. A cobrança vai para a
-                    conta da igreja, com registro na sua ficha.
+                    Dados do cartão tratados pelo <StripeBrandInline />. A
+                    cobrança vai para a conta da igreja, com registro na sua
+                    ficha.
                   </p>
                 </div>
 
@@ -348,8 +350,8 @@ function MemberPaymentStep({
         <div className="flex items-start gap-3 text-muted-foreground lg:hidden">
           <ShieldCheck className="mt-0.5 size-4 shrink-0 text-[var(--giving-trust)]" />
           <p className="text-xs leading-relaxed">
-            Dados do cartão tratados pelo Stripe. A cobrança vai para a conta
-            da igreja, com registro na sua ficha.
+            Dados do cartão tratados pelo <StripeBrandInline />. A cobrança vai
+            para a conta da igreja, com registro na sua ficha.
           </p>
         </div>
 

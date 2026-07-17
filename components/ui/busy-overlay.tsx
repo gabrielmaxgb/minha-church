@@ -1,6 +1,11 @@
 "use client";
 
-import { useEffect, useState, type ComponentType } from "react";
+import {
+  useEffect,
+  useState,
+  type ComponentType,
+  type ReactNode,
+} from "react";
 import { Loader2 } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
@@ -8,9 +13,9 @@ import { cn } from "@/lib/utils";
 
 export interface BusyOverlayProps {
   active: boolean;
-  steps: readonly string[];
+  steps: readonly ReactNode[];
   icon?: ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
-  hint?: string;
+  hint?: string | ReactNode;
   /** `contained` cobre o pai `relative`; `fullscreen` cobre a viewport. */
   variant?: "contained" | "fullscreen";
   stepIntervalMs?: number;
@@ -90,7 +95,7 @@ export function BusyOverlay({
             <AnimatePresence mode="wait">
               <motion.span
                 key={stepIndex}
-                className="text-center"
+                className="inline-flex items-center justify-center gap-1.5 text-center"
                 initial={shouldReduceMotion ? false : { opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={shouldReduceMotion ? undefined : { opacity: 0, y: -4 }}

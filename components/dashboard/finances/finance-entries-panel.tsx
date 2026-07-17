@@ -292,7 +292,7 @@ export function FinanceEntriesPanel({ embedded = false }: { embedded?: boolean }
       ) : (
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-sm text-muted-foreground">
-            Lançamentos manuais de entrada e saída.
+            Lançamentos manuais de entrada e saída. Registre aqui as entradas e saídas que não foram feitas através do sistema de contribuições online.
           </p>
           <div className="flex flex-wrap items-center gap-2">
             <Button type="button" variant="outline" size="sm" onClick={openCreate}>
@@ -318,7 +318,7 @@ export function FinanceEntriesPanel({ embedded = false }: { embedded?: boolean }
       )}
 
       {summary ? (
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
           <div className="rounded-xl border border-border bg-card px-4 py-3">
             <p className="text-xs text-muted-foreground">Entradas manuais</p>
             <p className="mt-1 font-medium tabular-nums text-foreground">
@@ -329,6 +329,12 @@ export function FinanceEntriesPanel({ embedded = false }: { embedded?: boolean }
             <p className="text-xs text-muted-foreground">Contribuições online</p>
             <p className="mt-1 font-medium tabular-nums text-foreground">
               {formatCurrency(summary.onlineDonationCents / 100)}
+            </p>
+          </div>
+          <div className="rounded-xl border border-border bg-card px-4 py-3">
+            <p className="text-xs text-muted-foreground">Inscrições pagas</p>
+            <p className="mt-1 font-medium tabular-nums text-foreground">
+              {formatCurrency((summary.eventTicketCents ?? 0) / 100)}
             </p>
           </div>
           <div className="rounded-xl border border-border bg-card px-4 py-3">

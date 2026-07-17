@@ -38,7 +38,6 @@ export default function MinistryDetailPage() {
       <DashboardPage
         title={ministry?.name ?? "Ministério"}
         subtitle="Configurações do ministério"
-        className="max-w-5xl"
       >
         <MinistryDetailContent ministryId={ministryId} />
       </DashboardPage>

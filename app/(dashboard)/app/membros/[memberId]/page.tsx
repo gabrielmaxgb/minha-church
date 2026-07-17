@@ -20,7 +20,6 @@ export default function MemberDetailPage() {
         subtitle={
           member ? MEMBER_STATUS_LABELS[member.status] : "Cadastro e histórico pastoral"
         }
-        className="max-w-4xl"
       >
         <MemberDetailContent memberId={memberId} />
       </DashboardPage>

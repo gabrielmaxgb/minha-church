@@ -225,6 +225,53 @@ export async function openExpressDashboard(
   );
 }
 
+export type ConnectPayoutStatus =
+  | "paid"
+  | "pending"
+  | "in_transit"
+  | "canceled"
+  | "failed";
+
+export interface ConnectPayout {
+  id: string;
+  amountCents: number;
+  currency: string;
+  status: ConnectPayoutStatus;
+  arrivalDate: string;
+  createdAt: string;
+  method: string;
+  description: string | null;
+  failureMessage: string | null;
+}
+
+export interface ConnectBalanceAmount {
+  amountCents: number;
+  currency: string;
+}
+
+export interface ConnectPayoutsOverview {
+  payoutsEnabled: boolean;
+  available: ConnectBalanceAmount[];
+  pending: ConnectBalanceAmount[];
+  payouts: ConnectPayout[];
+  hasMore: boolean;
+}
+
+export async function fetchConnectPayoutsOverview(
+  churchId: string,
+  options?: { limit?: number },
+): Promise<ConnectPayoutsOverview> {
+  const search = new URLSearchParams();
+  if (options?.limit) {
+    search.set("limit", String(options.limit));
+  }
+  const qs = search.toString();
+  return apiClient<ConnectPayoutsOverview>(
+    `/churches/${churchId}/payments/connect/payouts${qs ? `?${qs}` : ""}`,
+    { churchId },
+  );
+}
+
 export async function syncConnectAccount(
   churchId: string,
 ): Promise<ConnectStatus> {
@@ -592,6 +639,112 @@ export async function downloadGivingDonationsCsv(
   URL.revokeObjectURL(url);
 }
 
+export interface EventTicketPurchase {
+  id: string;
+  eventId: string;
+  eventName: string;
+  amountCents: number;
+  currency: string;
+  status: string;
+  buyerName: string | null;
+  buyerEmail: string | null;
+  memberId: string | null;
+  memberName: string | null;
+  createdAt: string;
+}
+
+export interface EventTicketPurchaseList {
+  items: EventTicketPurchase[];
+  page: number;
+  limit: number;
+  total: number;
+}
+
+export interface FetchEventTicketPurchasesParams {
+  eventId?: string;
+  status?: string;
+  memberId?: string;
+  from?: string;
+  to?: string;
+  page?: number;
+  limit?: number;
+}
+
+function toEventTicketsQuery(
+  params?: FetchEventTicketPurchasesParams,
+): string {
+  if (!params) {
+    return "";
+  }
+
+  const search = new URLSearchParams();
+  if (params.eventId) search.set("eventId", params.eventId);
+  if (params.status) search.set("status", params.status);
+  if (params.memberId) search.set("memberId", params.memberId);
+  if (params.from) search.set("from", params.from);
+  if (params.to) search.set("to", params.to);
+  if (params.page) search.set("page", String(params.page));
+  if (params.limit) search.set("limit", String(params.limit));
+  const qs = search.toString();
+  return qs ? `?${qs}` : "";
+}
+
+export async function fetchEventTicketPurchases(
+  churchId: string,
+  params?: FetchEventTicketPurchasesParams,
+): Promise<EventTicketPurchaseList> {
+  return apiClient<EventTicketPurchaseList>(
+    `/churches/${churchId}/payments/event-tickets${toEventTicketsQuery(params)}`,
+    { churchId },
+  );
+}
+
+export async function refundEventTicketPurchase(
+  churchId: string,
+  ticketId: string,
+): Promise<EventTicketPurchase> {
+  return apiClient<EventTicketPurchase>(
+    `/churches/${churchId}/payments/event-tickets/${ticketId}/refund`,
+    {
+      method: "POST",
+      body: JSON.stringify({}),
+      churchId,
+    },
+  );
+}
+
+export async function downloadEventTicketPurchasesCsv(
+  churchId: string,
+  params?: FetchEventTicketPurchasesParams,
+): Promise<void> {
+  const baseURL = process.env.NEXT_PUBLIC_API_URL?.trim();
+  if (!baseURL) {
+    throw new Error("NEXT_PUBLIC_API_URL não configurada.");
+  }
+
+  const response = await fetch(
+    `${baseURL}/churches/${churchId}/payments/event-tickets/export${toEventTicketsQuery(params)}`,
+    {
+      credentials: "include",
+      headers: { "X-Church-Id": churchId },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error("Não foi possível exportar as inscrições pagas.");
+  }
+
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = "inscricoes-pagas.csv";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}
+
 export async function fetchMyGivingDonations(
   churchId: string,
 ): Promise<GivingDonation[]> {
@@ -633,6 +786,8 @@ export interface FinanceEntriesSummary {
   expenseCents: number;
   balanceCents: number;
   onlineDonationCents: number;
+  /** Presente após o backend passar a agregar inscrições pagas. */
+  eventTicketCents?: number;
 }
 
 export interface FetchFinanceEntriesParams {
