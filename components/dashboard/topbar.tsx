@@ -55,7 +55,7 @@ export function DashboardTopbar({
       : church?.name;
 
   return (
-    <header className="z-20 shrink-0 border-b border-border bg-background">
+    <header className="sticky top-0 z-30 shrink-0 border-b border-border bg-background pt-[env(safe-area-inset-top,0px)]">
       <div className="flex h-14 items-center justify-between gap-4 px-4 sm:px-6">
         <div className="flex min-w-0 items-center gap-3">
           <Button

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { DM_Sans, Geist_Mono, Syne } from "next/font/google";
 
 import { AuthProvider } from "@/providers/auth-provider";
@@ -32,6 +32,13 @@ export const metadata: Metadata = {
     apple: [{ url: icon.src, type: "image/png" }],
     shortcut: icon.src,
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#f5f5f2",
 };
 
 export default function RootLayout({
