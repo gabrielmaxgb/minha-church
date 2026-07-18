@@ -95,6 +95,15 @@
   --relation-step-parent: var(--attention);
   --relation-parent-in-law: #9a6b52;
   --relation-uncle: var(--ring);
+
+  /* Mobile shell — bottom nav (3.5rem) + home indicator */
+  --mobile-nav-offset: 0px;
+}
+
+@media (max-width: 1023px) {
+  :root {
+    --mobile-nav-offset: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 .dark {

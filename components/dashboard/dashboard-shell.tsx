@@ -6,12 +6,14 @@ import { usePathname, useRouter } from "next/navigation";
 import { CheckoutReturnHandler } from "@/components/billing/checkout-return-handler";
 import { TierCrossingOwnerHost } from "@/components/billing/tier-crossing-owner-host";
 import { ChurchSwitchOverlay } from "@/components/dashboard/church-switch-overlay";
+import { MobileBottomNav } from "@/components/dashboard/mobile-bottom-nav";
 import { OnboardingChecklistProvider } from "@/components/dashboard/onboarding/onboarding-checklist-context";
 import { RolePreviewBanner } from "@/components/dashboard/role-preview-banner";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
 import { SystemBannersHost } from "@/components/dashboard/system-banners-host";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { DashboardContentMotion } from "@/components/motion/dashboard-motion";
+import { PwaInstallPrompt } from "@/components/pwa/install-prompt";
 import { AUTH_ROUTES } from "@/constants/routes";
 import { useRequireAuth } from "@/providers/auth-provider";
 import { cn } from "@/lib/utils";
@@ -108,7 +110,7 @@ export function DashboardShell({
         {variant === "full" ? (
           <main
             className={cn(
-              "dashboard-canvas flex min-h-0 flex-1 flex-col overflow-hidden",
+              "dashboard-canvas flex min-h-0 flex-1 flex-col overflow-hidden pb-(--mobile-nav-offset) lg:pb-0",
               isSwitchingChurch && "opacity-60",
             )}
           >
@@ -122,7 +124,7 @@ export function DashboardShell({
         ) : (
           <main
             className={cn(
-              "dashboard-canvas min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 sm:py-8",
+              "dashboard-canvas min-h-0 flex-1 overflow-y-auto px-4 py-6 pb-[calc(1.5rem+var(--mobile-nav-offset))] sm:px-6 sm:py-8 lg:pb-8",
               isSwitchingChurch && "opacity-60",
             )}
           >
@@ -131,6 +133,12 @@ export function DashboardShell({
           </main>
         )}
       </div>
+
+      <MobileBottomNav
+        onOpenMore={() => setSidebarOpen(true)}
+        moreOpen={sidebarOpen}
+      />
+      <PwaInstallPrompt />
       </div>
 
       <Suspense fallback={null}>

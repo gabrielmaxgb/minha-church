@@ -180,8 +180,8 @@ export function MyScheduleCalendar({
         </span>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
-        <div className="overflow-hidden rounded-lg border border-border/70 bg-card">
+      <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <div className="order-2 overflow-hidden rounded-lg border border-border/70 bg-card lg:order-1">
           <div className="grid grid-cols-7 border-b border-border/60 bg-muted/30">
             {getWeekdayLabels().map((label) => (
               <div
@@ -212,13 +212,13 @@ export function MyScheduleCalendar({
                   type="button"
                   onClick={() => setSelectedDateKey(dateKey)}
                   className={cn(
-                    "min-h-[5.5rem] border-b border-r border-border/40 p-1.5 text-left transition-colors sm:min-h-[6.5rem] sm:p-2",
+                    "min-h-11 border-b border-r border-border/40 p-1 text-left transition-colors sm:min-h-[5.5rem] sm:p-1.5 md:min-h-[6.5rem] md:p-2",
                     !inMonth && "bg-muted/20 text-muted-foreground/70",
                     selected && "bg-primary/8 ring-1 ring-inset ring-primary/25",
                     !selected && inMonth && "hover:bg-muted/40",
                   )}
                 >
-                  <div className="mb-1 flex items-center justify-between gap-1">
+                  <div className="mb-0.5 flex items-center justify-between gap-1 sm:mb-1">
                     <span
                       className={cn(
                         "inline-flex size-6 items-center justify-center rounded-full text-xs font-semibold",
@@ -270,7 +270,7 @@ export function MyScheduleCalendar({
                     )}
                   </div>
 
-                  <div className="mt-1 flex flex-wrap gap-0.5 sm:hidden">
+                  <div className="mt-0.5 flex flex-wrap justify-center gap-0.5 sm:mt-1 sm:justify-start sm:hidden">
                     {dotKinds.has("assigned") && (
                       <span className="size-1.5 rounded-full bg-success" />
                     )}
@@ -290,7 +290,7 @@ export function MyScheduleCalendar({
           </div>
         </div>
 
-        <aside className="rounded-lg border border-border/70 bg-card p-4">
+        <aside className="order-1 rounded-lg border border-border/70 bg-card p-4 lg:order-2">
           <div className="mb-3">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Seu dia

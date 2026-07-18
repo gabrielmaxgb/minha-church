@@ -244,8 +244,11 @@ export function ActivityCalendar({
           <span className="size-2.5 rounded-full bg-muted-foreground" />
           Ministério
         </span>
-        <span className="text-muted-foreground/80">
+        <span className="hidden text-muted-foreground/80 sm:inline">
           Clique no dia para ver a agenda e datas disponíveis.
+        </span>
+        <span className="sm:hidden text-muted-foreground/80">
+          Toque no dia para ver a agenda.
         </span>
       </div>
 
@@ -255,8 +258,8 @@ export function ActivityCalendar({
         </div>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
-        <div className="overflow-hidden rounded-xl border border-border/70 bg-card">
+      <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <div className="order-2 overflow-hidden rounded-xl border border-border/70 bg-card lg:order-1">
           <div className="grid grid-cols-7 border-b border-border/60 bg-muted/30">
             {getWeekdayLabels().map((label) => (
               <div
@@ -273,10 +276,10 @@ export function ActivityCalendar({
               {Array.from({ length: 42 }).map((_, index) => (
                 <div
                   key={index}
-                  className="min-h-[5.5rem] border-b border-r border-border/40 p-2"
+                  className="min-h-11 border-b border-r border-border/40 p-1 sm:min-h-[5.5rem] sm:p-2"
                 >
                   <Skeleton className="mb-2 h-4 w-6" />
-                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="hidden h-4 w-full sm:block" />
                 </div>
               ))}
             </div>
@@ -300,13 +303,13 @@ export function ActivityCalendar({
                     type="button"
                     onClick={() => setSelectedDateKey(dateKey)}
                     className={cn(
-                      "min-h-[5.5rem] border-b border-r border-border/40 p-1.5 text-left transition-colors sm:min-h-[6.5rem] sm:p-2",
+                      "min-h-11 border-b border-r border-border/40 p-1 text-left transition-colors sm:min-h-[5.5rem] sm:p-1.5 md:min-h-[6.5rem] md:p-2",
                       !inMonth && "bg-muted/20 text-muted-foreground/70",
                       selected && "bg-primary/8 ring-1 ring-inset ring-primary/25",
                       !selected && inMonth && "hover:bg-muted/40",
                     )}
                   >
-                    <div className="mb-1 flex items-center justify-between gap-1">
+                    <div className="mb-0.5 flex items-center justify-between gap-1 sm:mb-1">
                       <span
                         className={cn(
                           "inline-flex size-6 items-center justify-center rounded-full text-xs font-semibold",
@@ -349,7 +352,7 @@ export function ActivityCalendar({
                       )}
                     </div>
 
-                    <div className="mt-1 flex flex-wrap gap-0.5 sm:hidden">
+                    <div className="mt-0.5 flex flex-wrap justify-center gap-0.5 sm:mt-1 sm:justify-start sm:hidden">
                       {dayEvents.slice(0, 4).map((event) => (
                         <span
                           key={event.id}
@@ -367,7 +370,7 @@ export function ActivityCalendar({
           )}
         </div>
 
-        <aside className="rounded-xl border border-border/70 bg-card p-4">
+        <aside className="order-1 rounded-xl border border-border/70 bg-card p-4 lg:order-2">
           <div className="mb-3 flex items-start justify-between gap-2">
             <div className="min-w-0">
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">

@@ -381,7 +381,7 @@ export function MembersContent() {
                 type="button"
                 onClick={() => setStatus(filter.value)}
                 className={cn(
-                  "rounded-full border px-3 py-1.5 text-sm transition-colors",
+                  "min-h-11 rounded-full border px-3.5 py-2 text-sm transition-colors",
                   status === filter.value
                     ? "border-foreground bg-foreground text-background"
                     : "border-border text-muted-foreground hover:text-foreground",
@@ -397,7 +397,7 @@ export function MembersContent() {
               aria-label="Filtrar por família"
               value={familyId}
               onChange={(event) => setFamilyId(event.target.value)}
-              className="w-full sm:w-48 [&_button]:h-8 [&_button]:rounded-full [&_button]:py-0"
+              className="w-full sm:w-48 [&_button]:h-11 [&_button]:rounded-full [&_button]:py-0"
             >
               <option value="all">Todas as famílias</option>
               <option value="none">Sem família</option>
@@ -413,7 +413,7 @@ export function MembersContent() {
               onClick={() => setGroupByFamily((current) => !current)}
               aria-pressed={groupByFamily}
               className={cn(
-                "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-sm transition-colors",
+                "inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-sm transition-colors",
                 groupByFamily
                   ? "border-foreground bg-foreground text-background"
                   : "border-border text-muted-foreground hover:text-foreground",
@@ -424,7 +424,7 @@ export function MembersContent() {
             </button>
 
             {familyId !== "all" && familyId !== "none" && (
-              <Button size="sm" variant="outline" asChild className="h-8 shrink-0 rounded-full">
+              <Button size="sm" variant="outline" asChild className="h-11 shrink-0 rounded-full">
                 <Link href={familyGraphPath(familyId)}>
                   <Network className="size-4" />
                   Ver grafo

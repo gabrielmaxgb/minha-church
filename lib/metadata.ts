@@ -24,6 +24,7 @@ export const defaultMetadata: Metadata = {
     template: `%s | ${siteConfig.name}`,
   },
   description: siteConfig.description,
+  applicationName: siteConfig.name,
   openGraph: {
     type: "website",
     locale: "pt_BR",

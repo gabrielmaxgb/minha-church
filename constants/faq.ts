@@ -7,7 +7,7 @@ export const generalFaq: FaqItem[] = [
 	{
 		question: "Preciso instalar algo?",
 		answer:
-			"Não. O Minha Church funciona 100% no navegador — acesse de qualquer computador, tablet ou celular, sem instalação.",
+			"Não é obrigatório. O Minha Church funciona no navegador. No celular, você também pode instalar como app (atalho na tela inicial) — o próprio painel oferece a opção, ou use “Adicionar à Tela de Início” no Safari/Chrome. Sem App Store.",
 	},
 	{
 		question: "Posso importar meus membros de uma planilha?",

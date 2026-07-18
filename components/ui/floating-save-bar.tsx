@@ -18,7 +18,7 @@ export interface FloatingSaveBarProps {
 
 /**
  * Discord-style floating save bar — fixed to the viewport bottom when the form is dirty.
- * Accounts for the desktop sidebar width (`lg:w-56`).
+ * Accounts for the desktop sidebar width (`lg:w-60`) and mobile bottom nav + safe area.
  */
 export function FloatingSaveBar({
   visible,
@@ -51,14 +51,18 @@ export function FloatingSaveBar({
 
   return (
     <>
-      {/* Keeps the last form fields above the fixed bar */}
-      <div className="h-20 w-full shrink-0" aria-hidden />
+      {/* Keeps the last form fields above the fixed bar + mobile nav */}
+      <div
+        className="h-20 w-full shrink-0 lg:h-20"
+        style={{ marginBottom: "var(--mobile-nav-offset, 0px)" }}
+        aria-hidden
+      />
       {mounted
         ? createPortal(
             <div
               className={cn(
-                "pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center p-3 sm:p-4",
-                "lg:pl-56",
+                "pointer-events-none fixed inset-x-0 z-40 flex justify-center p-3 sm:p-4",
+                "bottom-[var(--mobile-nav-offset,0px)] lg:bottom-0 lg:pl-60",
                 className,
               )}
               role="status"

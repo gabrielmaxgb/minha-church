@@ -60,6 +60,7 @@ import {
 } from "@/lib/notifications/inbox-notifications";
 import { canManageMembers } from "@/lib/permissions";
 import { pendingNotificationStyles } from "@/lib/ui/notification-styles";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn, formatDateTime } from "@/lib/utils";
 import { useAuth, useTenant } from "@/providers/auth-provider";
 import type { InboxNotificationType } from "@/types/notifications";
@@ -148,11 +149,14 @@ function NotificationsPanel({
   onClose,
   titleId,
   anchorRect,
+  sheet,
 }: {
   open: boolean;
   onClose: () => void;
   titleId: string;
   anchorRect: DOMRect | null;
+  /** Bottom sheet on small screens (PWA / phone). */
+  sheet: boolean;
 }) {
   const { permissions, user } = useAuth();
   const { churchId } = useTenant();
@@ -301,14 +305,16 @@ function NotificationsPanel({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [open, onClose]);
 
-  if (!open || !anchorRect) {
+  if (!open || (!sheet && !anchorRect)) {
     return null;
   }
 
-  const panelStyle = {
-    top: anchorRect.bottom + 8,
-    right: Math.max(16, window.innerWidth - anchorRect.right),
-  };
+  const panelStyle = sheet
+    ? undefined
+    : {
+        top: (anchorRect?.bottom ?? 0) + 8,
+        right: Math.max(16, window.innerWidth - (anchorRect?.right ?? 0)),
+      };
 
   return createPortal(
     <>
@@ -325,11 +331,17 @@ function NotificationsPanel({
         aria-labelledby={titleId}
         style={panelStyle}
         className={cn(
-          "fixed z-50 flex w-[min(calc(100vw-2rem),22rem)] flex-col",
-          "rounded-xl border border-border/80 bg-surface-elevated shadow-elevated",
-          "max-h-[min(70dvh,28rem)]",
+          "fixed z-50 flex flex-col border border-border/80 bg-surface-elevated shadow-elevated",
+          sheet
+            ? "inset-x-0 bottom-0 max-h-[min(88dvh,36rem)] rounded-t-2xl pb-[env(safe-area-inset-bottom,0px)]"
+            : "w-[min(calc(100vw-2rem),22rem)] max-h-[min(70dvh,28rem)] rounded-xl",
         )}
       >
+        {sheet ? (
+          <div className="flex justify-center pt-2.5" aria-hidden>
+            <span className="h-1 w-10 rounded-full bg-border" />
+          </div>
+        ) : null}
         <header className="shrink-0 border-b border-border/70 px-4 py-3">
           <h2 id={titleId} className="text-sm font-semibold">
             Notificações
@@ -727,13 +739,15 @@ export function NotificationsBell() {
   const titleId = useId();
   const buttonRef = useRef<HTMLButtonElement>(null);
   const { churchId } = useTenant();
+  const isMobile = useMediaQuery("(max-width: 1023px)");
   const [open, setOpen] = useState(false);
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
   const count = useNotificationCount();
   const hasNotifications = count > 0;
+  const useSheet = isMobile;
 
   useEffect(() => {
-    if (!open) {
+    if (!open || useSheet) {
       return;
     }
 
@@ -751,7 +765,7 @@ export function NotificationsBell() {
       window.removeEventListener("resize", updatePosition);
       window.removeEventListener("scroll", updatePosition, true);
     };
-  }, [open]);
+  }, [open, useSheet]);
 
   // Todo membro com igreja selecionada vê o sininho (comunicação da igreja).
   if (!churchId) {
@@ -759,7 +773,7 @@ export function NotificationsBell() {
   }
 
   function handleToggle() {
-    if (!open && buttonRef.current) {
+    if (!open && !useSheet && buttonRef.current) {
       setAnchorRect(buttonRef.current.getBoundingClientRect());
     }
 
@@ -800,6 +814,7 @@ export function NotificationsBell() {
         onClose={() => setOpen(false)}
         titleId={titleId}
         anchorRect={anchorRect}
+        sheet={useSheet}
       />
     </>
   );

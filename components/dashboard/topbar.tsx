@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronDown, Church, LogOut, Menu, User } from "lucide-react";
+import { ChevronDown, Church, LogOut, User } from "lucide-react";
 import { useState } from "react";
 
-import { Button } from "@/components/ui/button";
 import { NotificationsBell } from "@/components/dashboard/notifications-bell";
 import { OnboardingHeaderButton } from "@/components/dashboard/onboarding/onboarding-header-button";
 import { TrialStatusHeaderChip } from "@/components/dashboard/trial-status-header-chip";
@@ -18,6 +17,7 @@ import { cn } from "@/lib/utils";
 interface DashboardTopbarProps {
   title: string;
   subtitle?: string;
+  /** @deprecated Mobile usa bottom nav "Mais"; mantido por compat. */
   onOpenSidebar?: () => void;
 }
 
@@ -33,7 +33,6 @@ function getInitials(name: string) {
 export function DashboardTopbar({
   title,
   subtitle,
-  onOpenSidebar,
 }: DashboardTopbarProps) {
   const {
     user,
@@ -54,48 +53,45 @@ export function DashboardTopbar({
       ? `${church.name} · ${formatMemberCountLabel(church.memberCount)}`
       : church?.name;
 
-  return (
-    <header className="z-20 shrink-0 border-b border-border bg-background">
-      <div className="flex h-14 items-center justify-between gap-4 px-4 sm:px-6">
-        <div className="flex min-w-0 items-center gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="lg:hidden"
-            onClick={onOpenSidebar}
-            aria-label="Abrir menu"
-          >
-            <Menu className="size-4" />
-          </Button>
+  const canSwitchChurch = churches.length > 1;
 
-          <div className="min-w-0">
-            <h1 className="truncate text-base font-medium tracking-tight text-foreground">
-              {title}
-            </h1>
-            {subtitle && (
-              <p className="truncate text-xs text-muted-foreground">
-                {subtitle}
-              </p>
-            )}
-          </div>
+  return (
+    <header
+      className="z-20 shrink-0 border-b border-border bg-background"
+      style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
+    >
+      <div className="flex h-14 items-center justify-between gap-3 px-4 sm:gap-4 sm:px-6">
+        <div className="min-w-0 flex-1">
+          <h1 className="truncate text-base font-medium tracking-tight text-foreground">
+            {title}
+          </h1>
+          {subtitle && (
+            <p className="truncate text-xs text-muted-foreground">
+              {subtitle}
+            </p>
+          )}
         </div>
 
-        <div className="flex h-9 items-center gap-1.5 sm:gap-2">
+        <div className="flex h-9 shrink-0 items-center gap-1.5 sm:gap-2">
           <TrialStatusHeaderChip />
           <NotificationsBell />
           <OnboardingHeaderButton />
 
           {church && (
-            <div className="relative hidden h-9 min-w-0 sm:block">
+            <div className="relative h-9 min-w-0">
               <button
                 type="button"
                 onClick={() => setChurchMenuOpen((prev) => !prev)}
-                disabled={isSwitchingChurch}
-                className="inline-flex h-9 max-w-[15rem] items-center gap-2 rounded-lg border border-border bg-card px-2.5 text-left transition-colors duration-150 hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60 lg:max-w-[17rem]"
+                disabled={isSwitchingChurch || !canSwitchChurch}
+                className={cn(
+                  "inline-flex h-9 items-center gap-2 rounded-lg border border-border bg-card text-left transition-colors duration-150",
+                  "hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60",
+                  "max-w-38 px-2 sm:max-w-60 sm:px-2.5 lg:max-w-68",
+                  !canSwitchChurch && "pointer-events-none",
+                )}
                 aria-expanded={churchMenuOpen}
                 aria-label={
-                  churches.length > 1
+                  canSwitchChurch
                     ? `Igreja ativa: ${church.name}. Trocar igreja`
                     : `Igreja ativa: ${church.name}`
                 }
@@ -104,12 +100,12 @@ export function DashboardTopbar({
                 <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
                   {churchLabel}
                 </span>
-                {churches.length > 1 && (
+                {canSwitchChurch && (
                   <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
                 )}
               </button>
 
-              {churchMenuOpen && churches.length > 1 && (
+              {churchMenuOpen && canSwitchChurch && (
                 <>
                   <button
                     type="button"
@@ -117,7 +113,7 @@ export function DashboardTopbar({
                     aria-label="Fechar seleção de igreja"
                     onClick={() => setChurchMenuOpen(false)}
                   />
-                  <div className="absolute right-0 z-20 mt-1.5 w-64 rounded-lg border border-border bg-popover p-1 shadow-popover">
+                  <div className="absolute right-0 z-20 mt-1.5 w-[min(calc(100vw-2rem),16rem)] rounded-lg border border-border bg-popover p-1 shadow-popover">
                     <p className="px-2.5 py-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                       Trocar igreja
                     </p>
@@ -131,7 +127,7 @@ export function DashboardTopbar({
                           void switchChurch(item.id);
                         }}
                         className={cn(
-                          "flex w-full rounded-md px-2.5 py-2 text-left text-sm transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60",
+                          "flex min-h-11 w-full rounded-md px-2.5 py-2.5 text-left text-sm transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60",
                           item.id === church.id && "bg-muted font-medium",
                         )}
                       >
@@ -182,7 +178,7 @@ export function DashboardTopbar({
                     {canAccessChurchSettings ? (
                       <Link
                         href={AUTH_ROUTES.settingsChurch}
-                        className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm transition-colors hover:bg-muted"
+                        className="flex min-h-11 items-center gap-2 rounded-md px-2.5 py-2.5 text-sm transition-colors hover:bg-muted"
                         onClick={() => setMenuOpen(false)}
                       >
                         <Church className="size-4" />
@@ -191,7 +187,7 @@ export function DashboardTopbar({
                     ) : null}
                     <Link
                       href={AUTH_ROUTES.settingsUser}
-                      className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm transition-colors hover:bg-muted"
+                      className="flex min-h-11 items-center gap-2 rounded-md px-2.5 py-2.5 text-sm transition-colors hover:bg-muted"
                       onClick={() => setMenuOpen(false)}
                     >
                       <User className="size-4" />
@@ -203,7 +199,7 @@ export function DashboardTopbar({
                         setMenuOpen(false);
                         void logout();
                       }}
-                      className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition-colors hover:bg-muted"
+                      className="flex min-h-11 w-full items-center gap-2 rounded-md px-2.5 py-2.5 text-left text-sm transition-colors hover:bg-muted"
                     >
                       <LogOut className="size-4" />
                       Sair

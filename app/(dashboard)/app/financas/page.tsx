@@ -161,20 +161,41 @@ function FinancesManageTabs({
   const tabs: Array<{
     id: FinancesTab;
     label: string;
+    shortLabel: string;
     icon: typeof PiggyBank;
   }> = [
-    { id: "fundos", label: "Fundos", icon: PiggyBank },
-    { id: "contribuicoes", label: "Entradas", icon: Receipt },
-    { id: "mensais", label: "Recorrentes", icon: RefreshCw },
-    { id: "repasses", label: "Repasses", icon: Building2 },
-    { id: "caixa", label: "Lançamentos manuais", icon: NotebookPen },
+    { id: "fundos", label: "Fundos", shortLabel: "Fundos", icon: PiggyBank },
+    {
+      id: "contribuicoes",
+      label: "Entradas",
+      shortLabel: "Entradas",
+      icon: Receipt,
+    },
+    {
+      id: "mensais",
+      label: "Recorrentes",
+      shortLabel: "Mensais",
+      icon: RefreshCw,
+    },
+    {
+      id: "repasses",
+      label: "Repasses",
+      shortLabel: "Repasses",
+      icon: Building2,
+    },
+    {
+      id: "caixa",
+      label: "Lançamentos manuais",
+      shortLabel: "Caixa",
+      icon: NotebookPen,
+    },
   ];
 
   return (
     <div
       role="tablist"
       aria-label="Gestão financeira"
-      className="inline-flex w-full flex-wrap rounded-xl border border-border bg-muted/35 p-1 sm:w-auto"
+      className="-mx-1 flex w-full gap-1 overflow-x-auto px-1 pb-0.5 sm:mx-0 sm:inline-flex sm:w-auto sm:flex-wrap sm:overflow-visible sm:rounded-xl sm:border sm:border-border sm:bg-muted/35 sm:p-1 sm:pb-1"
     >
       {tabs.map((tab) => {
         const Icon = tab.icon;
@@ -188,14 +209,15 @@ function FinancesManageTabs({
             id={`financas-tab-${tab.id}`}
             onClick={() => onChange(tab.id)}
             className={cn(
-              "inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors sm:flex-none sm:min-w-28",
+              "inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors sm:flex-1 sm:min-w-28 sm:flex-none",
               selected
                 ? "bg-foreground/85 font-medium text-background"
-                : "font-normal text-muted-foreground hover:bg-background/60 hover:text-foreground",
+                : "border border-border bg-card font-normal text-muted-foreground hover:bg-muted/60 hover:text-foreground sm:border-transparent sm:bg-transparent",
             )}
           >
             <Icon className="size-4 opacity-80" aria-hidden />
-            {tab.label}
+            <span className="sm:hidden">{tab.shortLabel}</span>
+            <span className="hidden sm:inline">{tab.label}</span>
           </button>
         );
       })}

@@ -1,11 +1,11 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { DM_Sans, Geist_Mono, Syne } from "next/font/google";
 
 import { AuthProvider } from "@/providers/auth-provider";
 import { QueryProvider } from "@/providers/query-provider";
+import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
 import { defaultMetadata } from "@/lib/metadata";
 
-import icon from "./icon.png";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -25,13 +25,31 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+/**
+ * Icons: use file conventions only (`app/icon.png`, `app/apple-icon.png`).
+ * Avoid `import icon from "./icon.png"` in metadata — Turbopack can throw
+ * `require is not defined` when composing page + image metadata modules.
+ */
 export const metadata: Metadata = {
   ...defaultMetadata,
-  icons: {
-    icon: [{ url: icon.src, type: "image/png" }],
-    apple: [{ url: icon.src, type: "image/png" }],
-    shortcut: icon.src,
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Minha Church",
   },
+  formatDetection: {
+    telephone: false,
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f5f5f2" },
+    { media: "(prefers-color-scheme: dark)", color: "#141413" },
+  ],
 };
 
 export default function RootLayout({
@@ -51,6 +69,7 @@ export default function RootLayout({
         <QueryProvider>
           <AuthProvider>{children}</AuthProvider>
         </QueryProvider>
+        <ServiceWorkerRegister />
       </body>
     </html>
   );

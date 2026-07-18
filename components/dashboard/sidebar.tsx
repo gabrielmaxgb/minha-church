@@ -476,7 +476,7 @@ export function DashboardSidebar({
             <button
               type="button"
               onClick={onClose}
-              className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground lg:hidden"
+              className="shrink-0 rounded-md p-2.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground lg:hidden"
               aria-label="Fechar menu"
             >
               <X className="size-4" />
