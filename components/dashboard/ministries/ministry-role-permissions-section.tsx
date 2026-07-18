@@ -98,7 +98,7 @@ export function MinistryPermissionToggle({
   return (
     <div
       className={cn(
-        "flex w-full items-start gap-3 rounded-xl border p-3.5 transition-all duration-200",
+        "flex w-full min-w-0 items-start gap-3 rounded-xl border p-3.5 transition-all duration-200",
         checked
           ? "border-foreground/20 bg-muted/40"
           : "border-border bg-card",
@@ -133,10 +133,10 @@ export function MinistryPermissionToggle({
         </span>
 
         <span className="min-w-0 flex-1 pt-0.5">
-          <span className="block text-sm font-medium leading-tight">
+          <span className="block text-sm font-medium leading-snug text-pretty">
             {permission.label}
           </span>
-          <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
+          <span className="mt-1 block text-xs leading-relaxed text-pretty text-muted-foreground">
             {permission.description}
           </span>
         </span>
@@ -168,7 +168,7 @@ export function RoleAssignmentConstraintToggle({
   return (
     <label
       className={cn(
-        "flex w-full cursor-pointer items-start gap-3 rounded-xl border border-border/60 bg-card/40 p-3.5 transition-colors",
+        "flex w-full min-w-0 cursor-pointer items-start gap-3 rounded-xl border border-border/60 bg-card/40 p-3.5 transition-colors",
         checked && "border-border bg-muted/30",
         disabled && "cursor-not-allowed opacity-60",
       )}
@@ -182,8 +182,10 @@ export function RoleAssignmentConstraintToggle({
         aria-label={label}
       />
       <span className="min-w-0 flex-1">
-        <span className="block text-sm font-medium leading-tight">{label}</span>
-        <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
+        <span className="block text-sm font-medium leading-snug text-pretty">
+          {label}
+        </span>
+        <span className="mt-1 block text-xs leading-relaxed text-pretty text-muted-foreground">
           {description}
         </span>
       </span>

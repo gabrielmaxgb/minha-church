@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Download, Share, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { AUTH_ROUTES } from "@/constants/routes";
 import {
   isDismissedRecently,
   isIosDevice,
@@ -145,18 +147,13 @@ export function PwaInstallPrompt() {
             >
               {mode === "ios" ? (
                 <>
-                  No Safari: toque em{" "}
-                  <span className="font-medium text-foreground">Compartilhar</span>
-                  {" → "}
-                  <span className="font-medium text-foreground">
-                    Adicionar à Tela de Início
-                  </span>
-                  . Atalho rápido, sem App Store.
+                  No Safari: Compartilhar → Adicionar à Tela de Início. Veja o
+                  passo a passo completo.
                 </>
               ) : (
                 <>
-                  Instale o Minha Church na tela inicial — acesso rápido e
-                  sensação de app, sem loja.
+                  Instale o Minha Church na tela inicial — acesso rápido, sem
+                  loja.
                 </>
               )}
             </p>
@@ -171,6 +168,19 @@ export function PwaInstallPrompt() {
                 onClick={() => void handleInstall()}
               >
                 {installing ? "Abrindo…" : "Instalar"}
+              </Button>
+            ) : (
+              <Button asChild size="sm">
+                <Link href={AUTH_ROUTES.installApp} onClick={dismiss}>
+                  Ver como instalar
+                </Link>
+              </Button>
+            )}
+            {mode === "native" ? (
+              <Button asChild size="sm" variant="ghost">
+                <Link href={AUTH_ROUTES.installApp} onClick={dismiss}>
+                  Saiba mais
+                </Link>
               </Button>
             ) : null}
             <Button

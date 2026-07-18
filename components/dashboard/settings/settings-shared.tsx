@@ -19,11 +19,13 @@ export function SettingsSectionHeader({
   return (
     <div className="mb-5 flex items-start justify-between gap-3">
       <div className="min-w-0 flex-1">
-        <h2 className="text-lg font-semibold tracking-tight">
+        <h2 className="text-lg font-semibold tracking-tight text-balance">
           {title}
         </h2>
         {description ? (
-          <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+          <p className="mt-1 text-sm leading-relaxed text-pretty text-muted-foreground">
+            {description}
+          </p>
         ) : null}
       </div>
       {action ? <div className="shrink-0">{action}</div> : null}
@@ -41,7 +43,7 @@ export function SettingsPanel({
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-xl border border-border/70",
+        "min-w-0 overflow-hidden rounded-xl border border-border/70",
         className,
       )}
     >
@@ -50,20 +52,97 @@ export function SettingsPanel({
   );
 }
 
+/**
+ * Lista + detalhe.
+ * Mobile: empilha (lista em cima, detalhe embaixo).
+ * Desktop (lg+): sidebar + painel — design atual preservado.
+ */
 export function SettingsSplitLayout({
   sidebar,
   children,
-  minHeight = "min-h-112",
+  minHeight = "min-h-0 lg:min-h-112",
 }: {
   sidebar: React.ReactNode;
   children: React.ReactNode;
   minHeight?: string;
 }) {
   return (
-    <div className={cn("flex", minHeight)}>
+    <div
+      className={cn(
+        "flex min-w-0 flex-col",
+        "lg:flex-row",
+        minHeight,
+      )}
+    >
       {sidebar}
-      <div className="flex min-w-0 flex-1 flex-col">{children}</div>
+      <div className="flex min-w-0 flex-1 flex-col border-t border-border/70 lg:border-t-0">
+        {children}
+      </div>
     </div>
+  );
+}
+
+/**
+ * Seletor horizontal no mobile (chips). Use com SettingsSidebar desktopOnly.
+ */
+export function SettingsMobileSelectBar({
+  children,
+  footer,
+}: {
+  children: React.ReactNode;
+  footer?: React.ReactNode;
+}) {
+  return (
+    <div className="bg-muted/20 lg:hidden">
+      <div
+        className={cn(
+          "flex gap-1.5 overflow-x-auto overscroll-x-contain px-3 py-2.5",
+          "[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+        )}
+        role="tablist"
+      >
+        {children}
+      </div>
+      {footer ? <div className="border-t border-border/60 px-3 py-3">{footer}</div> : null}
+    </div>
+  );
+}
+
+export function SettingsMobileSelectChip({
+  label,
+  selected,
+  dirty,
+  onClick,
+}: {
+  label: string;
+  selected: boolean;
+  dirty?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={selected}
+      onClick={onClick}
+      className={cn(
+        "inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-sm transition-colors",
+        selected
+          ? "border-foreground/15 bg-foreground font-medium text-background shadow-sm"
+          : "border-border/80 bg-background font-normal text-muted-foreground hover:border-border hover:bg-muted/40 hover:text-foreground",
+      )}
+    >
+      <span className="max-w-40 truncate">{label}</span>
+      {dirty ? (
+        <span
+          className={cn(
+            "size-1.5 shrink-0 rounded-full",
+            selected ? "bg-background/80" : "bg-attention-emphasis",
+          )}
+          aria-label="Alterações não salvas"
+        />
+      ) : null}
+    </button>
   );
 }
 
@@ -71,16 +150,30 @@ export function SettingsSidebar({
   children,
   footer,
   header,
+  desktopOnly = false,
 }: {
   children: React.ReactNode;
   footer?: React.ReactNode;
   header?: React.ReactNode;
+  /** Esconde no mobile quando há SettingsMobileSelectBar. */
+  desktopOnly?: boolean;
 }) {
   return (
-    <aside className="flex w-52 shrink-0 flex-col border-r border-border/70 bg-muted/20 sm:w-64">
+    <aside
+      className={cn(
+        "w-full shrink-0 flex-col bg-muted/20",
+        desktopOnly
+          ? "hidden lg:flex lg:w-56 lg:border-r lg:border-border/70 xl:w-64"
+          : "flex max-h-[min(45vh,14rem)] lg:max-h-none lg:w-56 lg:border-r lg:border-border/70 xl:w-64",
+      )}
+    >
       {header}
-      <div className="flex-1 space-y-0.5 overflow-y-auto p-2">{children}</div>
-      {footer && <div className="border-t border-border/70 p-2">{footer}</div>}
+      <div className="min-h-0 flex-1 space-y-0.5 overflow-y-auto overscroll-contain p-2">
+        {children}
+      </div>
+      {footer ? (
+        <div className="border-t border-border/70 p-2">{footer}</div>
+      ) : null}
     </aside>
   );
 }
@@ -296,13 +389,13 @@ export function SettingsSidebarItem({
       type="button"
       onClick={onClick}
       className={cn(
-        "flex w-full flex-col rounded-lg px-3 py-2 text-left text-sm transition-colors",
+        "flex min-h-11 w-full flex-col rounded-lg px-3 py-2.5 text-left text-sm transition-colors",
         selected
           ? "bg-background font-medium text-foreground shadow-sm"
           : "text-muted-foreground hover:bg-background/60 hover:text-foreground",
       )}
     >
-      <span className="flex items-center gap-2">
+      <span className="flex min-w-0 items-center gap-2">
         <span className="truncate">{label}</span>
         {dirty && (
           <span
@@ -341,16 +434,16 @@ export function SettingsToggleRow({
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={cn(
-        "flex w-full items-center justify-between gap-4 rounded-lg px-1 py-2.5 text-left transition-colors",
+        "flex w-full min-w-0 items-center justify-between gap-4 rounded-lg px-1 py-2.5 text-left transition-colors",
         disabled
           ? "cursor-not-allowed opacity-50"
           : "hover:bg-muted/50",
       )}
     >
       <span className="min-w-0">
-        <span className="block text-sm">{label}</span>
+        <span className="block text-sm text-pretty">{label}</span>
         {description && (
-          <span className="mt-0.5 block text-xs text-muted-foreground">
+          <span className="mt-0.5 block text-xs leading-relaxed text-pretty text-muted-foreground">
             {description}
           </span>
         )}
@@ -407,14 +500,16 @@ export function SettingsDetailHeader({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 border-b border-border/70 px-5 py-4">
-      <div>
+    <div className="flex flex-col gap-3 border-b border-border/70 px-4 py-4 sm:flex-row sm:items-start sm:justify-between sm:gap-4 sm:px-5">
+      <div className="min-w-0">
         <h3 className="font-medium">{title}</h3>
         {description && (
-          <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
+          <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+            {description}
+          </p>
         )}
       </div>
-      {action}
+      {action ? <div className="shrink-0">{action}</div> : null}
     </div>
   );
 }

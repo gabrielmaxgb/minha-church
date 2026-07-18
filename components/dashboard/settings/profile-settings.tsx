@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
-import { KeyRound } from "lucide-react";
+import { KeyRound, Smartphone } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
@@ -529,6 +529,29 @@ function ProfileSettingsForm({
           </>
         )}
       </form>
+
+      <div className="mt-6 lg:hidden">
+        <SettingsPanel>
+          <div className="flex items-start gap-3 px-5 py-5">
+            <div className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted text-foreground">
+              <Smartphone className="size-4" aria-hidden />
+            </div>
+            <div className="min-w-0 flex-1 space-y-3">
+              <div>
+                <h3 className="text-sm font-medium text-foreground">
+                  Instalar app
+                </h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Coloque o Minha Church na tela inicial do celular.
+                </p>
+              </div>
+              <Button asChild size="sm" variant="outline">
+                <Link href={AUTH_ROUTES.installApp}>Ver como instalar</Link>
+              </Button>
+            </div>
+          </div>
+        </SettingsPanel>
+      </div>
 
       <div className="mt-6">
         <AccountPrivacyPanel churchId={church?.id ?? churchId} />

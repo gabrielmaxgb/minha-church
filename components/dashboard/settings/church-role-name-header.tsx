@@ -40,8 +40,8 @@ export function ChurchRoleNameHeader({
   }
 
   return (
-    <div className="border-b border-border/70 px-5 py-4">
-      <div className="flex items-start justify-between gap-4">
+    <div className="border-b border-border/70 px-4 py-4 sm:px-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-2.5 py-1 text-[11px] font-medium text-primary">
           <Sparkles className="size-3" aria-hidden />
           Cargo personalizado

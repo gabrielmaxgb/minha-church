@@ -42,7 +42,7 @@ export function EventListNavActions({
   return (
     <div className={cn("flex flex-wrap items-center gap-2", className)}>
       {showOccurrence ? (
-        <Button type="button" size={size} variant="outline" asChild>
+        <Button type="button" size={size} asChild>
           <Link
             href={activityDetailPath(eventId)}
             onClick={(clickEvent) => clickEvent.stopPropagation()}
@@ -54,7 +54,7 @@ export function EventListNavActions({
       ) : null}
 
       {showCalendar ? (
-        <Button type="button" size={size} variant="outline" asChild>
+        <Button type="button" size={size} asChild>
           <Link
             href={activitiesCalendarPath(dateKeyFromIso(startsAt))}
             onClick={(clickEvent) => clickEvent.stopPropagation()}

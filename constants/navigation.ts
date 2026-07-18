@@ -23,6 +23,10 @@ export const footerNavLinks: NavLink[] = [
   { label: "Adendo LGPD", href: PUBLIC_ROUTES.dpa },
 ];
 
+/** Só no mobile — PWA não faz sentido no desktop. */
+export const footerMobileOnlyLinks: NavLink[] = [
+  { label: "Instalar app", href: PUBLIC_ROUTES.installApp },
+];
 export const siteConfig = {
   name: "Minha Church",
   tagline: "A rotina da igreja, em um só lugar.",

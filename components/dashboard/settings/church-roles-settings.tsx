@@ -34,6 +34,8 @@ import type { ChurchRole, UpdateChurchRolePayload } from "@/types/church-roles";
 import {
   SettingsAlert,
   SettingsEmptyState,
+  SettingsMobileSelectBar,
+  SettingsMobileSelectChip,
   SettingsPanel,
   SettingsSaveBar,
   SettingsSectionHeader,
@@ -522,47 +524,73 @@ export function ChurchRolesSettings() {
         </p>
       ) : (
         <SettingsPanel>
+          <SettingsMobileSelectBar
+            footer={
+              isCreating ? (
+                <form
+                  onSubmit={(event) => void handleCreateRole(event)}
+                  className="space-y-2"
+                >
+                  <Input
+                    value={newRoleName}
+                    onChange={(event) => setNewRoleName(event.target.value)}
+                    placeholder="Nome do cargo"
+                    autoFocus
+                    disabled={createRole.isPending}
+                    className="h-9 text-sm"
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      type="submit"
+                      size="sm"
+                      className="flex-1"
+                      disabled={createRole.isPending || !newRoleName.trim()}
+                    >
+                      Criar cargo
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setIsCreating(false);
+                        setNewRoleName("");
+                      }}
+                    >
+                      Cancelar
+                    </Button>
+                  </div>
+                </form>
+              ) : undefined
+            }
+          >
+            {[...systemRoles, ...customRoles].map((role) => (
+              <SettingsMobileSelectChip
+                key={role.id}
+                label={getDraftName(role)}
+                selected={role.id === selectedRoleId}
+                dirty={isRoleDirty(role)}
+                onClick={() => selectRole(role.id)}
+              />
+            ))}
+            {!isCreating ? (
+              <button
+                type="button"
+                onClick={() => setIsCreating(true)}
+                className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border border-dashed border-border/80 bg-background px-3.5 text-sm text-muted-foreground hover:border-border hover:bg-muted/40 hover:text-foreground"
+              >
+                <Plus className="size-3.5" />
+                Novo
+              </button>
+            ) : null}
+          </SettingsMobileSelectBar>
+
           <SettingsSplitLayout
             sidebar={
-              <SettingsSidebar>
-                <ChurchRoleSidebarGroupLabel
-                  title="Cargos padrão"
-                  count={systemRoles.length}
-                  tone="system"
-                />
-                {systemRoles.map((role) => (
-                  <SettingsSidebarItem
-                    key={role.id}
-                    label={getDraftName(role)}
-                    hint={`${getDraftPermissions(role).length} permissões ativas`}
-                    selected={role.id === selectedRoleId}
-                    dirty={isRoleDirty(role)}
-                    onClick={() => selectRole(role.id)}
-                  />
-                ))}
-
-                {customRoles.length > 0 && (
-                  <>
-                    <ChurchRoleSidebarGroupLabel
-                      title="Cargos personalizados"
-                      count={customRoles.length}
-                      tone="custom"
-                    />
-                    {customRoles.map((role) => (
-                      <SettingsSidebarItem
-                        key={role.id}
-                        label={getDraftName(role)}
-                        hint={`${getDraftPermissions(role).length} permissões ativas`}
-                        selected={role.id === selectedRoleId}
-                        dirty={isRoleDirty(role)}
-                        onClick={() => selectRole(role.id)}
-                      />
-                    ))}
-                  </>
-                )}
-
-                <div className="px-1 pt-2">
-                  {isCreating ? (
+              <SettingsSidebar
+                desktopOnly
+                footer={
+                  isCreating ? (
                     <form
                       onSubmit={(event) => void handleCreateRole(event)}
                       className="space-y-2"
@@ -608,8 +636,44 @@ export function ChurchRolesSettings() {
                       <Plus className="size-3.5" />
                       Novo cargo personalizado
                     </Button>
-                  )}
-                </div>
+                  )
+                }
+              >
+                <ChurchRoleSidebarGroupLabel
+                  title="Cargos padrão"
+                  count={systemRoles.length}
+                  tone="system"
+                />
+                {systemRoles.map((role) => (
+                  <SettingsSidebarItem
+                    key={role.id}
+                    label={getDraftName(role)}
+                    hint={`${getDraftPermissions(role).length} permissões ativas`}
+                    selected={role.id === selectedRoleId}
+                    dirty={isRoleDirty(role)}
+                    onClick={() => selectRole(role.id)}
+                  />
+                ))}
+
+                {customRoles.length > 0 && (
+                  <>
+                    <ChurchRoleSidebarGroupLabel
+                      title="Cargos personalizados"
+                      count={customRoles.length}
+                      tone="custom"
+                    />
+                    {customRoles.map((role) => (
+                      <SettingsSidebarItem
+                        key={role.id}
+                        label={getDraftName(role)}
+                        hint={`${getDraftPermissions(role).length} permissões ativas`}
+                        selected={role.id === selectedRoleId}
+                        dirty={isRoleDirty(role)}
+                        onClick={() => selectRole(role.id)}
+                      />
+                    ))}
+                  </>
+                )}
               </SettingsSidebar>
             }
           >

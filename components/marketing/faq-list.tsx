@@ -1,10 +1,30 @@
 import type { FaqItem } from "@/constants/faq";
-
+import { PUBLIC_ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
 
 interface FaqListProps {
   items: FaqItem[];
   className?: string;
+}
+
+function renderAnswer(answer: string) {
+  if (!answer.includes("/instalar")) {
+    return answer;
+  }
+
+  const parts = answer.split("/instalar");
+  return (
+    <>
+      {parts[0]}
+      <a
+        href={PUBLIC_ROUTES.installApp}
+        className="font-medium text-foreground underline underline-offset-2 hover:no-underline lg:pointer-events-none lg:no-underline"
+      >
+        Instalar app
+      </a>
+      {parts.slice(1).join("/instalar")}
+    </>
+  );
 }
 
 export function FaqList({ items, className }: FaqListProps) {
@@ -19,7 +39,7 @@ export function FaqList({ items, className }: FaqListProps) {
             </span>
           </summary>
           <div className="px-5 pb-4 text-sm leading-relaxed text-muted-foreground">
-            {item.answer}
+            {renderAnswer(item.answer)}
           </div>
         </details>
       ))}

@@ -6,6 +6,8 @@ import { HelpCircle, Plus, Trash2 } from "lucide-react";
 import { MinistryRolesGuideModal } from "@/components/dashboard/ministries/ministry-roles-guide-modal";
 import {
   SettingsEmptyState,
+  SettingsMobileSelectBar,
+  SettingsMobileSelectChip,
   SettingsPanel,
   SettingsSectionHeader,
   SettingsSidebar,
@@ -38,6 +40,58 @@ interface MinistryRolesSettingsSectionProps {
 function permissionCount(role: MinistryRole): number {
   return MINISTRY_PERMISSIONS.filter((permission) => role[permission.field])
     .length;
+}
+
+function CreateRoleForm({
+  newRoleName,
+  setNewRoleName,
+  looksLikeFunction,
+  isPending,
+  onSubmit,
+  onCancel,
+  submitLabel,
+}: {
+  newRoleName: string;
+  setNewRoleName: (value: string) => void;
+  looksLikeFunction: boolean;
+  isPending: boolean;
+  onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+  onCancel: () => void;
+  submitLabel: string;
+}) {
+  return (
+    <form onSubmit={onSubmit} className="space-y-2">
+      <Input
+        value={newRoleName}
+        onChange={(event) => setNewRoleName(event.target.value)}
+        placeholder="Ex.: Líder, Coordenador"
+        autoFocus
+        disabled={isPending}
+        className="h-9 text-sm"
+      />
+      {looksLikeFunction && (
+        <p className="rounded-lg border border-attention-border bg-attention-subtle px-2.5 py-2 text-xs leading-relaxed text-muted-foreground">
+          Isso parece uma{" "}
+          <strong className="text-foreground">função na escala</strong>, não um
+          cargo. Use a seção Funções na escala para Vocal, Teclado, Mídia e
+          similares.
+        </p>
+      )}
+      <div className="flex gap-2">
+        <Button
+          type="submit"
+          size="sm"
+          className="flex-1"
+          disabled={isPending || !newRoleName.trim()}
+        >
+          {submitLabel}
+        </Button>
+        <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
+          Cancelar
+        </Button>
+      </div>
+    </form>
+  );
 }
 
 function MinistryRolePermissionsPanel({
@@ -73,7 +127,7 @@ function MinistryRolePermissionsPanel({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="border-b border-border/70 px-4 py-4 sm:px-5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="text-sm font-medium tracking-tight">
@@ -95,7 +149,7 @@ function MinistryRolePermissionsPanel({
               type="button"
               size="sm"
               variant="ghost"
-              className="text-muted-foreground hover:text-destructive"
+              className="w-full justify-center text-muted-foreground hover:text-destructive sm:w-auto sm:justify-start"
               disabled={isDeleting}
               onClick={onDelete}
             >
@@ -187,6 +241,11 @@ export function MinistryRolesSettingsSection({
 
   const looksLikeFunction = looksLikeServiceFunctionName(newRoleName);
 
+  function cancelCreating() {
+    setIsCreating(false);
+    setNewRoleName("");
+  }
+
   async function handleCreateRole(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -209,6 +268,18 @@ export function MinistryRolesSettingsSection({
       setSelectedRoleId(null);
     }
   }
+
+  const createForm = (
+    <CreateRoleForm
+      newRoleName={newRoleName}
+      setNewRoleName={setNewRoleName}
+      looksLikeFunction={looksLikeFunction}
+      isPending={createRole.isPending}
+      onSubmit={(event) => void handleCreateRole(event)}
+      onCancel={cancelCreating}
+      submitLabel="Adicionar cargo"
+    />
+  );
 
   return (
     <div>
@@ -243,66 +314,37 @@ export function MinistryRolesSettingsSection({
       )}
 
       <SettingsPanel>
+        <SettingsMobileSelectBar
+          footer={canManage && isCreating ? createForm : undefined}
+        >
+          {roles.map((role) => (
+            <SettingsMobileSelectChip
+              key={role.id}
+              label={role.name}
+              selected={role.id === selectedRole?.id}
+              onClick={() => setSelectedRoleId(role.id)}
+            />
+          ))}
+          {canManage && !isCreating ? (
+            <button
+              type="button"
+              onClick={() => setIsCreating(true)}
+              className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border border-dashed border-border/80 bg-background px-3.5 text-sm text-muted-foreground hover:border-border hover:bg-muted/40 hover:text-foreground"
+            >
+              <Plus className="size-3.5" />
+              Novo
+            </button>
+          ) : null}
+        </SettingsMobileSelectBar>
+
         <SettingsSplitLayout
           sidebar={
-            <SettingsSidebar>
-              {roles.map((role) => (
-                <SettingsSidebarItem
-                  key={role.id}
-                  label={role.name}
-                  hint={`${permissionCount(role)} permissão${permissionCount(role) === 1 ? "" : "ões"} ativa${permissionCount(role) === 1 ? "" : "s"}`}
-                  selected={role.id === selectedRole?.id}
-                  onClick={() => setSelectedRoleId(role.id)}
-                />
-              ))}
-
-              {canManage && (
-                <div className="px-1 pt-2">
-                  {isCreating ? (
-                    <form
-                      onSubmit={(event) => void handleCreateRole(event)}
-                      className="space-y-2"
-                    >
-                      <Input
-                        value={newRoleName}
-                        onChange={(event) => setNewRoleName(event.target.value)}
-                        placeholder="Ex.: Líder, Coordenador"
-                        autoFocus
-                        disabled={createRole.isPending}
-                        className="h-9 text-sm"
-                      />
-                      {looksLikeFunction && (
-                        <p className="rounded-lg border border-attention-border bg-attention-subtle px-2.5 py-2 text-xs leading-relaxed text-muted-foreground">
-                          Isso parece uma{" "}
-                          <strong className="text-foreground">
-                            função na escala
-                          </strong>
-                          , não um cargo. Use a seção Funções na escala para
-                          Vocal, Teclado, Mídia e similares.
-                        </p>
-                      )}
-                      <div className="flex gap-2">
-                        <Button
-                          type="submit"
-                          size="sm"
-                          className="flex-1"
-                          disabled={createRole.isPending || !newRoleName.trim()}
-                        >
-                          Adicionar cargo
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setIsCreating(false);
-                            setNewRoleName("");
-                          }}
-                        >
-                          Cancelar
-                        </Button>
-                      </div>
-                    </form>
+            <SettingsSidebar
+              desktopOnly
+              footer={
+                canManage ? (
+                  isCreating ? (
+                    createForm
                   ) : (
                     <Button
                       type="button"
@@ -314,9 +356,19 @@ export function MinistryRolesSettingsSection({
                       <Plus className="size-3.5" />
                       Novo cargo
                     </Button>
-                  )}
-                </div>
-              )}
+                  )
+                ) : undefined
+              }
+            >
+              {roles.map((role) => (
+                <SettingsSidebarItem
+                  key={role.id}
+                  label={role.name}
+                  hint={`${permissionCount(role)} permissão${permissionCount(role) === 1 ? "" : "ões"} ativa${permissionCount(role) === 1 ? "" : "s"}`}
+                  selected={role.id === selectedRole?.id}
+                  onClick={() => setSelectedRoleId(role.id)}
+                />
+              ))}
             </SettingsSidebar>
           }
         >
