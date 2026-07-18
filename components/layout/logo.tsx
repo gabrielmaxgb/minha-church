@@ -30,7 +30,7 @@ export function Logo({
   const content = (
     <>
       <Image
-        src="/icon.png"
+        src="/marketing/logo-mark.png"
         alt=""
         width={32}
         height={32}
@@ -72,7 +72,7 @@ export function LogoMark({
 }) {
   return (
     <Image
-      src="/icon.png"
+      src="/marketing/logo-mark.png"
       alt=""
       width={size}
       height={size}

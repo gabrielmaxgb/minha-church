@@ -71,7 +71,7 @@ export function DashboardShell({
 
   return (
     <OnboardingChecklistProvider>
-      <div className="relative flex h-screen overflow-hidden bg-background">
+      <div className="relative flex h-screen min-w-0 overflow-hidden bg-background">
       {isSwitchingChurch && switchingToChurchName && (
         <ChurchSwitchOverlay churchName={switchingToChurchName} />
       )}
@@ -110,26 +110,28 @@ export function DashboardShell({
         {variant === "full" ? (
           <main
             className={cn(
-              "dashboard-canvas flex min-h-0 flex-1 flex-col overflow-hidden pb-(--mobile-nav-offset) lg:pb-0",
+              "dashboard-canvas flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-hidden pb-(--mobile-nav-offset) lg:pb-0",
               isSwitchingChurch && "opacity-60",
             )}
           >
             <div className="px-4 pt-4 empty:hidden sm:px-6">
               <SystemBannersHost />
             </div>
-            <DashboardContentMotion className="flex min-h-0 flex-1 flex-col px-4 py-4 sm:px-6 sm:py-5">
+            <DashboardContentMotion className="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden px-4 py-4 sm:px-6 sm:py-5">
               {children}
             </DashboardContentMotion>
           </main>
         ) : (
           <main
             className={cn(
-              "dashboard-canvas min-h-0 flex-1 overflow-y-auto px-4 py-6 pb-[calc(1.5rem+var(--mobile-nav-offset))] sm:px-6 sm:py-8 lg:pb-8",
+              "dashboard-canvas min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-4 py-6 pb-[calc(1.5rem+var(--mobile-nav-offset))] sm:px-6 sm:py-8 lg:pb-8",
               isSwitchingChurch && "opacity-60",
             )}
           >
             <SystemBannersHost />
-            <DashboardContentMotion>{children}</DashboardContentMotion>
+            <DashboardContentMotion className="min-w-0">
+              {children}
+            </DashboardContentMotion>
           </main>
         )}
       </div>
@@ -165,7 +167,7 @@ export function DashboardPage({
 }: DashboardPageProps) {
   return (
     <DashboardShell title={title} subtitle={subtitle}>
-      <div className={cn("mx-auto w-full", className, "max-w-6xl")}>
+      <div className={cn("mx-auto w-full min-w-0 max-w-6xl", className)}>
         {children}
       </div>
     </DashboardShell>

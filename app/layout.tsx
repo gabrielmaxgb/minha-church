@@ -26,12 +26,24 @@ const geistMono = Geist_Mono({
 });
 
 /**
- * Icons: use file conventions only (`app/icon.png`, `app/apple-icon.png`).
- * Avoid `import icon from "./icon.png"` in metadata — Turbopack can throw
- * `require is not defined` when composing page + image metadata modules.
+ * Icons: public URLs (not `import`ed PNGs) — avoids Turbopack metadata bugs.
+ * `app/apple-icon.png` (180) + `/icons/apple-touch-icon.png` cover iOS home screen.
  */
 export const metadata: Metadata = {
   ...defaultMetadata,
+  icons: {
+    icon: [
+      { url: "/icon.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      {
+        url: "/icons/apple-touch-icon.png",
+        sizes: "180x180",
+        type: "image/png",
+      },
+    ],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",

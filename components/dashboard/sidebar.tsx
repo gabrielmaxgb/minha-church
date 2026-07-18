@@ -8,7 +8,7 @@ import {
   useState,
   type ComponentType,
 } from "react";
-import { ChevronDown, Settings, X } from "lucide-react";
+import { ChevronDown, LogOut, Settings, X } from "lucide-react";
 
 import { SidebarChurchBrand } from "@/components/dashboard/sidebar-church-brand";
 import {
@@ -312,7 +312,7 @@ export function DashboardSidebar({
   className,
 }: DashboardSidebarProps) {
   const pathname = usePathname();
-  const { permissions, user } = useAuth();
+  const { permissions, user, logout } = useAuth();
   const isOwner = Boolean(user?.isOwner);
   const canAccessSchedulesData = canAccessSchedules(permissions);
   const hasCommunicationAccess = Boolean(permissions?.communication.access);
@@ -532,6 +532,17 @@ export function DashboardSidebar({
 
         <div className="my-3 border-t border-border/80" />
         <SettingsNavDropdown onNavigate={onNavigate} />
+        <button
+          type="button"
+          onClick={() => {
+            onNavigate?.();
+            void logout();
+          }}
+          className="flex w-full items-start gap-3 rounded-lg border border-transparent px-2.5 py-2.5 text-left text-sm font-normal leading-snug text-muted-foreground transition-colors duration-150 hover:bg-muted/50 hover:text-foreground"
+        >
+          <LogOut className="mt-0.5 size-5 shrink-0 opacity-65" aria-hidden />
+          <span className="min-w-0 flex-1 text-pretty">Sair</span>
+        </button>
       </nav>
     </aside>
   );

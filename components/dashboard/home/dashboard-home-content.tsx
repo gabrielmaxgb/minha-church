@@ -210,7 +210,7 @@ export function DashboardHomeContent() {
 
   return (
     <>
-      <StaggerList className="space-y-7">
+      <StaggerList className="min-w-0 space-y-7">
         <StaggerItem>
           <DashboardHero
             userName={user.name}
@@ -222,17 +222,21 @@ export function DashboardHomeContent() {
         <StaggerItem>
           <div
             className={cn(
-              "grid gap-4",
+              "grid min-w-0 gap-4",
               showWeekPulse ? "xl:grid-cols-2 xl:items-stretch" : undefined,
             )}
           >
-            <DashboardPriorities items={priorities} />
+            <div className="min-w-0">
+              <DashboardPriorities items={priorities} />
+            </div>
             {showWeekPulse ? (
-              <DashboardWeekPulse
-                variant="chart"
-                events={upcomingEvents}
-                canAccessActivities
-              />
+              <div className="min-w-0">
+                <DashboardWeekPulse
+                  variant="chart"
+                  events={upcomingEvents}
+                  canAccessActivities
+                />
+              </div>
             ) : null}
           </div>
         </StaggerItem>

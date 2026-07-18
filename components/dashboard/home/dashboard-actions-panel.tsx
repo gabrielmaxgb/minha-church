@@ -150,7 +150,7 @@ export function DashboardQuickActions({
   }
 
   return (
-    <section className="space-y-3">
+    <section className="min-w-0 space-y-3">
       <div>
         <h2 className="text-base font-medium text-foreground">Faça agora</h2>
         <p className="mt-0.5 text-sm text-muted-foreground">

@@ -66,7 +66,7 @@ export function DashboardPriorities({ items }: DashboardPrioritiesProps) {
       : `${items.length} coisas pedem você hoje`;
 
   return (
-    <section className="flex h-full flex-col justify-start rounded-xl border border-border bg-card p-4 sm:p-5">
+    <section className="flex h-full min-w-0 flex-col justify-start rounded-xl border border-border bg-card p-4 sm:p-5">
       <div className="shrink-0">
         <h2 className="text-sm font-medium text-foreground">{heading}</h2>
         <p className="mt-0.5 text-sm text-muted-foreground">

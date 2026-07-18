@@ -32,21 +32,18 @@ export function TrialStatusHeaderChip() {
   const dayLabel = trialDaysRemaining === 1 ? "dia" : "dias";
 
   return (
-    <div className="inline-flex h-9 max-w-[11rem] items-center gap-1.5 rounded-lg bg-[#1a1a18] pl-2 pr-1 sm:max-w-none sm:pl-2.5">
+    <div className="inline-flex h-9 max-w-[9.5rem] items-center gap-1 rounded-lg bg-[#1a1a18] pl-1.5 pr-1 sm:max-w-none sm:gap-1.5 sm:pl-2.5">
       <Sparkles
         className="size-3.5 shrink-0 text-[#f4f4f1]/80"
         aria-hidden
       />
-      <span className="truncate text-xs font-medium text-[#f4f4f1]/90">
-        <span className="sm:hidden">{trialDaysRemaining}d</span>
-        <span className="hidden sm:inline">
-          Teste · {trialDaysRemaining} {dayLabel}
-        </span>
+      <span className="hidden truncate text-xs font-medium text-[#f4f4f1]/90 sm:inline">
+        Teste · {trialDaysRemaining} {dayLabel}
       </span>
       <SubscribePricingTrigger
         inverted
         size="sm"
-        className="h-7 min-w-0 shrink-0 px-2.5 text-xs shadow-none"
+        className="h-7 min-w-0 shrink-0 px-2 text-xs shadow-none sm:px-2.5"
       >
         Assinar
       </SubscribePricingTrigger>

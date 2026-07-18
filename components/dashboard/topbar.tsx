@@ -57,11 +57,17 @@ export function DashboardTopbar({
 
   return (
     <header
-      className="z-20 shrink-0 border-b border-border bg-background"
+      className="z-20 min-w-0 shrink-0 border-b border-border bg-background"
       style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
     >
-      <div className="flex h-14 items-center justify-between gap-3 px-4 sm:gap-4 sm:px-6">
-        <div className="min-w-0 flex-1">
+      <div
+        className="flex h-14 min-w-0 items-center justify-between gap-2 sm:gap-3"
+        style={{
+          paddingLeft: "max(1rem, env(safe-area-inset-left, 0px))",
+          paddingRight: "max(1rem, env(safe-area-inset-right, 0px))",
+        }}
+      >
+        <div className="min-w-0 flex-1 overflow-hidden">
           <h1 className="truncate text-base font-medium tracking-tight text-foreground">
             {title}
           </h1>
@@ -72,40 +78,34 @@ export function DashboardTopbar({
           )}
         </div>
 
-        <div className="flex h-9 shrink-0 items-center gap-1.5 sm:gap-2">
+        {/* shrink permitido — senão o cluster estoura a largura da coluna no PWA */}
+        <div className="flex h-9 min-w-0 shrink items-center justify-end gap-1 sm:gap-1.5">
           <TrialStatusHeaderChip />
           <NotificationsBell />
           <OnboardingHeaderButton />
 
-          {church && (
+          {church && canSwitchChurch ? (
             <div className="relative h-9 min-w-0">
               <button
                 type="button"
                 onClick={() => setChurchMenuOpen((prev) => !prev)}
-                disabled={isSwitchingChurch || !canSwitchChurch}
+                disabled={isSwitchingChurch}
                 className={cn(
-                  "inline-flex h-9 items-center gap-2 rounded-lg border border-border bg-card text-left transition-colors duration-150",
+                  "inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card text-left transition-colors duration-150",
                   "hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60",
-                  "max-w-38 px-2 sm:max-w-60 sm:px-2.5 lg:max-w-68",
-                  !canSwitchChurch && "pointer-events-none",
+                  "px-2 sm:max-w-52 sm:gap-2 sm:px-2.5 lg:max-w-68",
                 )}
                 aria-expanded={churchMenuOpen}
-                aria-label={
-                  canSwitchChurch
-                    ? `Igreja ativa: ${church.name}. Trocar igreja`
-                    : `Igreja ativa: ${church.name}`
-                }
+                aria-label={`Igreja ativa: ${church.name}. Trocar igreja`}
               >
                 <Church className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
-                <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
+                <span className="hidden min-w-0 truncate text-sm font-medium text-foreground sm:inline">
                   {churchLabel}
                 </span>
-                {canSwitchChurch && (
-                  <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
-                )}
+                <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
               </button>
 
-              {churchMenuOpen && canSwitchChurch && (
+              {churchMenuOpen && (
                 <>
                   <button
                     type="button"
@@ -138,10 +138,10 @@ export function DashboardTopbar({
                 </>
               )}
             </div>
-          )}
+          ) : null}
 
           {user && (
-            <div className="relative h-9">
+            <div className="relative h-9 shrink-0">
               <button
                 type="button"
                 onClick={() => setMenuOpen((prev) => !prev)}
@@ -174,6 +174,11 @@ export function DashboardTopbar({
                       <p className="mt-1 truncate text-xs text-muted-foreground">
                         {formatUserAccessLabel(user)}
                       </p>
+                      {church ? (
+                        <p className="mt-1 truncate text-xs text-muted-foreground sm:hidden">
+                          {church.name}
+                        </p>
+                      ) : null}
                     </div>
                     {canAccessChurchSettings ? (
                       <Link

@@ -87,11 +87,11 @@ export function DashboardWeekPulse({
   const chart = canAccessActivities ? (
     <div
       className={cn(
-        "rounded-xl border border-domain-activities/30 bg-gradient-to-br from-domain-activities-subtle via-card to-card p-4 sm:p-5",
+        "min-w-0 max-w-full rounded-xl border border-domain-activities/30 bg-gradient-to-br from-domain-activities-subtle via-card to-card p-4 sm:p-5",
         chartOnly && "h-full",
       )}
     >
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <h2 className="text-sm font-medium text-domain-activities-foreground">
             Ritmo da semana
@@ -102,7 +102,7 @@ export function DashboardWeekPulse({
               : "Quantas atividades em cada dia — com base na agenda real."}
           </p>
         </div>
-        <div className="flex shrink-0 flex-col items-end gap-2">
+        <div className="flex shrink-0 items-center gap-2 sm:flex-col sm:items-end">
           <Button
             asChild
             variant="outline"
@@ -120,7 +120,7 @@ export function DashboardWeekPulse({
         </div>
       </div>
 
-      <div className="mt-5 flex h-28 items-end gap-1">
+      <div className="mt-5 flex h-28 min-w-0 items-end gap-1">
         {week.map((day) => {
           const heightPct =
             day.count === 0 ? 8 : Math.max(18, (day.count / maxCount) * 100);

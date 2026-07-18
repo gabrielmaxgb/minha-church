@@ -9,7 +9,7 @@
  *
  * Bump CACHE_VERSION em cada mudança relevante do SW.
  */
-const CACHE_VERSION = "mc-shell-v1";
+const CACHE_VERSION = "mc-shell-v2";
 const SHELL_CACHE = `mc-shell-${CACHE_VERSION}`;
 const STATIC_CACHE = `mc-static-${CACHE_VERSION}`;
 
@@ -18,6 +18,7 @@ const PRECACHE_URLS = [
   "/manifest.webmanifest",
   "/icons/icon-192.png",
   "/icons/icon-512.png",
+  "/icons/apple-touch-icon.png",
 ];
 
 self.addEventListener("install", (event) => {
