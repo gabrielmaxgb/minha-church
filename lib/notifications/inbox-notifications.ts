@@ -10,6 +10,8 @@ const TYPE_LABELS: Record<InboxNotificationType, string> = {
   account_linked: "Acesso",
   pending_access: "Acesso pendente",
   giving_donation_refunded: "Estorno",
+  care_request_received: "Cuidado",
+  care_request_viewed: "Cuidado",
 };
 
 export function inboxNotificationTypeLabel(

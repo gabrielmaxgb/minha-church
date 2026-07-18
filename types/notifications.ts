@@ -3,7 +3,9 @@ export type InboxNotificationType =
   | "schedule_roster_assigned"
   | "account_linked"
   | "pending_access"
-  | "giving_donation_refunded";
+  | "giving_donation_refunded"
+  | "care_request_received"
+  | "care_request_viewed";
 
 export interface InboxNotificationItem {
   id: string;
