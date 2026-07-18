@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { PushNotificationsPanel } from "@/components/pwa/push-notifications-panel";
 import {
   isIosDevice,
   isStandaloneDisplay,
@@ -19,7 +20,7 @@ import { cn } from "@/lib/utils";
 
 const BENEFITS = [
   "Abra em um toque, direto da tela inicial",
-  "Sensação de app, sem baixar na loja",
+  "Receba avisos no celular (escala, inscrição…)",
   "Continua funcionando no navegador se preferir",
 ] as const;
 
@@ -85,10 +86,11 @@ export function PwaInstallGuide({ className }: { className?: string }) {
             App já instalado
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-            Você está usando o Minha Church pela tela inicial. Pode fechar esta
-            página e seguir no painel.
+            Você está usando o Minha Church pela tela inicial. Ative as
+            notificações para receber avisos do sino no celular.
           </p>
         </div>
+        <PushNotificationsPanel />
       </div>
     );
   }

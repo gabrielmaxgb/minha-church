@@ -39,6 +39,7 @@ import {
   SettingsSectionHeader,
 } from "./settings-shared";
 import { AccountPrivacyPanel } from "./account-privacy-panel";
+import { PushNotificationsPanel } from "@/components/pwa/push-notifications-panel";
 
 function toDateInputValue(value: string | null | undefined): string {
   if (!value) {
@@ -551,6 +552,10 @@ function ProfileSettingsForm({
             </div>
           </div>
         </SettingsPanel>
+      </div>
+
+      <div className="mt-6">
+        <PushNotificationsPanel />
       </div>
 
       <div className="mt-6">

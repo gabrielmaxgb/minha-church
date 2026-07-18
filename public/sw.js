@@ -1,15 +1,16 @@
 /**
- * Minha Church — service worker leve (shell offline).
+ * Minha Church — service worker leve (shell offline + Web Push).
  *
  * Regras de estabilidade:
  * - Nunca cacheia /api/v1/* (auth, dados vivos).
  * - Navegações: network-first → fallback /offline.
  * - Assets hashed /_next/static/: cache-first.
  * - Precache mínimo (ícones + offline + manifest).
+ * - Push: só eventos do inbox unificado (payload JSON do backend).
  *
  * Bump CACHE_VERSION em cada mudança relevante do SW.
  */
-const CACHE_VERSION = "mc-shell-v3";
+const CACHE_VERSION = "mc-shell-v4";
 const SHELL_CACHE = `mc-shell-${CACHE_VERSION}`;
 const STATIC_CACHE = `mc-static-${CACHE_VERSION}`;
 
@@ -55,6 +56,83 @@ self.addEventListener("message", (event) => {
     self.skipWaiting();
   }
 });
+
+self.addEventListener("push", (event) => {
+  event.waitUntil(handlePush(event));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const href =
+    (event.notification.data && event.notification.data.href) ||
+    "/app/dashboard";
+  event.waitUntil(openOrFocusClient(href));
+});
+
+async function handlePush(event) {
+  let payload = {
+    title: "Minha Church",
+    body: "",
+    href: "/app/dashboard",
+    tag: "minha-church",
+  };
+
+  try {
+    if (event.data) {
+      const parsed = event.data.json();
+      payload = {
+        title: typeof parsed.title === "string" ? parsed.title : payload.title,
+        body: typeof parsed.body === "string" ? parsed.body : "",
+        href: typeof parsed.href === "string" ? parsed.href : payload.href,
+        tag: typeof parsed.tag === "string" ? parsed.tag : payload.tag,
+      };
+    }
+  } catch {
+    try {
+      const text = event.data ? event.data.text() : "";
+      if (text) {
+        payload.body = text;
+      }
+    } catch {
+      // ignore malformed payloads
+    }
+  }
+
+  await self.registration.showNotification(payload.title, {
+    body: payload.body || undefined,
+    icon: "/icons/icon-192.png",
+    badge: "/icons/icon-192.png",
+    tag: payload.tag,
+    renotify: true,
+    data: { href: payload.href },
+  });
+}
+
+async function openOrFocusClient(href) {
+  const url = new URL(href, self.location.origin).href;
+  const windowClients = await self.clients.matchAll({
+    type: "window",
+    includeUncontrolled: true,
+  });
+
+  for (const client of windowClients) {
+    if ("focus" in client) {
+      await client.focus();
+      if ("navigate" in client && client.url !== url) {
+        try {
+          await client.navigate(url);
+        } catch {
+          // navigate pode falhar em alguns browsers — abre nova janela abaixo
+        }
+      }
+      return;
+    }
+  }
+
+  if (self.clients.openWindow) {
+    await self.clients.openWindow(url);
+  }
+}
 
 function isApiRequest(url) {
   return url.pathname.startsWith("/api/");
