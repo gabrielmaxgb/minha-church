@@ -71,14 +71,14 @@ export function DashboardShell({
 
   return (
     <OnboardingChecklistProvider>
-      <div className="relative flex h-screen min-w-0 overflow-hidden bg-background">
+      <div className="relative flex h-dvh min-w-0 overflow-hidden overscroll-none bg-background">
       {isSwitchingChurch && switchingToChurchName && (
         <ChurchSwitchOverlay churchName={switchingToChurchName} />
       )}
 
       <div
         className={cn(
-          "hidden h-screen shrink-0 lg:block",
+          "hidden h-dvh shrink-0 lg:block",
           isSwitchingChurch && "pointer-events-none select-none",
         )}
       >
@@ -97,7 +97,7 @@ export function DashboardShell({
 
       <div
         className={cn(
-          "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden",
+          "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden overscroll-none",
           isSwitchingChurch && "pointer-events-none select-none",
         )}
         aria-busy={isSwitchingChurch}
@@ -110,7 +110,7 @@ export function DashboardShell({
         {variant === "full" ? (
           <main
             className={cn(
-              "dashboard-canvas flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-hidden pb-(--mobile-nav-offset) lg:pb-0",
+              "dashboard-canvas flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-hidden overscroll-y-contain pb-(--mobile-nav-offset) lg:pb-0",
               isSwitchingChurch && "opacity-60",
             )}
           >
@@ -124,7 +124,7 @@ export function DashboardShell({
         ) : (
           <main
             className={cn(
-              "dashboard-canvas min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-4 py-6 pb-[calc(1.5rem+var(--mobile-nav-offset))] sm:px-6 sm:py-8 lg:pb-8",
+              "dashboard-canvas min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-y-contain px-4 py-6 pb-[calc(1.5rem+var(--mobile-nav-offset))] sm:px-6 sm:py-8 lg:pb-8",
               isSwitchingChurch && "opacity-60",
             )}
           >
