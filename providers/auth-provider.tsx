@@ -294,7 +294,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const reloadSession = useCallback(async () => {
     const session = await loadSession();
-    const next = commitSession(session, church ?? undefined, sessionSetters);
+    // Nunca reutilizar o `church` em state — ele fica stale após billing
+    // (ex.: trial → active) e a topbar/banners não atualizam sem refresh.
+    // Preserva a igreja ativa pelo id, com dados frescos da sessão.
+    const preferredChurch = church
+      ? (session.churches.find((item) => item.id === church.id) ??
+        (session.church.id === church.id ? session.church : undefined))
+      : undefined;
+    const next = commitSession(session, preferredChurch, sessionSetters);
 
     scheduleTokenRefresh(next.expiresIn);
 
