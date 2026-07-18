@@ -182,7 +182,7 @@ export function AddMinistryMemberModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative z-10 flex w-full max-w-3xl flex-col overflow-hidden rounded-t-xl border border-border bg-background shadow-popover sm:max-h-[min(90dvh,720px)] sm:rounded-xl"
+        className="relative z-10 flex max-h-[min(92dvh,100%)] w-full max-w-3xl flex-col overflow-hidden rounded-t-xl border border-border bg-background shadow-popover sm:max-h-[min(90dvh,720px)] sm:rounded-xl"
       >
         <BusyOverlay
           active={assignMembers.isPending}
@@ -192,7 +192,7 @@ export function AddMinistryMemberModal({
             "Atualizando a equipe...",
           ]}
         />
-        <header className="flex items-start gap-4 px-8 pb-5 pt-8">
+        <header className="flex shrink-0 items-start gap-4 px-5 pb-4 pt-6 sm:px-8 sm:pb-5 sm:pt-8">
           <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             <UserPlus className="size-5" aria-hidden />
           </div>
@@ -218,8 +218,8 @@ export function AddMinistryMemberModal({
 
         <Separator />
 
-        <form onSubmit={handleSubmit} className="flex flex-col">
-          <div className="space-y-6 px-8 py-8">
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+          <div className="min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain px-5 py-6 sm:px-8 sm:py-8">
             {error && (
               <div
                 role="alert"
@@ -256,7 +256,7 @@ export function AddMinistryMemberModal({
             </div>
           </div>
 
-          <footer className="mt-auto flex shrink-0 flex-col-reverse gap-3 border-t border-border px-8 py-6 sm:flex-row sm:justify-end">
+          <footer className="mt-auto flex shrink-0 flex-col-reverse gap-3 border-t border-border px-5 py-4 sm:flex-row sm:justify-end sm:px-8 sm:py-6">
             <Button
               type="button"
               variant="outline"

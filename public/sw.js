@@ -9,13 +9,14 @@
  *
  * Bump CACHE_VERSION em cada mudança relevante do SW.
  */
-const CACHE_VERSION = "mc-shell-v2";
+const CACHE_VERSION = "mc-shell-v3";
 const SHELL_CACHE = `mc-shell-${CACHE_VERSION}`;
 const STATIC_CACHE = `mc-static-${CACHE_VERSION}`;
 
 const PRECACHE_URLS = [
   "/offline",
   "/manifest.webmanifest",
+  "/apple-touch-icon.png",
   "/icons/icon-192.png",
   "/icons/icon-512.png",
   "/icons/apple-touch-icon.png",

@@ -12,11 +12,13 @@ import React, {
 import { createPortal } from "react-dom";
 import { ChevronDown } from "lucide-react";
 
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 
 import {
   dropdownPositionToStyle,
   getDropdownPosition,
+  subscribeDropdownReposition,
   type DropdownPosition,
 } from "./dropdown-position";
 
@@ -83,6 +85,8 @@ export const SelectField = forwardRef<HTMLSelectElement, SelectFieldProps>(
     const triggerRef = useRef<HTMLButtonElement>(null);
     const listRef = useRef<HTMLUListElement>(null);
     const hiddenSelectRef = useRef<HTMLSelectElement>(null);
+    const isDesktopLayout = useMediaQuery("(min-width: 640px)");
+    const useInlineList = !isDesktopLayout;
 
     const [open, setOpen] = useState(false);
     const [highlightedIndex, setHighlightedIndex] = useState(0);
@@ -118,7 +122,7 @@ export const SelectField = forwardRef<HTMLSelectElement, SelectFieldProps>(
     }, [ref]);
 
     useLayoutEffect(() => {
-      if (!open || !triggerRef.current) {
+      if (!open || useInlineList || !triggerRef.current) {
         setDropdownPosition(null);
         return;
       }
@@ -132,17 +136,15 @@ export const SelectField = forwardRef<HTMLSelectElement, SelectFieldProps>(
       }
 
       updatePosition();
-      window.addEventListener("resize", updatePosition);
-      window.addEventListener("scroll", updatePosition, true);
-
-      return () => {
-        window.removeEventListener("resize", updatePosition);
-        window.removeEventListener("scroll", updatePosition, true);
-      };
-    }, [open, options.length]);
+      return subscribeDropdownReposition(updatePosition);
+    }, [open, useInlineList, options.length]);
 
     useEffect(() => {
-      function handlePointerDown(event: MouseEvent) {
+      if (!open) {
+        return;
+      }
+
+      function handlePointerDown(event: PointerEvent) {
         const target = event.target as Node;
 
         if (
@@ -155,10 +157,10 @@ export const SelectField = forwardRef<HTMLSelectElement, SelectFieldProps>(
         setOpen(false);
       }
 
-      document.addEventListener("mousedown", handlePointerDown);
+      document.addEventListener("pointerdown", handlePointerDown);
 
-      return () => document.removeEventListener("mousedown", handlePointerDown);
-    }, []);
+      return () => document.removeEventListener("pointerdown", handlePointerDown);
+    }, [open]);
 
     function emitChange(nextValue: string) {
       if (value === undefined) {
@@ -251,42 +253,48 @@ export const SelectField = forwardRef<HTMLSelectElement, SelectFieldProps>(
       ? dropdownPositionToStyle(dropdownPosition)
       : undefined;
 
+    const optionItems = options.map((option, index) => (
+      <li
+        key={`${option.value}-${option.label}`}
+        id={`${triggerId}-option-${index}`}
+        role="option"
+        aria-selected={selectedValue === option.value}
+      >
+        <button
+          type="button"
+          disabled={option.disabled}
+          className={cn(
+            "flex w-full rounded-lg px-3 py-2.5 text-left text-sm transition-colors touch-manipulation",
+            index === highlightedIndex
+              ? "bg-muted text-foreground"
+              : "text-foreground hover:bg-muted/70",
+            option.disabled && "cursor-not-allowed opacity-50",
+          )}
+          onMouseDown={(event) => event.preventDefault()}
+          onMouseEnter={() => setHighlightedIndex(index)}
+          onClick={() => selectOption(option)}
+        >
+          {option.label}
+        </button>
+      </li>
+    ));
+
+    const listClassName = useInlineList
+      ? "mt-1.5 max-h-[min(40dvh,16rem)] overflow-y-auto overscroll-contain rounded-xl border border-border bg-background p-1 shadow-lg"
+      : "overflow-y-auto overscroll-contain rounded-xl border border-border bg-background p-1 shadow-lg";
+
     const dropdownList =
-      open && dropdownStyle ? (
+      open && (useInlineList || dropdownStyle) ? (
         <ul
           ref={listRef}
           id={listId}
           role="listbox"
           tabIndex={-1}
-          style={dropdownStyle}
+          style={useInlineList ? undefined : dropdownStyle}
           onKeyDown={handleListKeyDown}
-          className="overflow-y-auto rounded-xl border border-border bg-background p-1 shadow-lg"
+          className={listClassName}
         >
-          {options.map((option, index) => (
-            <li
-              key={`${option.value}-${option.label}`}
-              id={`${triggerId}-option-${index}`}
-              role="option"
-              aria-selected={selectedValue === option.value}
-            >
-              <button
-                type="button"
-                disabled={option.disabled}
-                className={cn(
-                  "flex w-full rounded-lg px-3 py-2 text-left text-sm transition-colors",
-                  index === highlightedIndex
-                    ? "bg-muted text-foreground"
-                    : "text-foreground hover:bg-muted/70",
-                  option.disabled && "cursor-not-allowed opacity-50",
-                )}
-                onMouseDown={(event) => event.preventDefault()}
-                onMouseEnter={() => setHighlightedIndex(index)}
-                onClick={() => selectOption(option)}
-              >
-                {option.label}
-              </button>
-            </li>
-          ))}
+          {optionItems}
         </ul>
       ) : null;
 
@@ -320,7 +328,7 @@ export const SelectField = forwardRef<HTMLSelectElement, SelectFieldProps>(
             }
           }}
           className={cn(
-            "relative flex h-10 w-full items-center rounded-xl border border-input/80 bg-surface-elevated px-3 py-2 pr-10 text-left text-sm transition-all duration-200 focus-visible:border-transparent focus-visible:bg-muted/60 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+            "relative flex h-11 w-full items-center rounded-xl border border-input/80 bg-surface-elevated px-3 py-2 pr-10 text-left text-base transition-all duration-200 focus-visible:border-transparent focus-visible:bg-muted/60 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 sm:h-10 sm:text-sm",
             "aria-invalid:border-destructive/50 aria-invalid:bg-destructive/5 aria-invalid:focus-visible:bg-destructive/10",
           )}
         >
@@ -358,7 +366,11 @@ export const SelectField = forwardRef<HTMLSelectElement, SelectFieldProps>(
           {children}
         </select>
 
-        {mounted && dropdownList ? createPortal(dropdownList, document.body) : null}
+        {useInlineList
+          ? dropdownList
+          : mounted && dropdownList
+            ? createPortal(dropdownList, document.body)
+            : null}
       </div>
     );
   },

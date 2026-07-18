@@ -26,8 +26,9 @@ const geistMono = Geist_Mono({
 });
 
 /**
- * Icons: public URLs (not `import`ed PNGs) — avoids Turbopack metadata bugs.
- * `app/apple-icon.png` (180) + `/icons/apple-touch-icon.png` cover iOS home screen.
+ * iOS home-screen: precisa de `/apple-touch-icon.png` na raiz (público)
+ * + link explícito. Query `v=` quebra cache agressivo do Safari.
+ * PNG opaco (sem alpha) — iOS às vezes rejeita ícone com transparência.
  */
 export const metadata: Metadata = {
   ...defaultMetadata,
@@ -38,8 +39,18 @@ export const metadata: Metadata = {
     ],
     apple: [
       {
-        url: "/icons/apple-touch-icon.png",
+        url: "/apple-touch-icon.png?v=20260718",
         sizes: "180x180",
+        type: "image/png",
+      },
+      {
+        url: "/icons/apple-touch-icon-167.png?v=20260718",
+        sizes: "167x167",
+        type: "image/png",
+      },
+      {
+        url: "/icons/apple-touch-icon-152.png?v=20260718",
+        sizes: "152x152",
         type: "image/png",
       },
     ],

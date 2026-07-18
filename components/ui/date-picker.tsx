@@ -19,6 +19,7 @@ import {
   clampDropdownHorizontal,
   dropdownPositionToStyle,
   getDropdownPosition,
+  subscribeDropdownReposition,
   type DropdownPosition,
 } from "./dropdown-position";
 
@@ -128,13 +129,7 @@ export function DatePicker({
     }
 
     updatePosition();
-    window.addEventListener("resize", updatePosition);
-    window.addEventListener("scroll", updatePosition, true);
-
-    return () => {
-      window.removeEventListener("resize", updatePosition);
-      window.removeEventListener("scroll", updatePosition, true);
-    };
+    return subscribeDropdownReposition(updatePosition);
   }, [open]);
 
   useLayoutEffect(() => {
@@ -153,7 +148,7 @@ export function DatePicker({
       return;
     }
 
-    function handlePointerDown(event: MouseEvent) {
+    function handlePointerDown(event: PointerEvent) {
       const target = event.target as Node;
 
       if (
@@ -178,11 +173,11 @@ export function DatePicker({
       }
     }
 
-    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("pointerdown", handlePointerDown);
     document.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("pointerdown", handlePointerDown);
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [open, captionMode]);

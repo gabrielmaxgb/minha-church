@@ -17,6 +17,12 @@ export default function manifest(): MetadataRoute.Manifest {
     categories: ["business", "productivity"],
     icons: [
       {
+        src: "/apple-touch-icon.png",
+        sizes: "180x180",
+        type: "image/png",
+        purpose: "any",
+      },
+      {
         src: "/icons/icon-192.png",
         sizes: "192x192",
         type: "image/png",
@@ -33,12 +39,6 @@ export default function manifest(): MetadataRoute.Manifest {
         sizes: "512x512",
         type: "image/png",
         purpose: "maskable",
-      },
-      {
-        src: "/icons/apple-touch-icon.png",
-        sizes: "180x180",
-        type: "image/png",
-        purpose: "any",
       },
     ],
   };

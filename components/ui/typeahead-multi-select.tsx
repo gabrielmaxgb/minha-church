@@ -11,11 +11,13 @@ import {
 import { createPortal } from "react-dom";
 import { ChevronDown, Loader2, X } from "lucide-react";
 
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 
 import {
   dropdownPositionToStyle,
   getDropdownPosition,
+  subscribeDropdownReposition,
   type DropdownPosition,
 } from "./dropdown-position";
 import type { TypeaheadOption } from "./typeahead-select";
@@ -55,6 +57,10 @@ export function TypeaheadMultiSelect({
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const emptyRef = useRef<HTMLDivElement>(null);
+  // Mobile-first: keep the list in-flow until we know the viewport is wide enough
+  // for a portaled popover (avoids keyboard/clipping bugs on phones).
+  const isDesktopLayout = useMediaQuery("(min-width: 640px)");
+  const useInlineList = !isDesktopLayout;
 
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -109,7 +115,7 @@ export function TypeaheadMultiSelect({
   }, [query, open]);
 
   useLayoutEffect(() => {
-    if (!open || !comboboxRef.current) {
+    if (!open || useInlineList || !comboboxRef.current) {
       setDropdownPosition(null);
       return;
     }
@@ -123,17 +129,15 @@ export function TypeaheadMultiSelect({
     }
 
     updatePosition();
-    window.addEventListener("resize", updatePosition);
-    window.addEventListener("scroll", updatePosition, true);
-
-    return () => {
-      window.removeEventListener("resize", updatePosition);
-      window.removeEventListener("scroll", updatePosition, true);
-    };
-  }, [open, filteredOptions.length, selectedOptions.length]);
+    return subscribeDropdownReposition(updatePosition);
+  }, [open, useInlineList, filteredOptions.length, selectedOptions.length]);
 
   useEffect(() => {
-    function handlePointerDown(event: MouseEvent) {
+    if (!open) {
+      return;
+    }
+
+    function handlePointerDown(event: PointerEvent) {
       const target = event.target as Node;
 
       if (
@@ -148,10 +152,10 @@ export function TypeaheadMultiSelect({
       setQuery("");
     }
 
-    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("pointerdown", handlePointerDown);
 
-    return () => document.removeEventListener("mousedown", handlePointerDown);
-  }, []);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [open]);
 
   function addOption(option: TypeaheadOption) {
     if (selectedSet.has(option.value)) {
@@ -161,7 +165,10 @@ export function TypeaheadMultiSelect({
     onChange([...value, option.value]);
     setQuery("");
     setOpen(true);
-    inputRef.current?.focus();
+    // Keep focus without forcing the soft keyboard to flicker on every pick.
+    if (!useInlineList) {
+      inputRef.current?.focus();
+    }
   }
 
   function removeOption(optionValue: string) {
@@ -180,6 +187,7 @@ export function TypeaheadMultiSelect({
     }
 
     inputRef.current?.focus();
+    setOpen(true);
   }
 
   function handleInputFocus() {
@@ -245,53 +253,82 @@ export function TypeaheadMultiSelect({
   const showEmptyState = open && !loading && filteredOptions.length === 0;
   const showList = open && !loading && filteredOptions.length > 0;
 
+  const optionButtons = filteredOptions.map((option, index) => (
+    <li
+      key={option.value}
+      id={`${inputId}-option-${index}`}
+      role="option"
+      aria-selected={false}
+    >
+      <button
+        type="button"
+        className={cn(
+          "flex w-full flex-col rounded-lg px-3 py-2.5 text-left text-sm transition-colors touch-manipulation",
+          index === highlightedIndex
+            ? "bg-muted text-foreground"
+            : "text-foreground hover:bg-muted/70",
+        )}
+        onMouseDown={(event) => {
+          // Prevent input blur before click; do not use pointerdown —
+          // preventDefault there suppresses click on iOS.
+          event.preventDefault();
+        }}
+        onMouseEnter={() => setHighlightedIndex(index)}
+        onClick={() => addOption(option)}
+      >
+        <span className="font-medium">{option.label}</span>
+        {option.description && (
+          <span className="mt-0.5 text-xs text-muted-foreground">
+            {option.description}
+          </span>
+        )}
+      </button>
+    </li>
+  ));
+
+  const inlineList = showList ? (
+    <ul
+      ref={listRef}
+      id={listId}
+      role="listbox"
+      className={cn(
+        "mt-1.5 max-h-[min(40dvh,16rem)] overflow-y-auto overscroll-contain rounded-xl border border-border bg-background p-1 shadow-lg",
+        listClassName,
+      )}
+    >
+      {optionButtons}
+    </ul>
+  ) : null;
+
+  const inlineEmpty = showEmptyState ? (
+    <div
+      ref={emptyRef}
+      className="mt-1.5 rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-muted-foreground shadow-lg"
+    >
+      {emptyMessage}
+    </div>
+  ) : null;
+
   const dropdownStyle: React.CSSProperties | undefined = dropdownPosition
     ? dropdownPositionToStyle(dropdownPosition)
     : undefined;
 
-  const dropdownList = showList && dropdownStyle && (
+  const portaledList = showList && dropdownStyle && (
     <ul
       ref={listRef}
       id={listId}
       role="listbox"
       style={dropdownStyle}
       className={cn(
-        "overflow-y-auto rounded-xl border border-border bg-background p-1 shadow-lg",
+        "overflow-y-auto overscroll-contain rounded-xl border border-border bg-background p-1 shadow-lg",
         listClassName,
       )}
     >
-      {filteredOptions.map((option, index) => (
-        <li
-          key={option.value}
-          id={`${inputId}-option-${index}`}
-          role="option"
-          aria-selected={false}
-        >
-          <button
-            type="button"
-            className={cn(
-              "flex w-full flex-col rounded-lg px-3 py-2 text-left text-sm transition-colors",
-              index === highlightedIndex
-                ? "bg-muted text-foreground"
-                : "text-foreground hover:bg-muted/70",
-            )}
-            onMouseDown={(event) => event.preventDefault()}
-            onMouseEnter={() => setHighlightedIndex(index)}
-            onClick={() => addOption(option)}
-          >
-            <span className="font-medium">{option.label}</span>
-            {option.description && (
-              <span className="mt-0.5 text-xs text-muted-foreground">
-                {option.description}
-              </span>
-            )}
-          </button>
-        </li>
-      ))}
+      {optionButtons}
     </ul>
   );
 
-  const dropdownEmpty = showEmptyState && dropdownStyle && (
+  const portaledEmpty = showEmptyState && dropdownStyle && (
     <div
       ref={emptyRef}
       style={dropdownStyle}
@@ -306,7 +343,7 @@ export function TypeaheadMultiSelect({
       <div
         ref={comboboxRef}
         className={cn(
-          "relative flex min-h-10 w-full flex-wrap items-center gap-1.5 rounded-xl border border-input/80 bg-surface-elevated px-2 py-1.5 pr-9 transition-all duration-200",
+          "relative flex min-h-11 w-full flex-wrap items-center gap-1.5 rounded-xl border border-input/80 bg-surface-elevated px-2 py-1.5 pr-9 transition-all duration-200",
           "focus-within:border-transparent focus-within:bg-muted/60",
           disabled && "cursor-not-allowed opacity-50",
           ariaInvalid &&
@@ -322,7 +359,7 @@ export function TypeaheadMultiSelect({
             <span className="truncate">{option.label}</span>
             <button
               type="button"
-              className="rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
+              className="rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50 touch-manipulation"
               disabled={disabled || loading}
               aria-label={`Remover ${option.label}`}
               onClick={(event) => {
@@ -353,6 +390,10 @@ export function TypeaheadMultiSelect({
           }
           disabled={disabled || loading}
           autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck={false}
+          enterKeyHint="search"
           aria-invalid={ariaInvalid}
           aria-expanded={open}
           aria-controls={listId}
@@ -360,7 +401,7 @@ export function TypeaheadMultiSelect({
           aria-activedescendant={
             showList ? `${inputId}-option-${highlightedIndex}` : undefined
           }
-          className="min-w-[8rem] flex-1 border-0 bg-transparent px-1 py-1 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed"
+          className="min-h-9 min-w-[8rem] flex-1 border-0 bg-transparent px-1 py-1 text-base outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed sm:text-sm"
         />
 
         <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -372,8 +413,21 @@ export function TypeaheadMultiSelect({
         </span>
       </div>
 
-      {mounted && dropdownList ? createPortal(dropdownList, document.body) : null}
-      {mounted && dropdownEmpty ? createPortal(dropdownEmpty, document.body) : null}
+      {useInlineList ? (
+        <>
+          {inlineList}
+          {inlineEmpty}
+        </>
+      ) : (
+        <>
+          {mounted && portaledList
+            ? createPortal(portaledList, document.body)
+            : null}
+          {mounted && portaledEmpty
+            ? createPortal(portaledEmpty, document.body)
+            : null}
+        </>
+      )}
     </div>
   );
 }
