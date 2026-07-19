@@ -2,26 +2,23 @@
 
 import "@xyflow/react/dist/style.css";
 
+import { motion } from "motion/react";
 import { useMemo } from "react";
 import {
   Background,
   BackgroundVariant,
   BaseEdge,
-  Controls,
   Handle,
-  MarkerType,
   Position,
   ReactFlow,
   ReactFlowProvider,
-  getBezierPath,
+  useStore,
   type Edge,
   type EdgeProps,
   type Node,
   type NodeProps,
 } from "@xyflow/react";
-import { ArrowLeft, Users } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import {
   NODE_H,
   NODE_W,
@@ -30,6 +27,14 @@ import {
   initials,
   restName,
 } from "@/lib/members/family-graph-layout";
+import {
+  bundledRelationIds,
+  detectFamilyUnits,
+  familyUnitConnectorPath,
+  peerConnectorPath,
+  soloAscendantPath,
+  type GraphNodeBox,
+} from "@/lib/members/family-graph-genealogy";
 import { cn } from "@/lib/utils";
 import type {
   FamilyGraphMember,
@@ -37,6 +42,7 @@ import type {
   MemberRelationType,
 } from "@/types/members";
 import {
+  ASCENDANT_RELATION_TYPES,
   MEMBER_RELATION_LABELS,
   UNDIRECTED_RELATION_TYPES,
 } from "@/types/members";
@@ -118,6 +124,14 @@ const LEGEND: { type: MemberRelationType; label: string }[] = [
   { type: "sibling", label: MEMBER_RELATION_LABELS.sibling },
 ];
 
+const SELECTED_ID = "m-ana";
+
+const FICHE_PEEK = [
+  { name: "Marina Costa", role: "Mãe" },
+  { name: "Roberto Souza", role: "Pai" },
+  { name: "Pedro Souza", role: "Irmão" },
+] as const;
+
 const handleClassName =
   "!h-2 !w-2 !min-w-0 !border-0 !bg-transparent !opacity-0";
 
@@ -130,9 +144,17 @@ type MemberFlowNode = Node<MemberNodeData, "member">;
 
 type RelationEdgeData = {
   relationType: MemberRelationType;
+  kind: "peer" | "solo-parent";
+};
+
+type FamilyUnitEdgeData = {
+  parentIds: string[];
+  childIds: string[];
 };
 
 type RelationFlowEdge = Edge<RelationEdgeData, "relation">;
+type FamilyUnitFlowEdge = Edge<FamilyUnitEdgeData, "familyUnit">;
+type PreviewEdge = RelationFlowEdge | FamilyUnitFlowEdge;
 
 function MemberNode({ data }: NodeProps<MemberFlowNode>) {
   const { member, active } = data;
@@ -141,13 +163,21 @@ function MemberNode({ data }: NodeProps<MemberFlowNode>) {
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center gap-1.5 rounded-[1.25rem] border bg-white/95 px-3 py-2 text-center shadow-xs backdrop-blur-sm",
+        "relative flex flex-col items-center justify-center gap-1.5 rounded-2xl border px-3 py-2 text-center backdrop-blur-sm transition-[box-shadow,border-color]",
         active
-          ? "border-billing shadow-popover ring-[3px] ring-billing/20"
-          : "border-black/6",
+          ? "border-domain-members/50 bg-white shadow-[0_0_0_3px_color-mix(in_srgb,var(--domain-members)_22%,transparent),0_12px_28px_-12px_rgba(40,48,36,0.35)]"
+          : "border-black/6 bg-white/90 shadow-xs",
       )}
       style={{ width: NODE_W, height: NODE_H }}
     >
+      {active ? (
+        <motion.span
+          className="pointer-events-none absolute -inset-1 rounded-[1.15rem] border border-domain-members/35"
+          aria-hidden
+          animate={{ opacity: [0.35, 0.85, 0.35], scale: [1, 1.02, 1] }}
+          transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
+        />
+      ) : null}
       <Handle
         id="t"
         type="target"
@@ -166,8 +196,8 @@ function MemberNode({ data }: NodeProps<MemberFlowNode>) {
         className={cn(
           "flex size-9 items-center justify-center rounded-full text-[13px] font-semibold tracking-wide",
           active
-            ? "bg-billing text-white"
-            : "bg-billing-subtle text-billing-foreground",
+            ? "bg-domain-members text-white"
+            : "bg-domain-members-subtle text-domain-members-foreground",
         )}
       >
         {initials(member.name)}
@@ -200,41 +230,113 @@ function MemberNode({ data }: NodeProps<MemberFlowNode>) {
   );
 }
 
+function boxFromNode(node: {
+  id: string;
+  position: { x: number; y: number };
+  measured?: { width?: number; height?: number };
+}): GraphNodeBox {
+  return {
+    id: node.id,
+    x: node.position.x,
+    y: node.position.y,
+    width: node.measured?.width ?? NODE_W,
+    height: node.measured?.height ?? NODE_H,
+  };
+}
+
 function RelationEdge({
   id,
   sourceX,
   sourceY,
   targetX,
   targetY,
-  sourcePosition,
-  targetPosition,
   data,
 }: EdgeProps<RelationFlowEdge>) {
   const relationType = data?.relationType ?? "parent";
+  const kind = data?.kind ?? "solo-parent";
   const color = RELATION_COLORS[relationType];
-  const [edgePath] = getBezierPath({
-    sourceX,
-    sourceY,
-    targetX,
-    targetY,
-    sourcePosition,
-    targetPosition,
-  });
+  const source = { x: sourceX, y: sourceY };
+  const target = { x: targetX, y: targetY };
+
+  const edgePath =
+    kind === "peer"
+      ? peerConnectorPath(source, target)
+      : soloAscendantPath(source, target);
 
   return (
-    <BaseEdge
-      id={id}
-      path={edgePath}
-      style={{
-        stroke: color,
-        strokeWidth: UNDIRECTED_RELATION_TYPES.has(relationType) ? 2.5 : 2,
-      }}
-    />
+    <>
+      <BaseEdge
+        id={`${id}-halo`}
+        path={edgePath}
+        style={{
+          stroke: "rgba(255,255,255,0.92)",
+          strokeWidth: 5.5,
+          strokeLinecap: "round",
+        }}
+      />
+      <BaseEdge
+        id={id}
+        path={edgePath}
+        style={{
+          stroke: color,
+          strokeWidth: kind === "peer" ? 2.75 : 2.5,
+          strokeLinecap: "round",
+        }}
+      />
+    </>
+  );
+}
+
+function FamilyUnitEdge({ id, data }: EdgeProps<FamilyUnitFlowEdge>) {
+  const parentIds = data?.parentIds ?? [];
+  const childIds = data?.childIds ?? [];
+  const color = RELATION_COLORS.parent;
+
+  const nodes = useStore((state) => state.nodes);
+  const edgePath = useMemo(() => {
+    const byId = new Map(nodes.map((node) => [node.id, node]));
+    const parents = parentIds
+      .map((parentId) => byId.get(parentId))
+      .filter(Boolean)
+      .map((node) => boxFromNode(node!));
+    const children = childIds
+      .map((childId) => byId.get(childId))
+      .filter(Boolean)
+      .map((node) => boxFromNode(node!));
+    return familyUnitConnectorPath(parents, children);
+  }, [nodes, parentIds, childIds]);
+
+  if (!edgePath) return null;
+
+  return (
+    <>
+      <BaseEdge
+        id={`${id}-halo`}
+        path={edgePath}
+        style={{
+          stroke: "rgba(255,255,255,0.92)",
+          strokeWidth: 5.5,
+          strokeLinecap: "round",
+        }}
+      />
+      <BaseEdge
+        id={id}
+        path={edgePath}
+        style={{
+          stroke: color,
+          strokeWidth: 2.5,
+          strokeLinecap: "round",
+        }}
+      />
+    </>
   );
 }
 
 const nodeTypes = { member: MemberNode };
-const edgeTypes = { relation: RelationEdge };
+const edgeTypes = {
+  relation: RelationEdge,
+  familyUnit: FamilyUnitEdge,
+};
 
 function FamilyGraphPreviewCanvas() {
   const { nodes, edges } = useMemo(() => {
@@ -247,34 +349,88 @@ function FamilyGraphPreviewCanvas() {
         id: member.id,
         type: "member",
         position: { x: pos?.x ?? 0, y: pos?.y ?? 0 },
-        data: { member, active: member.id === "m-ana" },
+        data: { member, active: member.id === SELECTED_ID },
         draggable: false,
         selectable: false,
       };
     });
 
-    const nextEdges: RelationFlowEdge[] = DEMO_RELATIONS.map((relation) => {
+    const units = detectFamilyUnits(DEMO_RELATIONS);
+    const bundled = bundledRelationIds(units);
+
+    const nextEdges: PreviewEdge[] = [];
+
+    for (const unit of units) {
+      const [firstParent] = unit.parentIds;
+      const [firstChild] = unit.childIds;
+      if (!firstParent || !firstChild) continue;
+      nextEdges.push({
+        id: unit.id,
+        type: "familyUnit",
+        source: firstParent,
+        target: firstChild,
+        sourceHandle: "b",
+        targetHandle: "t",
+        data: {
+          parentIds: unit.parentIds,
+          childIds: unit.childIds,
+        },
+        selectable: false,
+        focusable: false,
+      });
+    }
+
+    for (const relation of DEMO_RELATIONS) {
+      if (bundled.has(relation.id)) continue;
+
       const isPeer = UNDIRECTED_RELATION_TYPES.has(relation.type);
-      return {
+      const isAscendant = ASCENDANT_RELATION_TYPES.has(relation.type);
+
+      let source = relation.fromMemberId;
+      let target = relation.toMemberId;
+      let sourceHandle = "b";
+      let targetHandle = "t";
+
+      if (isPeer) {
+        const fromPos = byId.get(relation.fromMemberId);
+        const toPos = byId.get(relation.toMemberId);
+        if (fromPos && toPos && fromPos.x > toPos.x) {
+          source = relation.toMemberId;
+          target = relation.fromMemberId;
+        }
+        sourceHandle = "r";
+        targetHandle = "l";
+      } else if (isAscendant) {
+        sourceHandle = "b";
+        targetHandle = "t";
+      }
+
+      nextEdges.push({
         id: relation.id,
         type: "relation",
-        source: relation.fromMemberId,
-        target: relation.toMemberId,
-        sourceHandle: isPeer ? "r" : "b",
-        targetHandle: isPeer ? "l" : "t",
-        data: { relationType: relation.type },
-        markerEnd: isPeer
-          ? undefined
-          : { type: MarkerType.ArrowClosed, width: 14, height: 14, color: RELATION_COLORS[relation.type] },
-      };
-    });
+        source,
+        target,
+        sourceHandle,
+        targetHandle,
+        data: {
+          relationType: relation.type,
+          kind: isPeer ? "peer" : "solo-parent",
+        },
+        selectable: false,
+        focusable: false,
+      });
+    }
 
     return { nodes: nextNodes, edges: nextEdges };
   }, []);
 
   return (
-    <div className="relative h-full w-full overflow-hidden bg-surface-elevated">
-      <ReactFlow<MemberFlowNode, RelationFlowEdge>
+    <div className="relative h-full w-full overflow-hidden">
+      <div
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_48%_40%,color-mix(in_srgb,var(--domain-members)_16%,transparent),transparent_58%)]"
+        aria-hidden
+      />
+      <ReactFlow<MemberFlowNode, PreviewEdge>
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
@@ -289,106 +445,146 @@ function FamilyGraphPreviewCanvas() {
         minZoom={0.35}
         maxZoom={1.2}
         fitView
-        fitViewOptions={{ padding: 0.22 }}
+        fitViewOptions={{ padding: 0.18 }}
         proOptions={{ hideAttribution: true }}
+        className="bg-transparent!"
       >
         <Background
           variant={BackgroundVariant.Dots}
-          gap={22}
-          size={1.4}
-          color="color-mix(in srgb, var(--foreground) 12%, transparent)"
-        />
-        <Controls
-          showInteractive={false}
-          className="rounded-xl! border! border-border/60! bg-white/95! shadow-xs!"
+          gap={20}
+          size={1.1}
+          color="color-mix(in srgb, var(--domain-members) 18%, transparent)"
         />
       </ReactFlow>
+    </div>
+  );
+}
 
-      {/* Same floating chrome as /app/membros/familias */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start justify-between gap-3 p-3 sm:p-4">
-        <div className="pointer-events-none flex min-w-0 items-center gap-2 rounded-2xl border border-border/60 bg-white/92 p-1.5 shadow-popover backdrop-blur-md">
-          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-xl px-2.5 py-2 text-sm text-muted-foreground">
-            <ArrowLeft className="size-4" aria-hidden />
-            <span className="hidden sm:inline">Membros</span>
-          </span>
-          <div className="mx-1 h-6 w-px shrink-0 bg-border/70" aria-hidden />
-          <div className="min-w-0 pr-2">
-            <p className="truncate text-sm font-semibold tracking-tight text-foreground">
-              Família Souza
-            </p>
-            <p className="truncate text-[11px] text-muted-foreground">
-              {DEMO_MEMBERS.length} pessoas
-              <span className="mx-1 text-border">·</span>
-              {DEMO_RELATIONS.length} vínculos
-            </p>
-          </div>
-        </div>
-
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          tabIndex={-1}
-          className="pointer-events-none shrink-0 shadow-popover backdrop-blur-md"
-        >
-          <Users className="size-4" aria-hidden />
-          Pessoas
-          <span className="ml-0.5 rounded-full bg-domain-members-subtle px-1.5 text-xs font-semibold text-domain-members-foreground">
-            {DEMO_MEMBERS.length}
-          </span>
-        </Button>
-      </div>
-
-      <div className="pointer-events-none absolute top-20 left-3 z-20 sm:top-18 sm:left-4">
-        <div className="w-[min(100%,15.5rem)] rounded-2xl border border-border/60 bg-white/92 p-3 shadow-xs backdrop-blur-md">
-          <p className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
-            Legenda
-          </p>
-          <ul className="mt-2 space-y-1.5">
-            {LEGEND.map((item) => (
-              <li
-                key={item.type}
-                className="flex items-center gap-2.5 text-xs text-foreground"
-              >
-                <span
-                  className="block h-1.5 w-7 shrink-0 rounded-full"
-                  style={{ backgroundColor: RELATION_COLORS[item.type] }}
-                  aria-hidden
-                />
-                <span className="leading-tight">{item.label}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-
-      <div className="pointer-events-none absolute inset-x-3 bottom-4 z-20 flex justify-center sm:inset-x-4 sm:justify-start sm:pl-66">
-        <div className="flex max-w-[min(100%,28rem)] items-center gap-2 rounded-full border border-border/60 bg-white/90 px-3 py-1.5 shadow-xs backdrop-blur-md">
-          <p className="truncate text-xs text-muted-foreground sm:text-sm">
-            Toque em uma pessoa para ver a ficha — e nos vínculos para entender
-            a família.
-          </p>
-        </div>
+function GraphLegend() {
+  return (
+    <div className="pointer-events-none absolute top-3 left-3 z-20 sm:top-4 sm:left-4">
+      <div className="rounded-2xl border border-border/50 bg-white/90 px-3 py-2.5 shadow-xs backdrop-blur-md">
+        <p className="text-[10px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
+          Vínculos
+        </p>
+        <ul className="mt-2 space-y-1.5">
+          {LEGEND.map((item) => (
+            <li
+              key={item.type}
+              className="flex items-center gap-2.5 text-[11px] text-foreground"
+            >
+              <span
+                className="block h-1 w-5 shrink-0 rounded-full"
+                style={{ backgroundColor: RELATION_COLORS[item.type] }}
+                aria-hidden
+              />
+              <span className="leading-tight">{item.label}</span>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );
 }
 
+function MemberFichePeek() {
+  return (
+    <motion.aside
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.25, ease: [0.25, 0.4, 0.25, 1] }}
+      className="pointer-events-none absolute right-3 bottom-3 z-20 w-[min(100%,16.5rem)] sm:right-4 sm:bottom-4"
+      aria-label="Ficha de Ana Souza"
+    >
+      <div className="overflow-hidden rounded-2xl border border-domain-members/25 bg-white/95 shadow-popover backdrop-blur-md">
+        <div className="border-b border-border/50 bg-domain-members-subtle/60 px-3.5 py-2.5">
+          <div className="flex items-center gap-2.5">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-domain-members text-[12px] font-semibold tracking-wide text-white">
+              AS
+            </span>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold tracking-tight text-foreground">
+                Ana Souza
+              </p>
+              <p className="truncate text-[11px] text-domain-members-foreground">
+                Selecionada no grafo
+              </p>
+            </div>
+          </div>
+        </div>
+        <ul className="divide-y divide-border/40 px-1 py-1">
+          {FICHE_PEEK.map((person) => (
+            <li
+              key={person.name}
+              className="flex items-center gap-2 px-2.5 py-1.5"
+            >
+              <span
+                className="flex size-6 shrink-0 items-center justify-center rounded-full bg-domain-members-subtle text-[9px] font-semibold tracking-wide text-domain-members-foreground"
+                aria-hidden
+              >
+                {initials(person.name)}
+              </span>
+              <span className="min-w-0 flex-1 truncate text-[12px] font-medium text-foreground">
+                {person.name}
+              </span>
+              <span className="shrink-0 text-[10px] text-muted-foreground">
+                {person.role}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </motion.aside>
+  );
+}
+
 /**
- * In-app family graph as it appears in the product (read-only marketing frame).
+ * Marketing frame — the family graph is the hero; fiche is a supporting peek.
  */
 export function FamilyGraphPreview({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "h-[28rem] overflow-hidden rounded-2xl border border-border/70 shadow-popover sm:h-[32rem]",
+        "relative overflow-hidden rounded-2xl border border-domain-members/25 bg-card shadow-popover",
         className,
       )}
       aria-label="Prévia do grafo de família no Minha Church"
     >
-      <ReactFlowProvider>
-        <FamilyGraphPreviewCanvas />
-      </ReactFlowProvider>
+      <div
+        className="pointer-events-none absolute -top-16 -right-10 size-44 rounded-full bg-domain-members/15 blur-3xl"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute -bottom-20 -left-12 size-52 rounded-full bg-domain-members/10 blur-3xl"
+        aria-hidden
+      />
+
+      <header className="relative flex flex-wrap items-end justify-between gap-3 border-b border-border/60 px-4 py-3 sm:px-5">
+        <div className="min-w-0">
+          <p className="text-[10px] font-semibold tracking-[0.16em] text-domain-members-foreground uppercase">
+            Grafo familiar
+          </p>
+          <h3 className="font-display mt-0.5 text-lg font-semibold tracking-tight text-foreground sm:text-xl">
+            Família Souza
+          </h3>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-full border border-domain-members/20 bg-domain-members-subtle px-2.5 py-1 text-[11px] font-medium tabular-nums text-domain-members-foreground">
+            {DEMO_MEMBERS.length} pessoas
+          </span>
+          <span className="rounded-full border border-border/70 bg-background/80 px-2.5 py-1 text-[11px] font-medium tabular-nums text-muted-foreground">
+            {DEMO_RELATIONS.length} vínculos
+          </span>
+        </div>
+      </header>
+
+      <div className="relative h-[28rem] sm:h-[34rem]">
+        <ReactFlowProvider>
+          <FamilyGraphPreviewCanvas />
+        </ReactFlowProvider>
+        <GraphLegend />
+        <MemberFichePeek />
+      </div>
     </div>
   );
 }

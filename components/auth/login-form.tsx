@@ -48,7 +48,7 @@ const welcomePoints = [
   {
     icon: CalendarDays,
     title: "Próximo culto em vista",
-    description: "Agenda, escalas e comunicados no mesmo lugar.",
+    description: "Agenda, escalas e comunicados — tudo no mesmo lugar.",
     tone: "text-attention-foreground bg-attention-subtle",
   },
 ] as const;

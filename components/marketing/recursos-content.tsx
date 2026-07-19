@@ -75,7 +75,7 @@ export function RecursosContent() {
                       ))}
                     </ul>
                     {section.id === "membros" ? (
-                      <div className="mt-8 max-w-xl">
+                      <div className="mt-8 max-w-3xl">
                         <FamilyGraphPreview />
                       </div>
                     ) : null}

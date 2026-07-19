@@ -291,7 +291,7 @@ function candidateElbows(
   ];
 }
 
-function pointsToRoundedPath(points: RoutePoint[], radius: number): string {
+export function pointsToRoundedPath(points: RoutePoint[], radius: number): string {
   if (points.length === 0) return "";
   if (points.length === 1) {
     const p = points[0]!;

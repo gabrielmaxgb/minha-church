@@ -241,47 +241,22 @@ export function FamilyGraphDemoSection() {
   return (
     <section className="border-b border-border bg-gradient-to-b from-domain-members-subtle/40 via-background to-background py-14 sm:py-20 lg:py-24">
       <Container>
-        <MotionSection
-          variants={fadeInUp}
-          className="grid items-center gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-14"
-        >
-          <div className="max-w-lg">
-            <p className="text-[11px] font-semibold tracking-[0.16em] text-domain-members-foreground uppercase">
-              Cadastro pastoral
-            </p>
-            <Heading as="h2" className="mt-3 text-balance">
-              A família inteira, não só a ficha
-            </Heading>
-            <p className="mt-4 text-base leading-relaxed text-muted-foreground">
-              O mesmo grafo que a liderança usa no app: pais, cônjuges e filhos
-              ligados de forma visual — para pastorear com contexto, não com
-              planilha.
-            </p>
-
-            <ul className="mt-8 space-y-3">
-              {[
-                "Vínculos de parentesco com cores claras",
-                "Quem é quem na família, de um olhar",
-                "Aberto direto da ficha do membro",
-              ].map((signal) => (
-                <li
-                  key={signal}
-                  className="flex items-start gap-3 text-sm text-foreground"
-                >
-                  <span
-                    className="mt-1.5 size-1.5 shrink-0 rounded-full bg-domain-members"
-                    aria-hidden
-                  />
-                  <span className="leading-snug">{signal}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="relative min-w-0">
-            <FamilyGraphPreview />
-          </div>
+        <MotionSection variants={fadeInUp} className="max-w-2xl">
+          <p className="text-[11px] font-semibold tracking-[0.16em] text-domain-members-foreground uppercase">
+            Cadastro pastoral
+          </p>
+          <Heading as="h2" className="mt-3 text-balance">
+            Família como grafo, não como lista
+          </Heading>
+          <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+            Pais, cônjuges e filhos ligados de forma visual — o diferencial
+            para pastorear com contexto, sem caçar parentesco em planilha.
+          </p>
         </MotionSection>
+
+        <MotionDiv variants={fadeInUp} className="relative mt-10 min-w-0 sm:mt-12">
+          <FamilyGraphPreview />
+        </MotionDiv>
       </Container>
     </section>
   );

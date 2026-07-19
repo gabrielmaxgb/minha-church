@@ -13,6 +13,7 @@ import {
   ClipboardList,
   Layers,
   LayoutDashboard,
+  LogOut,
   Mail,
   Megaphone,
   Repeat,
@@ -24,6 +25,7 @@ import {
 import { useState } from "react";
 
 import { pendingNotificationStyles } from "@/lib/ui/notification-styles";
+import { domainNavActive, type ProductDomain } from "@/lib/ui/domain-theme";
 import { cn } from "@/lib/utils";
 
 type MockView =
@@ -39,53 +41,47 @@ const primaryNav: {
   label: string;
   icon: typeof LayoutDashboard;
   badge?: number;
-  domainClass: string;
+  domain: ProductDomain;
   sectionStart?: boolean;
 }[] = [
   {
     id: "dashboard",
     label: "Início",
     icon: LayoutDashboard,
-    domainClass:
-      "border border-domain-home/30 bg-domain-home-subtle text-domain-home-foreground",
+    domain: "home",
   },
   {
     id: "activities",
     label: "Eventos",
     icon: Calendar,
     sectionStart: true,
-    domainClass:
-      "border border-domain-activities/30 bg-domain-activities-subtle text-domain-activities-foreground",
+    domain: "activities",
   },
   {
     id: "communication",
     label: "Comunicados",
     icon: Mail,
-    domainClass:
-      "border border-domain-communication/30 bg-domain-communication-subtle text-domain-communication-foreground",
+    domain: "communication",
   },
   {
     id: "schedules",
     label: "Minha escala",
     icon: CalendarDays,
     badge: 2,
-    domainClass:
-      "border border-domain-schedules/30 bg-domain-schedules-subtle text-domain-schedules-foreground",
+    domain: "schedules",
   },
   {
     id: "members",
     label: "Membros",
     icon: Users,
     sectionStart: true,
-    domainClass:
-      "border border-domain-members/30 bg-domain-members-subtle text-domain-members-foreground",
+    domain: "members",
   },
   {
     id: "ministries",
     label: "Ministérios",
     icon: Layers,
-    domainClass:
-      "border border-domain-ministries/30 bg-domain-ministries-subtle text-domain-ministries-foreground",
+    domain: "ministries",
   },
 ];
 
@@ -151,30 +147,30 @@ function BrowserChrome() {
 
 function MockChurchBrand() {
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-domain-members-subtle via-card to-attention-subtle p-3 shadow-xs">
+    <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-domain-members-subtle via-card to-attention-subtle p-3.5 shadow-xs">
       <div
-        className="pointer-events-none absolute -left-6 -top-8 size-20 rounded-full bg-domain-members/18 blur-2xl"
+        className="pointer-events-none absolute -left-8 -top-10 size-28 rounded-full bg-domain-members/18 blur-2xl"
         aria-hidden
       />
       <div
-        className="pointer-events-none absolute -right-4 -bottom-8 size-16 rounded-full bg-attention/22 blur-2xl"
+        className="pointer-events-none absolute -bottom-10 -right-6 size-24 rounded-full bg-attention/22 blur-2xl"
         aria-hidden
       />
-      <div className="relative flex items-center gap-2.5">
-        <span className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/70 bg-white/90 shadow-xs ring-1 ring-domain-members/15">
+      <div className="relative flex items-center gap-3">
+        <span className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/70 bg-white/90 shadow-xs ring-1 ring-domain-members/15">
           <Image
             src="/icon.png"
             alt=""
-            width={28}
-            height={28}
-            className="size-7 object-cover"
+            width={32}
+            height={32}
+            className="size-8 object-cover"
           />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-[9px] font-medium tracking-wide text-domain-members-foreground/80">
+          <p className="text-[10px] font-medium tracking-wide text-domain-members-foreground/80">
             Minha Church
           </p>
-          <p className="mt-0.5 truncate font-display text-[12px] font-semibold leading-snug tracking-tight text-foreground">
+          <p className="mt-0.5 line-clamp-2 font-display text-[15px] font-semibold leading-snug tracking-tight text-foreground">
             Igreja Esperança
           </p>
         </div>
@@ -185,18 +181,16 @@ function MockChurchBrand() {
 
 function MockTopbar({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
-    <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-border bg-background px-4">
-      <div className="min-w-0">
-        <h3 className="truncate text-sm font-medium tracking-tight sm:text-base">
+    <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-border bg-background px-4 sm:gap-3">
+      <div className="min-w-0 flex-1 overflow-hidden">
+        <h3 className="truncate text-base font-medium tracking-tight text-foreground">
           {title}
         </h3>
         {subtitle && (
-          <p className="truncate text-[10px] text-muted-foreground sm:text-xs">
-            {subtitle}
-          </p>
+          <p className="truncate text-xs text-muted-foreground">{subtitle}</p>
         )}
       </div>
-      <div className="flex h-9 shrink-0 items-center gap-1.5 sm:gap-2">
+      <div className="flex h-9 shrink-0 items-center justify-end gap-1 sm:gap-1.5">
         <div className="relative flex size-8 items-center justify-center rounded-lg border border-border bg-card">
           <Bell className="size-3.5 text-foreground" />
           <span
@@ -208,14 +202,14 @@ function MockTopbar({ title, subtitle }: { title: string; subtitle?: string }) {
             1
           </span>
         </div>
-        <div className="hidden h-8 max-w-[11rem] items-center gap-1.5 rounded-lg border border-border bg-card px-2 sm:flex">
-          <Church className="size-3 shrink-0 text-muted-foreground" />
-          <span className="min-w-0 flex-1 truncate text-[11px] font-medium">
+        <div className="hidden h-9 max-w-52 items-center gap-2 rounded-lg border border-border bg-card px-2.5 sm:flex">
+          <Church className="size-3.5 shrink-0 text-muted-foreground" />
+          <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
             Igreja Esperança
           </span>
-          <ChevronDown className="size-3 shrink-0 text-muted-foreground" />
+          <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
         </div>
-        <div className="flex size-8 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground">
+        <div className="flex size-8 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
           PS
         </div>
       </div>
@@ -226,13 +220,13 @@ function MockTopbar({ title, subtitle }: { title: string; subtitle?: string }) {
 function MockDashboardHero() {
   return (
     <section className="min-w-0 space-y-1">
-      <p className="text-[10px] text-muted-foreground sm:text-xs">
+      <p className="text-xs text-muted-foreground">
         domingo, 6 de julho · Igreja Esperança
       </p>
-      <p className="text-base font-semibold tracking-tight sm:text-xl">
+      <p className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
         Boa noite, Samuel
       </p>
-      <p className="text-[10px] text-muted-foreground sm:text-sm">
+      <p className="text-sm text-muted-foreground">
         O que mais importa para a igreja hoje.
       </p>
     </section>
@@ -287,48 +281,48 @@ const priorities: {
 
 function MockPriorities() {
   return (
-    <section className="flex h-full flex-col rounded-xl border border-border bg-card p-4">
-      <div>
-        <p className="text-sm font-medium tracking-tight">
+    <section className="flex h-full min-w-0 flex-col justify-start rounded-xl border border-border bg-card p-4 sm:p-5">
+      <div className="shrink-0">
+        <p className="text-sm font-medium text-foreground">
           3 coisas pedem você hoje
         </p>
-        <p className="mt-0.5 text-[10px] text-muted-foreground sm:text-xs">
+        <p className="mt-0.5 text-sm text-muted-foreground">
           Resolva estas primeiro — o restante pode esperar
         </p>
       </div>
-      <ul className="mt-3 flex flex-col gap-2">
+      <ul className="mt-4 flex flex-col gap-2">
         {priorities.map((item, index) => {
           const tone = priorityTones[item.tone];
           return (
             <li
               key={item.title}
               className={cn(
-                "flex items-center gap-3 rounded-xl border px-3 py-2.5",
+                "flex items-center gap-3 rounded-xl border px-3 py-3 sm:px-4",
                 tone.shell,
               )}
             >
               <span
                 className={cn(
-                  "flex size-8 shrink-0 items-center justify-center rounded-lg",
+                  "flex size-9 shrink-0 items-center justify-center rounded-lg",
                   tone.icon,
                 )}
               >
-                <item.icon className="size-3.5" strokeWidth={2} />
+                <item.icon className="size-4" strokeWidth={2} />
               </span>
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[9px] font-medium tabular-nums text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-medium tabular-nums text-muted-foreground">
                     {index + 1}.
                   </span>
-                  <span className="truncate text-[11px] font-semibold sm:text-xs">
+                  <span className="truncate text-sm font-semibold text-foreground">
                     {item.title}
                   </span>
                 </div>
-                <p className="mt-0.5 truncate text-[9px] text-muted-foreground sm:text-[10px]">
+                <p className="mt-0.5 truncate text-xs text-muted-foreground">
                   {item.description}
                 </p>
               </div>
-              <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" />
+              <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
             </li>
           );
         })}
@@ -352,27 +346,27 @@ function MockWeekPulse() {
   const total = weekDensity.reduce((sum, day) => sum + day.count, 0);
 
   return (
-    <section className="flex h-full flex-col rounded-xl border border-domain-activities/30 bg-gradient-to-br from-domain-activities-subtle via-card to-card p-4">
-      <div className="flex items-start justify-between gap-2">
+    <section className="flex h-full min-w-0 flex-col rounded-xl border border-domain-activities/30 bg-gradient-to-br from-domain-activities-subtle via-card to-card p-4 sm:p-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <p className="text-sm font-medium text-domain-activities-foreground">
             Ritmo da semana
           </p>
-          <p className="mt-0.5 text-[10px] text-muted-foreground sm:text-xs">
+          <p className="mt-0.5 text-xs text-muted-foreground">
             Eventos por dia na agenda
           </p>
         </div>
-        <div className="flex shrink-0 flex-col items-end gap-1.5">
-          <span className="inline-flex h-7 items-center gap-1 rounded-md border border-domain-activities/25 bg-card/80 px-2 text-[9px] font-medium text-domain-activities-foreground">
+        <div className="flex shrink-0 items-center gap-2 sm:flex-col sm:items-end">
+          <span className="inline-flex h-8 items-center gap-1.5 rounded-md border border-domain-activities/25 bg-card/80 px-3 text-xs font-medium text-domain-activities-foreground">
             Ver agenda
-            <ArrowRight className="size-3 opacity-80" />
+            <ArrowRight className="size-3.5 opacity-80" />
           </span>
-          <span className="rounded-md bg-domain-activities/20 px-2 py-1 text-[9px] font-medium tabular-nums text-domain-activities-foreground">
+          <span className="rounded-md bg-domain-activities/20 px-2 py-1 text-xs font-medium tabular-nums text-domain-activities-foreground">
             {total} no total
           </span>
         </div>
       </div>
-      <div className="mt-4 flex flex-1 items-end gap-1.5">
+      <div className="mt-5 flex h-28 min-w-0 flex-1 items-end gap-1">
         {weekDensity.map((day) => {
           const heightPct =
             day.count === 0 ? 8 : Math.max(18, (day.count / maxCount) * 100);
@@ -380,12 +374,12 @@ function MockWeekPulse() {
           return (
             <div
               key={day.label}
-              className="flex min-w-0 flex-1 flex-col items-center gap-1.5"
+              className="flex min-w-0 flex-1 flex-col items-center gap-2"
             >
               <div className="flex h-20 w-full items-end justify-center">
                 <div
                   className={cn(
-                    "w-full max-w-[1.75rem] rounded-md",
+                    "w-full max-w-[3.75rem] rounded-md",
                     day.count === 0
                       ? "bg-muted"
                       : day.isToday
@@ -395,10 +389,10 @@ function MockWeekPulse() {
                   style={{ height: `${heightPct}%` }}
                 />
               </div>
-              <div className="text-center leading-none">
+              <div className="text-center">
                 <p
                   className={cn(
-                    "text-[9px] font-medium capitalize",
+                    "text-[10px] font-medium capitalize",
                     day.isToday
                       ? "text-domain-activities-foreground"
                       : "text-muted-foreground",
@@ -406,7 +400,7 @@ function MockWeekPulse() {
                 >
                   {day.label}
                 </p>
-                <p className="mt-0.5 text-[9px] tabular-nums text-muted-foreground">
+                <p className="text-[10px] tabular-nums text-muted-foreground">
                   {day.count}
                 </p>
               </div>
@@ -462,38 +456,41 @@ function MockQuickActions({ compact }: { compact?: boolean }) {
   const items = compact ? quickActions.slice(0, 2) : quickActions;
 
   return (
-    <section className="space-y-2.5">
+    <section className="min-w-0 space-y-3">
       <div>
-        <p className="text-sm font-medium tracking-tight sm:text-base">
-          Faça agora
-        </p>
-        <p className="mt-0.5 text-[10px] text-muted-foreground sm:text-xs">
+        <p className="text-base font-medium text-foreground">Faça agora</p>
+        <p className="mt-0.5 text-sm text-muted-foreground">
           As tarefas mais comuns da secretaria
         </p>
       </div>
-      <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+      <ul
+        className={cn(
+          "grid gap-2.5",
+          items.length === 1 ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2",
+        )}
+      >
         {items.map((action) => (
           <li
             key={action.label}
-            className="flex items-center gap-3 rounded-xl border border-border bg-card px-3 py-3"
+            className="group flex min-h-14 items-center gap-3 rounded-xl border border-border bg-card px-4 py-3.5"
           >
             <span
               className={cn(
-                "flex size-9 shrink-0 items-center justify-center rounded-xl",
+                "flex size-11 shrink-0 items-center justify-center rounded-xl",
                 domainIconShell[action.domain],
               )}
             >
-              <action.icon className="size-4" strokeWidth={2} />
+              <action.icon className="size-5" strokeWidth={2} />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[12px] font-semibold tracking-tight sm:text-sm">
+              <p className="truncate text-base font-semibold tracking-tight text-foreground">
                 {action.label}
               </p>
-              <p className="mt-0.5 truncate text-[9px] text-muted-foreground sm:text-[10px]">
+              <p className="mt-0.5 truncate text-sm text-muted-foreground">
                 {action.description}
               </p>
             </div>
-            <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+            <ChevronRight className="size-5 shrink-0 text-muted-foreground" />
           </li>
         ))}
       </ul>
@@ -506,16 +503,16 @@ function MockEventsPanel({ compact }: { compact?: boolean }) {
 
   return (
     <section className="rounded-xl border border-domain-activities/30 bg-gradient-to-br from-domain-activities-subtle via-card to-card">
-      <div className="flex items-start justify-between gap-2 border-b border-domain-activities/20 px-4 py-3">
+      <div className="flex flex-col gap-3 border-b border-domain-activities/20 px-4 py-3.5 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <p className="text-sm font-medium text-domain-activities-foreground sm:text-base">
+          <p className="text-base font-medium text-domain-activities-foreground">
             Agenda da semana
           </p>
-          <p className="mt-0.5 text-[10px] text-muted-foreground sm:text-xs">
+          <p className="mt-0.5 text-sm text-muted-foreground">
             Próximos cultos e encontros
           </p>
         </div>
-        <span className="shrink-0 rounded-md border border-border bg-card px-2.5 py-1.5 text-[9px] font-medium">
+        <span className="inline-flex h-8 w-full shrink-0 items-center justify-center rounded-md border border-border bg-card px-3 text-xs font-medium sm:w-auto">
           Ver todas
         </span>
       </div>
@@ -532,16 +529,16 @@ function MockEventsPanel({ compact }: { compact?: boolean }) {
             >
               <div
                 className={cn(
-                  "flex size-9 shrink-0 flex-col items-center justify-center rounded-md border text-center leading-none",
+                  "flex size-10 shrink-0 flex-col items-center justify-center rounded-md border text-center leading-none",
                   isNext
                     ? "border-foreground/15 bg-foreground text-background"
                     : "border-border bg-card text-foreground",
                 )}
               >
-                <span className="text-[11px] font-semibold">{event.day}</span>
+                <span className="text-xs font-semibold">{event.day}</span>
                 <span
                   className={cn(
-                    "mt-0.5 text-[8px] font-medium uppercase tracking-wide",
+                    "mt-0.5 text-[9px] font-medium uppercase tracking-wide",
                     isNext ? "text-background/80" : "text-muted-foreground",
                   )}
                 >
@@ -549,24 +546,24 @@ function MockEventsPanel({ compact }: { compact?: boolean }) {
                 </span>
               </div>
               <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <p className="truncate text-[11px] font-medium sm:text-xs">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="truncate text-sm font-medium text-foreground">
                     {event.name}
                   </p>
                   {event.relative && (
-                    <span className="shrink-0 rounded-md bg-muted px-1.5 py-0.5 text-[9px] font-medium text-muted-foreground">
+                    <span className="shrink-0 rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
                       {event.relative}
                     </span>
                   )}
                 </div>
-                <div className="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[9px] text-muted-foreground">
+                <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
                   <span className="inline-flex items-center gap-1">
-                    <Calendar className="size-2.5 shrink-0" />
+                    <Calendar className="size-3 shrink-0" />
                     {event.time}
                   </span>
                   {event.recurring && (
                     <span className="inline-flex items-center gap-1">
-                      <Repeat className="size-2.5 shrink-0" />
+                      <Repeat className="size-3 shrink-0" />
                       Semanal
                     </span>
                   )}
@@ -600,28 +597,28 @@ const mockAnnouncements = [
 function MockCommunication() {
   return (
     <section className="rounded-xl border border-domain-communication/30 bg-gradient-to-br from-domain-communication-subtle via-card to-card">
-      <div className="flex items-start justify-between gap-2 border-b border-domain-communication/20 px-4 py-3">
+      <div className="flex flex-col gap-3 border-b border-domain-communication/20 px-4 py-3.5 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <p className="text-sm font-medium text-domain-communication-foreground sm:text-base">
+          <p className="text-base font-medium text-domain-communication-foreground">
             Comunicados
           </p>
-          <p className="mt-0.5 text-[10px] text-muted-foreground sm:text-xs">
+          <p className="mt-0.5 text-sm text-muted-foreground">
             Publicados para a igreja
           </p>
         </div>
-        <span className="shrink-0 rounded-md border border-border bg-card px-2.5 py-1.5 text-[9px] font-medium">
+        <span className="inline-flex h-8 w-full shrink-0 items-center justify-center rounded-md border border-border bg-card px-3 text-xs font-medium sm:w-auto">
           Ver tudo
         </span>
       </div>
       <ul className="divide-y divide-border/70">
         {mockAnnouncements.map((item) => (
           <li key={item.title} className="flex items-start gap-3 px-4 py-3">
-            <Megaphone className="mt-0.5 size-3.5 shrink-0 text-domain-communication-foreground" />
+            <Megaphone className="mt-0.5 size-4 shrink-0 text-domain-communication-foreground" />
             <div className="min-w-0">
-              <p className="truncate text-[11px] font-medium sm:text-xs">
+              <p className="truncate text-sm font-medium text-foreground">
                 {item.title}
               </p>
-              <p className="mt-0.5 truncate text-[9px] text-muted-foreground sm:text-[10px]">
+              <p className="mt-0.5 truncate text-xs text-muted-foreground">
                 {item.body}
               </p>
             </div>
@@ -634,22 +631,26 @@ function MockCommunication() {
 
 function DashboardView({ compact }: { compact?: boolean }) {
   return (
-    <div className="space-y-5">
+    <div className="space-y-7">
       <MockDashboardHero />
       <div
         className={cn(
-          "grid gap-3",
-          compact ? "grid-cols-1" : "lg:grid-cols-2 lg:items-stretch",
+          "grid min-w-0 gap-4",
+          compact ? "grid-cols-1" : "xl:grid-cols-2 xl:items-stretch",
         )}
       >
-        <MockPriorities />
-        <MockWeekPulse />
+        <div className="min-w-0">
+          <MockPriorities />
+        </div>
+        <div className="min-w-0">
+          <MockWeekPulse />
+        </div>
       </div>
       <MockQuickActions compact={compact} />
       <div
         className={cn(
-          "grid gap-4",
-          compact ? "grid-cols-1" : "lg:grid-cols-2",
+          "grid gap-6",
+          compact ? "grid-cols-1" : "xl:grid-cols-2",
         )}
       >
         <MockEventsPanel compact={compact} />
@@ -661,8 +662,8 @@ function DashboardView({ compact }: { compact?: boolean }) {
 
 function MembersView() {
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-card">
-      <div className="grid grid-cols-[1fr_1fr_1fr] gap-2 border-b border-border bg-muted/30 px-3 py-2 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
+    <div className="overflow-hidden rounded-xl border border-border bg-card">
+      <div className="grid grid-cols-[1fr_1fr_1fr] gap-2 border-b border-border bg-muted/30 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         <span>Nome</span>
         <span>Função</span>
         <span>Ministério</span>
@@ -670,9 +671,9 @@ function MembersView() {
       {membersPreview.map((member) => (
         <div
           key={member.name}
-          className="grid grid-cols-[1fr_1fr_1fr] gap-2 border-b border-border/60 px-3 py-2.5 text-[10px] last:border-0"
+          className="grid grid-cols-[1fr_1fr_1fr] gap-2 border-b border-border/60 px-4 py-3 text-sm last:border-0"
         >
-          <span className="font-medium">{member.name}</span>
+          <span className="font-medium text-foreground">{member.name}</span>
           <span className="text-muted-foreground">{member.role}</span>
           <span className="text-muted-foreground">{member.ministry}</span>
         </div>
@@ -683,22 +684,24 @@ function MembersView() {
 
 function MinistriesView() {
   return (
-    <div className="space-y-2">
+    <div className="space-y-2.5">
       {ministries.map((ministry) => (
         <div
           key={ministry.name}
-          className="flex items-center justify-between rounded-lg border border-border bg-card px-3 py-3"
+          className="flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3.5"
         >
           <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-1.5">
-              <p className="truncate text-[11px] font-medium">{ministry.name}</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="truncate text-sm font-medium text-foreground">
+                {ministry.name}
+              </p>
               {ministry.roster && (
-                <span className="rounded-md bg-muted px-1.5 py-0.5 text-[9px] font-medium text-muted-foreground">
+                <span className="rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
                   Escalas
                 </span>
               )}
             </div>
-            <p className="mt-0.5 text-[10px] text-muted-foreground">
+            <p className="mt-0.5 text-xs text-muted-foreground">
               {ministry.members} membros
             </p>
           </div>
@@ -713,10 +716,10 @@ function SchedulesView() {
   return (
     <div className="space-y-3">
       <div className={pendingNotificationStyles.banner.compact}>
-        <p className="text-[11px] font-medium">
+        <p className="text-sm font-medium">
           Culto de Domingo · 3 pessoas ainda não responderam
         </p>
-        <p className="mt-1 text-[10px] text-muted-foreground">
+        <p className="mt-1 text-xs text-muted-foreground">
           Feche a escala de Louvor antes das 19h.
         </p>
       </div>
@@ -727,15 +730,15 @@ function SchedulesView() {
       ].map((row) => (
         <div
           key={row.name}
-          className="flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2.5"
+          className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3"
         >
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-medium">{row.name}</p>
-            <p className="text-[10px] text-muted-foreground">{row.role}</p>
+            <p className="text-sm font-medium text-foreground">{row.name}</p>
+            <p className="text-xs text-muted-foreground">{row.role}</p>
           </div>
           <span
             className={cn(
-              "shrink-0 rounded-md px-2 py-0.5 text-[9px] font-medium",
+              "shrink-0 rounded-md px-2 py-0.5 text-xs font-medium",
               row.status === "Posso ir"
                 ? "bg-success-subtle text-success-foreground"
                 : "bg-attention-subtle text-attention-foreground",
@@ -795,46 +798,45 @@ function AppMock({
     >
       <BrowserChrome />
 
-      <div className={cn("flex", compact ? "min-h-[400px]" : "min-h-[560px]")}>
-        <aside className="hidden w-52 shrink-0 flex-col border-r border-border bg-surface md:flex">
-          <div className="border-b border-border px-3 py-3">
+      <div className={cn("flex", compact ? "min-h-[440px]" : "min-h-[640px]")}>
+        <aside className="hidden w-60 shrink-0 flex-col border-r border-border/80 bg-surface md:flex">
+          <div className="border-b border-border/80 px-3 py-3.5">
             <MockChurchBrand />
           </div>
 
-          <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2 py-3">
-            <p className="px-2.5 pb-2 text-[9px] font-medium tracking-wide text-muted-foreground">
-              Menu
-            </p>
+          <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-2 py-3.5">
             {primaryNav.map((item) => {
               const isActive = activeView === item.id;
 
               return (
-                <div key={item.id}>
-                  {item.sectionStart ? (
-                    <div className="my-2 border-t border-border/70" />
-                  ) : null}
+                <div
+                  key={item.id}
+                  className={item.sectionStart ? "mt-2" : undefined}
+                >
                   <button
                     type="button"
                     onClick={() => setActiveView(item.id)}
                     className={cn(
-                      "relative flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[11px] transition-colors",
+                      "flex w-full items-start gap-3 rounded-lg px-2.5 py-2.5 text-left text-sm leading-snug transition-colors duration-150",
                       isActive
-                        ? cn("font-medium", item.domainClass)
-                        : "border border-transparent text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+                        ? cn("font-medium", domainNavActive[item.domain])
+                        : "border border-transparent font-normal text-muted-foreground hover:bg-muted/50 hover:text-foreground",
                     )}
                   >
                     <item.icon
                       className={cn(
-                        "size-4 shrink-0",
+                        "mt-0.5 size-5 shrink-0",
                         isActive ? "opacity-90" : "opacity-65",
                       )}
                       strokeWidth={1.75}
                     />
-                    <span className="flex-1">{item.label}</span>
+                    <span className="min-w-0 flex-1 text-pretty wrap-break-word">
+                      {item.label}
+                    </span>
                     {item.badge !== undefined && item.badge > 0 && (
                       <span
                         className={cn(
-                          "flex h-4 min-w-4 items-center justify-center rounded-md px-1 text-[8px] font-bold tabular-nums",
+                          "mt-0.5 flex h-5 min-w-5 shrink-0 items-center justify-center rounded-md px-1 text-xs font-bold tabular-nums",
                           pendingNotificationStyles.countBadge,
                         )}
                       >
@@ -846,14 +848,21 @@ function AppMock({
               );
             })}
 
-            <div className="my-3 border-t border-border" />
+            <div className="my-3 border-t border-border/80" />
 
             <button
               type="button"
-              className="flex items-center gap-2.5 rounded-lg border border-transparent px-2.5 py-2 text-[11px] font-medium text-muted-foreground"
+              className="flex w-full items-start gap-3 rounded-lg border border-transparent px-2.5 py-2.5 text-left text-sm font-normal leading-snug text-muted-foreground"
             >
-              <Settings className="size-4 opacity-65" />
-              Configurações
+              <Settings className="mt-0.5 size-5 shrink-0 opacity-65" />
+              <span className="min-w-0 flex-1 text-pretty">Configurações</span>
+            </button>
+            <button
+              type="button"
+              className="flex w-full items-start gap-3 rounded-lg border border-transparent px-2.5 py-2.5 text-left text-sm font-normal leading-snug text-muted-foreground"
+            >
+              <LogOut className="mt-0.5 size-5 shrink-0 opacity-65" />
+              <span className="min-w-0 flex-1 text-pretty">Sair</span>
             </button>
           </nav>
         </aside>
@@ -861,7 +870,7 @@ function AppMock({
         <div className="flex min-w-0 flex-1 flex-col bg-background">
           <MockTopbar title={meta.title} subtitle={meta.subtitle} />
 
-          <div className="dashboard-canvas flex-1 overflow-auto p-3 sm:p-5">
+          <div className="dashboard-canvas flex-1 overflow-auto px-4 py-6 sm:px-6 sm:py-8">
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeView}

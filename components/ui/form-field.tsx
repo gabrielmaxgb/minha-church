@@ -35,10 +35,12 @@ export function FormAlert({
     >
       <Icon className="mt-0.5 size-4 shrink-0" aria-hidden />
       <div className="min-w-0">
-        {title && <p className="font-medium">{title}</p>}
-        <p className={cn(title && "mt-0.5", "text-[0.925rem] leading-relaxed")}>
+        {title ? <p className="font-medium">{title}</p> : null}
+        <div
+          className={cn(title && "mt-0.5", "text-[0.925rem] leading-relaxed")}
+        >
           {children}
-        </p>
+        </div>
       </div>
     </div>
   );

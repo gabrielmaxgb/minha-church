@@ -29,6 +29,13 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { routeAroundObstacles } from "@/lib/members/family-graph-edge-route";
 import {
+  detectFamilyUnits,
+  familyUnitConnectorPath,
+  genealogyAscendantPath,
+  peerConnectorPath,
+  soloAscendantPath,
+} from "@/lib/members/family-graph-genealogy";
+import {
   NODE_H,
   NODE_W,
   computeFamilyLayout,
@@ -249,14 +256,33 @@ function MemberNode({ data }: NodeProps<MemberFlowNode>) {
 /* Custom edge                                                                */
 /* -------------------------------------------------------------------------- */
 
+type GenealogyUnitRef = {
+  parentIds: string[];
+  childIds: string[];
+};
+
 type RelationEdgeData = {
   relationType: MemberRelationType;
   isSelected: boolean;
-  /** Horizontal shift for the mid-segment so parallel ascendant lines fan out. */
+  /** Horizontal shift for obstacle routing when not in a family unit. */
   laneOffset?: number;
+  /** Nuclear family — ascendant edges share trunk + child rail. */
+  genealogyUnit?: GenealogyUnitRef;
+  /**
+   * Covered by a family-unit connector. Still hit-testable when an
+   * ascendant (so each vínculo stays selectable); siblings stay fully hidden.
+   */
+  hiddenByUnit?: boolean;
+};
+
+type FamilyUnitEdgeData = {
+  parentIds: string[];
+  childIds: string[];
 };
 
 type RelationFlowEdge = Edge<RelationEdgeData, "relation">;
+type FamilyUnitFlowEdge = Edge<FamilyUnitEdgeData, "familyUnit">;
+type CanvasFlowEdge = RelationFlowEdge | FamilyUnitFlowEdge;
 
 function RelationEdge({
   id,
@@ -271,36 +297,115 @@ function RelationEdge({
 }: EdgeProps<RelationFlowEdge>) {
   const relationType = data?.relationType ?? "parent";
   const isPeer = UNDIRECTED_RELATION_TYPES.has(relationType);
+  const isAscendant = ASCENDANT_RELATION_TYPES.has(relationType);
   const isSelected = data?.isSelected ?? false;
   const laneOffset = data?.laneOffset ?? 0;
+  const genealogyUnit = data?.genealogyUnit;
+  const hiddenByUnit = data?.hiddenByUnit ?? false;
   const color = relationStroke(relationType);
 
-  // Cards are obstacles — route through gutters, never through a member.
-  const obstacles = useStore((state) =>
-    state.nodes
-      .filter((node) => node.id !== source && node.id !== target)
-      .map((node) => ({
-        x: node.position.x,
-        y: node.position.y,
-        width: NODE_W,
-        height: NODE_H,
-      })),
+  const nodes = useStore((state) => state.nodes);
+
+  const obstacles = useMemo(
+    () =>
+      nodes
+        .filter((node) => node.id !== source && node.id !== target)
+        .map((node) => ({
+          x: node.position.x,
+          y: node.position.y,
+          width: NODE_W,
+          height: NODE_H,
+        })),
+    [nodes, source, target],
   );
 
-  const edgePath = useMemo(
-    () =>
-      routeAroundObstacles(
-        { x: sourceX, y: sourceY },
-        { x: targetX, y: targetY },
-        obstacles,
-        { laneOffset, padding: 16, grid: 16, cornerRadius: 14 },
-      ),
-    [sourceX, sourceY, targetX, targetY, obstacles, laneOffset],
-  );
+  const edgePath = useMemo(() => {
+    const start = { x: sourceX, y: sourceY };
+    const end = { x: targetX, y: targetY };
+
+    // Sibling implied by the shared child rail — no separate stroke.
+    if (hiddenByUnit && isPeer) return "";
+
+    if (isPeer) {
+      return peerConnectorPath(start, end, { cornerRadius: 10 });
+    }
+
+    if (isAscendant && genealogyUnit) {
+      const byId = new Map(nodes.map((node) => [node.id, node]));
+      const parentBottoms = genealogyUnit.parentIds
+        .map((parentId) => byId.get(parentId))
+        .filter(Boolean)
+        .map((node) => {
+          const w = node!.measured?.width ?? NODE_W;
+          const h = node!.measured?.height ?? NODE_H;
+          return {
+            x: node!.position.x + w / 2,
+            y: node!.position.y + h,
+          };
+        });
+      const childTops = genealogyUnit.childIds
+        .map((childId) => byId.get(childId))
+        .filter(Boolean)
+        .map((node) => {
+          const w = node!.measured?.width ?? NODE_W;
+          return {
+            x: node!.position.x + w / 2,
+            y: node!.position.y,
+          };
+        });
+
+      if (parentBottoms.length > 0 && childTops.length > 0) {
+        return genealogyAscendantPath(start, end, {
+          parentBottoms,
+          childTops,
+        });
+      }
+    }
+
+    if (isAscendant) {
+      return soloAscendantPath(start, end, { cornerRadius: 14 });
+    }
+
+    return routeAroundObstacles(start, end, obstacles, {
+      laneOffset,
+      padding: 16,
+      grid: 16,
+      cornerRadius: 14,
+    });
+  }, [
+    hiddenByUnit,
+    isPeer,
+    sourceX,
+    sourceY,
+    targetX,
+    targetY,
+    isAscendant,
+    genealogyUnit,
+    nodes,
+    obstacles,
+    laneOffset,
+  ]);
+
+  if (!edgePath) return null;
+
+  // Bundled ascendants: invisible hit target (unit edge paints the stroke).
+  // When selected, paint so the leader sees which vínculo is active.
+  if (hiddenByUnit && isAscendant && !isSelected) {
+    return (
+      <BaseEdge
+        id={id}
+        path={edgePath}
+        interactionWidth={28}
+        style={{
+          stroke: "transparent",
+          strokeWidth: 2,
+        }}
+      />
+    );
+  }
 
   return (
     <>
-      {/* Soft halo only for readability when two lines cross in a gutter. */}
       <BaseEdge
         id={`${id}-halo`}
         path={edgePath}
@@ -313,7 +418,7 @@ function RelationEdge({
       <BaseEdge
         id={id}
         path={edgePath}
-        markerEnd={markerEnd}
+        markerEnd={isPeer || genealogyUnit ? undefined : markerEnd}
         interactionWidth={28}
         style={{
           stroke: color,
@@ -330,8 +435,63 @@ function RelationEdge({
   );
 }
 
+function FamilyUnitEdge({ id, data }: EdgeProps<FamilyUnitFlowEdge>) {
+  const parentIds = data?.parentIds ?? [];
+  const childIds = data?.childIds ?? [];
+  const color = relationStroke("parent");
+  const nodes = useStore((state) => state.nodes);
+
+  const edgePath = useMemo(() => {
+    const byId = new Map(nodes.map((node) => [node.id, node]));
+    const toBox = (node: (typeof nodes)[number]) => ({
+      id: node.id,
+      x: node.position.x,
+      y: node.position.y,
+      width: node.measured?.width ?? NODE_W,
+      height: node.measured?.height ?? NODE_H,
+    });
+    const parents = parentIds
+      .map((parentId) => byId.get(parentId))
+      .filter(Boolean)
+      .map((node) => toBox(node!));
+    const children = childIds
+      .map((childId) => byId.get(childId))
+      .filter(Boolean)
+      .map((node) => toBox(node!));
+    return familyUnitConnectorPath(parents, children);
+  }, [nodes, parentIds, childIds]);
+
+  if (!edgePath) return null;
+
+  return (
+    <>
+      <BaseEdge
+        id={`${id}-halo`}
+        path={edgePath}
+        style={{
+          stroke: "rgba(255,255,255,0.9)",
+          strokeWidth: 5.5,
+          strokeLinecap: "round",
+        }}
+      />
+      <BaseEdge
+        id={id}
+        path={edgePath}
+        style={{
+          stroke: color,
+          strokeWidth: 2.75,
+          strokeLinecap: "round",
+        }}
+      />
+    </>
+  );
+}
+
 const nodeTypes = { member: MemberNode };
-const edgeTypes = { relation: RelationEdge };
+const edgeTypes = {
+  relation: RelationEdge,
+  familyUnit: FamilyUnitEdge,
+};
 
 /* -------------------------------------------------------------------------- */
 /* Inner flow                                                                 */
@@ -367,7 +527,7 @@ function FamilyGraphFlow({
   );
 
   const [nodes, setNodes, onNodesChange] = useNodesState<MemberFlowNode>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<RelationFlowEdge>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<CanvasFlowEdge>([]);
 
   function resetSelection() {
     setSelectedId(null);
@@ -384,8 +544,9 @@ function FamilyGraphFlow({
   }, []);
 
   const handleEdgeClick = useCallback(
-    (_event: unknown, edge: RelationFlowEdge) => {
+    (_event: unknown, edge: CanvasFlowEdge) => {
       if (!canEdit || isBusy || edge.id === "pending-edge") return;
+      if (edge.type === "familyUnit") return;
       handleSelectRelation(edge.id);
     },
     [canEdit, isBusy, handleSelectRelation],
@@ -468,14 +629,30 @@ function FamilyGraphFlow({
         memberById.has(relation.toMemberId),
     );
 
-    // Fan out ascendant lines that converge on the same child so distinct
-    // ties (e.g. pai/mãe vs. tio/tia) run in parallel corridors instead of
-    // stacking on top of one another into the same top handle.
+    const units = detectFamilyUnits(validRelations);
+    const unitByAscendantId = new Map<
+      string,
+      { parentIds: string[]; childIds: string[] }
+    >();
+    const hiddenSiblingIds = new Set<string>();
+    for (const unit of units) {
+      const ref = { parentIds: unit.parentIds, childIds: unit.childIds };
+      for (const relationId of unit.bundledAscendantIds) {
+        unitByAscendantId.set(relationId, ref);
+      }
+      for (const relationId of unit.bundledSiblingIds) {
+        hiddenSiblingIds.add(relationId);
+      }
+    }
+
+    // Fan out ascendant lines that are NOT in a nuclear unit (e.g. uncle +
+    // parent to the same child) so distinct ties run in parallel corridors.
     const LANE_GAP = 30;
     const laneByRelationId = new Map<string, number>();
     const ascendantByTarget = new Map<string, MemberRelation[]>();
     for (const relation of validRelations) {
       if (!ASCENDANT_RELATION_TYPES.has(relation.type)) continue;
+      if (unitByAscendantId.has(relation.id)) continue;
       const bucket = ascendantByTarget.get(relation.toMemberId) ?? [];
       bucket.push(relation);
       ascendantByTarget.set(relation.toMemberId, bucket);
@@ -492,7 +669,7 @@ function FamilyGraphFlow({
       });
     }
 
-    const relationEdges: RelationFlowEdge[] = validRelations.map((relation) => {
+    const relationEdges: CanvasFlowEdge[] = validRelations.map((relation) => {
         const isPeer = UNDIRECTED_RELATION_TYPES.has(relation.type);
         const isAscendant = ASCENDANT_RELATION_TYPES.has(relation.type);
         let source = relation.fromMemberId;
@@ -559,11 +736,35 @@ function FamilyGraphFlow({
             relationType: relation.type,
             isSelected: selectedRelationId === relation.id,
             laneOffset: laneByRelationId.get(relation.id) ?? 0,
+            genealogyUnit: unitByAscendantId.get(relation.id),
+            hiddenByUnit:
+              unitByAscendantId.has(relation.id) ||
+              hiddenSiblingIds.has(relation.id),
           },
           selectable: canEdit,
           focusable: canEdit,
         };
       });
+
+    for (const unit of units) {
+      const [firstParent] = unit.parentIds;
+      const [firstChild] = unit.childIds;
+      if (!firstParent || !firstChild) continue;
+      relationEdges.unshift({
+        id: unit.id,
+        type: "familyUnit",
+        source: firstParent,
+        target: firstChild,
+        sourceHandle: "b",
+        targetHandle: "t",
+        data: {
+          parentIds: unit.parentIds,
+          childIds: unit.childIds,
+        },
+        selectable: false,
+        focusable: false,
+      });
+    }
 
     if (pendingPair) {
       relationEdges.push({
@@ -712,7 +913,7 @@ function FamilyGraphFlow({
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-surface-elevated">
-        <ReactFlow<MemberFlowNode, RelationFlowEdge>
+        <ReactFlow<MemberFlowNode, CanvasFlowEdge>
           nodes={nodes}
           edges={edges}
           onNodesChange={onNodesChange}

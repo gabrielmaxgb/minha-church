@@ -8,11 +8,36 @@ import { useEffect } from "react";
  */
 export function ServiceWorkerRegister() {
   useEffect(() => {
-    if (process.env.NODE_ENV !== "production") {
+    if (!("serviceWorker" in navigator)) {
       return;
     }
 
-    if (!("serviceWorker" in navigator)) {
+    // Em dev, remove qualquer SW residual (ex.: build de produção no mesmo
+    // origin). HMR do Turbopack e SW cache-first brigam e causam hydration
+    // mismatch com HTML fresco + JS antigo.
+    if (process.env.NODE_ENV !== "production") {
+      void (async () => {
+        try {
+          const registrations =
+            await navigator.serviceWorker.getRegistrations();
+          await Promise.all(
+            registrations.map((registration) => registration.unregister()),
+          );
+          if ("caches" in window) {
+            const keys = await caches.keys();
+            await Promise.all(
+              keys
+                .filter(
+                  (key) =>
+                    key.startsWith("mc-shell-") || key.startsWith("mc-static-"),
+                )
+                .map((key) => caches.delete(key)),
+            );
+          }
+        } catch (error) {
+          console.warn("[pwa] Falha ao limpar service worker em dev:", error);
+        }
+      })();
       return;
     }
 
