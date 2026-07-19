@@ -84,8 +84,8 @@ export function DashboardQuickActions({
     }
     if (permissions?.communication.access) {
       actions.push({
-        label: "Avisos",
-        description: "Comunicados da igreja",
+        label: "Comunicados",
+        description: "Mensagens oficiais da igreja",
         href: AUTH_ROUTES.communication,
         icon: Megaphone,
         domain: "communication",
@@ -115,7 +115,7 @@ export function DashboardQuickActions({
 
     if (canManageCommunication(permissions, Boolean(user?.isOwner))) {
       actions.push({
-        label: "Publicar aviso",
+        label: "Publicar comunicado",
         description: "Comunicado para a igreja",
         href: AUTH_ROUTES.communication,
         icon: Megaphone,

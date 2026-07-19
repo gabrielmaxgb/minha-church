@@ -32,7 +32,7 @@ const successHighlights = [
   {
     icon: CalendarDays,
     title: "A semana te espera",
-    description: "Membros, escalas e avisos no mesmo lugar, com calma.",
+    description: "Membros, escalas e comunicados no mesmo lugar, com calma.",
     tone: "text-muted-foreground bg-muted/80",
   },
   {

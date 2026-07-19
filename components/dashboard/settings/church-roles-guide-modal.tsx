@@ -135,7 +135,7 @@ export function ChurchRolesGuideModal({
                 <span>
                   <strong className="text-foreground">Acesso às seções</strong>{" "}
                   controla o que aparece no menu (Membros, Ministérios,
-                  Quadro de avisos…). Só leitura naquela área.
+                  Quadro de comunicados…). Só leitura naquela área.
                 </span>
               </li>
               <li className="flex gap-2">

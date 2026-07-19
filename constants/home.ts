@@ -41,7 +41,7 @@ export const homeHowItWorks = [
   {
     title: "Organize a semana",
     description:
-      "Agenda, escalas e avisos juntos — prontos para o próximo culto.",
+      "Agenda, escalas e comunicados juntos — prontos para o próximo culto.",
   },
 ] as const;
 
@@ -54,7 +54,7 @@ export const homeBenefits = [
   {
     title: "Mais clareza para liderar",
     description:
-      "Confirmações, avisos e o próximo culto aparecem juntos — não espalhados em grupos.",
+      "Confirmações, comunicados e o próximo culto aparecem juntos — não espalhados em grupos.",
   },
   {
     title: "Continuidade na equipe",

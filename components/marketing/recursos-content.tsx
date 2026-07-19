@@ -24,7 +24,7 @@ export function RecursosContent() {
               A rotina da igreja, organizada de ponta a ponta
             </Heading>
             <p className="mt-5 text-base leading-relaxed text-muted-foreground sm:text-lg">
-              Do primeiro contato às escalas do culto e aos avisos da semana —
+              Do primeiro contato às escalas do culto e aos comunicados da semana —
               fluxos que a liderança usa de verdade.
             </p>
           </MotionDiv>

@@ -173,7 +173,7 @@ export function SettingsGeneralPanel() {
               <div>
                 <h3 className="text-sm font-medium">Exportar dados da igreja</h3>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Baixa um JSON com membros, famílias, ministérios e avisos
+                  Baixa um JSON com membros, famílias, ministérios e comunicados
                   (sem segredos de pagamento).
                 </p>
               </div>

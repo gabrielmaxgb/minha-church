@@ -44,7 +44,7 @@ export function ScheduleBanner() {
       >
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 items-start gap-4">
-            <div className={pendingNotificationStyles.icon.md}>
+            <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-foreground text-background shadow-xs">
               <AlertCircle className="size-6" aria-hidden />
             </div>
             <div className="min-w-0">
@@ -60,7 +60,7 @@ export function ScheduleBanner() {
               </p>
             </div>
           </div>
-          <Button variant="cta" size="lg" className="shrink-0" asChild>
+          <Button variant="default" size="lg" className="shrink-0" asChild>
             <span className="inline-flex items-center gap-2">
               Responder agora
               <ChevronRight className="size-4 transition-transform group-hover:translate-x-0.5" />

@@ -44,7 +44,7 @@ export const homeFeatures: FeatureHighlight[] = [
       "Comunicados para toda a igreja ou por ministério — sem depender de grupos de WhatsApp.",
     icon: MessageSquare,
     items: [
-      "Avisos segmentados",
+      "Comunicados segmentados",
       "Registro do que foi publicado",
       "Leitura pela equipe",
     ],
@@ -77,7 +77,7 @@ export const resourceSections = [
       "Calendário de cultos e eventos",
       "Eventos da igreja e por ministério",
       "Local, horário e recorrência",
-      "Detalhe do evento com escala e avisos",
+      "Detalhe do evento com escala e comunicados",
     ],
   },
   {
@@ -108,11 +108,11 @@ export const resourceSections = [
   {
     id: "comunicacao",
     domain: "communication" as const,
-    title: "Avisos com histórico, não só no WhatsApp",
+    title: "Comunicados com histórico, não só no WhatsApp",
     description:
-      "Publique comunicados para a igreja ou ministérios e mantenha o registro do que foi dito.",
+      "Publique para a igreja ou ministérios e mantenha o registro do que foi dito.",
     items: [
-      "Avisos no painel da igreja",
+      "Comunicados no painel da igreja",
       "Segmentação por ministério",
       "Histórico de publicações",
       "Leitura pela equipe",

@@ -37,13 +37,13 @@ export const CHURCH_PERMISSION_LABELS: Record<ChurchPermissionKey, string> = {
   activities_access: "Eventos",
   schedules_access: "Minhas escalas",
   finances_access: "Finanças",
-  communication_access: "Avisos",
+  communication_access: "Comunicados",
   reports_access: "Relatórios",
   settings_access: "Configurações",
   members_manage: "Cadastrar e editar membros",
   ministries_manage: "Cadastrar e editar ministérios",
   events_create_church_wide: "Criar eventos em toda a igreja",
-  communication_manage: "Publicar e editar avisos",
+  communication_manage: "Publicar e editar comunicados",
   roles_manage: "Definir cargos da igreja",
   memberships_manage: "Atribuir cargos a usuários",
   counseling_receive: "Receber pedidos de aconselhamento e visitas",
@@ -64,7 +64,7 @@ export const CHURCH_PERMISSION_DESCRIPTIONS: Record<ChurchPermissionKey, string>
   finances_access:
     "Abre a área financeira da igreja (resumo de entradas e fundos).",
   communication_access:
-    "Abre Avisos, com comunicados da igreja e dos ministérios.",
+    "Abre Comunicados, com mensagens da igreja e dos ministérios.",
   reports_access:
     "Abre os resumos e relatórios da igreja.",
   settings_access:
@@ -76,7 +76,7 @@ export const CHURCH_PERMISSION_DESCRIPTIONS: Record<ChurchPermissionKey, string>
   events_create_church_wide:
     "Criar, editar e excluir eventos para toda a igreja e também eventos dentro de qualquer ministério, sem precisar liderá-lo.",
   communication_manage:
-    "Criar, editar e excluir avisos para a igreja ou ministérios específicos, agendar publicação e ver o histórico de envios.",
+    "Criar, editar e excluir comunicados para a igreja ou ministérios específicos, agendar publicação e ver o histórico de envios.",
   roles_manage:
     "Criar, editar e excluir cargos e definir quais permissões cada um concede (esta tela). Não atribui os cargos às pessoas.",
   memberships_manage:

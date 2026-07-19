@@ -339,7 +339,7 @@ export function AnnouncementComposerModal({
       >
         <header className="flex items-center justify-between border-b border-border/70 px-6 py-4">
           <h2 id={titleId} className="text-lg font-semibold tracking-tight">
-            {isEditing ? "Editar aviso" : "Novo aviso"}
+            {isEditing ? "Editar comunicado" : "Novo comunicado"}
           </h2>
           <button
             type="button"
@@ -534,7 +534,7 @@ export function AnnouncementComposerModal({
             </Button>
             <Button type="submit" disabled={submitDisabled}>
               {isPending && <Loader2 className="size-4 animate-spin" />}
-              {isEditing ? "Salvar alterações" : "Publicar aviso"}
+              {isEditing ? "Salvar alterações" : "Publicar comunicado"}
             </Button>
             </div>
           </footer>

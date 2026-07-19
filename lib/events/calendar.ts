@@ -173,7 +173,7 @@ export type MonthBarSegment<T> = {
  * Só inclui eventos multi-dia / dia inteiro.
  */
 export function buildMonthBarSegments<
-  T extends { id: string; startsAt: string; endsAt?: string | null },
+  T extends { startsAt: string; endsAt?: string | null },
 >(grid: Date[], events: T[]): MonthBarSegment<T>[] {
   const barEvents = events.filter(shouldRenderAsMonthBar);
   const segments: MonthBarSegment<T>[] = [];

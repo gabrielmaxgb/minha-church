@@ -145,9 +145,9 @@ export function buildDashboardPriorities(
       id: "announcements-unread",
       title:
         input.announcementsUnreadCount === 1
-          ? "1 aviso novo"
-          : `${input.announcementsUnreadCount} avisos novos`,
-      description: "Avisos que você ainda não abriu",
+          ? "1 comunicado novo"
+          : `${input.announcementsUnreadCount} comunicados novos`,
+      description: "Comunicados que você ainda não abriu",
       href: AUTH_ROUTES.communication,
       icon: Megaphone,
       tone: "communication",

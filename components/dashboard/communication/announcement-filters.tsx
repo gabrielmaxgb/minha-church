@@ -67,7 +67,7 @@ export function AnnouncementFiltersBar({
           <Input
             value={filters.search}
             onChange={(event) => patch({ search: event.target.value })}
-            placeholder="Buscar avisos..."
+            placeholder="Buscar comunicados..."
             className="h-11 rounded-xl border-border/80 bg-card pl-9 pr-9 shadow-xs focus-visible:ring-domain-communication/30"
             aria-label="Buscar comunicados"
           />

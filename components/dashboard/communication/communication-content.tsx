@@ -118,11 +118,11 @@ export function CommunicationContent() {
             icon: Megaphone,
             title: "Nenhum comunicado ainda",
             description:
-              "Crie o primeiro aviso para a igreja ou para um ministério.",
+              "Crie o primeiro comunicado para a igreja ou para um ministério.",
           }
         : {
             icon: Inbox,
-            title: "Sem avisos por enquanto",
+            title: "Sem comunicados por enquanto",
             description: "Quando a liderança publicar, aparece aqui.",
           },
     [canManage],
@@ -156,7 +156,7 @@ export function CommunicationContent() {
           <p className="text-sm text-muted-foreground">
             {canManage
               ? "Publique e acompanhe o que a igreja precisa saber."
-              : "Avisos da liderança para você."}
+              : "Comunicados da liderança para você."}
           </p>
         </div>
 
@@ -174,7 +174,7 @@ export function CommunicationContent() {
               </Button>
               <Button type="button" onClick={openCompose} {...blockProps}>
                 <Plus className="size-4" />
-                Novo aviso
+                Novo comunicado
               </Button>
             </div>
             {writesBlocked ? (
@@ -214,7 +214,7 @@ export function CommunicationContent() {
               {...blockProps}
             >
               <Plus className="size-4" />
-              Criar aviso
+              Criar comunicado
             </Button>
           ) : null}
         </div>
@@ -231,7 +231,7 @@ export function CommunicationContent() {
           {activeFilterCount > 0 ? (
             <p className="text-xs text-muted-foreground">
               {filteredAnnouncements.length === announcements.length
-                ? `${announcements.length} aviso${announcements.length === 1 ? "" : "s"}`
+                ? `${announcements.length} comunicado${announcements.length === 1 ? "" : "s"}`
                 : `${filteredAnnouncements.length} de ${announcements.length}`}
               {pinnedAnnouncements.length > 0
                 ? ` · ${pinnedAnnouncements.length} fixado${pinnedAnnouncements.length === 1 ? "" : "s"}`
@@ -246,7 +246,7 @@ export function CommunicationContent() {
               </div>
               <div>
                 <p className="font-medium text-foreground">
-                  Nenhum aviso encontrado
+                  Nenhum comunicado encontrado
                 </p>
                 <p className="mt-1 text-sm text-muted-foreground">
                   Ajuste a busca ou limpe os filtros.
@@ -281,8 +281,8 @@ export function CommunicationContent() {
                       </h2>
                       <p className="text-xs text-muted-foreground">
                         {pinnedAnnouncements.length === 1
-                          ? "1 aviso fixado"
-                          : `${pinnedAnnouncements.length} avisos fixados`}
+                          ? "1 comunicado fixado"
+                          : `${pinnedAnnouncements.length} comunicados fixados`}
                       </p>
                     </div>
                   </header>
@@ -317,7 +317,7 @@ export function CommunicationContent() {
                         id="recent-announcements-heading"
                         className="text-sm font-semibold tracking-tight text-foreground"
                       >
-                        Demais avisos
+                        Demais comunicados
                       </h2>
                       <p className="text-xs text-muted-foreground">
                         Mais recentes primeiro

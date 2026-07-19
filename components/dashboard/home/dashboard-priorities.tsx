@@ -52,7 +52,7 @@ export function DashboardPriorities({ items }: DashboardPrioritiesProps) {
               Nada urgente te espera agora
             </h2>
             <p className="mt-0.5 text-sm text-muted-foreground">
-              Quando houver escalas, pedidos ou avisos, eles aparecem aqui.
+              Quando houver escalas, pedidos ou comunicados, eles aparecem aqui.
             </p>
           </div>
         </div>

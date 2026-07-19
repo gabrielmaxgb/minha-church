@@ -185,7 +185,7 @@ export const privacyPolicySections: LegalSection[] = [
 		bullets: [
 			"Dados de conta e perfil: nome, e-mail, CPF (quando informado), telefone, senha (armazenada de forma segura), funções e permissões",
 			"Dados da igreja: nome, endereço/contato, informações fiscais necessárias a recebimentos (quando configurados)",
-			"Dados de membros e operação: fichas (inclusive datas de nascimento, batismo e membresia), famílias, ministérios, disponibilidade e escalas, eventos, inscrições, avisos e registros de uso do painel",
+			"Dados de membros e operação: fichas (inclusive datas de nascimento, batismo e membresia), famílias, ministérios, disponibilidade e escalas, eventos, inscrições, comunicados e registros de uso do painel",
 			"Conteúdos pastorais inseridos pelos usuários: pedidos de oração e de aconselhamento/visita (texto livre)",
 			"Dados de doadores e contribuidores: nome e e-mail informados no checkout público ou vinculados a membros",
 			"Dados de pagamento: tratados em grande parte pelo processador (Stripe); podemos receber status, identificadores e comprovantes necessários à operação",

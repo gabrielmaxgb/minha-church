@@ -26,10 +26,10 @@ export function DashboardAnnouncementsPanel({
       <div className="flex flex-col gap-3 border-b border-domain-communication/20 px-4 py-3.5 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <h2 className="text-base font-medium text-domain-communication-foreground">
-            Avisos
+            Comunicados
           </h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            Comunicados publicados para a igreja
+            Publicados para a igreja
           </p>
         </div>
         <Button
@@ -45,10 +45,10 @@ export function DashboardAnnouncementsPanel({
       {recent.length === 0 ? (
         <div className="px-4 py-8 text-center">
           <p className="text-sm font-medium text-foreground">
-            Nenhum aviso recente
+            Nenhum comunicado recente
           </p>
           <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
-            Publique um aviso para a igreja ficar alinhada.
+            Publique um comunicado para a igreja ficar alinhada.
           </p>
           {canPublish ? (
             <div className="mt-4 flex flex-col items-center gap-1.5">
@@ -56,15 +56,15 @@ export function DashboardAnnouncementsPanel({
                 <>
                   <Button size="sm" disabled>
                     <Plus className="size-4" />
-                    Publicar aviso
+                    Publicar comunicado
                   </Button>
-                  <LockedFeatureHint action="publicar avisos" />
+                  <LockedFeatureHint action="publicar comunicados" />
                 </>
               ) : (
                 <Button size="sm" asChild>
                   <Link href={AUTH_ROUTES.communication}>
                     <Plus className="size-4" />
-                    Publicar aviso
+                    Publicar comunicado
                   </Link>
                 </Button>
               )}

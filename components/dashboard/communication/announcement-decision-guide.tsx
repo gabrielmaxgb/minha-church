@@ -96,7 +96,7 @@ export function AnnouncementDecisionGuide({
               Evento = entra na agenda. Comunicado = precisa ser lido.
             </p>
             <p className="mt-1 text-muted-foreground">
-              Se for os dois, crie o evento e use o comunicado só para o aviso
+              Se for os dois, crie o evento e use o comunicado só para reforçar
               extra.
             </p>
           </div>
@@ -140,7 +140,7 @@ export function AnnouncementDecisionGuide({
           </div>
 
           <p className="rounded-xl border border-border/70 bg-muted/20 px-4 py-3 text-xs leading-relaxed text-muted-foreground">
-            Dica: se o aviso é só sobre um culto específico (tema da palavra,
+            Dica: se a mensagem é só sobre um culto específico (tema da palavra,
             ceia, chegar mais cedo), use o <strong>Recado em destaque</strong>{" "}
             dentro do próprio evento, em vez de um comunicado separado.
           </p>

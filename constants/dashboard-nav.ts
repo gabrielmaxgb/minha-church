@@ -68,10 +68,10 @@ export const dashboardNavItems: DashboardNavItem[] = [
     permission: "activities",
   },
   {
-    label: "Avisos",
+    label: "Comunicados",
     href: AUTH_ROUTES.communication,
     icon: Mail,
-    description: "Comunicados para a igreja",
+    description: "Mensagens oficiais da igreja",
     domain: "communication",
     permission: "communication",
   },

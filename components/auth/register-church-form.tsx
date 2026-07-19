@@ -49,7 +49,7 @@ const highlights = [
   },
   {
     icon: MessageSquare,
-    title: "Avisos com histórico",
+    title: "Comunicados com histórico",
     description: "Comunique a igreja sem depender só do WhatsApp.",
     tone: "text-muted-foreground bg-muted/80",
   },
@@ -166,7 +166,7 @@ export function RegisterChurchForm() {
               </h1>
               <p className="max-w-sm text-sm leading-relaxed text-muted-foreground sm:text-base">
                 Monte o espaço da comunidade em minutos e comece a semana com
-                clareza — membros, escalas e avisos no mesmo lugar.
+                clareza — membros, escalas e comunicados no mesmo lugar.
               </p>
             </div>
 

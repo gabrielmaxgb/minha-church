@@ -12,14 +12,15 @@ import { Button } from "@/components/ui/button";
 import { activityDetailPath } from "@/constants/routes";
 import { formatEventTime } from "@/lib/dashboard/date-utils";
 import {
+  buildMonthBarSegments,
   buildMonthGrid,
-  dateKeyFromIso,
   formatDayTitle,
   formatMonthTitle,
   getWeekdayLabels,
   groupEventsByDateKey,
   isSameMonth,
   isToday,
+  shouldRenderAsMonthBar,
   toDateKey,
 } from "@/lib/events/calendar";
 import {
@@ -34,7 +35,7 @@ import { cn } from "@/lib/utils";
 import type { MyScheduleEvent } from "@/types/ministries";
 
 const EMPTY_SCHEDULE_EVENTS: MyScheduleEvent[] = [];
-
+const MAX_TIMED_CHIPS = 2;
 
 interface MyScheduleCalendarProps {
   events: MyScheduleEvent[];
@@ -82,6 +83,19 @@ export function MyScheduleCalendar({
     () => buildMonthGrid(year, monthIndex),
     [year, monthIndex],
   );
+
+  const barSegments = useMemo(
+    () => buildMonthBarSegments(grid, sortedEvents),
+    [grid, sortedEvents],
+  );
+
+  const weeks = useMemo(() => {
+    const rows: Date[][] = [];
+    for (let index = 0; index < 6; index += 1) {
+      rows.push(grid.slice(index * 7, index * 7 + 7));
+    }
+    return rows;
+  }, [grid]);
 
   const selectedEvents = useMemo(
     () => eventsByDay.get(selectedDateKey) ?? EMPTY_SCHEDULE_EVENTS,
@@ -180,98 +194,169 @@ export function MyScheduleCalendar({
             ))}
           </div>
 
-          <div className="grid grid-cols-7">
-            {grid.map((day) => {
-              const dateKey = toDateKey(day);
-              const dayEvents = eventsByDay.get(dateKey) ?? [];
-              const inMonth = isSameMonth(day, year, monthIndex);
-              const selected = selectedDateKey === dateKey;
-              const today = isToday(day);
-              const visibleEvents = dayEvents.slice(0, 2);
-              const overflow = dayEvents.length - visibleEvents.length;
-              const dotKinds = new Set(
-                dayEvents.map((event) => getScheduleEventDisplayKind(event)),
+          <div>
+            {weeks.map((weekDays, weekIndex) => {
+              const weekBars = barSegments.filter(
+                (segment) => segment.weekIndex === weekIndex,
               );
+              const laneCount =
+                weekBars.reduce(
+                  (max, segment) => Math.max(max, segment.lane + 1),
+                  0,
+                ) || 0;
 
               return (
-                <button
-                  key={dateKey}
-                  type="button"
-                  onClick={() => setSelectedDateKey(dateKey)}
-                  className={cn(
-                    "min-h-11 border-b border-r border-border/40 p-1 text-left transition-colors sm:min-h-[5.5rem] sm:p-1.5 md:min-h-[6.5rem] md:p-2",
-                    !inMonth && "bg-muted/20 text-muted-foreground/70",
-                    selected && "bg-primary/8 ring-1 ring-inset ring-primary/25",
-                    !selected && inMonth && "hover:bg-muted/40",
-                  )}
+                <div
+                  key={`week-${weekIndex}`}
+                  className="border-b border-border/40 last:border-b-0"
                 >
-                  <div className="mb-0.5 flex items-center justify-between gap-1 sm:mb-1">
-                    <span
-                      className={cn(
-                        "inline-flex size-6 items-center justify-center rounded-full text-xs font-semibold",
-                        today && "bg-foreground text-background",
-                        !today && selected && "text-foreground",
-                      )}
-                    >
-                      {day.getDate()}
-                    </span>
-                    {dayEvents.length > 0 && (
-                      <span className="hidden items-center gap-0.5 sm:inline-flex">
-                        {dotKinds.has("assigned") && (
-                          <span className="size-1.5 rounded-full bg-success" />
-                        )}
-                        {dotKinds.has("pending") && (
-                          <span className={cn("size-1.5 rounded-full", pendingNotificationStyles.schedule.dot)} />
-                        )}
-                        {dotKinds.has("available") && (
-                          <span className="size-1.5 rounded-full bg-foreground" />
-                        )}
-                        {dotKinds.has("unavailable") && (
-                          <span className="size-1.5 rounded-full bg-muted-foreground/50" />
-                        )}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="hidden space-y-0.5 sm:block">
-                    {visibleEvents.map((event) => {
-                      const kind = getScheduleEventDisplayKind(event);
+                  <div className="grid grid-cols-7">
+                    {weekDays.map((day) => {
+                      const dateKey = toDateKey(day);
+                      const dayEvents = eventsByDay.get(dateKey) ?? [];
+                      const timedEvents = dayEvents.filter(
+                        (event) => !shouldRenderAsMonthBar(event),
+                      );
+                      const inMonth = isSameMonth(day, year, monthIndex);
+                      const selected = selectedDateKey === dateKey;
+                      const today = isToday(day);
+                      const visibleEvents = timedEvents.slice(0, MAX_TIMED_CHIPS);
+                      const overflow = timedEvents.length - visibleEvents.length;
+                      const dotKinds = new Set(
+                        dayEvents.map((event) =>
+                          getScheduleEventDisplayKind(event),
+                        ),
+                      );
 
                       return (
-                        <div
-                          key={event.eventId}
+                        <button
+                          key={dateKey}
+                          type="button"
+                          onClick={() => setSelectedDateKey(dateKey)}
                           className={cn(
-                            "truncate rounded px-1 py-0.5 text-[10px] font-medium leading-tight",
-                            scheduleEventStyle(kind),
+                            "min-h-11 border-r border-border/40 p-1 text-left transition-colors last:border-r-0 sm:min-h-[4.75rem] sm:p-1.5 md:min-h-[5.5rem] md:p-2",
+                            !inMonth && "bg-muted/20 text-muted-foreground/70",
+                            selected &&
+                              "bg-primary/8 ring-1 ring-inset ring-primary/25",
+                            !selected && inMonth && "hover:bg-muted/40",
                           )}
-                          title={event.name}
                         >
-                          {scheduleEventCalendarLabel(event)}
-                        </div>
+                          <div className="mb-0.5 flex items-center justify-between gap-1 sm:mb-1">
+                            <span
+                              className={cn(
+                                "inline-flex size-6 items-center justify-center rounded-full text-xs font-semibold",
+                                today && "bg-foreground text-background",
+                                !today && selected && "text-foreground",
+                              )}
+                            >
+                              {day.getDate()}
+                            </span>
+                            {dayEvents.length > 0 && (
+                              <span className="hidden items-center gap-0.5 sm:inline-flex">
+                                {dotKinds.has("assigned") && (
+                                  <span className="size-1.5 rounded-full bg-success" />
+                                )}
+                                {dotKinds.has("pending") && (
+                                  <span
+                                    className={cn(
+                                      "size-1.5 rounded-full",
+                                      pendingNotificationStyles.schedule.dot,
+                                    )}
+                                  />
+                                )}
+                                {dotKinds.has("available") && (
+                                  <span className="size-1.5 rounded-full bg-foreground" />
+                                )}
+                                {dotKinds.has("unavailable") && (
+                                  <span className="size-1.5 rounded-full bg-muted-foreground/50" />
+                                )}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="hidden space-y-0.5 sm:block">
+                            {visibleEvents.map((event) => {
+                              const kind = getScheduleEventDisplayKind(event);
+
+                              return (
+                                <div
+                                  key={event.eventId}
+                                  className={cn(
+                                    "truncate rounded px-1 py-0.5 text-[10px] font-medium leading-tight",
+                                    scheduleEventStyle(kind),
+                                  )}
+                                  title={event.name}
+                                >
+                                  {scheduleEventCalendarLabel(event)}
+                                </div>
+                              );
+                            })}
+                            {overflow > 0 && (
+                              <p className="px-1 text-[10px] font-medium text-muted-foreground">
+                                +{overflow}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="mt-0.5 flex flex-wrap justify-center gap-0.5 sm:mt-1 sm:justify-start sm:hidden">
+                            {dotKinds.has("assigned") && (
+                              <span className="size-1.5 rounded-full bg-success" />
+                            )}
+                            {dotKinds.has("pending") && (
+                              <span
+                                className={cn(
+                                  "size-1.5 rounded-full",
+                                  pendingNotificationStyles.schedule.dot,
+                                )}
+                              />
+                            )}
+                            {dotKinds.has("available") && (
+                              <span className="size-1.5 rounded-full bg-foreground" />
+                            )}
+                            {dotKinds.has("unavailable") && (
+                              <span className="size-1.5 rounded-full bg-muted-foreground/50" />
+                            )}
+                          </div>
+                        </button>
                       );
                     })}
-                    {overflow > 0 && (
-                      <p className="px-1 text-[10px] font-medium text-muted-foreground">
-                        +{overflow}
-                      </p>
-                    )}
                   </div>
 
-                  <div className="mt-0.5 flex flex-wrap justify-center gap-0.5 sm:mt-1 sm:justify-start sm:hidden">
-                    {dotKinds.has("assigned") && (
-                      <span className="size-1.5 rounded-full bg-success" />
-                    )}
-                    {dotKinds.has("pending") && (
-                      <span className={cn("size-1.5 rounded-full", pendingNotificationStyles.schedule.dot)} />
-                    )}
-                    {dotKinds.has("available") && (
-                      <span className="size-1.5 rounded-full bg-foreground" />
-                    )}
-                    {dotKinds.has("unavailable") && (
-                      <span className="size-1.5 rounded-full bg-muted-foreground/50" />
-                    )}
-                  </div>
-                </button>
+                  {laneCount > 0 ? (
+                    <div
+                      className="relative hidden gap-y-0.5 px-0.5 pb-1 sm:grid sm:grid-cols-7"
+                      style={{
+                        gridTemplateRows: `repeat(${laneCount}, 1.15rem)`,
+                      }}
+                    >
+                      {weekBars.map((segment) => {
+                        const kind = getScheduleEventDisplayKind(segment.event);
+                        const segmentDay = weekDays[segment.startCol];
+
+                        return (
+                          <button
+                            key={`${segment.event.eventId}-w${weekIndex}-l${segment.lane}`}
+                            type="button"
+                            title={segment.event.name}
+                            onClick={() =>
+                              setSelectedDateKey(toDateKey(segmentDay))
+                            }
+                            className={cn(
+                              "z-[1] mx-0.5 truncate rounded px-1.5 text-left text-[10px] font-semibold leading-[1.15rem] transition-opacity hover:opacity-90",
+                              scheduleEventStyle(kind),
+                            )}
+                            style={{
+                              gridColumn: `${segment.startCol + 1} / span ${segment.span}`,
+                              gridRow: segment.lane + 1,
+                            }}
+                          >
+                            {scheduleEventCalendarLabel(segment.event)}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : null}
+                </div>
               );
             })}
           </div>

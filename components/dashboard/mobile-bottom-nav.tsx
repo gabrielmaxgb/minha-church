@@ -45,7 +45,7 @@ const MOBILE_LABELS: Record<string, string> = {
   [AUTH_ROUTES.mySchedules]: "Escala",
   [AUTH_ROUTES.activities]: "Eventos",
   [AUTH_ROUTES.members]: "Membros",
-  [AUTH_ROUTES.communication]: "Avisos",
+  [AUTH_ROUTES.communication]: "Comunicados",
   [AUTH_ROUTES.finances]: "Finanças",
   [AUTH_ROUTES.tithesOfferings]: "Ofertas",
   [AUTH_ROUTES.ministries]: "Ministérios",

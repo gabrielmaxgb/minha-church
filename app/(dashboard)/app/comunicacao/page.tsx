@@ -8,8 +8,8 @@ export default function ComunicacaoPage() {
   return (
     <RequirePermission permission="communication">
       <DashboardPage
-        title="Avisos"
-        subtitle="Comunicados da igreja"
+        title="Comunicados"
+        subtitle="Mensagens oficiais da igreja"
       >
         <CommunicationContent />
       </DashboardPage>

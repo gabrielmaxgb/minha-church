@@ -59,7 +59,7 @@ const primaryNav: {
   },
   {
     id: "communication",
-    label: "Avisos",
+    label: "Comunicados",
     icon: Mail,
     domainClass:
       "border border-domain-communication/30 bg-domain-communication-subtle text-domain-communication-foreground",
@@ -447,7 +447,7 @@ const quickActions: {
   {
     domain: "communication",
     icon: Megaphone,
-    label: "Publicar aviso",
+    label: "Publicar comunicado",
     description: "Comunicado para a igreja",
   },
   {
@@ -603,10 +603,10 @@ function MockCommunication() {
       <div className="flex items-start justify-between gap-2 border-b border-domain-communication/20 px-4 py-3">
         <div className="min-w-0">
           <p className="text-sm font-medium text-domain-communication-foreground sm:text-base">
-            Avisos
+            Comunicados
           </p>
           <p className="mt-0.5 text-[10px] text-muted-foreground sm:text-xs">
-            Comunicados publicados para a igreja
+            Publicados para a igreja
           </p>
         </div>
         <span className="shrink-0 rounded-md border border-border bg-card px-2.5 py-1.5 text-[9px] font-medium">
@@ -767,8 +767,8 @@ const viewMeta: Record<MockView, { title: string; subtitle?: string }> = {
     subtitle: "Cultos e encontros da semana",
   },
   communication: {
-    title: "Avisos",
-    subtitle: "Comunicados para a igreja",
+    title: "Comunicados",
+    subtitle: "Mensagens oficiais da igreja",
   },
   schedules: {
     title: "Minha escala",

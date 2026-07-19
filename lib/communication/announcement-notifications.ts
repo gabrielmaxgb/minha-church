@@ -25,8 +25,8 @@ export function announcementsNotificationLabel(count: number): string {
 
 export function announcementsNotificationDescription(count: number): string {
   if (count === 1) {
-    return "Há um aviso novo da liderança aguardando sua leitura.";
+    return "Há um comunicado novo da liderança aguardando você.";
   }
 
-  return `Há ${count} avisos novos da liderança aguardando sua leitura.`;
+  return `Há ${count} comunicados novos da liderança aguardando você.`;
 }
