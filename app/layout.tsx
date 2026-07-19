@@ -5,6 +5,7 @@ import { AuthProvider } from "@/providers/auth-provider";
 import { QueryProvider } from "@/providers/query-provider";
 import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
 import { defaultMetadata } from "@/lib/metadata";
+import { IOS_SPLASH_IMAGES } from "@/lib/pwa/ios-splash";
 
 import "./globals.css";
 
@@ -29,6 +30,9 @@ const geistMono = Geist_Mono({
  * iOS home-screen: precisa de `/apple-touch-icon.png` na raiz (público)
  * + link explícito. Query `v=` quebra cache agressivo do Safari.
  * PNG opaco (sem alpha) — iOS às vezes rejeita ícone com transparência.
+ *
+ * Splash: `apple-touch-startup-image` por tamanho de tela + meta
+ * `apple-mobile-web-app-capable` (Next 15 removeu; Safari ainda exige).
  */
 export const metadata: Metadata = {
   ...defaultMetadata,
@@ -59,6 +63,12 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "default",
     title: "Minha Church",
+    startupImage: [...IOS_SPLASH_IMAGES],
+  },
+  // Next 15 emite mobile-web-app-capable; Safari ainda precisa do nome antigo
+  // para honrar apple-touch-startup-image.
+  other: {
+    "apple-mobile-web-app-capable": "yes",
   },
   formatDetection: {
     telephone: false,
@@ -69,10 +79,8 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f5f5f2" },
-    { media: "(prefers-color-scheme: dark)", color: "#141413" },
-  ],
+  // Cor clara — evita flash preto ao abrir o PWA (theme-color + splash).
+  themeColor: "#f5f5f2",
 };
 
 export default function RootLayout({
@@ -84,9 +92,11 @@ export default function RootLayout({
     <html
       lang="pt-BR"
       className={`${dmSans.variable} ${syne.variable} ${geistMono.variable} h-full antialiased`}
+      style={{ backgroundColor: "#f5f5f2" }}
     >
       <body
-        className="flex min-h-full flex-col"
+        className="flex min-h-full flex-col bg-background"
+        style={{ backgroundColor: "#f5f5f2" }}
         suppressHydrationWarning
       >
         <QueryProvider>
