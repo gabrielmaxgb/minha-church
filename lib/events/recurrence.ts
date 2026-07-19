@@ -231,3 +231,218 @@ export function intervalUnitLabel(mode: EventRepeatMode, count: number): string 
       return "";
   }
 }
+
+export type RecurrencePresetId =
+  | "none"
+  | "daily"
+  | "weekly_start"
+  | "monthly_date"
+  | "yearly"
+  | "weekdays"
+  | "custom";
+
+export const WEEKDAY_PRESET = [1, 2, 3, 4, 5] as const;
+
+function safeStartDate(startsAt: string): Date {
+  const date = new Date(startsAt);
+  return Number.isNaN(date.getTime()) ? new Date() : date;
+}
+
+export function weekdayFullLabel(day: number): string {
+  return (
+    WEEKDAY_OPTIONS.find((option) => option.value === day)?.fullLabel ??
+    "dia"
+  );
+}
+
+export function formatYearlyPresetLabel(startsAt: string): string {
+  const date = safeStartDate(startsAt);
+  const label = new Intl.DateTimeFormat("pt-BR", {
+    day: "numeric",
+    month: "long",
+  }).format(date);
+
+  return `Anual em ${label}`;
+}
+
+export function buildRecurrencePresetOptions(
+  startsAt: string,
+): Array<{ value: RecurrencePresetId; label: string }> {
+  const date = safeStartDate(startsAt);
+  const weekday = weekdayFullLabel(date.getDay()).toLowerCase();
+  const monthDay = date.getDate();
+
+  return [
+    { value: "none", label: "Não se repete" },
+    { value: "daily", label: "Todos os dias" },
+    { value: "weekly_start", label: `Semanal: cada ${weekday}` },
+    { value: "monthly_date", label: `Mensal no dia ${monthDay}` },
+    { value: "yearly", label: formatYearlyPresetLabel(startsAt) },
+    {
+      value: "weekdays",
+      label: "Todos os dias da semana (segunda a sexta)",
+    },
+    { value: "custom", label: "Personalizar…" },
+  ];
+}
+
+function sameDays(a: number[], b: readonly number[]): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+
+  const left = [...a].sort((x, y) => x - y);
+  const right = [...b].sort((x, y) => x - y);
+
+  return left.every((day, index) => day === right[index]);
+}
+
+/** Detecta se o estado atual cabe num preset simples (sem fim custom / interval > 1). */
+export function presetFromFormState(
+  state: EventRecurrenceFormState,
+  startsAt: string,
+): RecurrencePresetId {
+  if (state.repeatMode === "none") {
+    return "none";
+  }
+
+  const hasCustomEnd =
+    state.endType === "on_date" || state.endType === "after_count";
+  const hasCustomInterval = state.interval !== 1;
+
+  if (hasCustomEnd || hasCustomInterval) {
+    return "custom";
+  }
+
+  const startDay = safeStartDate(startsAt).getDay();
+
+  if (state.repeatMode === "daily") {
+    return "daily";
+  }
+
+  if (state.repeatMode === "weekly") {
+    if (sameDays(state.daysOfWeek, WEEKDAY_PRESET)) {
+      return "weekdays";
+    }
+
+    if (
+      state.daysOfWeek.length === 1 &&
+      state.daysOfWeek[0] === startDay
+    ) {
+      return "weekly_start";
+    }
+
+    return "custom";
+  }
+
+  if (state.repeatMode === "monthly") {
+    return "monthly_date";
+  }
+
+  if (state.repeatMode === "yearly") {
+    return "yearly";
+  }
+
+  return "custom";
+}
+
+export function applyRecurrencePreset(
+  preset: RecurrencePresetId,
+  startsAt: string,
+  current: EventRecurrenceFormState,
+): EventRecurrenceFormState {
+  const startDay = safeStartDate(startsAt).getDay();
+
+  switch (preset) {
+    case "none":
+      return {
+        ...current,
+        repeatMode: "none",
+        interval: 1,
+        daysOfWeek: [startDay],
+        endType: "never",
+        endDate: "",
+      };
+    case "daily":
+      return {
+        ...current,
+        repeatMode: "daily",
+        interval: 1,
+        daysOfWeek: [startDay],
+        endType: "never",
+        endDate: "",
+      };
+    case "weekly_start":
+      return {
+        ...current,
+        repeatMode: "weekly",
+        interval: 1,
+        daysOfWeek: [startDay],
+        endType: "never",
+        endDate: "",
+      };
+    case "monthly_date":
+      return {
+        ...current,
+        repeatMode: "monthly",
+        interval: 1,
+        daysOfWeek: [startDay],
+        endType: "never",
+        endDate: "",
+      };
+    case "yearly":
+      return {
+        ...current,
+        repeatMode: "yearly",
+        interval: 1,
+        daysOfWeek: [startDay],
+        endType: "never",
+        endDate: "",
+      };
+    case "weekdays":
+      return {
+        ...current,
+        repeatMode: "weekly",
+        interval: 1,
+        daysOfWeek: [...WEEKDAY_PRESET],
+        endType: "never",
+        endDate: "",
+      };
+    case "custom":
+      if (current.repeatMode === "none") {
+        return {
+          ...current,
+          repeatMode: "weekly",
+          interval: 1,
+          daysOfWeek: [startDay],
+          endType: "never",
+          endDate: "",
+        };
+      }
+
+      return current;
+  }
+}
+
+export function eventSpansMultipleCalendarDays(
+  startsAt: string,
+  endsAt: string | null | undefined,
+): boolean {
+  if (!endsAt) {
+    return false;
+  }
+
+  const start = new Date(startsAt);
+  const end = new Date(endsAt);
+
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    return false;
+  }
+
+  return (
+    start.getFullYear() !== end.getFullYear() ||
+    start.getMonth() !== end.getMonth() ||
+    start.getDate() !== end.getDate()
+  );
+}
+

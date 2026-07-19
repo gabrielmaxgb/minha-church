@@ -16,20 +16,23 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { activityDetailPath } from "@/constants/routes";
 import { formatEventTime } from "@/lib/dashboard/date-utils";
 import {
+  buildMonthBarSegments,
   buildMonthGrid,
   formatDayTitle,
+  formatEventScheduleLabel,
   formatMonthTitle,
   getWeekdayLabels,
   groupEventsByDateKey,
   isSameMonth,
   isToday,
+  shouldRenderAsMonthBar,
   toDateKey,
 } from "@/lib/events/calendar";
 import { isEventRegistrationOpen } from "@/lib/events/registration";
 import { cn } from "@/lib/utils";
 import type { ChurchEvent } from "@/types/events";
 
-const MAX_CHIPS_DESKTOP = 3;
+const MAX_TIMED_CHIPS = 2;
 
 interface DayAgendaGroup {
   key: string;
@@ -117,7 +120,7 @@ function DayAgendaEventItem({ event }: { event: ChurchEvent }) {
         <EventRegistrationOpenBadge event={event} />
       </div>
       <p className="mt-1 text-xs text-muted-foreground">
-        {formatEventTime(event.startsAt)}
+        {formatEventScheduleLabel(event)}
       </p>
     </Link>
   );
@@ -169,6 +172,19 @@ export function ActivityCalendar({
   );
 
   const eventsByDay = useMemo(() => groupEventsByDateKey(events), [events]);
+
+  const barSegments = useMemo(
+    () => buildMonthBarSegments(grid, events),
+    [grid, events],
+  );
+
+  const weeks = useMemo(() => {
+    const rows: Date[][] = [];
+    for (let index = 0; index < 6; index += 1) {
+      rows.push(grid.slice(index * 7, index * 7 + 7));
+    }
+    return rows;
+  }, [grid]);
 
   const selectedEvents = eventsByDay.get(selectedDateKey) ?? [];
   const selectedAgendaGroups = useMemo(
@@ -284,86 +300,135 @@ export function ActivityCalendar({
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-7">
-              {grid.map((day) => {
-                const dateKey = toDateKey(day);
-                const dayEvents = eventsByDay.get(dateKey) ?? [];
-                const inMonth = isSameMonth(day, year, monthIndex);
-                const selected = selectedDateKey === dateKey;
-                const today = isToday(day);
-                const hasChurchEvent = dayEvents.some(
-                  (event) => event.isChurchWide,
+            <div>
+              {weeks.map((weekDays, weekIndex) => {
+                const weekBars = barSegments.filter(
+                  (segment) => segment.weekIndex === weekIndex,
                 );
-                const visibleEvents = dayEvents.slice(0, MAX_CHIPS_DESKTOP);
-                const overflow = dayEvents.length - visibleEvents.length;
+                const laneCount =
+                  weekBars.reduce(
+                    (max, segment) => Math.max(max, segment.lane + 1),
+                    0,
+                  ) || 0;
 
                 return (
-                  <button
-                    key={dateKey}
-                    type="button"
-                    onClick={() => setSelectedDateKey(dateKey)}
-                    className={cn(
-                      "min-h-11 border-b border-r border-border/40 p-1 text-left transition-colors sm:min-h-[5.5rem] sm:p-1.5 md:min-h-[6.5rem] md:p-2",
-                      !inMonth && "bg-muted/20 text-muted-foreground/70",
-                      selected && "bg-primary/8 ring-1 ring-inset ring-primary/25",
-                      !selected && inMonth && "hover:bg-muted/40",
-                    )}
+                  <div
+                    key={`week-${weekIndex}`}
+                    className="border-b border-border/40 last:border-b-0"
                   >
-                    <div className="mb-0.5 flex items-center justify-between gap-1 sm:mb-1">
-                      <span
-                        className={cn(
-                          "inline-flex size-6 items-center justify-center rounded-full text-xs font-semibold",
-                          today &&
-                            "bg-foreground text-background",
-                          !today && selected && "text-foreground",
-                        )}
+                    <div className="grid grid-cols-7">
+                      {weekDays.map((day) => {
+                        const dateKey = toDateKey(day);
+                        const dayEvents = eventsByDay.get(dateKey) ?? [];
+                        const timedEvents = dayEvents.filter(
+                          (event) => !shouldRenderAsMonthBar(event),
+                        );
+                        const inMonth = isSameMonth(day, year, monthIndex);
+                        const selected = selectedDateKey === dateKey;
+                        const today = isToday(day);
+                        const hasAny = dayEvents.length > 0;
+                        const visibleTimed = timedEvents.slice(
+                          0,
+                          MAX_TIMED_CHIPS,
+                        );
+                        const timedOverflow =
+                          timedEvents.length - visibleTimed.length;
+
+                        return (
+                          <button
+                            key={dateKey}
+                            type="button"
+                            onClick={() => setSelectedDateKey(dateKey)}
+                            className={cn(
+                              "min-h-11 border-r border-border/40 p-1 text-left transition-colors last:border-r-0 sm:min-h-[4.75rem] sm:p-1.5 md:min-h-[5.5rem] md:p-2",
+                              !inMonth &&
+                                "bg-muted/20 text-muted-foreground/70",
+                              selected &&
+                                "bg-primary/8 ring-1 ring-inset ring-primary/25",
+                              !selected && inMonth && "hover:bg-muted/40",
+                            )}
+                          >
+                            <div className="mb-0.5 flex items-center justify-between gap-1 sm:mb-1">
+                              <span
+                                className={cn(
+                                  "inline-flex size-6 items-center justify-center rounded-full text-xs font-semibold",
+                                  today && "bg-foreground text-background",
+                                  !today && selected && "text-foreground",
+                                )}
+                              >
+                                {day.getDate()}
+                              </span>
+                              {hasAny ? (
+                                <span
+                                  className={cn(
+                                    "size-1.5 rounded-full sm:hidden",
+                                    dayEvents.some((event) => event.isChurchWide)
+                                      ? "bg-foreground"
+                                      : "bg-muted-foreground",
+                                  )}
+                                />
+                              ) : null}
+                            </div>
+
+                            <div className="hidden space-y-0.5 sm:block">
+                              {visibleTimed.map((event) => (
+                                <div
+                                  key={event.id}
+                                  className={cn(
+                                    "truncate rounded px-1 py-0.5 text-[10px] font-medium leading-tight",
+                                    event.isChurchWide
+                                      ? "bg-foreground/90 text-background"
+                                      : "bg-muted text-muted-foreground",
+                                  )}
+                                  title={event.name}
+                                >
+                                  {formatEventTime(event.startsAt)}{" "}
+                                  {event.name}
+                                </div>
+                              ))}
+                              {timedOverflow > 0 ? (
+                                <p className="px-1 text-[10px] font-medium text-muted-foreground">
+                                  +{timedOverflow}
+                                </p>
+                              ) : null}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {laneCount > 0 ? (
+                      <div
+                        className="relative hidden gap-y-0.5 px-0.5 pb-1 sm:grid sm:grid-cols-7"
+                        style={{
+                          gridTemplateRows: `repeat(${laneCount}, 1.15rem)`,
+                        }}
                       >
-                        {day.getDate()}
-                      </span>
-                      {dayEvents.length > 0 && (
-                        <span
-                          className={cn(
-                            "hidden size-1.5 rounded-full sm:block",
-                            hasChurchEvent ? "bg-foreground" : "bg-muted-foreground",
-                          )}
-                        />
-                      )}
-                    </div>
-
-                    <div className="hidden space-y-0.5 sm:block">
-                      {visibleEvents.map((event) => (
-                        <div
-                          key={event.id}
-                          className={cn(
-                            "truncate rounded px-1 py-0.5 text-[10px] font-medium leading-tight",
-                            event.isChurchWide
-                              ? "bg-foreground text-background"
-                              : "bg-muted text-muted-foreground",
-                          )}
-                          title={event.name}
-                        >
-                          {event.name}
-                        </div>
-                      ))}
-                      {overflow > 0 && (
-                        <p className="px-1 text-[10px] font-medium text-muted-foreground">
-                          +{overflow}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="mt-0.5 flex flex-wrap justify-center gap-0.5 sm:mt-1 sm:justify-start sm:hidden">
-                      {dayEvents.slice(0, 4).map((event) => (
-                        <span
-                          key={event.id}
-                          className={cn(
-                            "size-1.5 rounded-full",
-                            event.isChurchWide ? "bg-foreground" : "bg-muted-foreground",
-                          )}
-                        />
-                      ))}
-                    </div>
-                  </button>
+                        {weekBars.map((segment) => (
+                          <Link
+                            key={`${segment.event.id}-w${weekIndex}-l${segment.lane}`}
+                            href={activityDetailPath(segment.event.id)}
+                            title={segment.event.name}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                            }}
+                            className={cn(
+                              "z-[1] mx-0.5 truncate rounded px-1.5 text-[10px] font-semibold leading-[1.15rem] transition-opacity hover:opacity-90",
+                              segment.event.isChurchWide
+                                ? "bg-foreground text-background"
+                                : "bg-muted-foreground/85 text-background",
+                            )}
+                            style={{
+                              gridColumn: `${segment.startCol + 1} / span ${segment.span}`,
+                              gridRow: segment.lane + 1,
+                            }}
+                          >
+                            {segment.event.name}
+                          </Link>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
                 );
               })}
             </div>

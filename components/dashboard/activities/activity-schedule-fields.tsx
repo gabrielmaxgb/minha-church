@@ -2,21 +2,36 @@
 
 import { useMemo } from "react";
 
-import { Label } from "@/components/ui/label";
 import { DatePicker } from "@/components/ui/date-picker";
-import { SelectField } from "@/components/ui/select-field";
+import { TypeaheadSelect } from "@/components/ui/typeahead-select";
 import {
+  adjustEndsAtAfterStartChange,
   buildTimeOptions,
-  DURATION_PRESETS,
-  durationMinutesFromRange,
-  endsAtFromDuration,
+  defaultEndsAt,
+  formatScheduleSpanLabel,
+  fromAllDayRange,
+  isAllDayRange,
+  isValidScheduleRange,
   joinDatetimeLocal,
   nearestTimeOption,
   splitDatetimeLocal,
+  toAllDayRange,
 } from "@/lib/activities/datetime";
 import { cn } from "@/lib/utils";
 
 const TIME_OPTIONS = buildTimeOptions(15);
+
+const chipDateClass =
+  "w-auto shrink-0 [&_button]:h-9 [&_button]:w-auto [&_button]:min-w-0 [&_button]:border-transparent [&_button]:bg-muted/55 [&_button]:px-3 [&_button]:pr-9 [&_button]:font-medium [&_button]:shadow-none [&_button]:hover:bg-muted [&_button]:focus-visible:bg-muted";
+
+const chipTimeClass =
+  "w-[5.75rem] shrink-0 [&_input]:h-9 [&_input]:border-transparent [&_input]:bg-muted/55 [&_input]:px-3 [&_input]:pr-8 [&_input]:text-center [&_input]:font-medium [&_input]:tabular-nums [&_input]:shadow-none [&_input]:hover:bg-muted [&_input]:focus-visible:bg-muted sm:[&_input]:h-9";
+
+const chipDateElevatedClass =
+  "[&_button]:h-11 [&_button]:rounded-xl [&_button]:text-base";
+
+const chipTimeElevatedClass =
+  "w-28 [&_input]:h-11 [&_input]:rounded-xl [&_input]:text-base";
 
 interface ActivityScheduleFieldsProps {
   startsAt: string;
@@ -39,112 +54,280 @@ export function ActivityScheduleFields({
   className,
   elevated = false,
 }: ActivityScheduleFieldsProps) {
-  const { date, time } = splitDatetimeLocal(startsAt);
-  const durationMinutes = durationMinutesFromRange(startsAt, endsAt || null);
-  const selectedTime = nearestTimeOption(time);
+  const endSource = endsAt || defaultEndsAt(startsAt);
+  const allDay = isAllDayRange(startsAt, endSource);
+  const start = splitDatetimeLocal(startsAt);
+  const end = splitDatetimeLocal(endSource);
+  const startTime = nearestTimeOption(start.time);
+  const endTime = nearestTimeOption(end.time);
+  const rangeInvalid =
+    Boolean(endsAt) && !isValidScheduleRange(startsAt, endsAt, allDay);
+  const spanLabel = formatScheduleSpanLabel(startsAt, endSource, allDay);
+  const multiDay = start.date !== end.date;
 
-  const durationOptions = useMemo(() => {
-    const presets = [...DURATION_PRESETS];
+  const timeOptions = useMemo(() => TIME_OPTIONS, []);
 
-    if (
-      durationMinutes !== null &&
-      !presets.some((option) => option.value === durationMinutes)
-    ) {
-      presets.push({
-        value: durationMinutes,
-        label: `${durationMinutes} minutos`,
-      });
-    }
+  const dateClassName = cn(
+    chipDateClass,
+    elevated && chipDateElevatedClass,
+  );
+  const timeClassName = cn(
+    chipTimeClass,
+    elevated && chipTimeElevatedClass,
+  );
 
-    return presets;
-  }, [durationMinutes]);
-
-  function handleStartsAtChange(nextStartsAt: string) {
+  function applyRange(nextStartsAt: string, nextEndsAt: string) {
     onStartsAtChange(nextStartsAt);
-
-    if (durationMinutes !== null) {
-      const nextEndsAt = endsAtFromDuration(nextStartsAt, durationMinutes);
-      onEndsAtChange(nextEndsAt ?? "");
-    }
+    onEndsAtChange(nextEndsAt);
   }
 
-  function updateDuration(rawValue: string) {
-    if (!rawValue) {
-      onEndsAtChange("");
+  function handleStartDateChange(nextDate: string) {
+    if (allDay) {
+      const range = toAllDayRange(nextDate, end.date);
+      applyRange(range.startsAt, range.endsAt);
       return;
     }
 
-    const minutes = Number(rawValue);
-    const nextEndsAt = endsAtFromDuration(startsAt, minutes);
-    onEndsAtChange(nextEndsAt ?? "");
+    const nextStartsAt = joinDatetimeLocal(nextDate, startTime);
+    const nextEndsAt = adjustEndsAtAfterStartChange(
+      nextStartsAt,
+      startsAt,
+      endsAt || defaultEndsAt(startsAt),
+    );
+    applyRange(nextStartsAt, nextEndsAt);
   }
 
-  const selectClassName = elevated
-    ? "[&_button]:h-12 [&_button]:rounded-xl [&_button]:text-base"
-    : undefined;
+  function handleStartTimeChange(nextTime: string) {
+    const nextStartsAt = joinDatetimeLocal(
+      start.date,
+      nearestTimeOption(nextTime),
+    );
+    const nextEndsAt = adjustEndsAtAfterStartChange(
+      nextStartsAt,
+      startsAt,
+      endsAt || defaultEndsAt(startsAt),
+    );
+    applyRange(nextStartsAt, nextEndsAt);
+  }
+
+  function handleEndDateChange(nextDate: string) {
+    if (allDay) {
+      const range = toAllDayRange(start.date, nextDate);
+      applyRange(range.startsAt, range.endsAt);
+      return;
+    }
+
+    onEndsAtChange(joinDatetimeLocal(nextDate, endTime));
+  }
+
+  function handleEndTimeChange(nextTime: string) {
+    onEndsAtChange(joinDatetimeLocal(end.date, nearestTimeOption(nextTime)));
+  }
+
+  function handleAllDayChange(nextAllDay: boolean) {
+    if (nextAllDay) {
+      const range = toAllDayRange(start.date, end.date);
+      applyRange(range.startsAt, range.endsAt);
+      return;
+    }
+
+    const range = fromAllDayRange(start.date, end.date);
+    applyRange(range.startsAt, range.endsAt);
+  }
 
   return (
-    <div className={cn("grid gap-4 sm:grid-cols-3", className)}>
-      <div className="space-y-2">
-        <Label htmlFor={`${idPrefix}-date`}>Data</Label>
-        <DatePicker
-          id={`${idPrefix}-date`}
-          value={date}
-          onChange={(nextDate) => {
-            if (!nextDate) {
-              return;
-            }
+    <div
+      className={cn(
+        "overflow-hidden rounded-2xl border border-border/70 bg-muted/15",
+        className,
+      )}
+    >
+      <div className="px-3.5 py-3.5">
+        <ScheduleMoment
+          label="Início"
+          rail="start"
+        >
+          <DatePicker
+            id={`${idPrefix}-start-date`}
+            value={start.date}
+            onChange={(nextDate) => {
+              if (!nextDate) {
+                return;
+              }
 
-            handleStartsAtChange(joinDatetimeLocal(nextDate, selectedTime));
-          }}
+              handleStartDateChange(nextDate);
+            }}
+            disabled={disabled}
+            required
+            className={dateClassName}
+          />
+          {!allDay ? (
+            <TypeaheadSelect
+              id={`${idPrefix}-start-time`}
+              value={startTime}
+              options={timeOptions}
+              placeholder="19:00"
+              emptyMessage="Nenhum horário encontrado."
+              disabled={disabled}
+              required
+              className={timeClassName}
+              onChange={handleStartTimeChange}
+            />
+          ) : null}
+        </ScheduleMoment>
+
+        <div className="flex gap-3">
+          <div className="flex w-5 justify-center" aria-hidden>
+            <span className="w-px bg-border/80" />
+          </div>
+          <div className="flex min-h-7 items-center py-0.5">
+            {rangeInvalid ? (
+              <p className="text-xs font-medium text-destructive" role="alert">
+                Fim precisa ser depois do início
+              </p>
+            ) : spanLabel ? (
+              <p className="text-xs tabular-nums text-muted-foreground">
+                {spanLabel}
+              </p>
+            ) : (
+              <span className="h-3" />
+            )}
+          </div>
+        </div>
+
+        <ScheduleMoment
+          label="Fim"
+          rail="end"
+        >
+          <DatePicker
+            id={`${idPrefix}-end-date`}
+            value={end.date}
+            onChange={(nextDate) => {
+              if (!nextDate) {
+                return;
+              }
+
+              handleEndDateChange(nextDate);
+            }}
+            disabled={disabled}
+            required
+            className={dateClassName}
+          />
+          {!allDay ? (
+            <TypeaheadSelect
+              id={`${idPrefix}-end-time`}
+              value={endTime}
+              options={timeOptions}
+              placeholder="20:00"
+              emptyMessage="Nenhum horário encontrado."
+              disabled={disabled}
+              required
+              className={timeClassName}
+              onChange={handleEndTimeChange}
+            />
+          ) : null}
+        </ScheduleMoment>
+
+        {multiDay && !rangeInvalid ? (
+          <p className="mt-2.5 pl-8 text-xs text-muted-foreground">
+            Aparece em todos os dias do intervalo.
+          </p>
+        ) : null}
+      </div>
+
+      <label
+        htmlFor={`${idPrefix}-all-day`}
+        className={cn(
+          "flex cursor-pointer items-center justify-between gap-3 border-t border-border/60 bg-background/40 px-3.5 py-3",
+          disabled && "pointer-events-none opacity-60",
+        )}
+      >
+        <span className="text-sm font-medium text-foreground">Dia inteiro</span>
+        <AllDaySwitch
+          id={`${idPrefix}-all-day`}
+          checked={allDay}
           disabled={disabled}
-          required
-          className={elevated ? "[&_button]:h-12 [&_button]:text-base" : undefined}
+          onCheckedChange={handleAllDayChange}
         />
+      </label>
+    </div>
+  );
+}
+
+function ScheduleMoment({
+  label,
+  rail,
+  children,
+}: {
+  label: string;
+  rail: "start" | "end";
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex gap-3">
+      <div
+        className={cn(
+          "flex w-5 shrink-0 flex-col items-center",
+          rail === "start" ? "pt-2" : "justify-start",
+        )}
+        aria-hidden
+      >
+        {rail === "end" ? <span className="mb-0 h-2 w-px bg-border/80" /> : null}
+        <span
+          className={cn(
+            "size-2.5 shrink-0 rounded-full",
+            rail === "start"
+              ? "bg-foreground"
+              : "border-2 border-foreground bg-background",
+          )}
+        />
+        {rail === "start" ? (
+          <span className="mt-1 w-px flex-1 bg-border/80" />
+        ) : null}
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor={`${idPrefix}-time`}>Horário</Label>
-        <SelectField
-          id={`${idPrefix}-time`}
-          value={selectedTime}
-          disabled={disabled}
-          required
-          className={selectClassName}
-          onChange={(event) => {
-            handleStartsAtChange(joinDatetimeLocal(date, event.target.value));
-          }}
-        >
-          {TIME_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </SelectField>
-      </div>
-
-      <div className="space-y-2 sm:col-span-1">
-        <Label htmlFor={`${idPrefix}-duration`}>Duração</Label>
-        <SelectField
-          id={`${idPrefix}-duration`}
-          value={durationMinutes === null ? "" : String(durationMinutes)}
-          disabled={disabled}
-          className={selectClassName}
-          onChange={(event) => updateDuration(event.target.value)}
-        >
-          {durationOptions.map((option) => (
-            <option
-              key={option.label}
-              value={option.value === null ? "" : String(option.value)}
-            >
-              {option.label}
-            </option>
-          ))}
-        </SelectField>
-        <p className="text-xs text-muted-foreground">
-          Opcional. Define o término a partir do horário de início.
+      <div className="min-w-0 flex-1 space-y-1.5 pb-1">
+        <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+          {label}
         </p>
+        <div className="flex flex-wrap items-center gap-2">{children}</div>
       </div>
     </div>
+  );
+}
+
+function AllDaySwitch({
+  id,
+  checked,
+  disabled,
+  onCheckedChange,
+}: {
+  id: string;
+  checked: boolean;
+  disabled?: boolean;
+  onCheckedChange: (checked: boolean) => void;
+}) {
+  return (
+    <button
+      id={id}
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label="Dia inteiro"
+      disabled={disabled}
+      onClick={() => onCheckedChange(!checked)}
+      className={cn(
+        "relative inline-flex h-6 w-11 shrink-0 rounded-full transition-colors duration-200",
+        checked ? "bg-foreground" : "bg-muted-foreground/25",
+        disabled && "cursor-not-allowed opacity-50",
+      )}
+    >
+      <span
+        className={cn(
+          "pointer-events-none absolute top-0.5 size-5 rounded-full bg-background shadow-sm transition-transform duration-200",
+          checked ? "translate-x-5" : "translate-x-0.5",
+        )}
+      />
+    </button>
   );
 }

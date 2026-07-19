@@ -35,7 +35,12 @@ import {
   useDeleteChurchEvent,
   useUpdateChurchEvent,
 } from "@/lib/api/queries";
-import { toDatetimeLocalValue } from "@/lib/activities/datetime";
+import {
+  defaultEndsAt,
+  isAllDayRange,
+  isValidScheduleRange,
+  toDatetimeLocalValue,
+} from "@/lib/activities/datetime";
 import {
   applyActivityFormFieldErrors,
   activityFormFieldIds,
@@ -195,7 +200,11 @@ export function EditActivityModal({
     setHighlightNote(event.highlightNote ?? "");
     setLocation(event.location ?? "");
     setStartsAt(nextStarts);
-    setEndsAt(event.endsAt ? toDatetimeLocalValue(event.endsAt) : "");
+    setEndsAt(
+      event.endsAt
+        ? toDatetimeLocalValue(event.endsAt)
+        : defaultEndsAt(nextStarts),
+    );
     setVisibleToChurch(event.visibleToChurch ?? true);
     setRegistrationOpen(
       event.registrationOpen ??
@@ -261,6 +270,20 @@ export function EditActivityModal({
 
     if (!name.trim()) {
       setFormFieldErrors({ name: "Informe o nome da atividade." });
+      return;
+    }
+
+    if (
+      !endsAt ||
+      !isValidScheduleRange(
+        startsAt,
+        endsAt,
+        isAllDayRange(startsAt, endsAt),
+      )
+    ) {
+      setFormFieldErrors({
+        root: "O fim precisa ser no mesmo dia ou depois do início.",
+      });
       return;
     }
 
@@ -602,7 +625,6 @@ export function EditActivityModal({
 
             <EventFormSection
               title="Data e horário"
-              description="Defina o dia, o horário de início e a duração da atividade."
               icon={Clock}
             >
               <ActivityScheduleFields
@@ -633,6 +655,7 @@ export function EditActivityModal({
                   clearFieldError("recurrenceEndDate");
                 }}
                 startsAt={startsAt}
+                endsAt={endsAt}
                 disabled={isPending}
                 idPrefix="edit-activity"
                 endDateError={fieldErrors.recurrenceEndDate}

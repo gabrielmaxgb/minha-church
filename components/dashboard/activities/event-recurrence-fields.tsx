@@ -1,24 +1,31 @@
 "use client";
 
+import { useMemo } from "react";
 import { Repeat } from "lucide-react";
 
 import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SelectField } from "@/components/ui/select-field";
+import { FormMessage } from "@/components/ui/form-field";
 import {
+  applyRecurrencePreset,
+  buildRecurrencePresetOptions,
+  eventSpansMultipleCalendarDays,
   intervalUnitLabel,
-  REPEAT_MODE_OPTIONS,
+  presetFromFormState,
   WEEKDAY_OPTIONS,
   type EventRecurrenceFormState,
+  type RecurrencePresetId,
 } from "@/lib/events/recurrence";
-import { FormMessage } from "@/components/ui/form-field";
 import { cn } from "@/lib/utils";
 
 interface EventRecurrenceFieldsProps {
   value: EventRecurrenceFormState;
   onChange: (value: EventRecurrenceFormState) => void;
   startsAt: string;
+  /** Para hint quando o evento cobre mais de um dia. */
+  endsAt?: string;
   disabled?: boolean;
   idPrefix?: string;
   endDateError?: string;
@@ -28,11 +35,18 @@ export function EventRecurrenceFields({
   value,
   onChange,
   startsAt,
+  endsAt,
   disabled = false,
   idPrefix = "event",
   endDateError,
 }: EventRecurrenceFieldsProps) {
-  const isRecurring = value.repeatMode !== "none";
+  const presetOptions = useMemo(
+    () => buildRecurrencePresetOptions(startsAt),
+    [startsAt],
+  );
+  const selectedPreset = presetFromFormState(value, startsAt);
+  const showAdvanced = selectedPreset === "custom";
+  const multiDay = eventSpansMultipleCalendarDays(startsAt, endsAt);
   const startDate = new Date(startsAt);
   const monthlyDay = Number.isNaN(startDate.getTime())
     ? "—"
@@ -40,6 +54,10 @@ export function EventRecurrenceFields({
 
   function update(patch: Partial<EventRecurrenceFormState>) {
     onChange({ ...value, ...patch });
+  }
+
+  function handlePresetChange(next: RecurrencePresetId) {
+    onChange(applyRecurrencePreset(next, startsAt, value));
   }
 
   function toggleWeekday(day: number) {
@@ -58,30 +76,53 @@ export function EventRecurrenceFields({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="event-repeat-mode">Frequência</Label>
+        <Label htmlFor={`${idPrefix}-repeat-preset`}>Frequência</Label>
         <SelectField
-          id={`${idPrefix}-repeat-mode`}
-          value={value.repeatMode}
+          id={`${idPrefix}-repeat-preset`}
+          value={selectedPreset}
           onChange={(event) =>
-            update({
-              repeatMode: event.target.value as EventRecurrenceFormState["repeatMode"],
-            })
+            handlePresetChange(event.target.value as RecurrencePresetId)
           }
           disabled={disabled}
         >
-          {REPEAT_MODE_OPTIONS.map((option) => (
+          {presetOptions.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
             </option>
           ))}
         </SelectField>
+        {multiDay ? (
+          <p className="text-xs text-muted-foreground">
+            Cada ocorrência usa o mesmo intervalo de início e fim.
+          </p>
+        ) : null}
       </div>
 
-      {isRecurring && (
+      {showAdvanced ? (
         <>
+          <div className="space-y-2">
+            <Label htmlFor={`${idPrefix}-repeat-mode`}>Tipo</Label>
+            <SelectField
+              id={`${idPrefix}-repeat-mode`}
+              value={value.repeatMode === "none" ? "weekly" : value.repeatMode}
+              onChange={(event) =>
+                update({
+                  repeatMode: event.target
+                    .value as EventRecurrenceFormState["repeatMode"],
+                })
+              }
+              disabled={disabled}
+            >
+              <option value="daily">Diariamente</option>
+              <option value="weekly">Semanalmente</option>
+              <option value="monthly">Mensalmente</option>
+              <option value="yearly">Anualmente</option>
+            </SelectField>
+          </div>
+
           <div className="grid gap-3 sm:grid-cols-[7rem_1fr] sm:items-end">
             <div className="space-y-2">
-              <Label htmlFor="event-repeat-interval">A cada</Label>
+              <Label htmlFor={`${idPrefix}-repeat-interval`}>A cada</Label>
               <Input
                 id={`${idPrefix}-repeat-interval`}
                 type="number"
@@ -97,11 +138,14 @@ export function EventRecurrenceFields({
               />
             </div>
             <p className="pb-2 text-sm text-muted-foreground">
-              {intervalUnitLabel(value.repeatMode, value.interval)}
+              {intervalUnitLabel(
+                value.repeatMode === "none" ? "weekly" : value.repeatMode,
+                value.interval,
+              )}
             </p>
           </div>
 
-          {value.repeatMode === "weekly" && (
+          {value.repeatMode === "weekly" ? (
             <div className="space-y-2">
               <Label>Repetir nos dias</Label>
               <div className="flex flex-wrap gap-2">
@@ -128,20 +172,21 @@ export function EventRecurrenceFields({
                 })}
               </div>
             </div>
-          )}
+          ) : null}
 
-          {value.repeatMode === "monthly" && (
+          {value.repeatMode === "monthly" ? (
             <p className="text-sm text-muted-foreground">
-              Repete no dia <span className="font-medium text-foreground">{monthlyDay}</span>{" "}
+              Repete no dia{" "}
+              <span className="font-medium text-foreground">{monthlyDay}</span>{" "}
               de cada mês (meses sem esse dia são ignorados).
             </p>
-          )}
+          ) : null}
 
-          {value.repeatMode === "yearly" && (
+          {value.repeatMode === "yearly" ? (
             <p className="text-sm text-muted-foreground">
               Repete na mesma data todos os anos, a partir do primeiro evento.
             </p>
-          )}
+          ) : null}
 
           <div className="space-y-3">
             <Label>Termina em</Label>
@@ -196,13 +241,15 @@ export function EventRecurrenceFields({
                     disabled={disabled || value.endType !== "after_count"}
                     className="w-20"
                   />
-                  <span className="text-sm text-muted-foreground">ocorrências</span>
+                  <span className="text-sm text-muted-foreground">
+                    ocorrências
+                  </span>
                 </div>
               </EndOption>
             </div>
           </div>
         </>
-      )}
+      ) : null}
     </div>
   );
 }

@@ -82,21 +82,68 @@ export function endsAtFromDuration(
   return toDatetimeLocalValue(start);
 }
 
-export const DURATION_PRESETS: Array<{ value: number | null; label: string }> = [
-  { value: null, label: "Sem duração definida" },
-  { value: 30, label: "30 minutos" },
-  { value: 45, label: "45 minutos" },
-  { value: 60, label: "1 hora" },
-  { value: 90, label: "1 hora e 30 minutos" },
-  { value: 120, label: "2 horas" },
-  { value: 180, label: "3 horas" },
-  { value: 240, label: "4 horas" },
-];
+/** Default end = start + 1 hour (Google-like). */
+export function defaultEndsAt(startsAt: string): string {
+  return endsAtFromDuration(startsAt, 60) ?? startsAt;
+}
 
-export function buildTimeOptions(
-  stepMinutes = 15,
-): Array<{ value: string; label: string }> {
-  const options: Array<{ value: string; label: string }> = [];
+export function isEndsAfterStarts(startsAt: string, endsAt: string): boolean {
+  if (!startsAt || !endsAt) {
+    return true;
+  }
+
+  return new Date(endsAt).getTime() > new Date(startsAt).getTime();
+}
+
+/**
+ * Ao mudar o início, preserva a duração anterior; se o fim ficaria ≤ início,
+ * empurra para +1h.
+ */
+export function adjustEndsAtAfterStartChange(
+  nextStartsAt: string,
+  previousStartsAt: string,
+  previousEndsAt: string,
+): string {
+  const previousDuration = durationMinutesFromRange(
+    previousStartsAt,
+    previousEndsAt || null,
+  );
+  const duration = previousDuration ?? 60;
+  const nextEnds = endsAtFromDuration(nextStartsAt, duration);
+
+  if (!nextEnds) {
+    return defaultEndsAt(nextStartsAt);
+  }
+
+  if (!isEndsAfterStarts(nextStartsAt, nextEnds)) {
+    return defaultEndsAt(nextStartsAt);
+  }
+
+  return nextEnds;
+}
+
+export type TimeSelectOption = {
+  value: string;
+  label: string;
+  searchText: string;
+};
+
+/** Digits only — "19:30" / "19 30" / "1930" → "1930". */
+export function normalizeTimeQuery(query: string): string {
+  return query.replace(/\D/g, "");
+}
+
+export function timeOptionSearchText(value: string): string {
+  const digits = normalizeTimeQuery(value);
+  const [hour = "", minute = ""] = value.split(":");
+
+  return [value, digits, hour, minute, `${hour} ${minute}`]
+    .filter(Boolean)
+    .join(" ");
+}
+
+export function buildTimeOptions(stepMinutes = 15): TimeSelectOption[] {
+  const options: TimeSelectOption[] = [];
 
   for (let minutes = 0; minutes < 24 * 60; minutes += stepMinutes) {
     const hour = Math.floor(minutes / 60);
@@ -106,6 +153,7 @@ export function buildTimeOptions(
     options.push({
       value,
       label: value,
+      searchText: timeOptionSearchText(value),
     });
   }
 
@@ -129,3 +177,135 @@ export function nearestTimeOption(time: string, stepMinutes = 15): string {
 
   return `${String(nextHour).padStart(2, "0")}:${String(nextMinute).padStart(2, "0")}`;
 }
+
+/** Convenção sem coluna no banco: início 00:00 + fim 23:59 (hora local). */
+export const ALL_DAY_START_TIME = "00:00";
+export const ALL_DAY_END_TIME = "23:59";
+
+export function isAllDayRange(
+  startsAt: string,
+  endsAt: string | null | undefined,
+): boolean {
+  if (!endsAt) {
+    return false;
+  }
+
+  const start = new Date(startsAt);
+  const end = new Date(endsAt);
+
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    return false;
+  }
+
+  return (
+    start.getHours() === 0 &&
+    start.getMinutes() === 0 &&
+    end.getHours() === 23 &&
+    end.getMinutes() === 59
+  );
+}
+
+export function toAllDayRange(startDate: string, endDate: string): {
+  startsAt: string;
+  endsAt: string;
+} {
+  const safeEnd = endDate >= startDate ? endDate : startDate;
+
+  return {
+    startsAt: joinDatetimeLocal(startDate, ALL_DAY_START_TIME),
+    endsAt: joinDatetimeLocal(safeEnd, ALL_DAY_END_TIME),
+  };
+}
+
+/** Sai do modo dia inteiro: 19:00–20:00 no 1º dia, ou fim ao meio-dia se multi-dia. */
+export function fromAllDayRange(startDate: string, endDate: string): {
+  startsAt: string;
+  endsAt: string;
+} {
+  const startsAt = joinDatetimeLocal(startDate, "19:00");
+
+  if (endDate > startDate) {
+    return {
+      startsAt,
+      endsAt: joinDatetimeLocal(endDate, "12:00"),
+    };
+  }
+
+  return {
+    startsAt,
+    endsAt: defaultEndsAt(startsAt),
+  };
+}
+
+function localDateKeyFromValue(value: string): string {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return splitDatetimeLocal(value).date;
+  }
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+export function isValidScheduleRange(
+  startsAt: string,
+  endsAt: string,
+  allDay: boolean,
+): boolean {
+  if (allDay) {
+    return localDateKeyFromValue(endsAt) >= localDateKeyFromValue(startsAt);
+  }
+
+  return isEndsAfterStarts(startsAt, endsAt);
+}
+
+/** Rótulo curto da duração entre início e fim (ex.: "1 hora", "3 dias"). */
+export function formatScheduleSpanLabel(
+  startsAt: string,
+  endsAt: string,
+  allDay: boolean,
+): string | null {
+  if (!startsAt || !endsAt || !isValidScheduleRange(startsAt, endsAt, allDay)) {
+    return null;
+  }
+
+  if (allDay) {
+    const startKey = localDateKeyFromValue(startsAt);
+    const endKey = localDateKeyFromValue(endsAt);
+    const start = new Date(`${startKey}T12:00:00`);
+    const end = new Date(`${endKey}T12:00:00`);
+    const days =
+      Math.round((end.getTime() - start.getTime()) / 86_400_000) + 1;
+
+    if (days <= 1) {
+      return "1 dia";
+    }
+
+    return `${days} dias`;
+  }
+
+  const minutes = durationMinutesFromRange(startsAt, endsAt);
+
+  if (minutes == null) {
+    return null;
+  }
+
+  if (minutes < 60) {
+    return `${minutes} min`;
+  }
+
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+
+  if (rest === 0) {
+    return hours === 1 ? "1 hora" : `${hours} horas`;
+  }
+
+  return `${hours}h ${rest}min`;
+}
+
+

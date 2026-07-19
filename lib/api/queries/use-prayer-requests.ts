@@ -12,6 +12,7 @@ import {
 import { useTenant } from "@/providers/auth-provider";
 import type {
   CreatePrayerRequestPayload,
+  PrayerRequest,
   PrayerRequestBoardStatus,
 } from "@/types/prayer-requests";
 
@@ -93,6 +94,10 @@ export function useTogglePrayerRequestPray(
 ) {
   const { churchId } = useTenant();
   const queryClient = useQueryClient();
+  const listKey = prayerRequestsKeys.list(
+    churchId ?? "unknown",
+    status,
+  ).queryKey;
 
   return useMutation({
     mutationFn: (requestId: string) => {
@@ -102,24 +107,62 @@ export function useTogglePrayerRequestPray(
 
       return togglePrayerRequestPray(churchId, requestId);
     },
-    onSuccess: async (updated) => {
-      queryClient.setQueryData(
-        prayerRequestsKeys.list(churchId ?? "unknown", status).queryKey,
-        (current: unknown) => {
-          if (!Array.isArray(current)) {
-            return current;
+    onMutate: async (requestId) => {
+      await queryClient.cancelQueries({ queryKey: listKey });
+
+      const previousList = queryClient.getQueryData<PrayerRequest[]>(listKey);
+      const previousItem = previousList?.find((item) => item.id === requestId);
+
+      queryClient.setQueryData<PrayerRequest[]>(listKey, (current) => {
+        if (!Array.isArray(current)) {
+          return current;
+        }
+
+        return current.map((item) => {
+          if (item.id !== requestId) {
+            return item;
           }
 
-          return current.map((item) =>
-            item &&
-            typeof item === "object" &&
-            "id" in item &&
-            item.id === updated.id
-              ? updated
-              : item,
-          );
-        },
-      );
+          const prayedByMe = !item.prayedByMe;
+
+          return {
+            ...item,
+            prayedByMe,
+            prayerCount: Math.max(
+              0,
+              item.prayerCount + (prayedByMe ? 1 : -1),
+            ),
+          };
+        });
+      });
+
+      return { previousItem };
+    },
+    onError: (_error, requestId, context) => {
+      if (!context?.previousItem) {
+        return;
+      }
+
+      queryClient.setQueryData<PrayerRequest[]>(listKey, (current) => {
+        if (!Array.isArray(current)) {
+          return current;
+        }
+
+        return current.map((item) =>
+          item.id === requestId ? context.previousItem! : item,
+        );
+      });
+    },
+    onSuccess: (updated) => {
+      queryClient.setQueryData<PrayerRequest[]>(listKey, (current) => {
+        if (!Array.isArray(current)) {
+          return current;
+        }
+
+        return current.map((item) =>
+          item.id === updated.id ? updated : item,
+        );
+      });
     },
   });
 }

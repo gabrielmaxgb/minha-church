@@ -45,7 +45,12 @@ import {
   useDeleteChurchEvent,
   useUpdateChurchEvent,
 } from "@/lib/api/queries";
-import { toDatetimeLocalValue } from "@/lib/activities/datetime";
+import {
+  defaultEndsAt,
+  isAllDayRange,
+  isValidScheduleRange,
+  toDatetimeLocalValue,
+} from "@/lib/activities/datetime";
 import { isEventRegistrationOpen } from "@/lib/events/registration";
 import {
   buildRecurrencePayload,
@@ -209,7 +214,11 @@ export function ActivityEventModal({
     setHighlightNote(event.highlightNote ?? "");
     setLocation(event.location ?? "");
     setStartsAt(nextStarts);
-    setEndsAt(event.endsAt ? toDatetimeLocalValue(event.endsAt) : "");
+    setEndsAt(
+      event.endsAt
+        ? toDatetimeLocalValue(event.endsAt)
+        : defaultEndsAt(nextStarts),
+    );
     setVisibleToChurch(event.visibleToChurch ?? true);
     setRegistrationOpen(isEventRegistrationOpen(event));
     setPriceReais(
@@ -346,6 +355,18 @@ export function ActivityEventModal({
 
     if (!name.trim()) {
       setError("Informe o nome da atividade.");
+      return;
+    }
+
+    if (
+      !endsAt ||
+      !isValidScheduleRange(
+        startsAt,
+        endsAt,
+        isAllDayRange(startsAt, endsAt),
+      )
+    ) {
+      setError("O fim precisa ser no mesmo dia ou depois do início.");
       return;
     }
 
@@ -713,7 +734,6 @@ export function ActivityEventModal({
 
             <EventFormSection
               title="Data e horário"
-              description="Quando esta ocorrência acontece."
               icon={Clock}
             >
               <ActivityScheduleFields
@@ -741,6 +761,7 @@ export function ActivityEventModal({
                 value={recurrence}
                 onChange={setRecurrence}
                 startsAt={startsAt}
+                endsAt={endsAt}
                 disabled={isPending}
               />
             </EventFormSection>

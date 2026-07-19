@@ -93,7 +93,7 @@ function PrayerRequestCard({
   onPray,
   onDelete,
   onArchive,
-  praying,
+  prayPending,
   deleting,
   archiving,
 }: {
@@ -101,7 +101,7 @@ function PrayerRequestCard({
   onPray: () => void;
   onDelete: () => void;
   onArchive: () => void;
-  praying: boolean;
+  prayPending: boolean;
   deleting: boolean;
   archiving: boolean;
 }) {
@@ -189,12 +189,10 @@ function PrayerRequestCard({
                   : "hover:border-domain-communication/40 hover:bg-domain-communication-subtle/60 hover:text-domain-communication-foreground",
               )}
               onClick={onPray}
-              disabled={praying}
               aria-pressed={request.prayedByMe}
+              aria-busy={prayPending || undefined}
             >
-              {praying ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : request.prayedByMe ? (
+              {request.prayedByMe ? (
                 <Heart className="size-4 fill-current" aria-hidden />
               ) : (
                 <HandHeart className="size-4" aria-hidden />
@@ -226,7 +224,9 @@ export function PrayerRequestsContent() {
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [board, setBoard] = useState<PrayerRequestBoardStatus>("active");
-  const [prayingId, setPrayingId] = useState<string | null>(null);
+  const [pendingPrayIds, setPendingPrayIds] = useState<Set<string>>(
+    () => new Set(),
+  );
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [archivingId, setArchivingId] = useState<string | null>(null);
 
@@ -465,18 +465,31 @@ export function PrayerRequestsContent() {
               <PrayerRequestCard
                 key={request.id}
                 request={request}
-                praying={prayingId === request.id && togglePray.isPending}
+                prayPending={pendingPrayIds.has(request.id)}
                 deleting={deletingId === request.id && deleteRequest.isPending}
                 archiving={
                   archivingId === request.id && archiveRequest.isPending
                 }
-                onPray={async () => {
-                  setPrayingId(request.id);
-                  try {
-                    await togglePray.mutateAsync(request.id);
-                  } finally {
-                    setPrayingId(null);
+                onPray={() => {
+                  if (pendingPrayIds.has(request.id)) {
+                    return;
                   }
+
+                  setPendingPrayIds((current) => {
+                    const next = new Set(current);
+                    next.add(request.id);
+                    return next;
+                  });
+
+                  togglePray.mutate(request.id, {
+                    onSettled: () => {
+                      setPendingPrayIds((current) => {
+                        const next = new Set(current);
+                        next.delete(request.id);
+                        return next;
+                      });
+                    },
+                  });
                 }}
                 onDelete={async () => {
                   setDeletingId(request.id);

@@ -17,6 +17,7 @@ import {
   formatDayTitle,
   formatMonthTitle,
   getWeekdayLabels,
+  groupEventsByDateKey,
   isSameMonth,
   isToday,
   toDateKey,
@@ -34,20 +35,6 @@ import type { MyScheduleEvent } from "@/types/ministries";
 
 const EMPTY_SCHEDULE_EVENTS: MyScheduleEvent[] = [];
 
-function groupEventsByDateKey(
-  events: MyScheduleEvent[],
-): Map<string, MyScheduleEvent[]> {
-  const groups = new Map<string, MyScheduleEvent[]>();
-
-  for (const event of events) {
-    const key = dateKeyFromIso(event.startsAt);
-    const bucket = groups.get(key) ?? [];
-    bucket.push(event);
-    groups.set(key, bucket);
-  }
-
-  return groups;
-}
 
 interface MyScheduleCalendarProps {
   events: MyScheduleEvent[];

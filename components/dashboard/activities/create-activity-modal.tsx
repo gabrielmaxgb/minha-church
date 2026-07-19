@@ -44,6 +44,11 @@ import {
 } from "@/lib/events/recurrence";
 import type { CreateChurchEventPayload } from "@/types/events";
 import {
+  defaultEndsAt,
+  isAllDayRange,
+  isValidScheduleRange,
+} from "@/lib/activities/datetime";
+import {
   applyBrlCentsMask,
   parseBrlMaskToCents,
 } from "@/lib/utils";
@@ -110,7 +115,7 @@ export function CreateActivityModal({
   const [location, setLocation] = useState("");
   const initialStartsAt = defaultStartsAtValue ?? fallbackStartsAt();
   const [startsAt, setStartsAt] = useState(initialStartsAt);
-  const [endsAt, setEndsAt] = useState("");
+  const [endsAt, setEndsAt] = useState(() => defaultEndsAt(initialStartsAt));
   const [visibleToChurch, setVisibleToChurch] = useState(true);
   const [registrationOpen, setRegistrationOpen] = useState(false);
   const [priceReais, setPriceReais] = useState("");
@@ -186,7 +191,7 @@ export function CreateActivityModal({
         setHighlightNote("");
         setLocation("");
         setStartsAt(fallbackStartsAt());
-        setEndsAt("");
+        setEndsAt(defaultEndsAt(fallbackStartsAt()));
         setVisibleToChurch(false);
         setRegistrationOpen(false);
         setPriceReais("");
@@ -206,6 +211,7 @@ export function CreateActivityModal({
     setMinistryId(initialMinistryId);
     setVisibleToChurch(canSelectChurchWide);
     setStartsAt(nextStartsAt);
+    setEndsAt(defaultEndsAt(nextStartsAt));
     setRecurrence(defaultRecurrenceFormState(nextStartsAt));
 
     const previousOverflow = document.body.style.overflow;
@@ -279,6 +285,20 @@ export function CreateActivityModal({
 
     if (!name.trim()) {
       setFormFieldErrors({ name: "Informe o nome da atividade." });
+      return;
+    }
+
+    if (
+      !endsAt ||
+      !isValidScheduleRange(
+        startsAt,
+        endsAt,
+        isAllDayRange(startsAt, endsAt),
+      )
+    ) {
+      setFormFieldErrors({
+        root: "O fim precisa ser no mesmo dia ou depois do início.",
+      });
       return;
     }
 
@@ -520,7 +540,6 @@ export function CreateActivityModal({
 
             <EventFormSection
               title="Data e horário"
-              description="Quando o evento acontece e por quanto tempo."
               icon={Clock}
             >
               <ActivityScheduleFields
@@ -651,6 +670,7 @@ export function CreateActivityModal({
                         clearFieldError("recurrenceEndDate");
                       }}
                       startsAt={startsAt}
+                      endsAt={endsAt}
                       disabled={createEvent.isPending}
                       idPrefix="activity"
                       endDateError={fieldErrors.recurrenceEndDate}

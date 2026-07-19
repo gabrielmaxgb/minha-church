@@ -87,13 +87,25 @@ export function TypeaheadSelect({
       return options;
     }
 
+    const queryDigits = normalizedQuery.replace(/\D/g, "");
+
     return options.filter((option) => {
       const haystack = [option.label, option.description, option.searchText]
         .filter(Boolean)
         .join(" ")
         .toLowerCase();
 
-      return haystack.includes(normalizedQuery);
+      if (haystack.includes(normalizedQuery)) {
+        return true;
+      }
+
+      // "1930" / "19 30" bate em "19:30" via dígitos
+      if (queryDigits.length >= 2) {
+        const haystackDigits = haystack.replace(/\D/g, "");
+        return haystackDigits.includes(queryDigits);
+      }
+
+      return false;
     });
   }, [options, query]);
 
