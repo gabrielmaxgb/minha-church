@@ -225,7 +225,12 @@ export function canAccessSection(
     case "communication":
       return permissions.communication.access;
     case "reports":
-      return permissions.reports.access;
+      // Tesouraria também lê prestação de contas (alinha com a API).
+      return (
+        permissions.reports.access ||
+        permissions.finances.access ||
+        permissions.finances.manage
+      );
     case "settings":
       return permissions.settings.access;
     default:
@@ -328,7 +333,12 @@ export function hasRoutePermission(
     case "communication":
       return permissions.communication.access;
     case "reports":
-      return permissions.reports.access;
+      // Tesouraria também lê prestação de contas (alinha com a API).
+      return (
+        permissions.reports.access ||
+        permissions.finances.access ||
+        permissions.finances.manage
+      );
     case "settings":
       return permissions.settings.access;
     default:

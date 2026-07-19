@@ -180,8 +180,8 @@ function FinancesManageTabs({
     { id: "contribuicoes", label: "Entradas", icon: Receipt },
     { id: "mensais", label: "Recorrentes", icon: RefreshCw },
     { id: "repasses", label: "Repasses", icon: Building2 },
-    { id: "caixa", label: "Lançamentos", icon: NotebookPen },
-    { id: "contas", label: "Plano de contas", icon: BookOpen },
+    { id: "caixa", label: "Caixa", icon: NotebookPen },
+    { id: "contas", label: "Contas", icon: BookOpen },
   ];
 
   return (

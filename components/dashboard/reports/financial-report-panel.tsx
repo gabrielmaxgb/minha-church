@@ -70,15 +70,20 @@ export function FinancialReportPanel() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 print:hidden sm:flex-row sm:items-end sm:justify-between">
-        <div className="grid flex-1 gap-2 sm:grid-cols-2 sm:gap-3">
-          <label className="space-y-1 text-xs text-muted-foreground">
-            De
-            <DatePicker value={from} onChange={setFrom} />
-          </label>
-          <label className="space-y-1 text-xs text-muted-foreground">
-            Até
-            <DatePicker value={to} onChange={setTo} />
-          </label>
+        <div className="min-w-0 flex-1 space-y-2">
+          <p className="text-xs text-muted-foreground">
+            Período do relatório. O atalho em Finanças abre o mês completo.
+          </p>
+          <div className="grid gap-2 sm:grid-cols-2 sm:gap-3">
+            <label className="space-y-1 text-xs text-muted-foreground">
+              De
+              <DatePicker value={from} onChange={setFrom} />
+            </label>
+            <label className="space-y-1 text-xs text-muted-foreground">
+              Até
+              <DatePicker value={to} onChange={setTo} />
+            </label>
+          </div>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button

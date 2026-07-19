@@ -5,6 +5,7 @@ import { RefreshCw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toDateKey } from "@/lib/events/calendar";
 import {
   useFinanceEntriesSummary,
   usePaymentsSummary,
@@ -14,10 +15,10 @@ import { cn, formatCurrency } from "@/lib/utils";
 function currentMonthRange(): { from: string; to: string } {
   const now = new Date();
   const start = new Date(now.getFullYear(), now.getMonth(), 1);
-  const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+  const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
   return {
-    from: start.toISOString(),
-    to: end.toISOString(),
+    from: toDateKey(start),
+    to: toDateKey(end),
   };
 }
 

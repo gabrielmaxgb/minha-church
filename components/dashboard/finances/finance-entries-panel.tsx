@@ -19,6 +19,7 @@ import {
   useFinanceAccounts,
   useFinanceEntries,
   useFinanceEntriesSummary,
+  useFinancialPeriodStatus,
   useGivingFunds,
   useUpdateFinanceEntry,
 } from "@/lib/api/queries";
@@ -27,6 +28,7 @@ import type {
   FinanceEntryMethod,
   FinanceEntryType,
 } from "@/lib/api/payments";
+import { toDateKey } from "@/lib/events/calendar";
 import {
   applyBrlCentsMask,
   cn,
@@ -53,7 +55,7 @@ function typeVariant(type: FinanceEntryType): "success" | "danger" {
 }
 
 function todayIsoDate(): string {
-  return new Date().toISOString().slice(0, 10);
+  return toDateKey(new Date());
 }
 
 function parseAmountToCents(value: string): number | null {
@@ -117,16 +119,16 @@ export function FinanceEntriesPanel({ embedded = false }: { embedded?: boolean }
       page,
       limit: PAGE_SIZE,
       type: typeFilter || undefined,
-      from: from ? new Date(`${from}T00:00:00`).toISOString() : undefined,
-      to: to ? new Date(`${to}T23:59:59`).toISOString() : undefined,
+      from: from || undefined,
+      to: to || undefined,
     }),
     [page, typeFilter, from, to],
   );
 
   const summaryParams = useMemo(
     () => ({
-      from: from ? new Date(`${from}T00:00:00`).toISOString() : undefined,
-      to: to ? new Date(`${to}T23:59:59`).toISOString() : undefined,
+      from: from || undefined,
+      to: to || undefined,
     }),
     [from, to],
   );
@@ -135,6 +137,12 @@ export function FinanceEntriesPanel({ embedded = false }: { embedded?: boolean }
   const summaryQuery = useFinanceEntriesSummary(summaryParams);
   const fundsQuery = useGivingFunds();
   const accountsQuery = useFinanceAccounts({ includeInactive: false });
+  const formYear = Number((form.occurredOn || todayIsoDate()).slice(0, 4));
+  const formMonth = Number((form.occurredOn || todayIsoDate()).slice(5, 7));
+  const periodStatusQuery = useFinancialPeriodStatus(formYear, formMonth, {
+    enabled: Boolean(form.occurredOn || formOpen),
+  });
+  const formMonthClosed = Boolean(periodStatusQuery.data?.isClosed);
   const createMutation = useCreateFinanceEntry();
   const updateMutation = useUpdateFinanceEntry();
   const deleteMutation = useDeleteFinanceEntry();
@@ -198,6 +206,11 @@ export function FinanceEntriesPanel({ embedded = false }: { embedded?: boolean }
     }
     if (!form.occurredOn) {
       throw new Error("Informe a data.");
+    }
+    if (formMonthClosed) {
+      throw new Error(
+        "Este mês está fechado. Reabra o período em Finanças para lançar ou editar.",
+      );
     }
 
     return {
@@ -541,10 +554,21 @@ export function FinanceEntriesPanel({ embedded = false }: { embedded?: boolean }
             />
           </label>
 
+          {formMonthClosed ? (
+            <FormAlert>
+              O mês desta data está fechado. Reabra o período para salvar
+              alterações, ou escolha outra data.
+            </FormAlert>
+          ) : null}
+
           {formError ? <FormAlert>{formError}</FormAlert> : null}
 
           <div className="flex flex-wrap gap-2">
-            <Button type="button" disabled={isSaving} onClick={() => void handleSubmit()}>
+            <Button
+              type="button"
+              disabled={isSaving || formMonthClosed}
+              onClick={() => void handleSubmit()}
+            >
               {isSaving ? <Loader2 className="size-4 animate-spin" /> : null}
               {editingEntry ? "Salvar" : "Adicionar"}
             </Button>
@@ -679,7 +703,7 @@ export function FinanceEntriesPanel({ embedded = false }: { embedded?: boolean }
                   </Badge>
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {entryToDelete.category}
+                  {entryToDelete.accountName ?? entryToDelete.category}
                   {entryToDelete.fundName ? ` · ${entryToDelete.fundName}` : ""}
                 </p>
               </div>

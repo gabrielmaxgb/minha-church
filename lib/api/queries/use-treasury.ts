@@ -104,6 +104,9 @@ export function useCreateFinanceAccount() {
       void queryClient.invalidateQueries({
         queryKey: treasuryKeys.accounts._def,
       });
+      void queryClient.invalidateQueries({
+        queryKey: treasuryKeys.report._def,
+      });
     },
   });
 }

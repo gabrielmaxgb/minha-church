@@ -78,7 +78,7 @@ export function DashboardShell({
 
       <div
         className={cn(
-          "hidden h-dvh shrink-0 lg:block",
+          "hidden h-dvh shrink-0 print:hidden lg:block",
           isSwitchingChurch && "pointer-events-none select-none",
         )}
       >
@@ -86,7 +86,7 @@ export function DashboardShell({
       </div>
 
       {sidebarOpen && (
-        <div className="fixed inset-0 z-40 h-full w-full lg:hidden">
+        <div className="fixed inset-0 z-40 h-full w-full print:hidden lg:hidden">
           <DashboardSidebar
             onNavigate={() => setSidebarOpen(false)}
             onClose={() => setSidebarOpen(false)}
@@ -102,11 +102,13 @@ export function DashboardShell({
         )}
         aria-busy={isSwitchingChurch}
       >
-        <DashboardTopbar
-          title={title}
-          subtitle={subtitle ?? church?.name}
-          onOpenSidebar={() => setSidebarOpen(true)}
-        />
+        <div className="print:hidden">
+          <DashboardTopbar
+            title={title}
+            subtitle={subtitle ?? church?.name}
+            onOpenSidebar={() => setSidebarOpen(true)}
+          />
+        </div>
         {variant === "full" ? (
           <main
             className={cn(
@@ -114,7 +116,7 @@ export function DashboardShell({
               isSwitchingChurch && "opacity-60",
             )}
           >
-            <div className="px-4 pt-4 empty:hidden sm:px-6">
+            <div className="px-4 pt-4 empty:hidden print:hidden sm:px-6">
               <SystemBannersHost />
             </div>
             <DashboardContentMotion className="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden px-4 py-4 sm:px-6 sm:py-5">
@@ -128,7 +130,9 @@ export function DashboardShell({
               isSwitchingChurch && "opacity-60",
             )}
           >
-            <SystemBannersHost />
+            <div className="print:hidden">
+              <SystemBannersHost />
+            </div>
             <DashboardContentMotion className="min-w-0">
               {children}
             </DashboardContentMotion>
@@ -136,11 +140,13 @@ export function DashboardShell({
         )}
       </div>
 
-      <MobileBottomNav
-        onOpenMore={() => setSidebarOpen(true)}
-        moreOpen={sidebarOpen}
-      />
-      <PwaInstallPrompt />
+      <div className="print:hidden">
+        <MobileBottomNav
+          onOpenMore={() => setSidebarOpen(true)}
+          moreOpen={sidebarOpen}
+        />
+        <PwaInstallPrompt />
+      </div>
       </div>
 
       <Suspense fallback={null}>
