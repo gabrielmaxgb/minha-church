@@ -120,6 +120,8 @@ export function SubscriptionSettings() {
   const { openPortal, loading: portalLoading, error: portalError } =
     useBillingPortalAction();
 
+  // Espelha status de assinatura na sessão (topbar/banners) quando o summary muda.
+  // Deps só nos campos — reloadSession é estável (church via ref no AuthProvider).
   useEffect(() => {
     if (!data) {
       return;
@@ -133,10 +135,6 @@ export function SubscriptionSettings() {
     data?.subscriptionStatus,
     reloadSession,
   ]);
-
-  useEffect(() => {
-    void refetch();
-  }, [refetch]);
 
   if (!user?.isOwner) {
     return null;

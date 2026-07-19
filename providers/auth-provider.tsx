@@ -296,17 +296,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const session = await loadSession();
     // Nunca reutilizar o `church` em state — ele fica stale após billing
     // (ex.: trial → active) e a topbar/banners não atualizam sem refresh.
-    // Preserva a igreja ativa pelo id, com dados frescos da sessão.
-    const preferredChurch = church
-      ? (session.churches.find((item) => item.id === church.id) ??
-        (session.church.id === church.id ? session.church : undefined))
+    // Preserva a igreja ativa pelo cookie/id, com dados frescos da sessão.
+    // getStoredChurchId (não `church` em state) mantém reloadSession estável
+    // e evita loop de /auth/me em useEffects que dependem desta callback.
+    const storedChurchId = getStoredChurchId();
+    const preferredChurch = storedChurchId
+      ? (session.churches.find((item) => item.id === storedChurchId) ??
+        (session.church.id === storedChurchId ? session.church : undefined))
       : undefined;
     const next = commitSession(session, preferredChurch, sessionSetters);
 
     scheduleTokenRefresh(next.expiresIn);
 
     return session;
-  }, [church, scheduleTokenRefresh, sessionSetters]);
+  }, [scheduleTokenRefresh, sessionSetters]);
 
   const logout = useCallback(async () => {
     if (refreshTimerRef.current) {
