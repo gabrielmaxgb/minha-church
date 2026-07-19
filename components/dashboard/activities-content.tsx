@@ -8,6 +8,7 @@ import { ActivityCalendar } from "@/components/dashboard/activities/activity-cal
 import { ActivityEventCard } from "@/components/dashboard/activities/activity-event-card";
 import { ActivityEventModal } from "@/components/dashboard/activities/activity-event-modal";
 import { CreateActivityModal } from "@/components/dashboard/activities/create-activity-modal";
+import { DashboardPageIntro } from "@/components/dashboard/dashboard-page-intro";
 import { LockedFeatureHint } from "@/components/dashboard/locked-feature-hint";
 import { StaggerItem, StaggerList } from "@/components/motion/dashboard-motion";
 import { Button } from "@/components/ui/button";
@@ -144,24 +145,26 @@ export function ActivitiesContent() {
 
   return (
     <>
-      <div className="space-y-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-muted-foreground">
-            Planeje datas importantes da igreja e veja a agenda dos ministérios.
-          </p>
-
-          {canCreate && (
-            <div className="flex flex-col items-start gap-1.5 sm:items-end">
-              <Button onClick={() => openCreateModal()} {...blockProps}>
-                <Plus className="size-4" />
-                Novo evento
-              </Button>
-              {writesBlocked && (
-                <LockedFeatureHint action="criar ou editar eventos" />
-              )}
-            </div>
-          )}
-        </div>
+      <div className="space-y-7">
+        <DashboardPageIntro
+          eyebrow="Agenda"
+          title="Atividades"
+          description="Datas da igreja e agenda dos ministérios num só lugar."
+          domain="activities"
+          action={
+            canCreate ? (
+              <>
+                <Button onClick={() => openCreateModal()} {...blockProps}>
+                  <Plus className="size-4" />
+                  Novo evento
+                </Button>
+                {writesBlocked ? (
+                  <LockedFeatureHint action="criar ou editar eventos" />
+                ) : null}
+              </>
+            ) : undefined
+          }
+        />
 
         <div
           role="tablist"
@@ -360,7 +363,7 @@ function ViewTab({
       className={cn(
         "inline-flex min-h-11 items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors",
         active
-          ? "bg-background text-foreground shadow-soft"
+          ? "bg-foreground text-background"
           : "text-muted-foreground hover:text-foreground",
       )}
     >

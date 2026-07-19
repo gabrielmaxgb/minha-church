@@ -50,6 +50,7 @@ export const AUTH_ROUTES = {
   financesContributions: "/app/financas#contribuicoes",
   financesPayouts: "/app/financas#repasses",
   financesManualEntries: "/app/financas#caixa",
+  financesAccounts: "/app/financas#contas",
   financesMonthly: "/app/financas#mensais",
   tithesOfferings: "/app/dizimos-e-ofertas",
   communication: "/app/comunicacao",

@@ -171,6 +171,18 @@ export {
   useUpdateGivingFund,
   useUpsertFiscalProfile,
 } from "@/lib/api/queries/use-payments";
+export { treasuryKeys } from "@/lib/api/queries/treasury.keys";
+export {
+  resolveTreasuryError,
+  useCloseFinancialPeriod,
+  useCreateFinanceAccount,
+  useExportFinancialReport,
+  useFinanceAccounts,
+  useFinancialPeriodStatus,
+  useFinancialReport,
+  useReopenFinancialPeriod,
+  useUpdateFinanceAccount,
+} from "@/lib/api/queries/use-treasury";
 export { rosterKeys, worshipKeys } from "@/lib/api/queries/roster.keys";
 export { useMySchedules, useMyWorshipSchedule } from "@/lib/api/queries/use-my-schedules";
 export {

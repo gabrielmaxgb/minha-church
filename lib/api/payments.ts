@@ -764,6 +764,8 @@ export interface FinanceEntry {
   currency: string;
   occurredOn: string;
   category: string;
+  accountId: string | null;
+  accountName: string | null;
   fundId: string | null;
   fundName: string | null;
   method: FinanceEntryMethod;
@@ -802,7 +804,8 @@ export interface CreateFinanceEntryInput {
   type: FinanceEntryType;
   amountCents: number;
   occurredOn: string;
-  category: string;
+  accountId?: string;
+  category?: string;
   fundId?: string;
   method?: FinanceEntryMethod;
   note?: string;
@@ -812,6 +815,7 @@ export interface UpdateFinanceEntryInput {
   type?: FinanceEntryType;
   amountCents?: number;
   occurredOn?: string;
+  accountId?: string | null;
   category?: string;
   fundId?: string | null;
   method?: FinanceEntryMethod;

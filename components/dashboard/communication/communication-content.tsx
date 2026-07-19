@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { HelpCircle, Inbox, Megaphone, Pin, Plus, SearchX } from "lucide-react";
 
+import { DashboardPageIntro } from "@/components/dashboard/dashboard-page-intro";
 import { LockedFeatureHint } from "@/components/dashboard/locked-feature-hint";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -150,39 +151,41 @@ export function CommunicationContent() {
   const EmptyIcon = emptyState.icon;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0">
-          <p className="text-sm text-muted-foreground">
-            {canManage
-              ? "Publique e acompanhe o que a igreja precisa saber."
-              : "Comunicados da liderança para você."}
-          </p>
-        </div>
-
-        {canManage ? (
-          <div className="flex flex-col items-stretch gap-1.5 sm:items-end">
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setGuideOpen(true)}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <HelpCircle className="size-4" />
-                Ajuda
-              </Button>
-              <Button type="button" onClick={openCompose} {...blockProps}>
-                <Plus className="size-4" />
-                Novo comunicado
-              </Button>
-            </div>
-            {writesBlocked ? (
-              <LockedFeatureHint action="criar ou editar comunicados" />
-            ) : null}
-          </div>
-        ) : null}
-      </div>
+    <div className="space-y-7">
+      <DashboardPageIntro
+        eyebrow="Comunicados"
+        title={canManage ? "O que a igreja precisa saber" : "Para você"}
+        description={
+          canManage
+            ? "Publique e acompanhe mensagens oficiais da liderança."
+            : "Comunicados da liderança para você."
+        }
+        domain="communication"
+        action={
+          canManage ? (
+            <>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setGuideOpen(true)}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <HelpCircle className="size-4" />
+                  Ajuda
+                </Button>
+                <Button type="button" onClick={openCompose} {...blockProps}>
+                  <Plus className="size-4" />
+                  Novo comunicado
+                </Button>
+              </div>
+              {writesBlocked ? (
+                <LockedFeatureHint action="criar ou editar comunicados" />
+              ) : null}
+            </>
+          ) : undefined
+        }
+      />
 
       {activeQuery.isLoading ? (
         <div className="space-y-3">

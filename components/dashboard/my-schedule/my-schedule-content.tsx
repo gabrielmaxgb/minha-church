@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ChevronRight, Layers } from "lucide-react";
 
+import { DashboardPageIntro } from "@/components/dashboard/dashboard-page-intro";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { myScheduleMinistryPath } from "@/constants/routes";
@@ -70,15 +71,23 @@ export function MyScheduleContent() {
 
   if (!data.hasSchedule) {
     return (
-      <div className="rounded-lg border border-dashed border-border bg-muted/15 px-6 py-12 text-center">
-        <Layers className="mx-auto size-10 text-muted-foreground" />
-        <p className="mt-4 text-base font-semibold text-foreground">
-          Nenhuma escala no momento
-        </p>
-        <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-          Quando houver eventos com coleta de disponibilidade aberta ou escalas
-          confirmadas para você, elas aparecem aqui.
-        </p>
+      <div className="space-y-7">
+        <DashboardPageIntro
+          eyebrow="Escalas"
+          title="Minhas escalas"
+          description="Disponibilidade e escalas confirmadas dos seus ministérios."
+          domain="schedules"
+        />
+        <div className="rounded-2xl border border-dashed border-border bg-muted/15 px-6 py-12 text-center">
+          <Layers className="mx-auto size-10 text-muted-foreground" />
+          <p className="font-display mt-4 text-lg font-semibold tracking-tight text-foreground">
+            Nenhuma escala no momento
+          </p>
+          <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+            Quando houver eventos com coleta de disponibilidade aberta ou
+            escalas confirmadas para você, elas aparecem aqui.
+          </p>
+        </div>
       </div>
     );
   }
@@ -91,7 +100,14 @@ export function MyScheduleContent() {
   const groupCount = ministries.length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-7">
+      <DashboardPageIntro
+        eyebrow="Escalas"
+        title="Minhas escalas"
+        description="Escolha um grupo para ver o calendário, responder disponibilidade e acompanhar suas escalas."
+        domain="schedules"
+      />
+
       {totalPending > 0 && (
         <div className={pendingNotificationStyles.banner.inline}>
           <p className="text-sm font-medium text-foreground">
@@ -102,12 +118,7 @@ export function MyScheduleContent() {
         </div>
       )}
 
-      <p className="text-sm text-muted-foreground">
-        Escolha um grupo para ver o calendário, responder disponibilidade e
-        acompanhar suas escalas.
-      </p>
-
-      <div className="overflow-hidden rounded-xl border border-border bg-background">
+      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-xs">
         {ministries.map((ministry) => {
           const pending = ministry.pendingAvailability.length;
           const openEvents = (ministry.events ?? []).filter(
@@ -118,7 +129,7 @@ export function MyScheduleContent() {
             <Link
               key={ministry.ministryId}
               href={myScheduleMinistryPath(ministry.ministryId)}
-              className="flex items-center gap-3 border-b border-border px-4 py-4 transition-colors last:border-b-0 hover:bg-muted/40"
+              className="group flex items-center gap-3 border-b border-border px-4 py-4 transition-colors last:border-b-0 hover:bg-muted/40"
             >
               <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted text-foreground">
                 <Layers className="size-5" />
@@ -126,7 +137,7 @@ export function MyScheduleContent() {
 
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-sm font-semibold tracking-tight text-foreground">
+                  <p className="font-display text-sm font-semibold tracking-tight text-foreground">
                     {ministry.ministryName}
                   </p>
                   {pending > 0 && (
@@ -146,7 +157,7 @@ export function MyScheduleContent() {
                 )}
               </div>
 
-              <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+              <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
             </Link>
           );
         })}

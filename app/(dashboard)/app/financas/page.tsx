@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   ArrowRight,
+  BookOpen,
   Building2,
   Landmark,
   Loader2,
@@ -15,26 +16,32 @@ import {
 } from "lucide-react";
 
 import { RequirePermission } from "@/components/auth/require-permission";
-import { StripeWordmark, stripeOutlineButtonClassName } from "@/components/brand/stripe-mark";
+import {
+  StripeWordmark,
+  stripeOutlineButtonClassName,
+} from "@/components/brand/stripe-mark";
+import { SubscribePricingTrigger } from "@/components/billing/subscribe-pricing-trigger";
 import { DashboardPage } from "@/components/dashboard/dashboard-shell";
+import { DashboardPageIntro } from "@/components/dashboard/dashboard-page-intro";
+import { ChartOfAccountsPanel } from "@/components/dashboard/finances/chart-of-accounts-panel";
 import { ConnectPayoutsPanel } from "@/components/dashboard/finances/connect-payouts-panel";
 import { FinanceEntriesPanel } from "@/components/dashboard/finances/finance-entries-panel";
 import { FinancesSummaryCards } from "@/components/dashboard/finances/finances-summary-cards";
 import { GivingDonationsPanel } from "@/components/dashboard/finances/giving-donations-panel";
 import { GivingFundsPanel } from "@/components/dashboard/finances/giving-funds-panel";
 import { GivingSubscriptionsPanel } from "@/components/dashboard/finances/giving-subscriptions-panel";
-import { SubscribePricingTrigger } from "@/components/billing/subscribe-pricing-trigger";
+import { PeriodCloseBar } from "@/components/dashboard/finances/period-close-bar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FormAlert } from "@/components/ui/form-field";
 import { AUTH_ROUTES, settingsSectionPath } from "@/constants/routes";
+import type { ConnectOnboardingStatus } from "@/lib/api/payments";
 import {
   resolvePaymentsError,
   useConnectStatus,
   useOpenExpressDashboard,
   usePaymentsSummary,
 } from "@/lib/api/queries";
-import type { ConnectOnboardingStatus } from "@/lib/api/payments";
 import { useFeatureLock } from "@/lib/subscription/use-feature-lock";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
@@ -44,7 +51,8 @@ type FinancesTab =
   | "contribuicoes"
   | "mensais"
   | "repasses"
-  | "caixa";
+  | "caixa"
+  | "contas";
 
 function parseFinancesHash(hash: string): FinancesTab {
   if (hash === "#contribuicoes") {
@@ -55,6 +63,9 @@ function parseFinancesHash(hash: string): FinancesTab {
   }
   if (hash === "#repasses") {
     return "repasses";
+  }
+  if (hash === "#contas" || hash === "#plano-de-contas") {
+    return "contas";
   }
   if (
     hash === "#movimentacoes" ||
@@ -76,6 +87,8 @@ function financesHashForTab(tab: FinancesTab): string {
       return "#repasses";
     case "caixa":
       return "#caixa";
+    case "contas":
+      return "#contas";
     default:
       return "";
   }
@@ -161,41 +174,24 @@ function FinancesManageTabs({
   const tabs: Array<{
     id: FinancesTab;
     label: string;
-    shortLabel: string;
     icon: typeof PiggyBank;
   }> = [
-    { id: "fundos", label: "Fundos", shortLabel: "Fundos", icon: PiggyBank },
-    {
-      id: "contribuicoes",
-      label: "Entradas",
-      shortLabel: "Entradas",
-      icon: Receipt,
-    },
-    {
-      id: "mensais",
-      label: "Recorrentes",
-      shortLabel: "Mensais",
-      icon: RefreshCw,
-    },
-    {
-      id: "repasses",
-      label: "Repasses",
-      shortLabel: "Repasses",
-      icon: Building2,
-    },
-    {
-      id: "caixa",
-      label: "Lançamentos manuais",
-      shortLabel: "Caixa",
-      icon: NotebookPen,
-    },
+    { id: "fundos", label: "Fundos", icon: PiggyBank },
+    { id: "contribuicoes", label: "Entradas", icon: Receipt },
+    { id: "mensais", label: "Recorrentes", icon: RefreshCw },
+    { id: "repasses", label: "Repasses", icon: Building2 },
+    { id: "caixa", label: "Lançamentos", icon: NotebookPen },
+    { id: "contas", label: "Plano de contas", icon: BookOpen },
   ];
 
   return (
     <div
       role="tablist"
       aria-label="Gestão financeira"
-      className="-mx-1 flex w-full gap-1 overflow-x-auto px-1 pb-0.5 sm:mx-0 sm:inline-flex sm:w-auto sm:flex-wrap sm:overflow-visible sm:rounded-xl sm:border sm:border-border sm:bg-muted/35 sm:p-1 sm:pb-1"
+      className={cn(
+        "flex w-full gap-0.5 overflow-x-auto overscroll-x-contain rounded-xl border border-border/80 bg-muted/30 p-1",
+        "[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+      )}
     >
       {tabs.map((tab) => {
         const Icon = tab.icon;
@@ -209,15 +205,17 @@ function FinancesManageTabs({
             id={`financas-tab-${tab.id}`}
             onClick={() => onChange(tab.id)}
             className={cn(
-              "inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors sm:flex-1 sm:min-w-28 sm:flex-none",
+              "inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-sm transition-colors",
               selected
-                ? "bg-foreground/85 font-medium text-background"
-                : "border border-border bg-card font-normal text-muted-foreground hover:bg-muted/60 hover:text-foreground sm:border-transparent sm:bg-transparent",
+                ? "bg-foreground font-medium text-background"
+                : "font-normal text-muted-foreground hover:bg-muted/50 hover:text-foreground",
             )}
           >
-            <Icon className="size-4 opacity-80" aria-hidden />
-            <span className="sm:hidden">{tab.shortLabel}</span>
-            <span className="hidden sm:inline">{tab.label}</span>
+            <Icon
+              className={cn("size-3.5", selected ? "opacity-100" : "opacity-70")}
+              aria-hidden
+            />
+            {tab.label}
           </button>
         );
       })}
@@ -247,15 +245,18 @@ function FinancesManageSection() {
 
   return (
     <section className="space-y-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <header className="space-y-3">
         <div>
-          <h2 className="text-lg font-semibold tracking-tight">Gestão</h2>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            Do recebimento ao banco — e o caixa que você registra à mão.
+          <h2 className="font-display text-lg font-semibold tracking-tight">
+            Gestão
+          </h2>
+          <div className="mt-2.5 h-px w-8 bg-domain-finances" />
+          <p className="mt-2.5 text-sm text-muted-foreground">
+            Do recebimento ao banco — caixa, contas e fechamento do mês.
           </p>
         </div>
         <FinancesManageTabs value={tab} onChange={selectTab} />
-      </div>
+      </header>
 
       <div
         role="tabpanel"
@@ -270,6 +271,8 @@ function FinancesManageSection() {
           <GivingSubscriptionsPanel />
         ) : tab === "repasses" ? (
           <ConnectPayoutsPanel />
+        ) : tab === "contas" ? (
+          <ChartOfAccountsPanel embedded />
         ) : (
           <FinanceEntriesPanel embedded />
         )}
@@ -304,43 +307,58 @@ function FinancesContent() {
     );
   }
 
-  if (isOwner && connect && !connect.canReceivePayments) {
-    const copy = ownerActivationCopy(connect.onboardingStatus);
-
-    return (
-      <div className="rounded-2xl border border-border bg-card p-8 text-center shadow-xs">
-        <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-muted">
-          <Landmark className="size-5" aria-hidden />
-        </div>
-        <h2 className="mt-4 text-xl font-semibold tracking-tight">
-          {copy.title}
-        </h2>
-        <p className="mx-auto mt-2 max-w-lg text-sm leading-relaxed text-muted-foreground">
-          {copy.description}
-        </p>
-        <div className="mt-6">
-          <Button asChild className="gap-2">
-            <Link href={settingsSectionPath("recebimentos")}>
-              {copy.cta}
-              <ArrowRight className="size-4" />
-            </Link>
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  const needsConnectActivation = Boolean(
+    isOwner && connect && !connect.canReceivePayments,
+  );
+  const activationCopy = needsConnectActivation
+    ? ownerActivationCopy(connect!.onboardingStatus)
+    : null;
 
   return (
     <div className="space-y-10">
+      <DashboardPageIntro
+        eyebrow="Tesouraria"
+        title="Finanças"
+        description="Recebimentos, caixa e fechamento do mês."
+        domain="finances"
+      />
+
+      {activationCopy ? (
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-xs sm:p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex gap-3">
+              <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-muted">
+                <Landmark className="size-5" aria-hidden />
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-base font-semibold tracking-tight">
+                  {activationCopy.title}
+                </h2>
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                  {activationCopy.description} Enquanto isso, você já pode
+                  usar o caixa, o plano de contas e fechar o mês.
+                </p>
+              </div>
+            </div>
+            <Button asChild className="shrink-0 gap-2">
+              <Link href={settingsSectionPath("recebimentos")}>
+                {activationCopy.cta}
+                <ArrowRight className="size-4" />
+              </Link>
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           {summary?.canReceivePayments ? (
             <Badge variant="success">Conta ativa</Badge>
           ) : (
-            <Badge variant="outline">Recebimentos indisponíveis</Badge>
+            <Badge variant="outline">Recebimentos online pendentes</Badge>
           )}
           <p className="text-sm text-muted-foreground">
-            Resumo dos fundos e contribuições. Membros doam em{" "}
+            Resumo do mês, caixa e prestação de contas. Membros doam em{" "}
             <Link
               href={AUTH_ROUTES.tithesOfferings}
               className="font-medium text-foreground underline underline-offset-2"
@@ -384,6 +402,8 @@ function FinancesContent() {
 
       <FinancesSummaryCards />
 
+      <PeriodCloseBar />
+
       {canManage ? (
         <FinancesManageSection />
       ) : (
@@ -402,7 +422,7 @@ export default function FinancasPage() {
     <RequirePermission permission="finances">
       <DashboardPage
         title="Finanças"
-        subtitle="Resumo dos recebimentos e gestão de fundos"
+        subtitle="Recebimentos, caixa e fechamento do mês"
       >
         <FinancesContent />
       </DashboardPage>

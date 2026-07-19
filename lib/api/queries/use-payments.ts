@@ -389,6 +389,9 @@ export function useCreateFinanceEntry() {
       void queryClient.invalidateQueries({
         queryKey: paymentsKeys.financeEntriesSummary._def,
       });
+      void queryClient.invalidateQueries({
+        queryKey: ["treasury"],
+      });
     },
   });
 }
@@ -422,6 +425,9 @@ export function useUpdateFinanceEntry() {
       void queryClient.invalidateQueries({
         queryKey: paymentsKeys.financeEntriesSummary._def,
       });
+      void queryClient.invalidateQueries({
+        queryKey: ["treasury"],
+      });
     },
   });
 }
@@ -448,6 +454,9 @@ export function useDeleteFinanceEntry() {
       });
       void queryClient.invalidateQueries({
         queryKey: paymentsKeys.financeEntriesSummary._def,
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["treasury"],
       });
     },
   });

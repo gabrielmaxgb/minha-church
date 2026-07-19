@@ -98,11 +98,11 @@ export const resourceSections = [
     domain: "finances" as const,
     title: "Recebimentos e prestação de contas",
     description:
-      "Receba dízimos e doações online, registre entradas e saídas manuais e exporte o histórico para assembleia.",
+      "Receba dízimos e doações online, registre o caixa, feche o mês e exporte o relatório para a assembleia.",
     items: [
       "Fundos de cobrança e página pública de doação",
-      "Histórico, filtros e exportação CSV",
-      "Livro-caixa com lançamentos manuais",
+      "Plano de contas e livro-caixa",
+      "Fechamento mensal e relatório financeiro (PDF/CSV)",
     ],
   },
   {

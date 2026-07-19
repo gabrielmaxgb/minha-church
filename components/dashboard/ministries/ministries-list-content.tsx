@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ChevronRight, Plus } from "lucide-react";
 
+import { DashboardPageIntro } from "@/components/dashboard/dashboard-page-intro";
 import { CreateMinistryModal } from "@/components/dashboard/ministries/create-ministry-modal";
 import { LockedFeatureHint } from "@/components/dashboard/locked-feature-hint";
 import { Badge } from "@/components/ui/badge";
@@ -28,31 +29,37 @@ export function MinistriesListContent() {
 
   return (
     <>
-      <div className="space-y-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-muted-foreground">
-            {locked
-              ? "Visualize os ministérios cadastrados. Assine um plano para acessar configurações e gerenciar equipes."
+      <div className="space-y-7">
+        <DashboardPageIntro
+          eyebrow="Serviço"
+          title="Ministérios"
+          description={
+            locked
+              ? "Visualize os ministérios cadastrados. Assine um plano para gerenciar equipes."
               : canManage
-                ? "Gerencie todas as áreas de serviço — cargos, permissões e eventos."
-                : "Ministérios em que você serve na igreja."}
-          </p>
-
-          {canManage && (
-            <div className="flex flex-col items-start gap-1.5 sm:items-end">
-              <Button
-                size="sm"
-                onClick={() => setModalOpen(true)}
-                disabled={locked}
-                title={reason ?? undefined}
-              >
-                <Plus className="size-4" />
-                Novo ministério
-              </Button>
-              {locked && <LockedFeatureHint action="criar ministérios" />}
-            </div>
-          )}
-        </div>
+                ? "Áreas de serviço — cargos, permissões e eventos."
+                : "Ministérios em que você serve na igreja."
+          }
+          domain="ministries"
+          action={
+            canManage ? (
+              <>
+                <Button
+                  size="sm"
+                  onClick={() => setModalOpen(true)}
+                  disabled={locked}
+                  title={reason ?? undefined}
+                >
+                  <Plus className="size-4" />
+                  Novo ministério
+                </Button>
+                {locked ? (
+                  <LockedFeatureHint action="criar ministérios" />
+                ) : null}
+              </>
+            ) : undefined
+          }
+        />
 
         {isLoading && (
           <div className="overflow-hidden rounded-xl border border-border">
@@ -93,13 +100,15 @@ export function MinistriesListContent() {
         )}
 
         {!isLoading && !isError && sortedMinistries.length > 0 && (
-          <div className="overflow-hidden rounded-xl border border-border bg-background">
+          <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-xs">
             {sortedMinistries.map((ministry) => {
               const rowContent = (
                 <>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="truncate font-medium">{ministry.name}</span>
+                      <span className="font-display truncate font-semibold tracking-tight">
+                        {ministry.name}
+                      </span>
                       {!ministry.isActive && (
                         <Badge variant="outline" className="text-[11px]">
                           Inativo
@@ -112,7 +121,7 @@ export function MinistriesListContent() {
                     </p>
                   </div>
                   {!locked && (
-                    <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                    <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
                   )}
                 </>
               );
@@ -121,7 +130,7 @@ export function MinistriesListContent() {
                 return (
                   <div
                     key={ministry.id}
-                    className="flex items-center gap-3 border-b border-border px-4 py-3 last:border-b-0"
+                    className="flex items-center gap-3 border-b border-border px-4 py-3.5 last:border-b-0"
                   >
                     {rowContent}
                   </div>
@@ -132,7 +141,7 @@ export function MinistriesListContent() {
                 <Link
                   key={ministry.id}
                   href={ministryDetailPath(ministry.id)}
-                  className="flex items-center gap-3 border-b border-border px-4 py-3 transition-colors last:border-b-0 hover:bg-muted/40"
+                  className="group flex items-center gap-3 border-b border-border px-4 py-3.5 transition-colors last:border-b-0 hover:bg-muted/40"
                 >
                   {rowContent}
                 </Link>

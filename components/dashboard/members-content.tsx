@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 
 import { ImportMembersDialog } from "@/components/dashboard/members/import-members-dialog";
+import { DashboardPageIntro } from "@/components/dashboard/dashboard-page-intro";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SelectField } from "@/components/ui/select-field";
@@ -318,28 +319,15 @@ export function MembersContent() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-3">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="relative max-w-md flex-1">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Buscar por nome, e-mail ou telefone"
-              className="pl-9 pr-9"
-              aria-busy={isSearching}
-            />
-            {isSearching && (
-              <Loader2
-                className="absolute right-3 top-1/2 size-4 -translate-y-1/2 animate-spin text-muted-foreground"
-                aria-hidden
-              />
-            )}
-          </div>
-
-          {canManage && (
-            <div className="flex shrink-0 flex-wrap gap-2 self-start sm:self-auto">
+    <div className="space-y-7">
+      <DashboardPageIntro
+        eyebrow="Cadastro"
+        title="Membros"
+        description="Fichas pastorais, famílias e histórico da comunidade."
+        domain="members"
+        action={
+          canManage ? (
+            <div className="flex shrink-0 flex-wrap gap-2">
               <Button
                 size="sm"
                 variant="outline"
@@ -370,6 +358,25 @@ export function MembersContent() {
                 </Link>
               </Button>
             </div>
+          ) : undefined
+        }
+      />
+
+      <div className="space-y-3">
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Buscar por nome, e-mail ou telefone"
+            className="pl-9 pr-9"
+            aria-busy={isSearching}
+          />
+          {isSearching && (
+            <Loader2
+              className="absolute right-3 top-1/2 size-4 -translate-y-1/2 animate-spin text-muted-foreground"
+              aria-hidden
+            />
           )}
         </div>
 

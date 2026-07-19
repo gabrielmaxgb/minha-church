@@ -19,11 +19,12 @@ export function SettingsSectionHeader({
   return (
     <div className="mb-5 flex items-start justify-between gap-3">
       <div className="min-w-0 flex-1">
-        <h2 className="text-lg font-semibold tracking-tight text-balance">
+        <h2 className="font-display text-lg font-semibold tracking-tight text-balance">
           {title}
         </h2>
+        <div className="mt-2.5 h-px w-8 bg-muted-foreground/40" />
         {description ? (
-          <p className="mt-1 text-sm leading-relaxed text-pretty text-muted-foreground">
+          <p className="mt-2.5 text-sm leading-relaxed text-pretty text-muted-foreground">
             {description}
           </p>
         ) : null}

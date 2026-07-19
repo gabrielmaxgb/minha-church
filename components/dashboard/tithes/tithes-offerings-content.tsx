@@ -5,6 +5,7 @@ import { ArrowRight } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 
 import { RequireActiveMember } from "@/components/auth/require-active-member";
+import { DashboardPageIntro } from "@/components/dashboard/dashboard-page-intro";
 import { PaymentMethodBadges } from "@/components/dashboard/finances/fund-payment-methods-field";
 import { MemberGivingCheckoutDialog } from "@/components/dashboard/tithes/member-giving-checkout-dialog";
 import { FormAlert } from "@/components/ui/form-field";
@@ -15,6 +16,8 @@ import { useFeatureLock } from "@/lib/subscription/use-feature-lock";
 import { cn } from "@/lib/utils";
 
 import "@/app/doar/giving.css";
+
+const EASE = [0.22, 1, 0.36, 1] as const;
 
 export function TithesOfferingsContent() {
   const { locked } = useFeatureLock();
@@ -38,8 +41,8 @@ export function TithesOfferingsContent() {
     return (
       <div className="space-y-3">
         <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-28 w-full rounded-2xl" />
-        <Skeleton className="h-28 w-full rounded-2xl" />
+        <Skeleton className="h-24 w-full rounded-2xl" />
+        <Skeleton className="h-24 w-full rounded-2xl" />
       </div>
     );
   }
@@ -56,18 +59,14 @@ export function TithesOfferingsContent() {
   const funds = fundsQuery.data ?? [];
 
   return (
-    <div className="giving-root -mx-1 space-y-8 rounded-3xl px-1">
-      <div>
-        <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-          Contribuição registrada
-        </p>
-        <h2 className="mt-2 text-xl font-semibold tracking-tight text-foreground">
-          Escolha um fundo
-        </h2>
-        <p className="mt-1 max-w-xl text-sm leading-relaxed text-muted-foreground">
-          Você contribui logado — o valor fica no fundo e na sua ficha pastoral.
-        </p>
-      </div>
+    <div className="giving-root -mx-1 space-y-7 rounded-3xl px-1">
+      <DashboardPageIntro
+        eyebrow="Contribuição registrada"
+        title="Escolha um fundo"
+        description="Você contribui logado — o valor fica no fundo e na sua ficha pastoral."
+        domain="finances"
+        accentClassName="bg-[var(--giving-trust)]"
+      />
 
       {funds.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-border bg-muted/20 p-8 text-center text-sm text-muted-foreground">
@@ -84,7 +83,7 @@ export function TithesOfferingsContent() {
               transition={{
                 duration: 0.35,
                 delay: index * 0.05,
-                ease: [0.22, 1, 0.36, 1],
+                ease: EASE,
               }}
             >
               <button
@@ -93,13 +92,14 @@ export function TithesOfferingsContent() {
                 className={cn(
                   "group flex w-full items-center gap-4 overflow-hidden rounded-2xl border border-border bg-card text-left shadow-xs transition-colors",
                   "hover:border-[color-mix(in_srgb,var(--giving-trust)_35%,var(--border))]",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--giving-trust)]/35",
                 )}
               >
-                <div className="relative hidden h-full min-h-24 w-2 shrink-0 self-stretch bg-[var(--giving-ink)] sm:block">
+                <div className="relative hidden min-h-24 w-1.5 shrink-0 self-stretch bg-[var(--giving-ink)] sm:block">
                   <div className="absolute inset-0 bg-[var(--giving-trust)]/40" />
                 </div>
                 <div className="min-w-0 flex-1 px-4 py-4 sm:px-5 sm:py-5">
-                  <p className="font-medium tracking-tight text-foreground">
+                  <p className="font-display text-base font-semibold tracking-tight text-foreground">
                     {fund.name}
                   </p>
                   {fund.description ? (

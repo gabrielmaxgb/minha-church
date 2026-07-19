@@ -16,6 +16,7 @@ import {
   useCreateFinanceEntry,
   useDeleteFinanceEntry,
   useExportFinanceEntries,
+  useFinanceAccounts,
   useFinanceEntries,
   useFinanceEntriesSummary,
   useGivingFunds,
@@ -71,7 +72,7 @@ type EntryFormState = {
   type: FinanceEntryType;
   amount: string;
   occurredOn: string;
-  category: string;
+  accountId: string;
   fundId: string;
   method: FinanceEntryMethod;
   note: string;
@@ -81,7 +82,7 @@ const EMPTY_FORM: EntryFormState = {
   type: "income",
   amount: "",
   occurredOn: todayIsoDate(),
-  category: "",
+  accountId: "",
   fundId: "",
   method: "other",
   note: "",
@@ -92,7 +93,7 @@ function entryToForm(entry: FinanceEntry): EntryFormState {
     type: entry.type,
     amount: centsToInputValue(entry.amountCents),
     occurredOn: entry.occurredOn,
-    category: entry.category,
+    accountId: entry.accountId ?? "",
     fundId: entry.fundId ?? "",
     method: entry.method,
     note: entry.note ?? "",
@@ -133,6 +134,7 @@ export function FinanceEntriesPanel({ embedded = false }: { embedded?: boolean }
   const entriesQuery = useFinanceEntries(params);
   const summaryQuery = useFinanceEntriesSummary(summaryParams);
   const fundsQuery = useGivingFunds();
+  const accountsQuery = useFinanceAccounts({ includeInactive: false });
   const createMutation = useCreateFinanceEntry();
   const updateMutation = useUpdateFinanceEntry();
   const deleteMutation = useDeleteFinanceEntry();
@@ -144,6 +146,26 @@ export function FinanceEntriesPanel({ embedded = false }: { embedded?: boolean }
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const summary = summaryQuery.data;
   const isSaving = createMutation.isPending || updateMutation.isPending;
+
+  const accountOptions = useMemo(() => {
+    const all = accountsQuery.data ?? [];
+    const matching = all.filter(
+      (account) =>
+        !account.isSystem &&
+        account.isActive &&
+        account.kind === form.type,
+    );
+    if (
+      form.accountId &&
+      !matching.some((account) => account.id === form.accountId)
+    ) {
+      const selected = all.find((account) => account.id === form.accountId);
+      if (selected) {
+        return [selected, ...matching];
+      }
+    }
+    return matching;
+  }, [accountsQuery.data, form.accountId, form.type]);
 
   const resetForm = () => {
     setForm(EMPTY_FORM);
@@ -171,8 +193,8 @@ export function FinanceEntriesPanel({ embedded = false }: { embedded?: boolean }
     if (amountCents === null) {
       throw new Error("Informe um valor válido maior que zero.");
     }
-    if (!form.category.trim()) {
-      throw new Error("Informe a categoria.");
+    if (!form.accountId) {
+      throw new Error("Selecione a conta do plano de contas.");
     }
     if (!form.occurredOn) {
       throw new Error("Informe a data.");
@@ -182,7 +204,7 @@ export function FinanceEntriesPanel({ embedded = false }: { embedded?: boolean }
       type: form.type,
       amountCents,
       occurredOn: form.occurredOn,
-      category: form.category.trim(),
+      accountId: form.accountId,
       fundId: form.fundId || undefined,
       method: form.method,
       note: form.note.trim() || undefined,
@@ -409,6 +431,7 @@ export function FinanceEntriesPanel({ embedded = false }: { embedded?: boolean }
                   setForm((current) => ({
                     ...current,
                     type: event.target.value as FinanceEntryType,
+                    accountId: "",
                   }))
                 }
               >
@@ -454,14 +477,23 @@ export function FinanceEntriesPanel({ embedded = false }: { embedded?: boolean }
               />
             </label>
             <label className="space-y-1 text-xs text-muted-foreground">
-              Categoria
-              <Input
-                value={form.category}
-                placeholder="Ex.: Aluguel, Oferta especial"
+              Conta
+              <SelectField
+                value={form.accountId}
                 onChange={(event) =>
-                  setForm((current) => ({ ...current, category: event.target.value }))
+                  setForm((current) => ({
+                    ...current,
+                    accountId: event.target.value,
+                  }))
                 }
-              />
+              >
+                <option value="">Selecione…</option>
+                {accountOptions.map((account) => (
+                  <option key={account.id} value={account.id}>
+                    {account.name}
+                  </option>
+                ))}
+              </SelectField>
             </label>
             <label className="space-y-1 text-xs text-muted-foreground">
               Fundo (opcional)
@@ -553,7 +585,7 @@ export function FinanceEntriesPanel({ embedded = false }: { embedded?: boolean }
                   </Badge>
                 </div>
                 <p className="mt-0.5 text-sm text-muted-foreground">
-                  {entry.category}
+                  {entry.accountName ?? entry.category}
                   {entry.fundName ? ` · ${entry.fundName}` : ""}
                   {` · ${METHOD_LABEL[entry.method]}`}
                 </p>

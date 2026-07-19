@@ -135,7 +135,7 @@ export const dashboardNavItems: DashboardNavItem[] = [
     label: "Relatórios",
     href: AUTH_ROUTES.reports,
     icon: BarChart3,
-    description: "Resumos para a liderança",
+    description: "Prestação de contas e exportações",
     domain: "reports",
     permission: "reports",
   },

@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { MemberDetailButton } from "@/components/dashboard/members/member-detail-link";
+import { DashboardPageIntro } from "@/components/dashboard/dashboard-page-intro";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
@@ -273,23 +274,22 @@ export function PrayerRequestsContent() {
   }
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-7">
+      <DashboardPageIntro
+        eyebrow="Intercessão"
+        title="Pedidos de oração"
+        description="A igreja se une em oração. Pedidos ficam no quadro ativo por 30 dias."
+        domain="communication"
+      />
+
       <section className="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-xs">
         <div className="border-b border-border/70 px-4 py-4 sm:px-5">
-          <div className="flex items-start gap-3">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-domain-communication-subtle text-domain-communication-foreground">
-              <HandHeart className="size-4" aria-hidden />
-            </span>
-            <div className="min-w-0">
-              <h2 className="text-base font-semibold tracking-tight text-foreground">
-                Compartilhar pedido
-              </h2>
-              <p className="mt-0.5 text-sm text-muted-foreground">
-                A igreja pode se unir em oração. Pedidos ficam no quadro ativo
-                por 30 dias.
-              </p>
-            </div>
-          </div>
+          <h3 className="font-display text-base font-semibold tracking-tight text-foreground">
+            Compartilhar pedido
+          </h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Escreva com sinceridade — anônimo ou com seu nome.
+          </p>
         </div>
 
         <form

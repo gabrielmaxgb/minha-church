@@ -14,6 +14,7 @@ import {
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
 import { CreateCareRequestModal } from "@/components/dashboard/care-requests/create-care-request-modal";
+import { DashboardPageIntro } from "@/components/dashboard/dashboard-page-intro";
 import { FinanceConfirmDialog } from "@/components/dashboard/finances/finance-confirm-dialog";
 import { MemberDetailButton } from "@/components/dashboard/members/member-detail-link";
 import {
@@ -115,10 +116,11 @@ function PanelIntro({
 }) {
   return (
     <div className="mb-5">
-      <h2 className="text-lg font-semibold tracking-tight text-foreground">
+      <h2 className="font-display text-lg font-semibold tracking-tight text-foreground">
         {title}
       </h2>
-      <p className="mt-1 max-w-xl text-sm leading-relaxed text-muted-foreground">
+      <div className="mt-2.5 h-px w-8 bg-domain-members" />
+      <p className="mt-2.5 max-w-xl text-sm leading-relaxed text-muted-foreground">
         {description}
       </p>
     </div>
@@ -244,31 +246,39 @@ export function CareRequestsContent() {
   ];
 
   return (
-    <div className="md:grid md:grid-cols-[14rem_minmax(0,1fr)] md:items-start md:gap-8">
-      <SideRailNav
-        items={navItems}
-        active={tab}
-        onChange={setTab}
-        tone="communication"
-        ariaLabel="Seções de aconselhamento"
-        mobileEqual
+    <div className="space-y-7">
+      <DashboardPageIntro
+        eyebrow="Cuidado pastoral"
+        title="Aconselhamentos"
+        description="Peça apoio pastoral e acompanhe suas solicitações com discreção."
+        domain="members"
       />
 
-      <div className="min-w-0">
-        <AnimatePresence mode="wait" initial={false}>
-          {tabReady ? (
-            <motion.div
-              key={tab}
-              role="tabpanel"
-              initial={
-                shouldReduceMotion ? false : { opacity: 0, y: 10 }
-              }
-              animate={{ opacity: 1, y: 0 }}
-              exit={
-                shouldReduceMotion ? undefined : { opacity: 0, y: -6 }
-              }
-              transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-            >
+      <div className="md:grid md:grid-cols-[14rem_minmax(0,1fr)] md:items-start md:gap-8">
+        <SideRailNav
+          items={navItems}
+          active={tab}
+          onChange={setTab}
+          tone="communication"
+          ariaLabel="Seções de aconselhamento"
+          mobileEqual
+        />
+
+        <div className="min-w-0">
+          <AnimatePresence mode="wait" initial={false}>
+            {tabReady ? (
+              <motion.div
+                key={tab}
+                role="tabpanel"
+                initial={
+                  shouldReduceMotion ? false : { opacity: 0, y: 10 }
+                }
+                animate={{ opacity: 1, y: 0 }}
+                exit={
+                  shouldReduceMotion ? undefined : { opacity: 0, y: -6 }
+                }
+                transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+              >
               {tab === "ask" && (
                 <section>
                   <PanelIntro
@@ -548,6 +558,7 @@ export function CareRequestsContent() {
             </div>
           )}
         </AnimatePresence>
+      </div>
       </div>
 
       {confirmViewRequest ? (
