@@ -59,7 +59,7 @@ export function BusyOverlay({
           className={cn(
             "z-20 flex flex-col items-center justify-center gap-5 bg-card/85 backdrop-blur-sm",
             variant === "contained" && "absolute inset-0 rounded-[inherit]",
-            variant === "fullscreen" && "fixed inset-0 z-80 rounded-none",
+            variant === "fullscreen" && "fixed inset-0 z-[80] rounded-none",
             className,
           )}
           initial={shouldReduceMotion ? false : { opacity: 0 }}

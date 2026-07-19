@@ -19,9 +19,11 @@ export function DashboardContentMotion({
   return (
     <motion.div
       className={className}
-      initial={shouldReduceMotion ? false : { opacity: 0, y: 14 }}
-      animate={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      // Só opacity — `y` deixa transform no DOM e prende `position:fixed`
+      // dos modais atrás da sidebar mobile (z-40).
+      initial={shouldReduceMotion ? false : { opacity: 0 }}
+      animate={shouldReduceMotion ? undefined : { opacity: 1 }}
+      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
     >
       {children}
     </motion.div>

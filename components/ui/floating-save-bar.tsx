@@ -61,7 +61,7 @@ export function FloatingSaveBar({
         ? createPortal(
             <div
               className={cn(
-                "pointer-events-none fixed inset-x-0 z-40 flex justify-center p-3 sm:p-4",
+                "pointer-events-none fixed inset-x-0 z-[45] flex justify-center p-3 sm:p-4",
                 "bottom-[var(--mobile-nav-offset,0px)] lg:bottom-0 lg:pl-60",
                 className,
               )}

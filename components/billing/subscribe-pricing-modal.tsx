@@ -13,6 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { ModalPortal } from "@/components/ui/modal-portal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePricing } from "@/lib/api/queries/use-pricing";
 import { useSubscribeCheckout } from "@/lib/billing/use-subscribe-checkout";
@@ -175,19 +176,20 @@ export function SubscribePricingModal({
       : null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4 md:p-6">
-      <button
-        type="button"
-        className="absolute inset-0 bg-black/45"
-        aria-label="Fechar"
-        onClick={onClose}
-      />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="subscribe-pricing-title"
-        className="relative z-10 flex max-h-[96vh] w-full max-w-6xl flex-col overflow-hidden rounded-t-xl border border-border bg-background shadow-popover sm:rounded-xl"
-      >
+    <ModalPortal>
+      <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4 md:p-6">
+        <button
+          type="button"
+          className="absolute inset-0 bg-black/45"
+          aria-label="Fechar"
+          onClick={onClose}
+        />
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="subscribe-pricing-title"
+          className="relative z-10 flex max-h-[96vh] w-full max-w-6xl flex-col overflow-hidden rounded-t-xl border border-border bg-background shadow-popover sm:rounded-xl"
+        >
         <BusyOverlay
           active={loading}
           icon={StripeMarkIcon}
@@ -393,6 +395,7 @@ export function SubscribePricingModal({
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </ModalPortal>
   );
 }
