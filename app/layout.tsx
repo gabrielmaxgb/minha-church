@@ -39,17 +39,17 @@ export const metadata: Metadata = {
     ],
     apple: [
       {
-        url: "/apple-touch-icon.png?v=20260718",
+        url: "/apple-touch-icon.png?v=20260719",
         sizes: "180x180",
         type: "image/png",
       },
       {
-        url: "/icons/apple-touch-icon-167.png?v=20260718",
+        url: "/icons/apple-touch-icon-167.png?v=20260719",
         sizes: "167x167",
         type: "image/png",
       },
       {
-        url: "/icons/apple-touch-icon-152.png?v=20260718",
+        url: "/icons/apple-touch-icon-152.png?v=20260719",
         sizes: "152x152",
         type: "image/png",
       },
