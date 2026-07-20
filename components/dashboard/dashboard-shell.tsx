@@ -54,19 +54,11 @@ export function DashboardShell({
   }, [isLoading, mustChangePassword, router]);
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <p className="animate-pulse text-sm text-muted-foreground">Carregando...</p>
-      </div>
-    );
+    return <div className="min-h-dvh w-full bg-white" aria-hidden />;
   }
 
   if (!isAuthenticated || !church || mustChangePassword) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <p className="text-sm text-muted-foreground">Redirecionando...</p>
-      </div>
-    );
+    return <div className="min-h-dvh w-full bg-white" aria-hidden />;
   }
 
   return (

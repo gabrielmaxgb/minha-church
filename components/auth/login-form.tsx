@@ -16,6 +16,7 @@ import { Suspense, useState } from "react";
 import { useForm } from "react-hook-form";
 import { motion, useReducedMotion } from "motion/react";
 
+import { AuthBootSplash } from "@/components/auth/auth-boot-splash";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FormAlert, FormField, FormMessage } from "@/components/ui/form-field";
@@ -34,8 +35,10 @@ import {
   resolvePostLoginRedirect,
 } from "@/constants/routes";
 import { ApiError } from "@/lib/api/client";
+import { clearBootSplashSeed } from "@/lib/auth/boot-splash-bridge";
 import { loginSchema, type LoginFormValues } from "@/lib/validation/schemas";
 import { cn } from "@/lib/utils";
+import { resetAsymptoticProgressSingleton } from "@/hooks/use-asymptotic-progress";
 import { useAuth } from "@/providers/auth-provider";
 
 const welcomePoints = [
@@ -131,6 +134,8 @@ function LoginFormContent() {
             ? loginError.message
             : "Não foi possível entrar. Tente novamente.",
       });
+      clearBootSplashSeed();
+      resetAsymptoticProgressSingleton();
       setIsLoading(false);
       setLoadingIdentifier(null);
     }
@@ -144,6 +149,15 @@ function LoginFormContent() {
     setValue("identifier", loginEmail);
     setValue("password", DEMO_PASSWORD);
     await performLogin(loginEmail, DEMO_PASSWORD);
+  }
+
+  if (isLoading) {
+    return (
+      <AuthBootSplash
+        ready={false}
+        label="Entrando na sua igreja…"
+      />
+    );
   }
 
   return (

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { DM_Sans, Geist_Mono, Syne } from "next/font/google";
 
+import { AuthBootSplashHost } from "@/components/auth/auth-boot-splash-host";
 import { AuthProvider } from "@/providers/auth-provider";
 import { QueryProvider } from "@/providers/query-provider";
 import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
@@ -100,7 +101,10 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <QueryProvider>
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>
+            <AuthBootSplashHost />
+            {children}
+          </AuthProvider>
         </QueryProvider>
         <ServiceWorkerRegister />
       </body>
