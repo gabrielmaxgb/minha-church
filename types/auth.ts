@@ -27,6 +27,7 @@ export interface UserPermissions {
   roles: { manage: boolean };
   memberships: { manage: boolean };
   counseling: { receive: boolean };
+  pastoralCare: { access: boolean };
 }
 
 export type SubscriptionStatus =
@@ -178,4 +179,5 @@ export type ChurchPermissionKey =
   | "roles_manage"
   | "memberships_manage"
   | "counseling_receive"
-  | "receivables_manage";
+  | "receivables_manage"
+  | "pastoral_care";

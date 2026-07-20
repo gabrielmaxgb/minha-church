@@ -15,7 +15,8 @@ export type NavPermissionKey =
   | "finances"
   | "communication"
   | "reports"
-  | "settings";
+  | "settings"
+  | "pastoralCare";
 
 export function canManageMembers(permissions: UserPermissions) {
   return permissions.members.manage;
@@ -233,6 +234,8 @@ export function canAccessSection(
       );
     case "settings":
       return permissions.settings.access;
+    case "pastoralCare":
+      return permissions.pastoralCare.access;
     default:
       return false;
   }
@@ -304,7 +307,8 @@ export type RoutePermission =
   | "finances"
   | "communication"
   | "reports"
-  | "settings";
+  | "settings"
+  | "pastoralCare";
 
 export function hasRoutePermission(
   permissions: UserPermissions,
@@ -341,6 +345,8 @@ export function hasRoutePermission(
       );
     case "settings":
       return permissions.settings.access;
+    case "pastoralCare":
+      return permissions.pastoralCare.access;
     default:
       return false;
   }

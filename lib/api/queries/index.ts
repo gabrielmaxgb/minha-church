@@ -208,6 +208,15 @@ export {
   usePrayerRequests,
   useTogglePrayerRequestPray,
 } from "@/lib/api/queries/use-prayer-requests";
+export { pastoralNotesKeys } from "@/lib/api/queries/pastoral-notes.keys";
+export {
+  resolvePastoralNotesError,
+  useCreatePastoralNote,
+  useDeletePastoralNote,
+  useMemberPastoralNotes,
+  usePastoralCareSummary,
+  useUpdatePastoralNote,
+} from "@/lib/api/queries/use-pastoral-notes";
 export { notificationsKeys } from "@/lib/api/queries/notifications.keys";
 export {
   useMarkNotificationRead,

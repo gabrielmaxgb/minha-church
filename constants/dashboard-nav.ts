@@ -5,6 +5,7 @@ import {
   CalendarDays,
   HandHeart,
   HeartHandshake,
+  HeartPulse,
   Layers,
   LayoutDashboard,
   Mail,
@@ -116,6 +117,14 @@ export const dashboardNavItems: DashboardNavItem[] = [
     access: "activeAdultMember",
   },
   {
+    label: "Acompanhamento",
+    href: AUTH_ROUTES.pastoralCare,
+    icon: HeartPulse,
+    description: "Notas de cuidado e quem precisa de atenção",
+    domain: "members",
+    permission: "pastoralCare",
+  },
+  {
     label: "Finanças",
     href: AUTH_ROUTES.finances,
     icon: Wallet,
@@ -176,6 +185,7 @@ export const dashboardNavOrder: DashboardNavEntry[] = [
   // Cuidado da comunidade
   { type: "item", href: AUTH_ROUTES.prayerRequests, sectionStart: true },
   { type: "item", href: AUTH_ROUTES.careRequests },
+  { type: "item", href: AUTH_ROUTES.pastoralCare },
   // Gestão e olhar da liderança
   { type: "group", id: "financeiro", sectionStart: true },
   { type: "item", href: AUTH_ROUTES.reports },

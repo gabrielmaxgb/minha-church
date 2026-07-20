@@ -56,6 +56,7 @@ export const AUTH_ROUTES = {
   communication: "/app/comunicacao",
   careRequests: "/app/aconselhamentos",
   prayerRequests: "/app/pedidos-de-oracao",
+  pastoralCare: "/app/acompanhamento",
   reports: "/app/relatorios",
   settings: "/app/configuracoes",
   settingsChurch: "/app/configuracoes/igreja",

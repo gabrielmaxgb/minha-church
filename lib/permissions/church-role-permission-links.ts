@@ -10,6 +10,7 @@ export const ACTION_REQUIRES_SECTION_ACCESS: Partial<
   events_create_church_wide: "activities_access",
   communication_manage: "communication_access",
   receivables_manage: "finances_access",
+  pastoral_care: "members_access",
   roles_manage: "settings_access",
   memberships_manage: "settings_access",
 };
@@ -18,7 +19,7 @@ export const ACTION_REQUIRES_SECTION_ACCESS: Partial<
 export const SECTION_ACCESS_IMPLIES_ACTIONS: Partial<
   Record<ChurchPermissionKey, ChurchPermissionKey[]>
 > = {
-  members_access: ["members_manage"],
+  members_access: ["members_manage", "pastoral_care"],
   ministries_access: ["ministries_manage"],
   activities_access: ["events_create_church_wide"],
   communication_access: ["communication_manage"],

@@ -7,6 +7,7 @@ import {
   CalendarDays,
   CalendarPlus,
   HeartHandshake,
+  HeartPulse,
   LayoutDashboard,
   Layers,
   Mail,
@@ -49,6 +50,7 @@ const PERMISSION_ICONS: Record<ChurchPermissionKey, LucideIcon> = {
   roles_manage: Shield,
   memberships_manage: UserPlus,
   counseling_receive: HeartHandshake,
+  pastoral_care: HeartPulse,
   receivables_manage: Wallet,
 };
 

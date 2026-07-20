@@ -14,7 +14,6 @@ import {
   Trash2,
   UserCheck,
   UserPlus,
-  UserRound,
 } from "lucide-react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 
@@ -58,16 +57,21 @@ import {
 } from "@/lib/members/parental-consent";
 import { useTrialWriteGuard } from "@/lib/subscription/use-trial-write-guard";
 import { createMemberFormSchema } from "@/lib/validation/schemas";
-import { cn, formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 import type { Member, MemberAccountCredentials } from "@/types/members";
 import { MEMBER_STATUS_LABELS } from "@/types/members";
 import { useAuth } from "@/providers/auth-provider";
 import { ApiError } from "@/lib/api/client";
 
+export type MemberDetailSection = "profile" | "ministries";
+
 interface MemberExpandedPanelProps {
   member: Member;
   canManage: boolean;
   onDeleted?: () => void;
+  /** Aba ativa — o pai orquestra Cadastro vs Ministérios. */
+  section?: MemberDetailSection;
+  onEditingChange?: (editing: boolean) => void;
 }
 
 function DetailSection({
@@ -130,35 +134,26 @@ function ReadOnlyDetails({
     .filter(Boolean)
     .join(", ");
 
+  const minorBadge = isMinorMember(member) ? (
+    <Badge
+      variant="outline"
+      className={
+        member.parentalConsentGranted
+          ? "border-emerald-600/30 text-emerald-700"
+          : "border-amber-600/30 text-amber-700"
+      }
+    >
+      {member.parentalConsentGranted
+        ? "Menor · consentimento ok"
+        : "Menor · consentimento pendente"}
+    </Badge>
+  ) : null;
+
   return (
     <div className="space-y-4">
-      <DetailSection icon={UserRound} title="Identificação">
-        <DetailItem label="Nome" value={member.name} className="sm:col-span-2" />
-        <DetailItem
-          label="Status"
-          value={
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="secondary">
-                {MEMBER_STATUS_LABELS[member.status]}
-              </Badge>
-              {isMinorMember(member) ? (
-                <Badge
-                  variant="outline"
-                  className={
-                    member.parentalConsentGranted
-                      ? "border-emerald-600/30 text-emerald-700"
-                      : "border-amber-600/30 text-amber-700"
-                  }
-                >
-                  {member.parentalConsentGranted
-                    ? "Menor · consentimento ok"
-                    : "Menor · consentimento pendente"}
-                </Badge>
-              ) : null}
-            </div>
-          }
-        />
-      </DetailSection>
+      {minorBadge ? (
+        <div className="flex flex-wrap items-center gap-2">{minorBadge}</div>
+      ) : null}
 
       <DetailSection icon={Phone} title="Contato">
         <DetailItem label="E-mail" value={member.email} />
@@ -190,7 +185,11 @@ function ReadOnlyDetails({
       </DetailSection>
 
       <DetailSection icon={MapPin} title="Endereço">
-        <DetailItem label="Endereço completo" value={address} className="sm:col-span-2" />
+        <DetailItem
+          label="Endereço completo"
+          value={address}
+          className="sm:col-span-2"
+        />
       </DetailSection>
 
       <DetailSection icon={Church} title="Vida na igreja">
@@ -234,11 +233,12 @@ export function MemberExpandedPanel({
   member,
   canManage,
   onDeleted,
+  section = "profile",
+  onEditingChange,
 }: MemberExpandedPanelProps) {
   const { user, church } = useAuth();
   const { writesBlocked, reason } = useTrialWriteGuard();
   const tierCrossing = useTierCrossingGate();
-  const [viewTab, setViewTab] = useState<"profile" | "ministries">("profile");
   const [confirmName, setConfirmName] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [familyLinkOpen, setFamilyLinkOpen] = useState(false);
@@ -278,6 +278,10 @@ export function MemberExpandedPanel({
     setPendingStatusChange(null);
     form.clearErrors("root");
   }, [member, form]);
+
+  useEffect(() => {
+    onEditingChange?.(isEditing);
+  }, [isEditing]); // eslint-disable-line react-hooks/exhaustive-deps -- notify parent only when editing flips
 
   const canDelete = confirmName.trim() === member.name;
   const isPending = updateMember.isPending || deleteMember.isPending;
@@ -435,49 +439,33 @@ export function MemberExpandedPanel({
   if (!canManage) {
     const isSelf = user?.id === member.userId;
 
-    return (
-      <div className="space-y-4">
-        <div className="flex gap-2 border-b border-border/60 pb-2">
-          <button
-            type="button"
-            onClick={() => setViewTab("profile")}
-            className={cn(
-              "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
-              viewTab === "profile"
-                ? "bg-muted text-foreground"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            Perfil
-          </button>
-          <button
-            type="button"
-            onClick={() => setViewTab("ministries")}
-            className={cn(
-              "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
-              viewTab === "ministries"
-                ? "bg-muted text-foreground"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            Ministérios
-          </button>
-        </div>
+    if (section === "ministries") {
+      return (
+        <MemberMinistriesFunctionsSection
+          memberId={member.id}
+          ministries={member.ministries}
+          editable={isSelf && !writesBlocked}
+        />
+      );
+    }
 
-        {viewTab === "profile" ? (
-          <ReadOnlyDetails member={member} showMinistries={false} />
-        ) : (
-          <MemberMinistriesFunctionsSection
-            memberId={member.id}
-            ministries={member.ministries}
-            editable={isSelf && !writesBlocked}
-          />
-        )}
-      </div>
-    );
+    return <ReadOnlyDetails member={member} showMinistries={false} />;
   }
 
   if (!isEditing) {
+    if (section === "ministries") {
+      return (
+        <div className="space-y-6">
+          <MemberMinistriesFunctionsSection
+            memberId={member.id}
+            ministries={member.ministries}
+            editable={!writesBlocked}
+          />
+          <MemberMinistriesSection member={member} disabled={writesBlocked} />
+        </div>
+      );
+    }
+
     return (
       <>
         <div className="relative space-y-5">
@@ -587,30 +575,6 @@ export function MemberExpandedPanel({
           {consentError ? <FormAlert>{consentError}</FormAlert> : null}
 
           <ReadOnlyDetails member={member} showMinistries={false} />
-
-          <div className="space-y-3">
-            <div className="flex gap-2 border-b border-border/60 pb-2">
-              <button
-                type="button"
-                onClick={() => setViewTab("ministries")}
-                className={cn(
-                  "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
-                  viewTab === "ministries"
-                    ? "bg-muted text-foreground"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                Funções nos ministérios
-              </button>
-            </div>
-            <MemberMinistriesFunctionsSection
-              memberId={member.id}
-              ministries={member.ministries}
-              editable={!writesBlocked}
-            />
-          </div>
-
-          <MemberMinistriesSection member={member} disabled={writesBlocked} />
         </div>
 
         {createdAccount && (

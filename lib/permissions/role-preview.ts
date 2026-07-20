@@ -21,6 +21,7 @@ export function emptyUserPermissions(): UserPermissions {
     roles: { manage: false },
     memberships: { manage: false },
     counseling: { receive: false },
+    pastoralCare: { access: false },
   };
 }
 
@@ -68,6 +69,7 @@ export function churchRolePermissionsToUserPermissions(
   permissions.roles.manage = has("roles_manage");
   permissions.memberships.manage = has("memberships_manage");
   permissions.counseling.receive = has("counseling_receive");
+  permissions.pastoralCare.access = has("pastoral_care");
 
   return permissions;
 }

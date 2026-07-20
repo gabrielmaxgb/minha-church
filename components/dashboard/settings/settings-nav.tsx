@@ -169,6 +169,7 @@ const emptyPermissions: UserPermissions = {
   roles: { manage: false },
   memberships: { manage: false },
   counseling: { receive: false },
+  pastoralCare: { access: false },
 };
 
 export function useSettingsNav(
