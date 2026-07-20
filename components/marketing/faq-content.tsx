@@ -1,30 +1,27 @@
+"use client";
+
+import { billingFaq, generalFaq } from "@/constants/faq";
 import { Container } from "@/components/layout/container";
 import { CtaBanner } from "@/components/marketing/cta-banner";
 import { FaqList } from "@/components/marketing/faq-list";
-import { Heading } from "@/components/ui/heading";
-import { billingFaq, generalFaq } from "@/constants/faq";
+import { MarketingPageHero } from "@/components/motion/marketing-page-hero";
+import { ScrubHeadline } from "@/components/motion/scrub-headline";
 
 export function FaqContent() {
   return (
     <>
-      <section className="border-b border-border">
-        <Container className="py-16 sm:py-20 lg:py-24">
-          <div className="max-w-2xl">
-            <Heading as="h1" className="text-balance">
-              Perguntas frequentes
-            </Heading>
-            <p className="mt-5 text-base leading-relaxed text-muted-foreground sm:text-lg">
-              Respostas para as dúvidas mais comuns sobre o produto e a
-              cobrança.
-            </p>
-          </div>
-        </Container>
-      </section>
+      <MarketingPageHero
+        eyebrow="Minha Church"
+        title="Perguntas frequentes"
+        support="Respostas para as dúvidas mais comuns sobre o produto e a cobrança."
+      />
 
       <section className="border-b border-border py-16 sm:py-24">
         <Container>
           <div className="max-w-2xl">
-            <Heading as="h2">Produto</Heading>
+            <ScrubHeadline as="h2" className="text-2xl sm:text-3xl">
+              Produto
+            </ScrubHeadline>
             <div className="mt-8">
               <FaqList items={generalFaq} />
             </div>
@@ -35,7 +32,9 @@ export function FaqContent() {
       <section className="border-b border-border py-16 sm:py-24">
         <Container>
           <div className="max-w-2xl">
-            <Heading as="h2">Preço e pagamento</Heading>
+            <ScrubHeadline as="h2" className="text-2xl sm:text-3xl">
+              Preço e pagamento
+            </ScrubHeadline>
             <div className="mt-8">
               <FaqList items={billingFaq} />
             </div>

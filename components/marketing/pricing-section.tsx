@@ -2,14 +2,18 @@
 
 import Link from "next/link";
 import { Check } from "lucide-react";
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 
 import { billingFaq } from "@/constants/faq";
 import { PUBLIC_ROUTES } from "@/constants/routes";
 import { Container } from "@/components/layout/container";
 import { CtaBanner } from "@/components/marketing/cta-banner";
 import { FaqList } from "@/components/marketing/faq-list";
-import { MotionSection } from "@/components/motion/motion-section";
+import { PricingCalculator } from "@/components/marketing/pricing-calculator";
+import { HorizontalScrub } from "@/components/motion/horizontal-scrub";
+import { Magnetic } from "@/components/motion/magnetic";
+import { MarketingPageHero } from "@/components/motion/marketing-page-hero";
+import { ScrubHeadline } from "@/components/motion/scrub-headline";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -19,19 +23,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Heading, SectionHeader } from "@/components/ui/heading";
+import { SectionHeader } from "@/components/ui/heading";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PricingCalculator } from "@/components/marketing/pricing-calculator";
 import { usePricing } from "@/lib/api/queries/use-pricing";
+import { ensureGsap, prefersReducedMotion } from "@/lib/gsap/client";
 import {
   formatPricePerMember,
   getPricePerMember,
   getTierBillingComparison,
 } from "@/lib/pricing";
-import { staggerContainer, staggerItem } from "@/lib/motion";
 import type { BillingPeriod, PricingTier } from "@/types";
 import { cn, formatCurrency } from "@/lib/utils";
-import { motion } from "motion/react";
 
 function TierPriceComparison({
   tier,
@@ -121,8 +123,29 @@ function IncludedBenefits({
   benefits: string[];
   className?: string;
 }) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el || prefersReducedMotion()) return;
+    const gsap = ensureGsap();
+    const items = el.querySelectorAll("li");
+    const ctx = gsap.context(() => {
+      gsap.from(items, {
+        opacity: 0,
+        x: -12,
+        stagger: 0.06,
+        duration: 0.45,
+        ease: "power2.out",
+        scrollTrigger: { trigger: el, start: "top 85%", once: true },
+      });
+    }, el);
+    return () => ctx.revert();
+  }, []);
+
   return (
     <div
+      ref={ref}
       className={cn(
         "mx-auto max-w-3xl rounded-lg border border-border bg-muted/30 p-6 sm:p-8",
         className,
@@ -183,12 +206,9 @@ function PricingSkeleton() {
     <>
       <Skeleton className="mx-auto mt-12 h-48 max-w-3xl rounded-lg" />
       <Skeleton className="mx-auto mt-6 h-24 max-w-2xl rounded-lg" />
-      <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:items-center">
+      <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <Card
-            key={i}
-            className={cn("shadow-none", i === 1 && "lg:min-h-[22rem]")}
-          >
+          <Card key={i} className="shadow-none">
             <CardHeader>
               <Skeleton className="h-5 w-28" />
               <Skeleton className="h-4 w-full" />
@@ -212,160 +232,163 @@ export function PricingSection() {
 
   return (
     <>
-      <section className="border-b border-border">
-        <Container className="py-16 sm:py-20 lg:py-24">
-          <div className="max-w-2xl">
-            <Heading as="h1" className="text-balance">
-              Investimento justo para o tamanho da sua igreja
-            </Heading>
-            <p className="mt-5 text-base leading-relaxed text-muted-foreground sm:text-lg">
-              As mesmas ferramentas em todas as faixas — você paga conforme
-              quantos membros cadastra, não por pacote de funcionalidades.{" "}
-              <span className="font-medium text-foreground">30 dias grátis</span>
-              , sem cartão.
-            </p>
-          </div>
+      <MarketingPageHero
+        eyebrow="Minha Church"
+        title="Investimento justo para o tamanho da sua igreja"
+        support={
+          <>
+            As mesmas ferramentas em todas as faixas — você paga conforme quantos
+            membros cadastra, não por pacote de funcionalidades.{" "}
+            <span className="font-medium text-foreground">30 dias grátis</span>,
+            sem cartão.
+          </>
+        }
+      />
 
+      <section className="border-b border-border">
+        <Container className="py-12 sm:py-16">
           {isLoading && <PricingSkeleton />}
 
           {isError && (
-            <p className="mt-16 text-center text-muted-foreground">
+            <p className="text-center text-muted-foreground">
               Não foi possível carregar os preços. Tente novamente mais tarde.
             </p>
           )}
 
           {pricing && (
             <>
-            <div className="mx-auto mt-12 max-w-3xl text-center">
-              <div className="inline-flex rounded-lg border border-border p-1">
-                <button
-                  type="button"
-                  onClick={() => setPeriod("monthly")}
-                  className={cn(
-                    "rounded-md px-4 py-1.5 text-sm font-medium transition-colors cursor-pointer",
-                    period === "monthly"
-                      ? "bg-foreground text-background"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  Mensal
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPeriod("yearly")}
-                  className={cn(
-                    "rounded-md px-4 py-1.5 text-sm font-medium transition-colors cursor-pointer",
-                    period === "yearly"
-                      ? "bg-foreground text-background"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  Anual
-                  <span
+              <div className="mx-auto max-w-3xl text-center">
+                <div className="inline-flex rounded-lg border border-border p-1">
+                  <button
+                    type="button"
+                    onClick={() => setPeriod("monthly")}
                     className={cn(
-                      "ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                      "cursor-pointer rounded-md px-4 py-1.5 text-sm font-medium transition-colors",
+                      period === "monthly"
+                        ? "bg-foreground text-background"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    Mensal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPeriod("yearly")}
+                    className={cn(
+                      "cursor-pointer rounded-md px-4 py-1.5 text-sm font-medium transition-colors",
                       period === "yearly"
-                        ? "bg-background/20 text-background"
-                        : "bg-foreground/10 text-foreground",
+                        ? "bg-foreground text-background"
+                        : "text-muted-foreground hover:text-foreground",
                     )}
                   >
-                    2 meses grátis
-                  </span>
-                </button>
-              </div>
-            </div>
-
-              <PricingCalculator period={period} className="mt-8" />
-
-            <div className="mx-auto max-w-3xl text-center">
-              <p className="mt-14 text-sm font-medium text-muted-foreground">
-                Tabela completa por faixa
-              </p>
-            </div>
-
-              <MotionSection
-                className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:items-center"
-                variants={staggerContainer}
-              >
-                {pricing.tiers.map((tier) => (
-                  <motion.div
-                    key={tier.id}
-                    variants={staggerItem}
-                    className={cn(
-                      tier.highlighted && "sm:col-span-2 lg:col-span-1",
-                    )}
-                  >
-                    <Card
+                    Anual
+                    <span
                       className={cn(
-                        "relative flex h-full flex-col shadow-none transition-shadow",
-                        tier.highlighted
-                          ? "border-foreground bg-foreground text-background lg:scale-[1.06] lg:shadow-2xl"
-                          : "border-border",
+                        "ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold tracking-wide uppercase",
+                        period === "yearly"
+                          ? "bg-background/20 text-background"
+                          : "bg-foreground/10 text-foreground",
                       )}
                     >
-                      <CardHeader>
-                        {tier.highlighted && (
-                          <span className="mb-2 inline-flex w-fit rounded-full bg-background/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-background">
-                            Mais vendida
-                          </span>
-                        )}
-                        <CardTitle
-                          className={cn(
-                            "tracking-tight",
-                            tier.highlighted
-                              ? "text-xl font-bold"
-                              : "text-base font-semibold",
-                          )}
-                        >
-                          {tier.name}
-                        </CardTitle>
-                        <CardDescription
-                          className={cn(
-                            "text-xs leading-relaxed",
-                            tier.highlighted
-                              ? "text-background/70"
-                              : "text-muted-foreground",
-                          )}
-                        >
-                          {tier.memberRange}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="flex-1">
-                        <TierPriceComparison
-                          tier={tier}
-                          period={period}
-                          highlighted={tier.highlighted}
-                        />
-                      </CardContent>
-                      <CardFooter>
-                        <Button
-                          className={cn(
-                            "w-full",
-                            tier.highlighted &&
-                              "bg-background text-foreground hover:bg-background/90",
-                          )}
-                          variant={tier.highlighted ? "secondary" : "outline"}
-                          asChild
-                        >
-                          <Link href={PUBLIC_ROUTES.register}>{pricing.cta}</Link>
-                        </Button>
-                      </CardFooter>
-                    </Card>
-                  </motion.div>
-                ))}
-              </MotionSection>
+                      2 meses grátis
+                    </span>
+                  </button>
+                </div>
+              </div>
 
-              <IncludedBenefits benefits={pricing.benefits} className="mt-12" />
-
-              <ValueAnchor
-                headline={pricing.valueAnchor.headline}
-                example={pricing.valueAnchor.example}
-                className="mt-6"
-              />
+              <PricingCalculator period={period} className="mt-8" />
             </>
           )}
         </Container>
       </section>
+
+      {pricing ? (
+        <HorizontalScrub
+          intro={
+            <div className="max-w-xl">
+              <ScrubHeadline>Tabela por faixa</ScrubHeadline>
+              <p className="mt-3 text-muted-foreground">
+                Role as faixas — mesmo produto, preço pelo tamanho.
+              </p>
+            </div>
+          }
+        >
+          {pricing.tiers.map((tier) => (
+            <Card
+              key={tier.id}
+              className={cn(
+                "relative flex h-full w-[min(88vw,20rem)] shrink-0 flex-col shadow-none sm:w-72",
+                tier.highlighted
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-border",
+              )}
+            >
+              <CardHeader>
+                {tier.highlighted && (
+                  <span className="mb-2 inline-flex w-fit rounded-full bg-background/15 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-background uppercase">
+                    Mais vendida
+                  </span>
+                )}
+                <CardTitle
+                  className={cn(
+                    "tracking-tight",
+                    tier.highlighted
+                      ? "text-xl font-bold"
+                      : "text-base font-semibold",
+                  )}
+                >
+                  {tier.name}
+                </CardTitle>
+                <CardDescription
+                  className={cn(
+                    "text-xs leading-relaxed",
+                    tier.highlighted
+                      ? "text-background/70"
+                      : "text-muted-foreground",
+                  )}
+                >
+                  {tier.memberRange}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex-1">
+                <TierPriceComparison
+                  tier={tier}
+                  period={period}
+                  highlighted={tier.highlighted}
+                />
+              </CardContent>
+              <CardFooter>
+                <Magnetic className="w-full">
+                  <Button
+                    className={cn(
+                      "w-full",
+                      tier.highlighted &&
+                        "bg-background text-foreground hover:bg-background/90",
+                    )}
+                    variant={tier.highlighted ? "secondary" : "outline"}
+                    asChild
+                  >
+                    <Link href={PUBLIC_ROUTES.register}>{pricing.cta}</Link>
+                  </Button>
+                </Magnetic>
+              </CardFooter>
+            </Card>
+          ))}
+        </HorizontalScrub>
+      ) : null}
+
+      {pricing ? (
+        <section className="border-b border-border py-12 sm:py-16">
+          <Container>
+            <IncludedBenefits benefits={pricing.benefits} />
+            <ValueAnchor
+              headline={pricing.valueAnchor.headline}
+              example={pricing.valueAnchor.example}
+              className="mt-6"
+            />
+          </Container>
+        </section>
+      ) : null}
 
       <section className="border-t border-border bg-muted/30 py-24 sm:py-32">
         <Container>

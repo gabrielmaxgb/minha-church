@@ -6,56 +6,54 @@ import { securityFeatures } from "@/constants/about";
 import { PUBLIC_ROUTES } from "@/constants/routes";
 import { Container } from "@/components/layout/container";
 import { CtaBanner } from "@/components/marketing/cta-banner";
-import { MotionDiv, MotionSection } from "@/components/motion/motion-section";
+import { HorizontalScrub } from "@/components/motion/horizontal-scrub";
+import { MarketingPageHero } from "@/components/motion/marketing-page-hero";
+import { ScrubHeadline } from "@/components/motion/scrub-headline";
+import { GsapReveal } from "@/components/motion/gsap-reveal";
 import { Heading } from "@/components/ui/heading";
-import { fadeInUp } from "@/lib/motion";
 
 export function SegurancaContent() {
   return (
     <>
-      <section className="border-b border-border">
-        <Container className="py-16 sm:py-20 lg:py-24">
-          <MotionDiv variants={fadeInUp} className="max-w-2xl">
-            <Heading as="h1" className="text-balance">
-              Seus dados estão seguros conosco
-            </Heading>
-            <p className="mt-5 text-base leading-relaxed text-muted-foreground sm:text-lg">
-              Pastores e tesoureiros confiam dados sensíveis ao Minha Church.
-              Levamos essa responsabilidade a sério.
+      <MarketingPageHero
+        eyebrow="Minha Church"
+        title="Seus dados estão seguros conosco"
+        support="Pastores e tesoureiros confiam dados sensíveis ao Minha Church. Levamos essa responsabilidade a sério."
+      />
+
+      <HorizontalScrub
+        intro={
+          <div className="max-w-xl">
+            <ScrubHeadline>Camadas de proteção</ScrubHeadline>
+            <p className="mt-3 text-muted-foreground">
+              Deslize pelas práticas que sustentam a confiança.
             </p>
-          </MotionDiv>
-        </Container>
-      </section>
-
-      <section className="border-b border-border py-16 sm:py-24">
-        <Container>
-          <div className="divide-y divide-border border-y border-border">
-            {securityFeatures.map((feature, index) => (
-              <MotionSection
-                key={feature.title}
-                variants={fadeInUp}
-                className="grid gap-4 py-8 sm:grid-cols-[4rem_1fr] sm:gap-8"
-              >
-                <span className="font-mono text-sm text-muted-foreground">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-                <div className="max-w-2xl">
-                  <h2 className="text-base font-medium text-foreground">
-                    {feature.title}
-                  </h2>
-                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                    {feature.description}
-                  </p>
-                </div>
-              </MotionSection>
-            ))}
           </div>
-        </Container>
-      </section>
+        }
+      >
+        {securityFeatures.map((feature, index) => (
+          <article
+            key={feature.title}
+            className="flex w-[min(88vw,22rem)] shrink-0 flex-col justify-between rounded-2xl border border-border bg-card p-6 sm:w-md sm:p-8"
+          >
+            <div>
+              <span className="font-mono text-sm text-muted-foreground">
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              <h2 className="mt-6 font-display text-2xl font-bold tracking-tight text-foreground">
+                {feature.title}
+              </h2>
+              <p className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
+                {feature.description}
+              </p>
+            </div>
+          </article>
+        ))}
+      </HorizontalScrub>
 
       <section className="border-b border-border py-16 sm:py-24">
         <Container>
-          <MotionSection variants={fadeInUp} className="max-w-2xl">
+          <GsapReveal className="max-w-2xl">
             <Heading as="h2">LGPD e privacidade</Heading>
             <p className="mt-4 leading-relaxed text-muted-foreground">
               O Minha Church foi desenhado em linha com a Lei Geral de Proteção
@@ -76,7 +74,7 @@ export function SegurancaContent() {
             >
               Ver perguntas frequentes
             </Link>
-          </MotionSection>
+          </GsapReveal>
         </Container>
       </section>
 

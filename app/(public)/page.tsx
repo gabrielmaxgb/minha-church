@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 
 import {
   BenefitsSection,
+  ChaosToCalmSection,
   CtaSection,
   FamilyGraphDemoSection,
   FlowsSection,
   HeroSection,
   HomeFaqSection,
   HowItWorksSection,
-  OperationDemoSection,
   ScreensSection,
 } from "@/components/marketing/home-sections";
 import { siteConfig } from "@/constants/navigation";
@@ -22,7 +22,7 @@ export default function HomePage() {
   return (
     <>
       <HeroSection />
-      <OperationDemoSection />
+      <ChaosToCalmSection />
       <FamilyGraphDemoSection />
       <FlowsSection />
       <ScreensSection />
