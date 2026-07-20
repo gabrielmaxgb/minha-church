@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   ArrowRight,
-  BookOpen,
   Building2,
   Landmark,
   Loader2,
@@ -23,7 +22,6 @@ import {
 import { SubscribePricingTrigger } from "@/components/billing/subscribe-pricing-trigger";
 import { DashboardPage } from "@/components/dashboard/dashboard-shell";
 import { DashboardPageIntro } from "@/components/dashboard/dashboard-page-intro";
-import { ChartOfAccountsPanel } from "@/components/dashboard/finances/chart-of-accounts-panel";
 import { ConnectPayoutsPanel } from "@/components/dashboard/finances/connect-payouts-panel";
 import { FinanceEntriesPanel } from "@/components/dashboard/finances/finance-entries-panel";
 import { FinancesSummaryCards } from "@/components/dashboard/finances/finances-summary-cards";
@@ -34,6 +32,10 @@ import { PeriodCloseBar } from "@/components/dashboard/finances/period-close-bar
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FormAlert } from "@/components/ui/form-field";
+import {
+  segmentedListClassName,
+  segmentedTriggerClassName,
+} from "@/components/ui/segmented-control";
 import { AUTH_ROUTES, settingsSectionPath } from "@/constants/routes";
 import type { ConnectOnboardingStatus } from "@/lib/api/payments";
 import {
@@ -42,57 +44,15 @@ import {
   useOpenExpressDashboard,
   usePaymentsSummary,
 } from "@/lib/api/queries";
+import {
+  financesHashForTab,
+  isCategoriesHash,
+  parseFinancesHash,
+  type FinancesTab,
+} from "@/lib/finances/finances-tabs";
 import { useFeatureLock } from "@/lib/subscription/use-feature-lock";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
-
-type FinancesTab =
-  | "fundos"
-  | "contribuicoes"
-  | "mensais"
-  | "repasses"
-  | "caixa"
-  | "contas";
-
-function parseFinancesHash(hash: string): FinancesTab {
-  if (hash === "#contribuicoes") {
-    return "contribuicoes";
-  }
-  if (hash === "#mensais") {
-    return "mensais";
-  }
-  if (hash === "#repasses") {
-    return "repasses";
-  }
-  if (hash === "#contas" || hash === "#plano-de-contas") {
-    return "contas";
-  }
-  if (
-    hash === "#movimentacoes" ||
-    hash === "#lancamentos-manuais" ||
-    hash === "#caixa"
-  ) {
-    return "caixa";
-  }
-  return "fundos";
-}
-
-function financesHashForTab(tab: FinancesTab): string {
-  switch (tab) {
-    case "contribuicoes":
-      return "#contribuicoes";
-    case "mensais":
-      return "#mensais";
-    case "repasses":
-      return "#repasses";
-    case "caixa":
-      return "#caixa";
-    case "contas":
-      return "#contas";
-    default:
-      return "";
-  }
-}
 
 function ownerActivationCopy(status: ConnectOnboardingStatus): {
   title: string;
@@ -164,6 +124,20 @@ function FinancesLockedCard({ isOwner }: { isOwner: boolean }) {
   );
 }
 
+type TabDef = {
+  id: FinancesTab;
+  label: string;
+  icon: typeof PiggyBank;
+};
+
+const FINANCES_TABS: TabDef[] = [
+  { id: "fundos", label: "Fundos", icon: PiggyBank },
+  { id: "contribuicoes", label: "Entradas", icon: Receipt },
+  { id: "mensais", label: "Recorrentes", icon: RefreshCw },
+  { id: "repasses", label: "Repasses", icon: Building2 },
+  { id: "caixa", label: "Caixa", icon: NotebookPen },
+];
+
 function FinancesManageTabs({
   value,
   onChange,
@@ -171,29 +145,15 @@ function FinancesManageTabs({
   value: FinancesTab;
   onChange: (tab: FinancesTab) => void;
 }) {
-  const tabs: Array<{
-    id: FinancesTab;
-    label: string;
-    icon: typeof PiggyBank;
-  }> = [
-    { id: "fundos", label: "Fundos", icon: PiggyBank },
-    { id: "contribuicoes", label: "Entradas", icon: Receipt },
-    { id: "mensais", label: "Recorrentes", icon: RefreshCw },
-    { id: "repasses", label: "Repasses", icon: Building2 },
-    { id: "caixa", label: "Caixa", icon: NotebookPen },
-    { id: "contas", label: "Contas", icon: BookOpen },
-  ];
-
   return (
     <div
       role="tablist"
       aria-label="Gestão financeira"
-      className={cn(
-        "flex w-full gap-0.5 overflow-x-auto overscroll-x-contain rounded-xl border border-border/80 bg-muted/30 p-1",
-        "[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+      className={segmentedListClassName(
+        "w-full gap-0.5 overflow-x-auto overscroll-x-contain scrollbar-none",
       )}
     >
-      {tabs.map((tab) => {
+      {FINANCES_TABS.map((tab) => {
         const Icon = tab.icon;
         const selected = value === tab.id;
         return (
@@ -204,11 +164,9 @@ function FinancesManageTabs({
             aria-selected={selected}
             id={`financas-tab-${tab.id}`}
             onClick={() => onChange(tab.id)}
-            className={cn(
-              "inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-sm transition-colors",
-              selected
-                ? "bg-foreground font-medium text-background"
-                : "font-normal text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+            className={segmentedTriggerClassName(
+              selected,
+              "min-h-9 shrink-0 px-3 py-2 text-sm",
             )}
           >
             <Icon
@@ -225,10 +183,13 @@ function FinancesManageTabs({
 
 function FinancesManageSection() {
   const [tab, setTab] = useState<FinancesTab>("fundos");
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
 
   useEffect(() => {
     const readHash = () => {
-      setTab(parseFinancesHash(window.location.hash));
+      const hash = window.location.hash;
+      setTab(parseFinancesHash(hash));
+      setCategoriesOpen(isCategoriesHash(hash));
     };
 
     readHash();
@@ -238,8 +199,24 @@ function FinancesManageSection() {
 
   const selectTab = (next: FinancesTab) => {
     setTab(next);
+    setCategoriesOpen(false);
     const url = new URL(window.location.href);
     url.hash = financesHashForTab(next);
+    window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+  };
+
+  const openCategories = () => {
+    setTab("caixa");
+    setCategoriesOpen(true);
+    const url = new URL(window.location.href);
+    url.hash = "#categorias";
+    window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+  };
+
+  const closeCategories = () => {
+    setCategoriesOpen(false);
+    const url = new URL(window.location.href);
+    url.hash = "#caixa";
     window.history.replaceState(null, "", url.pathname + url.search + url.hash);
   };
 
@@ -252,7 +229,7 @@ function FinancesManageSection() {
           </h2>
           <div className="mt-2.5 h-px w-8 bg-domain-finances" />
           <p className="mt-2.5 text-sm text-muted-foreground">
-            Do recebimento ao banco — caixa, contas e fechamento do mês.
+            Fundos e doações online, repasses e livro-caixa.
           </p>
         </div>
         <FinancesManageTabs value={tab} onChange={selectTab} />
@@ -271,10 +248,13 @@ function FinancesManageSection() {
           <GivingSubscriptionsPanel />
         ) : tab === "repasses" ? (
           <ConnectPayoutsPanel />
-        ) : tab === "contas" ? (
-          <ChartOfAccountsPanel embedded />
         ) : (
-          <FinanceEntriesPanel embedded />
+          <FinanceEntriesPanel
+            embedded
+            categoriesOpen={categoriesOpen}
+            onOpenCategories={openCategories}
+            onCloseCategories={closeCategories}
+          />
         )}
       </div>
     </section>
@@ -319,7 +299,7 @@ function FinancesContent() {
       <DashboardPageIntro
         eyebrow="Tesouraria"
         title="Finanças"
-        description="Recebimentos, caixa e fechamento do mês."
+        description="Fundos, doações, repasses e livro-caixa."
         domain="finances"
       />
 
@@ -336,7 +316,7 @@ function FinancesContent() {
                 </h2>
                 <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
                   {activationCopy.description} Enquanto isso, você já pode
-                  usar o caixa, o plano de contas e fechar o mês.
+                  usar o caixa, as categorias e fechar o mês.
                 </p>
               </div>
             </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Elements,
   PaymentElement,
@@ -37,17 +37,38 @@ import {
   parseBrlMaskToCents,
 } from "@/lib/utils";
 import { resolveGivingStripeError } from "@/lib/payments/giving-stripe-errors";
+import { useAuth } from "@/providers/auth-provider";
 
 export function GivingCheckoutForm({ fund }: { fund: PublicGivingFund }) {
+  const { user, church, isAuthenticated, isLoading: authLoading } = useAuth();
+  const isMemberOfThisChurch =
+    isAuthenticated &&
+    Boolean(church?.slug) &&
+    church!.slug === fund.churchSlug &&
+    Boolean(user);
+
   const [amountMasked, setAmountMasked] = useState(() =>
     formatBrlCentsMask(5_000),
   );
   const [payerName, setPayerName] = useState("");
   const [payerEmail, setPayerEmail] = useState("");
+  const [contributeAnonymously, setContributeAnonymously] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   const [recurring, setRecurring] = useState(false);
   const [session, setSession] = useState<GivingCheckoutSession | null>(null);
+  const [didPrefill, setDidPrefill] = useState(false);
+
+  useEffect(() => {
+    if (authLoading || didPrefill || !isMemberOfThisChurch || !user) {
+      return;
+    }
+    setPayerName(user.name);
+    setPayerEmail(user.email);
+    setDidPrefill(true);
+  }, [authLoading, didPrefill, isMemberOfThisChurch, user]);
+
+  const linkToMember = isMemberOfThisChurch && !contributeAnonymously;
 
   const amountCents = parseBrlMaskToCents(amountMasked);
   const amountValid =
@@ -81,9 +102,14 @@ export function GivingCheckoutForm({ fund }: { fund: PublicGivingFund }) {
     try {
       const next = await createGivingCheckout(fund.churchSlug, fund.fundSlug, {
         amountCents,
-        payerName: payerName.trim() || undefined,
-        payerEmail: payerEmail.trim() || undefined,
+        payerName: linkToMember
+          ? undefined
+          : payerName.trim() || undefined,
+        payerEmail: linkToMember
+          ? undefined
+          : payerEmail.trim() || undefined,
         recurring: recurring || undefined,
+        anonymous: contributeAnonymously || undefined,
       });
       setSession(next);
     } catch (startError) {
@@ -119,6 +145,41 @@ export function GivingCheckoutForm({ fund }: { fund: PublicGivingFund }) {
       }
     >
       <div className="space-y-6">
+        {isMemberOfThisChurch && !contributeAnonymously ? (
+          <div className="rounded-xl border border-domain-finances/30 bg-domain-finances-subtle/60 px-3.5 py-3">
+            <p className="text-sm font-medium text-foreground">
+              Contribuindo como {user?.name}
+            </p>
+            <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+              Esta contribuição será vinculada à sua ficha na igreja.
+            </p>
+            <button
+              type="button"
+              className="mt-2 text-xs font-medium text-foreground underline-offset-4 hover:underline"
+              disabled={starting}
+              onClick={() => setContributeAnonymously(true)}
+            >
+              Continuar sem identificar
+            </button>
+          </div>
+        ) : null}
+
+        {isMemberOfThisChurch && contributeAnonymously ? (
+          <div className="rounded-xl border border-border bg-muted/30 px-3.5 py-3">
+            <p className="text-sm text-muted-foreground">
+              Contribuição sem vínculo à ficha.
+            </p>
+            <button
+              type="button"
+              className="mt-2 text-xs font-medium text-foreground underline-offset-4 hover:underline"
+              disabled={starting}
+              onClick={() => setContributeAnonymously(false)}
+            >
+              Voltar a contribuir como {user?.name}
+            </button>
+          </div>
+        ) : null}
+
         <div>
           <h2 className="text-lg font-semibold tracking-tight">
             Valor da contribuição
@@ -171,43 +232,52 @@ export function GivingCheckoutForm({ fund }: { fund: PublicGivingFund }) {
 
         {error && <FormAlert>{error}</FormAlert>}
 
-        <FormField label="Nome" htmlFor="payer-name">
-          <Input
-            id="payer-name"
-            value={payerName}
-            onChange={(event) => setPayerName(event.target.value)}
-            placeholder="Como deseja aparecer no registro"
-            disabled={starting}
-          />
-        </FormField>
+        {!linkToMember ? (
+          <>
+            <FormField label="Nome" htmlFor="payer-name">
+              <Input
+                id="payer-name"
+                value={payerName}
+                onChange={(event) => setPayerName(event.target.value)}
+                placeholder="Como deseja aparecer no registro"
+                disabled={starting}
+              />
+            </FormField>
 
-        <FormField label="E-mail para comprovante" htmlFor="payer-email">
-          <Input
-            id="payer-email"
-            type="email"
-            value={payerEmail}
-            onChange={(event) => setPayerEmail(event.target.value)}
-            placeholder="Opcional"
-            disabled={starting}
-          />
-        </FormField>
+            <FormField label="E-mail para comprovante" htmlFor="payer-email">
+              <Input
+                id="payer-email"
+                type="email"
+                value={payerEmail}
+                onChange={(event) => setPayerEmail(event.target.value)}
+                placeholder="Opcional"
+                disabled={starting}
+              />
+            </FormField>
 
-        <p className="text-xs leading-relaxed text-muted-foreground">
-          Nome e e-mail (se informados) ficam registrados para a igreja
-          identificar a contribuição e, quando possível, enviar comprovante.
-          A igreja é a controladora desses dados; o Minha Church opera a
-          plataforma. Cartão e dados de pagamento são tratados pelo{" "}
-          <StripeBrandInline />. Veja a{" "}
-          <a
-            href={PUBLIC_ROUTES.privacy}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-medium text-foreground underline-offset-4 hover:underline"
-          >
-            Política de Privacidade
-          </a>
-          .
-        </p>
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              Nome e e-mail (se informados) ficam registrados para a igreja
+              identificar a contribuição e, quando possível, enviar comprovante.
+              A igreja é a controladora desses dados; o Minha Church opera a
+              plataforma. Cartão e dados de pagamento são tratados pelo{" "}
+              <StripeBrandInline />. Veja a{" "}
+              <a
+                href={PUBLIC_ROUTES.privacy}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-foreground underline-offset-4 hover:underline"
+              >
+                Política de Privacidade
+              </a>
+              .
+            </p>
+          </>
+        ) : (
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            Usaremos o nome e e-mail da sua conta. Cartão e dados de pagamento
+            são tratados pelo <StripeBrandInline />.
+          </p>
+        )}
 
         {fund.paymentMethods.card ? (
           <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border/70 bg-muted/20 px-3 py-3 text-sm transition-colors hover:bg-muted/35">
@@ -306,8 +376,11 @@ function CheckoutPaymentStep({
           </p>
           {session.mode === "subscription" ? (
             <p className="mt-2 text-sm text-muted-foreground">
-              Use um <span className="font-medium text-foreground">cartão de crédito</span>.
-              Débito costuma falhar nas cobranças mensais automáticas.
+              Use um{" "}
+              <span className="font-medium text-foreground">
+                cartão de crédito
+              </span>
+              . Débito costuma falhar nas cobranças mensais automáticas.
             </p>
           ) : null}
         </div>

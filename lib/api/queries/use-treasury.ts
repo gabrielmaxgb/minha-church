@@ -8,6 +8,7 @@ import { treasuryKeys } from "@/lib/api/queries/treasury.keys";
 import {
   closeFinancialPeriod,
   createFinanceAccount,
+  deleteFinanceAccount,
   downloadFinancialReportCsv,
   reopenFinancialPeriod,
   updateFinanceAccount,
@@ -133,6 +134,27 @@ export function useUpdateFinanceAccount() {
       });
       void queryClient.invalidateQueries({
         queryKey: paymentsKeys.financeEntries._def,
+      });
+      void queryClient.invalidateQueries({
+        queryKey: treasuryKeys.report._def,
+      });
+    },
+  });
+}
+
+export function useDeleteFinanceAccount() {
+  const { church } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (accountId: string) => {
+      if (!church?.id) throw new Error("Igreja não encontrada.");
+      return deleteFinanceAccount(church.id, accountId);
+    },
+    onSuccess: () => {
+      if (!church?.id) return;
+      void queryClient.invalidateQueries({
+        queryKey: treasuryKeys.accounts._def,
       });
       void queryClient.invalidateQueries({
         queryKey: treasuryKeys.report._def,

@@ -28,8 +28,11 @@ const geistMono = Geist_Mono({
 });
 
 /**
- * iOS home-screen: precisa de `/apple-touch-icon.png` na raiz (público)
- * + link explícito. Query `v=` quebra cache agressivo do Safari.
+ * Favicon / PWA (`/icon.png`, `/icons/icon-*`): pomba em PNG transparente,
+ * sem caixa branca — a aba do browser não deve mostrar quadrado branco.
+ *
+ * iOS home-screen (`/apple-touch-icon*.png`): fundo branco opaco + padding
+ * (estilo ícone de app). Query `v=` quebra cache agressivo do Safari.
  * PNG opaco (sem alpha) — iOS às vezes rejeita ícone com transparência.
  *
  * Splash: `apple-touch-startup-image` por tamanho de tela + meta
@@ -39,22 +42,22 @@ export const metadata: Metadata = {
   ...defaultMetadata,
   icons: {
     icon: [
-      { url: "/icon.png", sizes: "192x192", type: "image/png" },
-      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+      { url: "/icon.png?v=20260720", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png?v=20260720", sizes: "512x512", type: "image/png" },
     ],
     apple: [
       {
-        url: "/apple-touch-icon.png?v=20260719",
+        url: "/apple-touch-icon.png?v=20260720",
         sizes: "180x180",
         type: "image/png",
       },
       {
-        url: "/icons/apple-touch-icon-167.png?v=20260719",
+        url: "/icons/apple-touch-icon-167.png?v=20260720",
         sizes: "167x167",
         type: "image/png",
       },
       {
-        url: "/icons/apple-touch-icon-152.png?v=20260719",
+        url: "/icons/apple-touch-icon-152.png?v=20260720",
         sizes: "152x152",
         type: "image/png",
       },

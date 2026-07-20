@@ -10,6 +10,8 @@ export interface FinanceAccount {
   isActive: boolean;
   isSystem: boolean;
   sortOrder: number;
+  entryCount: number;
+  canDelete: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -111,6 +113,19 @@ export async function updateFinanceAccount(
     {
       method: "PATCH",
       body: JSON.stringify(input),
+      churchId,
+    },
+  );
+}
+
+export async function deleteFinanceAccount(
+  churchId: string,
+  accountId: string,
+): Promise<{ ok: true }> {
+  return apiClient<{ ok: true }>(
+    `/churches/${churchId}/treasury/accounts/${accountId}`,
+    {
+      method: "DELETE",
       churchId,
     },
   );

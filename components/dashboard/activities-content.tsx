@@ -13,6 +13,10 @@ import { LockedFeatureHint } from "@/components/dashboard/locked-feature-hint";
 import { StaggerItem, StaggerList } from "@/components/motion/dashboard-motion";
 import { Button } from "@/components/ui/button";
 import { SelectField } from "@/components/ui/select-field";
+import {
+  segmentedListClassName,
+  segmentedTriggerClassName,
+} from "@/components/ui/segmented-control";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useChurchEvents, useMinistries } from "@/lib/api/queries";
 import { getMonthQueryRange, startsAtForDateKey } from "@/lib/events/calendar";
@@ -23,7 +27,6 @@ import {
   canManageActivity,
 } from "@/lib/permissions";
 import { useTrialWriteGuard } from "@/lib/subscription/use-trial-write-guard";
-import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 import type { ChurchEvent } from "@/types/events";
 
@@ -169,7 +172,7 @@ export function ActivitiesContent() {
         <div
           role="tablist"
           aria-label="Visualização de eventos"
-          className="inline-flex rounded-xl border border-border/80 bg-muted/30 p-1"
+          className={segmentedListClassName()}
         >
           <ViewTab
             active={view === "calendar"}
@@ -360,11 +363,9 @@ function ViewTab({
       role="tab"
       aria-selected={active}
       onClick={onClick}
-      className={cn(
-        "inline-flex min-h-11 items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors",
-        active
-          ? "bg-foreground text-background"
-          : "text-muted-foreground hover:text-foreground",
+      className={segmentedTriggerClassName(
+        active,
+        "min-h-11 gap-2 px-3.5 py-2 text-sm font-medium",
       )}
     >
       {icon}

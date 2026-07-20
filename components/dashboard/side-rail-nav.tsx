@@ -4,6 +4,10 @@ import type { LucideIcon } from "lucide-react";
 
 import type { ProductDomain } from "@/lib/ui/domain-theme";
 import { cn } from "@/lib/utils";
+import {
+  segmentedListClassName,
+  segmentedTriggerClassName,
+} from "@/components/ui/segmented-control";
 
 export type SideRailTone = ProductDomain | "danger";
 
@@ -103,13 +107,16 @@ function SideRailNavItem<T extends string>({
         aria-selected={active}
         onClick={() => onSelect(item.id)}
         className={cn(
-          "relative inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg px-3 text-sm transition-colors",
-          barFill ? "flex-1" : "shrink-0",
-          active
-            ? "bg-background font-medium text-foreground shadow-soft"
-            : isDanger
-              ? "font-normal text-destructive/80 hover:text-destructive"
-              : "font-normal text-muted-foreground hover:text-foreground",
+          "relative",
+          segmentedTriggerClassName(
+            active,
+            cn(
+              barFill ? "min-h-11 flex-1 px-3 text-sm" : "min-h-11 shrink-0 px-3 text-sm",
+              !active &&
+                isDanger &&
+                "text-destructive/80 hover:bg-transparent hover:text-destructive",
+            ),
+          ),
         )}
       >
         {Icon ? <Icon className="size-4 shrink-0 opacity-80" aria-hidden /> : null}
@@ -218,10 +225,11 @@ export function SideRailNav<T extends string>({
       <div
         role="tablist"
         aria-label={ariaLabel}
-        className={cn(
-          "sticky top-0 z-10 -mx-1 mb-5 flex gap-0.5 rounded-xl border border-border/80 bg-muted/40 p-1 backdrop-blur-sm md:hidden",
-          !mobileEqual &&
-            "overflow-x-auto scrollbar-none",
+        className={segmentedListClassName(
+          cn(
+            "sticky top-0 z-10 -mx-1 mb-5 w-auto bg-muted/40 backdrop-blur-sm md:hidden",
+            !mobileEqual && "overflow-x-auto scrollbar-none",
+          ),
         )}
       >
         {flatItems.map((item) => (

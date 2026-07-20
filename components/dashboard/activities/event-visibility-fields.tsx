@@ -3,6 +3,10 @@
 import { Globe, Users } from "lucide-react";
 
 import { EventOptionCard } from "@/components/dashboard/activities/event-option-card";
+import {
+  segmentedListClassName,
+  segmentedTriggerClassName,
+} from "@/components/ui/segmented-control";
 import { cn } from "@/lib/utils";
 
 interface EventVisibilityFieldsProps {
@@ -58,9 +62,8 @@ export function EventVisibilityFields({
   if (layout === "inline") {
     return (
       <div
-        className={cn(
-          "inline-flex flex-wrap gap-1 rounded-lg border border-border/60 bg-muted/30 p-1",
-          className,
+        className={segmentedListClassName(
+          cn("flex-wrap rounded-lg", className),
         )}
         role="radiogroup"
         aria-label="Visibilidade na agenda"
@@ -73,12 +76,12 @@ export function EventVisibilityFields({
             aria-checked={visibleToChurch === option.value}
             disabled={disabled}
             onClick={() => onVisibleToChurchChange(option.value)}
-            className={cn(
-              "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-              visibleToChurch === option.value
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground",
-              disabled && "cursor-not-allowed opacity-50",
+            className={segmentedTriggerClassName(
+              visibleToChurch === option.value,
+              cn(
+                "rounded-md px-3 py-1.5 text-sm font-medium",
+                disabled && "cursor-not-allowed opacity-50",
+              ),
             )}
           >
             <option.icon className="size-3.5 shrink-0" aria-hidden />

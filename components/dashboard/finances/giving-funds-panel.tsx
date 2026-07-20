@@ -3,27 +3,31 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
+  Check,
   ChevronDown,
   Copy,
   ExternalLink,
+  Link2,
   Loader2,
+  Lock,
   Plus,
   Power,
+  QrCode,
   Trash2,
 } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
 import {
   FundPaymentMethodsField,
-  PaymentMethodBadges,
+  PaymentMethodSummary,
   fundPaymentMethodsSelected,
+  paymentMethodLabels,
 } from "@/components/dashboard/finances/fund-payment-methods-field";
-import { Badge } from "@/components/ui/badge";
+import { FundQrModal } from "@/components/dashboard/finances/fund-qr-modal";
 import { Button } from "@/components/ui/button";
 import { FormAlert, FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tooltip } from "@/components/ui/tooltip";
 import { givingFundPath, settingsSectionPath } from "@/constants/routes";
 import {
   resolvePaymentsError,
@@ -40,12 +44,9 @@ import type {
   GivingFundPaymentMethods,
 } from "@/lib/api/payments";
 import { isOwnerOnboardingMinimumComplete } from "@/lib/payments/fiscal-profile-completeness";
+import { partitionGivingFundsByAudience } from "@/lib/finances/partition-giving-funds";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
-
-function audienceLabel(audience: GivingFundAudience): string {
-  return audience === "public" ? "Link público" : "Membros logados";
-}
 
 const EMPTY_METHODS: GivingFundPaymentMethods = {
   pix: false,
@@ -64,7 +65,7 @@ export function GivingFundsPanel() {
   const updateFund = useUpdateGivingFund();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [audience, setAudience] = useState<GivingFundAudience>("members");
+  const [audience, setAudience] = useState<GivingFundAudience>("public");
   const [paymentMethods, setPaymentMethods] =
     useState<GivingFundPaymentMethods>(EMPTY_METHODS);
   const [methodsFormKey, setMethodsFormKey] = useState(0);
@@ -75,7 +76,9 @@ export function GivingFundsPanel() {
   const [fundToDeactivate, setFundToDeactivate] = useState<GivingFund | null>(
     null,
   );
+  const [fundForQr, setFundForQr] = useState<GivingFund | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [copiedFundId, setCopiedFundId] = useState<string | null>(null);
   const [didAutoOpenCreate, setDidAutoOpenCreate] = useState(false);
   const [origin, setOrigin] = useState("");
 
@@ -84,6 +87,7 @@ export function GivingFundsPanel() {
   }, []);
 
   const funds = fundsQuery.data ?? [];
+  const { publicFunds, memberFunds } = partitionGivingFundsByAudience(funds);
   const isOwner = Boolean(user?.isOwner);
   const canManage = isOwner || Boolean(permissions?.finances.manage);
   const churchSlug = church?.slug;
@@ -119,7 +123,7 @@ export function GivingFundsPanel() {
   const resetCreateForm = () => {
     setName("");
     setDescription("");
-    setAudience("members");
+    setAudience("public");
     setPaymentMethods(EMPTY_METHODS);
     setMethodsFormKey((key) => key + 1);
   };
@@ -136,6 +140,10 @@ export function GivingFundsPanel() {
     try {
       await navigator.clipboard.writeText(url);
       setSuccess("Link copiado.");
+      setCopiedFundId(fund.id);
+      window.setTimeout(() => {
+        setCopiedFundId((current) => (current === fund.id ? null : current));
+      }, 2000);
     } catch {
       setError("Não foi possível copiar o link.");
     }
@@ -243,8 +251,8 @@ export function GivingFundsPanel() {
     return (
       <div className="space-y-3">
         <Skeleton className="h-12 w-full rounded-xl" />
-        <Skeleton className="h-24 w-full rounded-xl" />
-        <Skeleton className="h-24 w-full rounded-xl" />
+        <Skeleton className="h-28 w-full rounded-2xl" />
+        <Skeleton className="h-28 w-full rounded-2xl" />
       </div>
     );
   }
@@ -259,16 +267,15 @@ export function GivingFundsPanel() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="min-w-0">
-          <h2 className="text-base font-semibold tracking-tight text-foreground">
-            Fundos cadastrados
-          </h2>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            Membros doam em Dízimos e ofertas; fundos públicos geram link
-            externo.
-          </p>
-        </div>
+      <div className="min-w-0">
+        <h2 className="font-display text-lg font-semibold tracking-tight text-foreground">
+          Fundos cadastrados
+        </h2>
+        <div className="mt-2.5 h-px w-8 bg-domain-finances" aria-hidden />
+        <p className="mt-2.5 text-sm leading-relaxed text-muted-foreground">
+          Destinos de Pix, cartão e boleto. Compartilháveis têm link e QR code;
+          os demais só aparecem em Dízimos e ofertas.
+        </p>
       </div>
 
       {error ? <FormAlert>{error}</FormAlert> : null}
@@ -367,14 +374,14 @@ export function GivingFundsPanel() {
                       {(
                         [
                           {
-                            value: "members" as const,
-                            title: "Membros logados",
-                            body: "Aparece em Dízimos e ofertas, com vínculo à ficha.",
+                            value: "public" as const,
+                            title: "Compartilhável (recomendado)",
+                            body: "Qualquer pessoa paga pelo link; se estiver logado, vincula à ficha.",
                           },
                           {
-                            value: "public" as const,
-                            title: "Link público",
-                            body: "Qualquer pessoa paga sem login, sem vínculo de membro.",
+                            value: "members" as const,
+                            title: "Só membros (sem link)",
+                            body: "Aparece só em Dízimos e ofertas — sem URL pública.",
                           },
                         ] as const
                       ).map((option) => {
@@ -449,167 +456,152 @@ export function GivingFundsPanel() {
         </div>
       ) : null}
 
-      <ul className="divide-y divide-border rounded-xl border border-border bg-card">
-        {funds.length === 0 ? (
-          <li className="px-4 py-8 text-center text-sm leading-relaxed text-muted-foreground">
-            Nenhum fundo ainda.
-            {canShowCreate
-              ? " Abra “Novo fundo” acima para cadastrar o primeiro."
-              : canManage
-                ? " Complete o perfil da igreja para cadastrar."
-                : " Peça a quem gerencia recebimentos para cadastrar."}
-          </li>
-        ) : (
-          funds.map((fund) => (
-            <li
-              key={fund.id}
-              className="flex flex-col gap-3 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between"
+      {funds.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-border bg-muted/15 px-4 py-10 text-center text-sm leading-relaxed text-muted-foreground">
+          Nenhum fundo ainda.
+          {canShowCreate
+            ? " Abra “Novo fundo” acima para cadastrar o primeiro."
+            : canManage
+              ? " Complete o perfil da igreja para cadastrar."
+              : " Peça a quem gerencia recebimentos para cadastrar."}
+        </div>
+      ) : (
+        <div className="space-y-8">
+          {publicFunds.length > 0 ? (
+            <FundAudienceSection
+              title="Compartilháveis"
+              subtitle="Link e QR code para qualquer pessoa contribuir."
+              tone="public"
             >
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="font-medium text-foreground">{fund.name}</p>
-                  <Badge variant="outline">{audienceLabel(fund.audience)}</Badge>
-                  {!fund.isActive ? (
-                    <Badge variant="outline">Desativado</Badge>
-                  ) : null}
-                </div>
-                {fund.description ? (
-                  <p className="mt-0.5 text-sm text-muted-foreground">
-                    {fund.description}
-                  </p>
-                ) : null}
-                <div className="mt-2">
-                  <PaymentMethodBadges methods={fund.paymentMethods} />
-                </div>
-                <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-                  {fund.audience === "public" && fundHref(fund) ? (
-                    <>
-                      <a
-                        href={fundHref(fund)!}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="break-all underline decoration-dotted underline-offset-2 hover:text-foreground"
-                      >
-                        {`${origin}${fundHref(fund)}`}
-                      </a>
-                      <button
-                        type="button"
-                        onClick={() => void handleCopyLink(fund)}
-                        title="Copiar link"
-                        aria-label="Copiar link"
-                        className="shrink-0 rounded p-0.5 hover:bg-muted hover:text-foreground"
-                      >
-                        <Copy className="size-3.5" />
-                      </button>
-                    </>
-                  ) : (
-                    "Disponível em Dízimos e ofertas"
-                  )}
-                  {!fund.canDelete ? (
-                    <Tooltip content="Não é possível excluir: este fundo já recebeu contribuições. Desative-o para preservar o histórico financeiro.">
-                      <span
-                        tabIndex={0}
-                        className="cursor-help underline decoration-dotted underline-offset-2 outline-none"
-                      >
-                        · Já recebeu contribuições
-                      </span>
-                    </Tooltip>
-                  ) : null}
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {fund.isActive && fund.audience === "public" && fundHref(fund) ? (
-                  <>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="gap-1.5"
-                      onClick={() => void handleCopyLink(fund)}
-                    >
-                      <Copy className="size-3.5" />
-                      Copiar link
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="gap-1.5"
-                      asChild
-                    >
-                      <a
-                        href={fundHref(fund)!}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        <ExternalLink className="size-3.5" />
-                        Abrir
-                      </a>
-                    </Button>
-                  </>
-                ) : null}
-                {canManage ? (
-                  <>
-                    {fund.canDelete ? (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="gap-1.5 text-destructive hover:bg-destructive/5 hover:text-destructive"
-                        disabled={deleteFund.isPending || updateFund.isPending}
-                        onClick={() => {
+              {publicFunds.map((fund) => {
+                const href = fundHref(fund);
+                const showShare = fund.isActive && Boolean(href);
+                const justCopied = copiedFundId === fund.id;
+                const pathLabel = href?.replace(/^\//, "") ?? null;
+
+                return (
+                  <FundCard
+                    key={fund.id}
+                    fund={fund}
+                    tone="public"
+                    pathLabel={pathLabel}
+                    actions={
+                      <>
+                        {showShare ? (
+                          <div className="flex flex-col gap-2">
+                            <Button
+                              type="button"
+                              className="h-9 w-full gap-2"
+                              onClick={() => void handleCopyLink(fund)}
+                            >
+                              {justCopied ? (
+                                <Check className="size-4" />
+                              ) : (
+                                <Copy className="size-4" />
+                              )}
+                              {justCopied ? "Copiado" : "Copiar link"}
+                            </Button>
+                            <div className="grid grid-cols-2 gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                className="h-9 gap-2 border-domain-finances/25 text-domain-finances-foreground hover:bg-domain-finances-subtle"
+                                onClick={() => {
+                                  setError(null);
+                                  setSuccess(null);
+                                  setFundForQr(fund);
+                                }}
+                              >
+                                <QrCode className="size-4" />
+                                QR code
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                className="h-9 gap-2"
+                                asChild
+                              >
+                                <a
+                                  href={href!}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  <ExternalLink className="size-4" />
+                                  Abrir
+                                </a>
+                              </Button>
+                            </div>
+                          </div>
+                        ) : null}
+                        <div className="flex justify-end">
+                          <FundManageActions
+                            fund={fund}
+                            canManage={canManage}
+                            isPending={
+                              deleteFund.isPending || updateFund.isPending
+                            }
+                            togglingId={togglingId}
+                            onDelete={() => {
+                              setError(null);
+                              setSuccess(null);
+                              setFundToDelete(fund);
+                            }}
+                            onDeactivate={() => {
+                              setError(null);
+                              setSuccess(null);
+                              setFundToDeactivate(fund);
+                            }}
+                            onReactivate={() => void handleReactivate(fund)}
+                          />
+                        </div>
+                      </>
+                    }
+                  />
+                );
+              })}
+            </FundAudienceSection>
+          ) : null}
+
+          {memberFunds.length > 0 ? (
+            <FundAudienceSection
+              title="Só para membros"
+              subtitle="Aparecem em Dízimos e ofertas — sem link externo."
+              tone="members"
+            >
+              {memberFunds.map((fund) => (
+                <FundCard
+                  key={fund.id}
+                  fund={fund}
+                  tone="members"
+                  actions={
+                    <div className="flex justify-end">
+                      <FundManageActions
+                        fund={fund}
+                        canManage={canManage}
+                        isPending={
+                          deleteFund.isPending || updateFund.isPending
+                        }
+                        togglingId={togglingId}
+                        onDelete={() => {
                           setError(null);
                           setSuccess(null);
                           setFundToDelete(fund);
                         }}
-                      >
-                        <Trash2 className="size-3.5" />
-                        Excluir
-                      </Button>
-                    ) : fund.isActive ? (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="gap-1.5"
-                        disabled={deleteFund.isPending || updateFund.isPending}
-                        onClick={() => {
+                        onDeactivate={() => {
                           setError(null);
                           setSuccess(null);
                           setFundToDeactivate(fund);
                         }}
-                      >
-                        <Power className="size-3.5" />
-                        Desativar
-                      </Button>
-                    ) : (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="gap-1.5"
-                        disabled={
-                          deleteFund.isPending ||
-                          updateFund.isPending ||
-                          togglingId === fund.id
-                        }
-                        onClick={() => void handleReactivate(fund)}
-                      >
-                        {togglingId === fund.id ? (
-                          <Loader2 className="size-3.5 animate-spin" />
-                        ) : (
-                          <Power className="size-3.5" />
-                        )}
-                        Reativar
-                      </Button>
-                    )}
-                  </>
-                ) : null}
-              </div>
-            </li>
-          ))
-        )}
-      </ul>
+                        onReactivate={() => void handleReactivate(fund)}
+                      />
+                    </div>
+                  }
+                />
+              ))}
+            </FundAudienceSection>
+          ) : null}
+        </div>
+      )}
 
       {fundToDelete ? (
         <FundConfirmDialog
@@ -659,7 +651,235 @@ export function GivingFundsPanel() {
           onConfirm={() => void handleConfirmDeactivate()}
         />
       ) : null}
+
+      {fundForQr && fundHref(fundForQr) && origin ? (
+        <FundQrModal
+          open
+          onClose={() => setFundForQr(null)}
+          fundName={fundForQr.name}
+          churchName={church?.name ?? "Sua igreja"}
+          url={`${origin}${fundHref(fundForQr)}`}
+        />
+      ) : null}
     </div>
+  );
+}
+
+function FundAudienceSection({
+  title,
+  subtitle,
+  tone,
+  children,
+}: {
+  title: string;
+  subtitle: string;
+  tone: "public" | "members";
+  children: React.ReactNode;
+}) {
+  const isPublic = tone === "public";
+
+  return (
+    <section className="space-y-3.5">
+      <div className="flex items-start gap-3">
+        <span
+          className={cn(
+            "mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl",
+            isPublic
+              ? "bg-domain-finances-subtle text-domain-finances-foreground"
+              : "bg-muted text-muted-foreground",
+          )}
+          aria-hidden
+        >
+          {isPublic ? (
+            <Link2 className="size-4" />
+          ) : (
+            <Lock className="size-4" />
+          )}
+        </span>
+        <div className="min-w-0">
+          <h3 className="font-display text-base font-semibold tracking-tight text-foreground">
+            {title}
+          </h3>
+          <div
+            className={cn(
+              "mt-2 h-px w-8",
+              isPublic ? "bg-domain-finances" : "bg-foreground/20",
+            )}
+            aria-hidden
+          />
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            {subtitle}
+          </p>
+        </div>
+      </div>
+      <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{children}</ul>
+    </section>
+  );
+}
+
+function FundCard({
+  fund,
+  tone,
+  pathLabel,
+  actions,
+}: {
+  fund: GivingFund;
+  tone: "public" | "members";
+  pathLabel?: string | null;
+  actions: React.ReactNode;
+}) {
+  const isPublic = tone === "public";
+  const hasMethods = paymentMethodLabels(fund.paymentMethods).length > 0;
+
+  return (
+    <li
+      className={cn(
+        "relative flex h-full flex-col overflow-hidden rounded-2xl border bg-card shadow-xs",
+        isPublic
+          ? "border-domain-finances/25"
+          : "border-border",
+        !fund.isActive && "opacity-65",
+      )}
+    >
+      <div
+        className={cn(
+          "pointer-events-none absolute inset-x-0 top-0 h-24 bg-linear-to-b to-transparent",
+          isPublic
+            ? "from-domain-finances-subtle/80"
+            : "from-muted/60",
+        )}
+        aria-hidden
+      />
+
+      <div className="relative z-10 flex flex-1 flex-col gap-4 p-5">
+        <div className="flex items-start gap-3">
+          <span
+            className={cn(
+              "flex size-11 shrink-0 items-center justify-center rounded-2xl",
+              fund.isActive
+                ? isPublic
+                  ? "bg-domain-finances-subtle text-domain-finances-foreground"
+                  : "bg-muted text-muted-foreground"
+                : "bg-muted text-muted-foreground",
+            )}
+            aria-hidden
+          >
+            {isPublic ? (
+              <Link2 className="size-5" />
+            ) : (
+              <Lock className="size-5" />
+            )}
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+              <h4
+                className={cn(
+                  "font-display text-lg font-semibold tracking-tight text-foreground",
+                  !fund.isActive && "text-muted-foreground",
+                )}
+              >
+                {fund.name}
+              </h4>
+              {!fund.isActive ? (
+                <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                  Desativado
+                </span>
+              ) : null}
+            </div>
+            {fund.description ? (
+              <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+                {fund.description}
+              </p>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="mt-auto space-y-2.5">
+          {hasMethods ? (
+            <PaymentMethodSummary methods={fund.paymentMethods} />
+          ) : null}
+          {pathLabel ? (
+            <p className="truncate rounded-lg bg-foreground/4 px-2.5 py-1.5 font-mono text-[11px] tracking-tight text-muted-foreground">
+              {pathLabel}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="space-y-2 border-t border-border/70 pt-4">{actions}</div>
+      </div>
+    </li>
+  );
+}
+
+function FundManageActions({
+  fund,
+  canManage,
+  isPending,
+  togglingId,
+  onDelete,
+  onDeactivate,
+  onReactivate,
+}: {
+  fund: GivingFund;
+  canManage: boolean;
+  isPending: boolean;
+  togglingId: string | null;
+  onDelete: () => void;
+  onDeactivate: () => void;
+  onReactivate: () => void;
+}) {
+  if (!canManage) {
+    return null;
+  }
+
+  if (fund.canDelete) {
+    return (
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="h-8 gap-1.5 text-destructive hover:bg-destructive/5 hover:text-destructive"
+        disabled={isPending}
+        onClick={onDelete}
+      >
+        <Trash2 className="size-3.5" />
+        Excluir
+      </Button>
+    );
+  }
+
+  if (fund.isActive) {
+    return (
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="h-8 gap-1.5 text-muted-foreground hover:text-foreground"
+        disabled={isPending}
+        onClick={onDeactivate}
+      >
+        <Power className="size-3.5" />
+        Desativar
+      </Button>
+    );
+  }
+
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      className="h-8 gap-1.5"
+      disabled={isPending || togglingId === fund.id}
+      onClick={onReactivate}
+    >
+      {togglingId === fund.id ? (
+        <Loader2 className="size-3.5 animate-spin" />
+      ) : (
+        <Power className="size-3.5" />
+      )}
+      Reativar
+    </Button>
   );
 }
 

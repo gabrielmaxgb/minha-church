@@ -11,6 +11,10 @@ import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { FormAlert } from "@/components/ui/form-field";
 import { SelectField } from "@/components/ui/select-field";
+import {
+  segmentedListClassName,
+  segmentedTriggerClassName,
+} from "@/components/ui/segmented-control";
 import { Skeleton } from "@/components/ui/skeleton";
 import type {
   EventTicketPurchase,
@@ -116,7 +120,9 @@ function IncomeSourceTabs({
     <div
       role="tablist"
       aria-label="Origem das entradas"
-      className="inline-flex w-full flex-wrap rounded-lg border border-border bg-muted/30 p-0.5 sm:w-auto"
+      className={segmentedListClassName(
+        "w-full flex-wrap rounded-lg p-0.5 sm:w-auto",
+      )}
     >
       {options.map((option) => {
         const Icon = option.icon;
@@ -128,11 +134,9 @@ function IncomeSourceTabs({
             role="tab"
             aria-selected={selected}
             onClick={() => onChange(option.id)}
-            className={cn(
-              "inline-flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-md px-2.5 text-xs transition-colors sm:flex-none sm:px-3",
-              selected
-                ? "bg-background font-medium text-foreground shadow-sm"
-                : "font-normal text-muted-foreground hover:text-foreground",
+            className={segmentedTriggerClassName(
+              selected,
+              "min-h-9 flex-1 rounded-md px-2.5 text-xs sm:flex-none sm:px-3",
             )}
           >
             <Icon className="size-3.5 opacity-70" aria-hidden />

@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:unit": "npx --yes tsx --test lib/ministries/roster-candidates.test.ts"
+    "test:unit": "npx --yes tsx --test lib/ministries/roster-candidates.test.ts lib/members/family-graph-genealogy.test.ts lib/finances/*.test.ts lib/ui/*.test.ts",
+    "test:smoke:finances": "python3 scripts/smoke-finances.py"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
@@ -26,6 +27,7 @@
     "motion": "^12.42.0",
     "next": "16.2.9",
     "papaparse": "^5.5.4",
+    "qrcode": "^1.5.4",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-hook-form": "^7.80.0",
@@ -38,6 +40,7 @@
     "@tanstack/react-query-devtools": "^5.101.1",
     "@types/node": "^20",
     "@types/papaparse": "^5.5.2",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

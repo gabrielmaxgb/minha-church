@@ -176,6 +176,7 @@ export {
   resolveTreasuryError,
   useCloseFinancialPeriod,
   useCreateFinanceAccount,
+  useDeleteFinanceAccount,
   useExportFinancialReport,
   useFinanceAccounts,
   useFinancialPeriodStatus,

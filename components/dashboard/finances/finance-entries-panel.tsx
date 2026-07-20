@@ -1,13 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Download, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
-
 import { FinanceConfirmDialog } from "@/components/dashboard/finances/finance-confirm-dialog";
+import { ChartOfAccountsModal } from "@/components/dashboard/finances/chart-of-accounts-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
-import { FormAlert } from "@/components/ui/form-field";
+import { FormAlert, FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { SelectField } from "@/components/ui/select-field";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -36,6 +34,17 @@ import {
   formatCurrency,
   parseBrlMaskToCents,
 } from "@/lib/utils";
+import {
+  BookOpen,
+  ChevronDown,
+  Download,
+  Loader2,
+  Pencil,
+  Plus,
+  Trash2,
+  X,
+} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 const TYPE_LABEL: Record<FinanceEntryType, string> = {
   income: "Entrada",
@@ -102,7 +111,17 @@ function entryToForm(entry: FinanceEntry): EntryFormState {
   };
 }
 
-export function FinanceEntriesPanel({ embedded = false }: { embedded?: boolean }) {
+export function FinanceEntriesPanel({
+  embedded = false,
+  categoriesOpen = false,
+  onOpenCategories,
+  onCloseCategories,
+}: {
+  embedded?: boolean;
+  categoriesOpen?: boolean;
+  onOpenCategories?: () => void;
+  onCloseCategories?: () => void;
+}) {
   const [page, setPage] = useState(1);
   const [typeFilter, setTypeFilter] = useState<"" | FinanceEntryType>("");
   const [from, setFrom] = useState("");
@@ -113,6 +132,26 @@ export function FinanceEntriesPanel({ embedded = false }: { embedded?: boolean }
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [entryToDelete, setEntryToDelete] = useState<FinanceEntry | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [fundLinkOpen, setFundLinkOpen] = useState(false);
+  const [localCategoriesOpen, setLocalCategoriesOpen] = useState(false);
+
+  const categoriesModalOpen = onOpenCategories
+    ? categoriesOpen
+    : localCategoriesOpen;
+  const openCategoriesModal = () => {
+    if (onOpenCategories) {
+      onOpenCategories();
+      return;
+    }
+    setLocalCategoriesOpen(true);
+  };
+  const closeCategoriesModal = () => {
+    if (onCloseCategories) {
+      onCloseCategories();
+      return;
+    }
+    setLocalCategoriesOpen(false);
+  };
 
   const params = useMemo(
     () => ({
@@ -175,11 +214,22 @@ export function FinanceEntriesPanel({ embedded = false }: { embedded?: boolean }
     return matching;
   }, [accountsQuery.data, form.accountId, form.type]);
 
+  const funds = fundsQuery.data ?? [];
+  const showFundField = form.type === "income" && funds.length > 0;
+
+  useEffect(() => {
+    if (form.type === "expense" && form.fundId) {
+      setForm((current) => ({ ...current, fundId: "" }));
+      setFundLinkOpen(false);
+    }
+  }, [form.type, form.fundId]);
+
   const resetForm = () => {
     setForm(EMPTY_FORM);
     setEditingEntry(null);
     setFormOpen(false);
     setFormError(null);
+    setFundLinkOpen(false);
   };
 
   const openCreate = () => {
@@ -187,6 +237,7 @@ export function FinanceEntriesPanel({ embedded = false }: { embedded?: boolean }
     setForm({ ...EMPTY_FORM, occurredOn: todayIsoDate() });
     setFormOpen(true);
     setFormError(null);
+    setFundLinkOpen(false);
   };
 
   const openEdit = (entry: FinanceEntry) => {
@@ -194,6 +245,7 @@ export function FinanceEntriesPanel({ embedded = false }: { embedded?: boolean }
     setForm(entryToForm(entry));
     setFormOpen(true);
     setFormError(null);
+    setFundLinkOpen(Boolean(entry.fundId));
   };
 
   const buildPayload = () => {
@@ -202,7 +254,7 @@ export function FinanceEntriesPanel({ embedded = false }: { embedded?: boolean }
       throw new Error("Informe um valor válido maior que zero.");
     }
     if (!form.accountId) {
-      throw new Error("Selecione a conta do plano de contas.");
+      throw new Error("Selecione o tipo no relatório.");
     }
     if (!form.occurredOn) {
       throw new Error("Informe a data.");
@@ -296,14 +348,23 @@ export function FinanceEntriesPanel({ embedded = false }: { embedded?: boolean }
       {!embedded ? (
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold tracking-tight">
-              Lançamentos manuais
+            <h2 className="font-display text-lg font-semibold tracking-tight">
+              Livro-caixa
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Entradas e saídas manuais do livro-caixa.
+              Entradas e saídas manuais — dinheiro, transferência, etc.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={openCategoriesModal}
+            >
+              <BookOpen className="size-4" />
+              Categorias
+            </Button>
             <Button type="button" variant="outline" size="sm" onClick={openCreate}>
               <Plus className="size-4" />
               Novo lançamento
@@ -326,13 +387,23 @@ export function FinanceEntriesPanel({ embedded = false }: { embedded?: boolean }
         </div>
       ) : (
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-sm text-muted-foreground">
-            Lançamentos manuais de entrada e saída. Registre aqui as entradas e saídas que não foram feitas através do sistema de contribuições online.
+          <p className="max-w-xl text-sm text-muted-foreground">
+            Oferta em dinheiro, contas pagas, transferências — o dia a dia da
+            tesouraria.
           </p>
           <div className="flex flex-wrap items-center gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={openCreate}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={openCategoriesModal}
+            >
+              <BookOpen className="size-4" />
+              Categorias
+            </Button>
+            <Button type="button" size="sm" onClick={openCreate}>
               <Plus className="size-4" />
-              Novo
+              Novo lançamento
             </Button>
             <Button
               type="button"
@@ -425,9 +496,9 @@ export function FinanceEntriesPanel({ embedded = false }: { embedded?: boolean }
       </div>
 
       {formOpen ? (
-        <div className="space-y-3 rounded-xl border border-border bg-card p-4">
+        <div className="space-y-4 rounded-2xl border border-border bg-card p-4 shadow-xs sm:p-5">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-sm font-medium text-foreground">
+            <p className="text-sm font-semibold text-foreground">
               {editingEntry ? "Editar lançamento" : "Novo lançamento"}
             </p>
             <Button type="button" variant="ghost" size="sm" onClick={resetForm}>
@@ -436,29 +507,30 @@ export function FinanceEntriesPanel({ embedded = false }: { embedded?: boolean }
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <label className="space-y-1 text-xs text-muted-foreground">
-              Tipo
+            <FormField label="Tipo" htmlFor="entry-type" required>
               <SelectField
+                id="entry-type"
                 value={form.type}
                 onChange={(event) =>
                   setForm((current) => ({
                     ...current,
                     type: event.target.value as FinanceEntryType,
                     accountId: "",
+                    fundId: "",
                   }))
                 }
               >
                 <option value="income">Entrada</option>
                 <option value="expense">Saída</option>
               </SelectField>
-            </label>
-            <label className="space-y-1 text-xs text-muted-foreground">
-              Valor
+            </FormField>
+            <FormField label="Valor" htmlFor="entry-amount" required>
               <div className="relative">
                 <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-muted-foreground">
                   R$
                 </span>
                 <Input
+                  id="entry-amount"
                   inputMode="numeric"
                   autoComplete="off"
                   placeholder="0,00"
@@ -475,10 +547,10 @@ export function FinanceEntriesPanel({ embedded = false }: { embedded?: boolean }
                   className="pl-10 tabular-nums"
                 />
               </div>
-            </label>
-            <label className="space-y-1 text-xs text-muted-foreground">
-              Data
+            </FormField>
+            <FormField label="Data" htmlFor="entry-date" required>
               <DatePicker
+                id="entry-date"
                 value={form.occurredOn}
                 onChange={(dateKey) =>
                   setForm((current) => ({
@@ -488,10 +560,16 @@ export function FinanceEntriesPanel({ embedded = false }: { embedded?: boolean }
                 }
                 required
               />
-            </label>
-            <label className="space-y-1 text-xs text-muted-foreground">
-              Conta
+            </FormField>
+            <FormField
+              label="Tipo no relatório"
+              htmlFor="entry-account"
+              required
+              hint="Ex.: Dízimos, Ofertas, Utilidades"
+              className="sm:col-span-2 lg:col-span-2"
+            >
               <SelectField
+                id="entry-account"
                 value={form.accountId}
                 onChange={(event) =>
                   setForm((current) => ({
@@ -507,26 +585,10 @@ export function FinanceEntriesPanel({ embedded = false }: { embedded?: boolean }
                   </option>
                 ))}
               </SelectField>
-            </label>
-            <label className="space-y-1 text-xs text-muted-foreground">
-              Fundo (opcional)
+            </FormField>
+            <FormField label="Forma" htmlFor="entry-method" required>
               <SelectField
-                value={form.fundId}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, fundId: event.target.value }))
-                }
-              >
-                <option value="">Nenhum</option>
-                {(fundsQuery.data ?? []).map((fund) => (
-                  <option key={fund.id} value={fund.id}>
-                    {fund.name}
-                  </option>
-                ))}
-              </SelectField>
-            </label>
-            <label className="space-y-1 text-xs text-muted-foreground">
-              Forma de pagamento
-              <SelectField
+                id="entry-method"
                 value={form.method}
                 onChange={(event) =>
                   setForm((current) => ({
@@ -541,18 +603,80 @@ export function FinanceEntriesPanel({ embedded = false }: { embedded?: boolean }
                   </option>
                 ))}
               </SelectField>
-            </label>
+            </FormField>
           </div>
 
-          <label className="block space-y-1 text-xs text-muted-foreground">
-            Observação (opcional)
+          {showFundField ? (
+            <div className="overflow-hidden rounded-xl border border-border/80">
+              <button
+                type="button"
+                aria-expanded={fundLinkOpen}
+                onClick={() => {
+                  setFundLinkOpen((open) => {
+                    if (open) {
+                      setForm((current) => ({ ...current, fundId: "" }));
+                    }
+                    return !open;
+                  });
+                }}
+                className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-sm transition-colors hover:bg-muted/35"
+              >
+                <ChevronDown
+                  className={cn(
+                    "size-4 shrink-0 text-muted-foreground transition-transform duration-200",
+                    fundLinkOpen && "rotate-180",
+                  )}
+                  aria-hidden
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="font-medium text-foreground">
+                    Destino da oferta
+                  </span>
+                  <span className="mt-0.5 block text-xs text-muted-foreground">
+                    Opcional — ex.: Missões, Construção
+                  </span>
+                </span>
+                {form.fundId ? (
+                  <span className="max-w-32 truncate text-xs text-muted-foreground">
+                    {funds.find((f) => f.id === form.fundId)?.name}
+                  </span>
+                ) : null}
+              </button>
+              {fundLinkOpen ? (
+                <div className="border-t border-border/70 px-3.5 py-3">
+                  <SelectField
+                    id="entry-fund"
+                    value={form.fundId}
+                    aria-label="Destino da oferta"
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        fundId: event.target.value,
+                      }))
+                    }
+                  >
+                    <option value="">Nenhum</option>
+                    {funds.map((fund) => (
+                      <option key={fund.id} value={fund.id}>
+                        {fund.name}
+                      </option>
+                    ))}
+                  </SelectField>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
+          <FormField label="Observação" htmlFor="entry-note">
             <Input
+              id="entry-note"
               value={form.note}
+              placeholder="Opcional"
               onChange={(event) =>
                 setForm((current) => ({ ...current, note: event.target.value }))
               }
             />
-          </label>
+          </FormField>
 
           {formMonthClosed ? (
             <FormAlert>
@@ -610,7 +734,7 @@ export function FinanceEntriesPanel({ embedded = false }: { embedded?: boolean }
                 </div>
                 <p className="mt-0.5 text-sm text-muted-foreground">
                   {entry.accountName ?? entry.category}
-                  {entry.fundName ? ` · ${entry.fundName}` : ""}
+                  {entry.fundName ? ` · destino ${entry.fundName}` : ""}
                   {` · ${METHOD_LABEL[entry.method]}`}
                 </p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
@@ -704,7 +828,9 @@ export function FinanceEntriesPanel({ embedded = false }: { embedded?: boolean }
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground">
                   {entryToDelete.accountName ?? entryToDelete.category}
-                  {entryToDelete.fundName ? ` · ${entryToDelete.fundName}` : ""}
+                  {entryToDelete.fundName
+                    ? ` · destino ${entryToDelete.fundName}`
+                    : ""}
                 </p>
               </div>
             </div>
@@ -720,6 +846,11 @@ export function FinanceEntriesPanel({ embedded = false }: { embedded?: boolean }
           onConfirm={() => void handleConfirmDelete()}
         />
       ) : null}
+
+      <ChartOfAccountsModal
+        open={categoriesModalOpen}
+        onClose={closeCategoriesModal}
+      />
     </div>
   );
 }

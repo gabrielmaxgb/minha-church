@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, PiggyBank } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 
 import { RequireActiveMember } from "@/components/auth/require-active-member";
 import { DashboardPageIntro } from "@/components/dashboard/dashboard-page-intro";
-import { PaymentMethodBadges } from "@/components/dashboard/finances/fund-payment-methods-field";
+import { PaymentMethodSummary } from "@/components/dashboard/finances/fund-payment-methods-field";
 import { MemberGivingCheckoutDialog } from "@/components/dashboard/tithes/member-giving-checkout-dialog";
 import { FormAlert } from "@/components/ui/form-field";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -39,10 +39,15 @@ export function TithesOfferingsContent() {
 
   if (fundsQuery.isPending) {
     return (
-      <div className="space-y-3">
+      <div className="space-y-7">
         <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-24 w-full rounded-2xl" />
-        <Skeleton className="h-24 w-full rounded-2xl" />
+        <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <li key={i}>
+              <Skeleton className="h-48 w-full rounded-2xl" />
+            </li>
+          ))}
+        </ul>
       </div>
     );
   }
@@ -74,7 +79,7 @@ export function TithesOfferingsContent() {
           criar, eles aparecerão aqui.
         </p>
       ) : (
-        <ul className="grid gap-3">
+        <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {funds.map((fund, index) => (
             <motion.li
               key={fund.id}
@@ -82,44 +87,12 @@ export function TithesOfferingsContent() {
               animate={{ opacity: 1, y: 0 }}
               transition={{
                 duration: 0.35,
-                delay: index * 0.05,
+                delay: index * 0.04,
                 ease: EASE,
               }}
+              className="h-full"
             >
-              <button
-                type="button"
-                onClick={() => setSelected(fund)}
-                className={cn(
-                  "group flex w-full items-center gap-4 overflow-hidden rounded-2xl border border-border bg-card text-left shadow-xs transition-colors",
-                  "hover:border-[color-mix(in_srgb,var(--giving-trust)_35%,var(--border))]",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--giving-trust)]/35",
-                )}
-              >
-                <div className="relative hidden min-h-24 w-1.5 shrink-0 self-stretch bg-[var(--giving-ink)] sm:block">
-                  <div className="absolute inset-0 bg-[var(--giving-trust)]/40" />
-                </div>
-                <div className="min-w-0 flex-1 px-4 py-4 sm:px-5 sm:py-5">
-                  <p className="font-display text-base font-semibold tracking-tight text-foreground">
-                    {fund.name}
-                  </p>
-                  {fund.description ? (
-                    <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
-                      {fund.description}
-                    </p>
-                  ) : (
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      Contribuição vinculada à sua ficha
-                    </p>
-                  )}
-                  <div className="mt-2">
-                    <PaymentMethodBadges methods={fund.paymentMethods} />
-                  </div>
-                </div>
-                <span className="mr-4 inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[var(--giving-ink)] px-3 py-1.5 text-xs font-medium text-[var(--giving-paper)] transition-transform group-hover:translate-x-0.5 sm:mr-5">
-                  Contribuir
-                  <ArrowRight className="size-3.5" aria-hidden />
-                </span>
-              </button>
+              <MemberFundCard fund={fund} onSelect={() => setSelected(fund)} />
             </motion.li>
           ))}
         </ul>
@@ -132,6 +105,65 @@ export function TithesOfferingsContent() {
         />
       ) : null}
     </div>
+  );
+}
+
+function MemberFundCard({
+  fund,
+  onSelect,
+}: {
+  fund: MemberGivingFund;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={cn(
+        "group relative flex h-full w-full flex-col overflow-hidden rounded-2xl border border-domain-finances/25 bg-card text-left shadow-xs transition-colors",
+        "hover:border-[color-mix(in_srgb,var(--giving-trust)_40%,var(--border))]",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--giving-trust)]/35",
+      )}
+    >
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-linear-to-b from-domain-finances-subtle/80 to-transparent"
+        aria-hidden
+      />
+
+      <div className="relative z-10 flex flex-1 flex-col gap-4 p-5">
+        <div className="flex items-start gap-3">
+          <span
+            className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-domain-finances-subtle text-domain-finances-foreground"
+            aria-hidden
+          >
+            <PiggyBank className="size-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h3 className="font-display text-lg font-semibold tracking-tight text-foreground">
+              {fund.name}
+            </h3>
+            {fund.description ? (
+              <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+                {fund.description}
+              </p>
+            ) : (
+              <p className="mt-1 text-sm text-muted-foreground">
+                Contribuição vinculada à sua ficha
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-auto space-y-3">
+          <PaymentMethodSummary methods={fund.paymentMethods} />
+
+          <span className="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-lg bg-[var(--giving-ink)] text-sm font-medium text-[var(--giving-paper)] transition-transform group-hover:translate-y-px">
+            Contribuir
+            <ArrowRight className="size-3.5" aria-hidden />
+          </span>
+        </div>
+      </div>
+    </button>
   );
 }
 

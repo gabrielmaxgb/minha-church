@@ -240,17 +240,14 @@ export function AuthBootSplash({
       />
 
       <div className="relative z-10 flex w-full max-w-xs flex-col items-center px-6">
-        <div
-          ref={markRef}
-          className="overflow-hidden rounded-2xl shadow-[0_8px_28px_rgb(20_20_19_/0.1)] ring-1 ring-black/5"
-        >
+        <div ref={markRef}>
           <Image
             src="/marketing/logo-mark.png"
             alt=""
             width={72}
             height={72}
             priority
-            className="size-[4.5rem] object-cover"
+            className="size-[4.5rem] object-contain"
           />
         </div>
 

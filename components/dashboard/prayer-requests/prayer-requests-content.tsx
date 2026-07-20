@@ -13,6 +13,10 @@ import {
 import { MemberDetailButton } from "@/components/dashboard/members/member-detail-link";
 import { DashboardPageIntro } from "@/components/dashboard/dashboard-page-intro";
 import { Button } from "@/components/ui/button";
+import {
+  segmentedListClassName,
+  segmentedTriggerClassName,
+} from "@/components/ui/segmented-control";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -394,7 +398,7 @@ export function PrayerRequestsContent() {
           </div>
 
           <div
-            className="inline-flex rounded-lg border border-border bg-muted/30 p-0.5"
+            className={segmentedListClassName("rounded-lg p-0.5")}
             role="tablist"
             aria-label="Filtrar quadro"
           >
@@ -410,11 +414,9 @@ export function PrayerRequestsContent() {
                 role="tab"
                 aria-selected={board === tab.id}
                 onClick={() => setBoard(tab.id)}
-                className={cn(
-                  "rounded-md px-3 py-1.5 text-sm transition-colors",
-                  board === tab.id
-                    ? "bg-background font-medium text-foreground shadow-xs"
-                    : "text-muted-foreground hover:text-foreground",
+                className={segmentedTriggerClassName(
+                  board === tab.id,
+                  "rounded-md px-3 py-1.5 text-sm",
                 )}
               >
                 {tab.label}

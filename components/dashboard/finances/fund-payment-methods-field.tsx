@@ -215,27 +215,39 @@ export function fundPaymentMethodsSelected(
   );
 }
 
+export function paymentMethodLabels(
+  methods: GivingFundPaymentMethods,
+): string[] {
+  return METHODS.filter((method) => methods[method.key]).map(
+    (method) => method.label,
+  );
+}
+
+/** Quiet meta text for list rows — not interactive chips. */
+export function PaymentMethodSummary({
+  methods,
+  className,
+}: {
+  methods: GivingFundPaymentMethods;
+  className?: string;
+}) {
+  const labels = paymentMethodLabels(methods);
+
+  if (labels.length === 0) {
+    return null;
+  }
+
+  return (
+    <span className={cn("text-xs text-muted-foreground", className)}>
+      {labels.join(" · ")}
+    </span>
+  );
+}
+
 export function PaymentMethodBadges({
   methods,
 }: {
   methods: GivingFundPaymentMethods;
 }) {
-  const active = METHODS.filter((method) => methods[method.key]);
-
-  if (active.length === 0) {
-    return null;
-  }
-
-  return (
-    <span className="inline-flex flex-wrap gap-1">
-      {active.map((method) => (
-        <span
-          key={method.key}
-          className="inline-flex items-center rounded-md border border-border bg-muted/40 px-1.5 py-0.5 text-[11px] font-medium tracking-wide text-muted-foreground"
-        >
-          {method.label}
-        </span>
-      ))}
-    </span>
-  );
+  return <PaymentMethodSummary methods={methods} />;
 }

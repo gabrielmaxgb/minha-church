@@ -5,6 +5,7 @@ import { ChevronDown, Search, SlidersHorizontal, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { segmentedTriggerClassName } from "@/components/ui/segmented-control";
 import {
   countActiveAnnouncementFilters,
   DEFAULT_ANNOUNCEMENT_FILTERS,
@@ -266,7 +267,7 @@ function QuickPill({
             ? "bg-destructive/10 text-destructive"
             : tone === "important"
               ? "bg-attention-subtle text-attention-foreground"
-              : "bg-background text-foreground shadow-soft"
+              : segmentedTriggerClassName(true, "rounded-lg px-3 py-1.5 text-xs")
           : "text-muted-foreground hover:text-foreground",
       )}
     >

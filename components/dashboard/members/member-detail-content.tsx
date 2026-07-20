@@ -17,13 +17,11 @@ import {
   type MemberDetailSection,
 } from "@/components/dashboard/members/member-expanded-panel";
 import { MemberPastoralCarePanel } from "@/components/dashboard/pastoral-care/member-pastoral-care-panel";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  segmentedListClassName,
+  segmentedTriggerClassName,
+} from "@/components/ui/segmented-control";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AUTH_ROUTES } from "@/constants/routes";
 import { useMember } from "@/lib/api/queries";
@@ -268,7 +266,9 @@ export function MemberDetailContent({ memberId }: MemberDetailContentProps) {
           <div
             role="tablist"
             aria-label="Seções da ficha"
-            className="flex gap-1 overflow-x-auto overscroll-x-contain rounded-lg border border-border bg-muted/30 p-0.5 scrollbar-none"
+            className={segmentedListClassName(
+              "w-full gap-1 overflow-x-auto overscroll-x-contain rounded-lg p-0.5 scrollbar-none",
+            )}
           >
             {availableTabs.map((item) => {
               const Icon = item.icon;
@@ -289,13 +289,13 @@ export function MemberDetailContent({ memberId }: MemberDetailContentProps) {
                       : item.description
                   }
                   onClick={() => selectTab(item.id)}
-                  className={cn(
-                    "inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-md px-3 text-sm transition-colors",
-                    selected
-                      ? "bg-foreground font-medium text-background"
-                      : "font-normal text-muted-foreground hover:text-foreground",
-                    locked &&
-                      "cursor-not-allowed opacity-45 hover:text-muted-foreground",
+                  className={segmentedTriggerClassName(
+                    selected,
+                    cn(
+                      "min-h-9 shrink-0 rounded-md px-3 text-sm",
+                      locked &&
+                        "cursor-not-allowed opacity-45 hover:bg-transparent hover:text-muted-foreground",
+                    ),
                   )}
                 >
                   <Icon className="size-3.5 opacity-70" aria-hidden />

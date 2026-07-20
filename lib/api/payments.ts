@@ -454,6 +454,8 @@ export interface CreateGivingCheckoutInput {
   payerName?: string;
   payerEmail?: string;
   recurring?: boolean;
+  /** Se true, não vincula à ficha mesmo logado. */
+  anonymous?: boolean;
 }
 
 export interface GivingCheckoutSession {
@@ -504,7 +506,8 @@ export async function createGivingCheckout(
     {
       method: "POST",
       body: JSON.stringify(input),
-      skipAuth: true,
+      // Envia cookie de sessão quando houver — vínculo híbrido à ficha.
+      // Continua público: sem cookie o checkout anônimo segue normal.
     },
   );
 }
