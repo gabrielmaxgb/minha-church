@@ -657,6 +657,7 @@ export function GivingFundsPanel() {
           open
           onClose={() => setFundForQr(null)}
           fundName={fundForQr.name}
+          fundDescription={fundForQr.description}
           churchName={church?.name ?? "Sua igreja"}
           url={`${origin}${fundHref(fundForQr)}`}
         />

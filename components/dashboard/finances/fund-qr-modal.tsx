@@ -13,6 +13,7 @@ type FundQrModalProps = {
   open: boolean;
   onClose: () => void;
   fundName: string;
+  fundDescription?: string | null;
   churchName: string;
   url: string;
 };
@@ -36,6 +37,7 @@ const GIVING = {
 async function buildExportPng(options: {
   url: string;
   fundName: string;
+  fundDescription?: string | null;
   churchName: string;
 }): Promise<Blob> {
   await document.fonts.ready.catch(() => undefined);
@@ -106,17 +108,29 @@ async function buildExportPng(options: {
     y += 44;
   }
 
+  const description = options.fundDescription?.trim();
+  if (description) {
+    y += 10;
+    ctx.fillStyle = GIVING.paperSoft;
+    ctx.font = "400 22px 'DM Sans', ui-sans-serif, system-ui, sans-serif";
+    const descLines = wrapText(ctx, description, contentW, 2);
+    for (const line of descLines) {
+      ctx.fillText(line, pad, y);
+      y += 30;
+    }
+  }
+
   y += 8;
-  ctx.fillStyle = GIVING.paperSoft;
-  ctx.font = "400 22px 'DM Sans', ui-sans-serif, system-ui, sans-serif";
+  ctx.fillStyle = GIVING.paperMuted;
+  ctx.font = "500 20px 'DM Sans', ui-sans-serif, system-ui, sans-serif";
   ctx.fillText("Escaneie para contribuir", pad, y);
 
   const urlLabel = options.url.replace(/^https?:\/\//, "");
   const footerReserve = 88;
   const qrImg = await loadImage(qrDataUrl);
-  const qrTop = y + 36;
+  const qrTop = y + 28;
   const qrMax = EXPORT_SIZE - footerReserve - qrTop - pad;
-  const qrFrame = Math.min(440, Math.max(280, qrMax));
+  const qrFrame = Math.min(440, Math.max(240, qrMax));
   const qrInner = Math.round(qrFrame * 0.88);
   const qrFrameX = (EXPORT_SIZE - qrFrame) / 2;
   const qrFrameY = qrTop;
@@ -225,6 +239,7 @@ export function FundQrModal({
   open,
   onClose,
   fundName,
+  fundDescription,
   churchName,
   url,
 }: FundQrModalProps) {
@@ -234,6 +249,7 @@ export function FundQrModal({
   const [busy, setBusy] = useState<"download" | "print" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const ready = Boolean(previewUrl);
+  const description = fundDescription?.trim() || null;
 
   useEffect(() => {
     if (!open) {
@@ -269,7 +285,7 @@ export function FundQrModal({
       });
 
     // Preview do cartão exportado (mesmo visual do PNG)
-    void buildExportPng({ url, fundName, churchName })
+    void buildExportPng({ url, fundName, fundDescription: description, churchName })
       .then((blob) => {
         if (cancelled) {
           return;
@@ -288,7 +304,7 @@ export function FundQrModal({
         URL.revokeObjectURL(objectUrlToRevoke);
       }
     };
-  }, [churchName, fundName, open, url]);
+  }, [churchName, description, fundName, open, url]);
 
   useEffect(() => {
     if (!open) {
@@ -307,7 +323,12 @@ export function FundQrModal({
     setBusy("download");
     setError(null);
     try {
-      const blob = await buildExportPng({ url, fundName, churchName });
+      const blob = await buildExportPng({
+        url,
+        fundName,
+        fundDescription: description,
+        churchName,
+      });
       const objectUrl = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = objectUrl;
@@ -319,13 +340,18 @@ export function FundQrModal({
     } finally {
       setBusy(null);
     }
-  }, [churchName, fundName, url]);
+  }, [churchName, description, fundName, url]);
 
   const handlePrint = useCallback(async () => {
     setBusy("print");
     setError(null);
     try {
-      const blob = await buildExportPng({ url, fundName, churchName });
+      const blob = await buildExportPng({
+        url,
+        fundName,
+        fundDescription: description,
+        churchName,
+      });
       const objectUrl = URL.createObjectURL(blob);
       const printWindow = window.open("", "_blank", "noopener,noreferrer");
       if (!printWindow) {
@@ -361,7 +387,7 @@ export function FundQrModal({
     } finally {
       setBusy(null);
     }
-  }, [churchName, fundName, url]);
+  }, [churchName, description, fundName, url]);
 
   if (!open) {
     return null;
@@ -450,7 +476,12 @@ export function FundQrModal({
                     <p className="mt-4 text-base font-semibold tracking-tight">
                       {fundName}
                     </p>
-                    <p className="mt-1 text-xs text-[#f5f5f2]/65">
+                    {description ? (
+                      <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-[#f5f5f2]/70">
+                        {description}
+                      </p>
+                    ) : null}
+                    <p className="mt-1 text-xs text-[#f5f5f2]/55">
                       Escaneie para contribuir
                     </p>
                     <div className="mx-auto mt-5 flex size-[180px] items-center justify-center rounded-2xl bg-[#f5f5f2] p-2">
