@@ -10,6 +10,7 @@ import {
   hasRoutePermission,
   type RoutePermission,
 } from "@/lib/permissions";
+import { useNavAccessOptions } from "@/lib/permissions/use-nav-access-options";
 import { useAuth } from "@/providers/auth-provider";
 
 interface RequirePermissionProps {
@@ -33,6 +34,7 @@ export function RequirePermission({
 }: RequirePermissionProps) {
   const router = useRouter();
   const { permissions, user, isLoading, isAuthenticated } = useAuth();
+  const navAccess = useNavAccessOptions();
   const redirectingUnauthRef = useRef(false);
 
   const allowed =
@@ -55,10 +57,18 @@ export function RequirePermission({
   }, [isAuthenticated, isLoading]);
 
   useEffect(() => {
-    if (!isLoading && isAuthenticated && !allowed && permissions) {
+    if (
+      !isLoading &&
+      isAuthenticated &&
+      !allowed &&
+      permissions &&
+      navAccess.isReady
+    ) {
       router.replace(
         getFirstAccessibleRoute(permissions, {
-          isOwner: Boolean(user?.isOwner),
+          isOwner: navAccess.isOwner,
+          isActiveMember: navAccess.isActiveMember,
+          isActiveAdultMember: navAccess.isActiveAdultMember,
         }),
       );
     }
@@ -66,12 +76,15 @@ export function RequirePermission({
     allowed,
     isAuthenticated,
     isLoading,
+    navAccess.isActiveAdultMember,
+    navAccess.isActiveMember,
+    navAccess.isOwner,
+    navAccess.isReady,
     permissions,
     router,
-    user?.isOwner,
   ]);
 
-  if (isLoading) {
+  if (isLoading || (!allowed && !navAccess.isReady)) {
     return <GateFallback />;
   }
 

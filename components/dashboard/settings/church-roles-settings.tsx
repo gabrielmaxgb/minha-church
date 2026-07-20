@@ -16,6 +16,7 @@ import {
 } from "@/lib/api/queries";
 import { canManageChurchRoles, getFirstAccessibleRoute } from "@/lib/permissions";
 import { churchRolePermissionsToUserPermissions } from "@/lib/permissions/role-preview";
+import { useNavAccessOptions } from "@/lib/permissions/use-nav-access-options";
 import {
   applyChurchPermissionGroupToggle,
   applyChurchPermissionToggle,
@@ -114,6 +115,7 @@ function ChurchRoleSidebarGroupLabel({
 export function ChurchRolesSettings() {
   const router = useRouter();
   const { permissions, startRolePreview } = useAuth();
+  const navAccess = useNavAccessOptions();
   const { data: roles, isLoading, isError } = useChurchRoles();
   const createRole = useCreateChurchRole();
   const updateRole = useUpdateChurchRole();
@@ -744,6 +746,9 @@ export function ChurchRolesSettings() {
                           router.push(
                             getFirstAccessibleRoute(previewPermissions, {
                               isOwner: false,
+                              isActiveMember: navAccess.isActiveMember,
+                              isActiveAdultMember:
+                                navAccess.isActiveAdultMember,
                             }),
                           );
                         }}
