@@ -12,6 +12,7 @@ import {
 } from "@/constants/home";
 import { PUBLIC_ROUTES } from "@/constants/routes";
 import { Container } from "@/components/layout/container";
+import { CtaBanner } from "@/components/marketing/cta-banner";
 import { MotionDiv, MotionSection } from "@/components/motion/motion-section";
 import { ProductShowcase } from "@/components/marketing/product-showcase";
 import { FamilyGraphPreview } from "@/components/marketing/family-graph-preview";
@@ -469,30 +470,11 @@ export function HomeFaqSection() {
 
 export function CtaSection() {
   return (
-    <section className="py-14 sm:py-20">
-      <Container>
-        <MotionSection
-          className="rounded-2xl border border-border bg-foreground px-5 py-12 text-center text-background sm:px-12 sm:py-14"
-          variants={fadeInUp}
-        >
-          <Heading as="h2" className="text-balance text-background">
-            Comece a organizar sua igreja
-          </Heading>
-          <p className="mx-auto mt-4 max-w-md text-sm text-background/70 sm:text-base">
-            30 dias liberados. Sem cartão. Depois, pague só pela faixa de
-            membros da sua comunidade.
-          </p>
-          <div className="mt-8">
-            <Button
-              size="lg"
-              className="w-full bg-background text-foreground hover:bg-background/90 sm:w-auto"
-              asChild
-            >
-              <Link href={PUBLIC_ROUTES.register}>Começar grátis</Link>
-            </Button>
-          </div>
-        </MotionSection>
-      </Container>
-    </section>
+    <CtaBanner
+      title="Comece a organizar sua igreja"
+      description="30 dias liberados. Sem cartão. Depois, pague só pela faixa de membros da sua comunidade."
+      primaryLabel="Começar grátis"
+      primaryHref={PUBLIC_ROUTES.register}
+    />
   );
 }

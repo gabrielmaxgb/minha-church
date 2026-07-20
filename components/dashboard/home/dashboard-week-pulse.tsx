@@ -23,6 +23,13 @@ interface DashboardWeekPulseProps {
   variant?: "full" | "chart";
 }
 
+/** Preenchimento opaco no preto do app — densidade sobe com a quantidade. */
+function weekBarFill(count: number, maxCount: number, isToday: boolean) {
+  const density = 0.45 + (count / maxCount) * 0.55;
+  const mix = isToday ? 100 : Math.round(density * 100);
+  return `color-mix(in srgb, var(--foreground) ${mix}%, var(--card))`;
+}
+
 export function DashboardWeekPulse({
   events,
   memberCount,
@@ -124,6 +131,10 @@ export function DashboardWeekPulse({
         {week.map((day) => {
           const heightPct =
             day.count === 0 ? 8 : Math.max(18, (day.count / maxCount) * 100);
+          const barFill =
+            day.count === 0
+              ? undefined
+              : weekBarFill(day.count, maxCount, day.isToday);
 
           return (
             <div
@@ -134,12 +145,10 @@ export function DashboardWeekPulse({
                 <motion.div
                   className={cn(
                     "w-full max-w-[3.75rem] rounded-md",
-                    day.count === 0
-                      ? "bg-muted"
-                      : day.isToday
-                        ? "bg-domain-activities"
-                        : "bg-domain-activities/55",
+                    day.count === 0 && "bg-border/70",
+                    day.isToday && day.count > 0 && "ring-2 ring-foreground/25 ring-offset-1 ring-offset-card",
                   )}
+                  style={barFill ? { backgroundColor: barFill } : undefined}
                   initial={
                     shouldReduceMotion ? false : { height: "8%", opacity: 0.4 }
                   }

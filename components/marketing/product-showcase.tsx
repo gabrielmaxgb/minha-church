@@ -370,6 +370,12 @@ function MockWeekPulse() {
         {weekDensity.map((day) => {
           const heightPct =
             day.count === 0 ? 8 : Math.max(18, (day.count / maxCount) * 100);
+          const density = 0.45 + (day.count / maxCount) * 0.55;
+          const mix = day.isToday ? 100 : Math.round(density * 100);
+          const barFill =
+            day.count === 0
+              ? undefined
+              : `color-mix(in srgb, var(--foreground) ${mix}%, var(--card))`;
 
           return (
             <div
@@ -380,13 +386,15 @@ function MockWeekPulse() {
                 <div
                   className={cn(
                     "w-full max-w-[3.75rem] rounded-md",
-                    day.count === 0
-                      ? "bg-muted"
-                      : day.isToday
-                        ? "bg-domain-activities"
-                        : "bg-domain-activities/55",
+                    day.count === 0 && "bg-border/70",
+                    day.isToday &&
+                      day.count > 0 &&
+                      "ring-2 ring-foreground/25 ring-offset-1 ring-offset-card",
                   )}
-                  style={{ height: `${heightPct}%` }}
+                  style={{
+                    height: `${heightPct}%`,
+                    ...(barFill ? { backgroundColor: barFill } : null),
+                  }}
                 />
               </div>
               <div className="text-center">

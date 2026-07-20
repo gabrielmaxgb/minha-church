@@ -1,53 +1,83 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
 import { AuthBootSplash } from "@/components/auth/auth-boot-splash";
+import {
+  clearBootSplashLive,
+  clearBootSplashSeed,
+  getBootSplashDefaultLabel,
+  getBootSplashLiveState,
+  setBootSplashReady,
+  subscribeBootSplashLive,
+} from "@/lib/auth/boot-splash-bridge";
 import { useAuth } from "@/providers/auth-provider";
 
+function useBootSplashLive() {
+  return useSyncExternalStore(
+    subscribeBootSplashLive,
+    getBootSplashLiveState,
+    getBootSplashLiveState,
+  );
+}
+
 /**
- * Splash global no boot da sessão em rotas `/app/*` (F5 e cold boot pós-login).
- * Login submit também monta splash; o progresso continua via sessionStorage.
+ * Splash global única: login (via bridge) + boot de sessão em `/app/*`.
+ * Evita remount da arte na troca de label — só o texto dá refresh.
  */
 export function AuthBootSplashHost() {
   const pathname = usePathname();
   const { isLoading } = useAuth();
+  const live = useBootSplashLive();
   const onApp = pathname.startsWith("/app");
-  const [show, setShow] = useState(false);
-  const [ready, setReady] = useState(false);
-  const showRef = useRef(false);
 
-  useEffect(() => {
-    showRef.current = show;
-  }, [show]);
+  const [sessionActive, setSessionActive] = useState(false);
+  const [sessionReady, setSessionReady] = useState(false);
 
+  // Login soft-nav: completa a splash quando a rota /app já está ativa.
   useEffect(() => {
-    if (!onApp) {
+    if (live.active && !live.ready && onApp) {
+      setBootSplashReady();
+    }
+  }, [live.active, live.ready, onApp]);
+
+  // Cold boot / F5 em /app.
+  useEffect(() => {
+    if (!onApp || live.active) {
       return;
     }
 
     if (isLoading) {
-      setShow(true);
-      setReady(false);
+      setSessionActive(true);
+      setSessionReady(false);
       return;
     }
 
-    if (showRef.current) {
-      setReady(true);
+    if (sessionActive) {
+      setSessionReady(true);
     }
-  }, [isLoading, onApp]);
+  }, [isLoading, onApp, sessionActive, live.active]);
+
+  const showSession = onApp && !live.active && (isLoading || sessionActive);
+  const show = live.active || showSession;
 
   if (!show) {
     return null;
   }
 
+  const ready = live.active ? live.ready : sessionReady;
+  const label = live.active ? live.label : getBootSplashDefaultLabel();
+
   return (
     <AuthBootSplash
       ready={ready}
+      label={label}
       onFinished={() => {
-        setShow(false);
-        setReady(false);
+        clearBootSplashLive();
+        clearBootSplashSeed();
+        setSessionActive(false);
+        setSessionReady(false);
       }}
     />
   );

@@ -1,11 +1,11 @@
 "use client";
 
 import { motion, useReducedMotion } from "motion/react";
-import type { Variants } from "motion/react";
+import type { HTMLMotionProps, Variants } from "motion/react";
 
 import { cn } from "@/lib/utils";
 
-interface MotionSectionProps {
+interface MotionSectionProps extends Omit<HTMLMotionProps<"section">, "variants"> {
   children: React.ReactNode;
   className?: string;
   variants?: Variants;
@@ -15,6 +15,7 @@ export function MotionSection({
   children,
   className,
   variants,
+  ...props
 }: MotionSectionProps) {
   const shouldReduceMotion = useReducedMotion();
 
@@ -25,19 +26,25 @@ export function MotionSection({
       whileInView={shouldReduceMotion ? undefined : "visible"}
       viewport={{ once: true, margin: "-80px" }}
       variants={variants}
+      {...props}
     >
       {children}
     </motion.section>
   );
 }
 
-interface MotionDivProps {
+interface MotionDivProps extends Omit<HTMLMotionProps<"div">, "variants"> {
   children: React.ReactNode;
   className?: string;
   variants?: Variants;
 }
 
-export function MotionDiv({ children, className, variants }: MotionDivProps) {
+export function MotionDiv({
+  children,
+  className,
+  variants,
+  ...props
+}: MotionDivProps) {
   const shouldReduceMotion = useReducedMotion();
 
   return (
@@ -46,6 +53,7 @@ export function MotionDiv({ children, className, variants }: MotionDivProps) {
       initial={shouldReduceMotion ? false : "hidden"}
       animate={shouldReduceMotion ? undefined : "visible"}
       variants={variants}
+      {...props}
     >
       {children}
     </motion.div>

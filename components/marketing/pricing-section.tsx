@@ -6,9 +6,14 @@ import { useState } from "react";
 
 import { billingFaq } from "@/constants/faq";
 import { PUBLIC_ROUTES } from "@/constants/routes";
-import { Container } from "@/components/layout/container";
 import { CtaBanner } from "@/components/marketing/cta-banner";
 import { FaqList } from "@/components/marketing/faq-list";
+import { MarketingPageHero } from "@/components/marketing/marketing-page-hero";
+import {
+  MarketingSection,
+  MarketingSectionIntro,
+} from "@/components/marketing/marketing-section";
+import { PricingCalculator } from "@/components/marketing/pricing-calculator";
 import { MotionSection } from "@/components/motion/motion-section";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,9 +24,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Heading, SectionHeader } from "@/components/ui/heading";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PricingCalculator } from "@/components/marketing/pricing-calculator";
 import { usePricing } from "@/lib/api/queries/use-pricing";
 import {
   formatPricePerMember,
@@ -212,37 +215,36 @@ export function PricingSection() {
 
   return (
     <>
-      <section className="border-b border-border">
-        <Container className="py-16 sm:py-20 lg:py-24">
-          <div className="max-w-2xl">
-            <Heading as="h1" className="text-balance">
-              Investimento justo para o tamanho da sua igreja
-            </Heading>
-            <p className="mt-5 text-base leading-relaxed text-muted-foreground sm:text-lg">
-              As mesmas ferramentas em todas as faixas — você paga conforme
-              quantos membros cadastra, não por pacote de funcionalidades.{" "}
-              <span className="font-medium text-foreground">30 dias grátis</span>
-              , sem cartão.
-            </p>
-          </div>
+      <MarketingPageHero
+        title="Investimento justo para o tamanho da sua igreja"
+        support={
+          <>
+            As mesmas ferramentas em todas as faixas — você paga conforme
+            quantos membros cadastra, não por pacote de funcionalidades.{" "}
+            <span className="font-medium text-foreground">30 dias grátis</span>,
+            sem cartão.
+          </>
+        }
+      />
 
-          {isLoading && <PricingSkeleton />}
+      <MarketingSection>
+        {isLoading && <PricingSkeleton />}
 
-          {isError && (
-            <p className="mt-16 text-center text-muted-foreground">
-              Não foi possível carregar os preços. Tente novamente mais tarde.
-            </p>
-          )}
+        {isError && (
+          <p className="text-center text-muted-foreground">
+            Não foi possível carregar os preços. Tente novamente mais tarde.
+          </p>
+        )}
 
-          {pricing && (
-            <>
-            <div className="mx-auto mt-12 max-w-3xl text-center">
+        {pricing ? (
+          <>
+            <div className="mx-auto max-w-3xl text-center">
               <div className="inline-flex rounded-lg border border-border p-1">
                 <button
                   type="button"
                   onClick={() => setPeriod("monthly")}
                   className={cn(
-                    "rounded-md px-4 py-1.5 text-sm font-medium transition-colors cursor-pointer",
+                    "cursor-pointer rounded-md px-4 py-1.5 text-sm font-medium transition-colors",
                     period === "monthly"
                       ? "bg-foreground text-background"
                       : "text-muted-foreground hover:text-foreground",
@@ -254,7 +256,7 @@ export function PricingSection() {
                   type="button"
                   onClick={() => setPeriod("yearly")}
                   className={cn(
-                    "rounded-md px-4 py-1.5 text-sm font-medium transition-colors cursor-pointer",
+                    "cursor-pointer rounded-md px-4 py-1.5 text-sm font-medium transition-colors",
                     period === "yearly"
                       ? "bg-foreground text-background"
                       : "text-muted-foreground hover:text-foreground",
@@ -263,7 +265,7 @@ export function PricingSection() {
                   Anual
                   <span
                     className={cn(
-                      "ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                      "ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold tracking-wide uppercase",
                       period === "yearly"
                         ? "bg-background/20 text-background"
                         : "bg-foreground/10 text-foreground",
@@ -275,116 +277,119 @@ export function PricingSection() {
               </div>
             </div>
 
-              <PricingCalculator period={period} className="mt-8" />
+            <PricingCalculator period={period} className="mt-8" />
 
-            <div className="mx-auto max-w-3xl text-center">
-              <p className="mt-14 text-sm font-medium text-muted-foreground">
-                Tabela completa por faixa
-              </p>
-            </div>
+            <MarketingSectionIntro
+              className="mx-auto mt-14 text-center"
+              title="Tabela completa por faixa"
+              support="Mesmo produto — você escolhe pela quantidade de membros."
+            />
 
-              <MotionSection
-                className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:items-center"
-                variants={staggerContainer}
-              >
-                {pricing.tiers.map((tier) => (
-                  <motion.div
-                    key={tier.id}
-                    variants={staggerItem}
+            <MotionSection
+              className="mt-10 grid gap-4 sm:mt-12 sm:grid-cols-2 lg:grid-cols-4 lg:items-center"
+              variants={staggerContainer}
+            >
+              {pricing.tiers.map((tier) => (
+                <motion.div
+                  key={tier.id}
+                  variants={staggerItem}
+                  className={cn(
+                    tier.highlighted && "sm:col-span-2 lg:col-span-1",
+                  )}
+                >
+                  <Card
                     className={cn(
-                      tier.highlighted && "sm:col-span-2 lg:col-span-1",
+                      "relative flex h-full flex-col shadow-none transition-shadow",
+                      tier.highlighted
+                        ? "border-foreground bg-foreground text-background lg:scale-[1.06] lg:shadow-2xl"
+                        : "border-border",
                     )}
                   >
-                    <Card
-                      className={cn(
-                        "relative flex h-full flex-col shadow-none transition-shadow",
-                        tier.highlighted
-                          ? "border-foreground bg-foreground text-background lg:scale-[1.06] lg:shadow-2xl"
-                          : "border-border",
+                    <CardHeader>
+                      {tier.highlighted && (
+                        <span className="mb-2 inline-flex w-fit rounded-full bg-background/15 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-background uppercase">
+                          Mais vendida
+                        </span>
                       )}
-                    >
-                      <CardHeader>
-                        {tier.highlighted && (
-                          <span className="mb-2 inline-flex w-fit rounded-full bg-background/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-background">
-                            Mais vendida
-                          </span>
+                      <CardTitle
+                        className={cn(
+                          "tracking-tight",
+                          tier.highlighted
+                            ? "text-xl font-bold"
+                            : "text-base font-semibold",
                         )}
-                        <CardTitle
-                          className={cn(
-                            "tracking-tight",
-                            tier.highlighted
-                              ? "text-xl font-bold"
-                              : "text-base font-semibold",
-                          )}
-                        >
-                          {tier.name}
-                        </CardTitle>
-                        <CardDescription
-                          className={cn(
-                            "text-xs leading-relaxed",
-                            tier.highlighted
-                              ? "text-background/70"
-                              : "text-muted-foreground",
-                          )}
-                        >
-                          {tier.memberRange}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="flex-1">
-                        <TierPriceComparison
-                          tier={tier}
-                          period={period}
-                          highlighted={tier.highlighted}
-                        />
-                      </CardContent>
-                      <CardFooter>
-                        <Button
-                          className={cn(
-                            "w-full",
-                            tier.highlighted &&
-                              "bg-background text-foreground hover:bg-background/90",
-                          )}
-                          variant={tier.highlighted ? "secondary" : "outline"}
-                          asChild
-                        >
-                          <Link href={PUBLIC_ROUTES.register}>{pricing.cta}</Link>
-                        </Button>
-                      </CardFooter>
-                    </Card>
-                  </motion.div>
-                ))}
-              </MotionSection>
+                      >
+                        {tier.name}
+                      </CardTitle>
+                      <CardDescription
+                        className={cn(
+                          "text-xs leading-relaxed",
+                          tier.highlighted
+                            ? "text-background/70"
+                            : "text-muted-foreground",
+                        )}
+                      >
+                        {tier.memberRange}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex-1">
+                      <TierPriceComparison
+                        tier={tier}
+                        period={period}
+                        highlighted={tier.highlighted}
+                      />
+                    </CardContent>
+                    <CardFooter>
+                      <Button
+                        className={cn(
+                          "w-full",
+                          tier.highlighted &&
+                            "bg-background text-foreground hover:bg-background/90",
+                        )}
+                        variant={tier.highlighted ? "secondary" : "outline"}
+                        asChild
+                      >
+                        <Link href={PUBLIC_ROUTES.register}>{pricing.cta}</Link>
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                </motion.div>
+              ))}
+            </MotionSection>
 
-              <IncludedBenefits benefits={pricing.benefits} className="mt-12" />
+            <IncludedBenefits benefits={pricing.benefits} className="mt-12" />
 
-              <ValueAnchor
-                headline={pricing.valueAnchor.headline}
-                example={pricing.valueAnchor.example}
-                className="mt-6"
-              />
-            </>
-          )}
-        </Container>
-      </section>
+            <ValueAnchor
+              headline={pricing.valueAnchor.headline}
+              example={pricing.valueAnchor.example}
+              className="mt-6"
+            />
+          </>
+        ) : null}
+      </MarketingSection>
 
-      <section className="border-t border-border bg-muted/30 py-24 sm:py-32">
-        <Container>
-          <SectionHeader label="Dúvidas" title="Perguntas sobre cobrança" />
-          <div className="mx-auto mt-12 max-w-2xl">
+      <MarketingSection muted>
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,16rem)_minmax(0,1fr)] lg:gap-14">
+          <MarketingSectionIntro
+            title="Perguntas sobre cobrança"
+            support="Trial, faixa de membros e ciclo de pagamento."
+          >
+            <p className="mt-4 text-sm text-muted-foreground">
+              Mais perguntas? Veja nossa{" "}
+              <Link
+                href={PUBLIC_ROUTES.faq}
+                className="font-medium text-foreground underline-offset-4 hover:underline"
+              >
+                página de FAQ
+              </Link>
+              .
+            </p>
+          </MarketingSectionIntro>
+          <div className="min-w-0">
             <FaqList items={billingFaq} />
           </div>
-          <p className="mt-6 text-center text-sm text-muted-foreground">
-            Mais perguntas? Veja nossa{" "}
-            <Link
-              href={PUBLIC_ROUTES.faq}
-              className="font-medium text-foreground underline-offset-4 hover:underline"
-            >
-              página de FAQ
-            </Link>
-            .
-          </p>
-        </Container>
-      </section>
+        </div>
+      </MarketingSection>
 
       <CtaBanner
         title="30 dias para organizar sua igreja de verdade"

@@ -43,7 +43,9 @@ export function AuthBootSplash({
   const reduceMotion = useRef(false);
   const onFinishedRef = useRef(onFinished);
   const finishingRef = useRef(false);
+  const labelRef = useRef(label);
   const [visible, setVisible] = useState(true);
+  const [displayLabel, setDisplayLabel] = useState(label);
 
   const { progress, done, getCurrentProgress } = useAsymptoticProgress(ready);
 
@@ -53,16 +55,52 @@ export function AuthBootSplash({
 
   // Persiste progresso pra hard nav (login → /app).
   useEffect(() => {
-    stashBootSplashProgress(progress);
-  }, [progress]);
+    stashBootSplashProgress(progress, displayLabel);
+  }, [progress, displayLabel]);
 
   useEffect(() => {
     const persist = () => {
-      stashBootSplashProgress(getCurrentProgress());
+      stashBootSplashProgress(getCurrentProgress(), labelRef.current);
     };
     window.addEventListener("pagehide", persist);
     return () => window.removeEventListener("pagehide", persist);
   }, [getCurrentProgress]);
+
+  // Só o texto “dá refresh” — arte / bloom / marca ficam intactos.
+  useEffect(() => {
+    if (label === labelRef.current) {
+      return;
+    }
+
+    const next = label;
+    const copy = copyRef.current;
+
+    if (!copy || reduceMotion.current) {
+      labelRef.current = next;
+      setDisplayLabel(next);
+      return;
+    }
+
+    const tween = gsap.to(copy, {
+      opacity: 0,
+      y: 6,
+      duration: 0.18,
+      ease: "power2.in",
+      onComplete: () => {
+        labelRef.current = next;
+        setDisplayLabel(next);
+        gsap.fromTo(
+          copy,
+          { opacity: 0, y: -6 },
+          { opacity: 1, y: 0, duration: 0.28, ease: "power2.out" },
+        );
+      },
+    });
+
+    return () => {
+      tween.kill();
+    };
+  }, [label]);
 
   useLayoutEffect(() => {
     reduceMotion.current = prefersReducedMotion();
@@ -71,7 +109,8 @@ export function AuthBootSplash({
       return;
     }
 
-    const skipIntro = progress >= 0.45;
+    // Qualquer continuidade (seed > 0) — sem re-intro da arte (evita piscada).
+    const skipIntro = progress > 0;
 
     if (reduceMotion.current || skipIntro) {
       gsap.set(
@@ -240,7 +279,7 @@ export function AuthBootSplash({
           ref={copyRef}
           className="mt-4 text-center text-sm text-[#6f6f6a]"
         >
-          {label}
+          {displayLabel}
         </p>
       </div>
     </div>

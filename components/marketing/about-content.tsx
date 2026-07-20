@@ -1,11 +1,14 @@
 "use client";
 
-import { Container } from "@/components/layout/container";
-import { CtaBanner } from "@/components/marketing/cta-banner";
-import { MotionDiv, MotionSection } from "@/components/motion/motion-section";
-import { Heading } from "@/components/ui/heading";
 import { aboutStory } from "@/constants/about";
 import { PUBLIC_ROUTES } from "@/constants/routes";
+import { CtaBanner } from "@/components/marketing/cta-banner";
+import { MarketingPageHero } from "@/components/marketing/marketing-page-hero";
+import {
+  MarketingSection,
+  MarketingSectionIntro,
+} from "@/components/marketing/marketing-section";
+import { MotionDiv, MotionSection } from "@/components/motion/motion-section";
 import { fadeInUp } from "@/lib/motion";
 
 const values = [
@@ -24,70 +27,58 @@ const values = [
     description:
       "Gestão clara de finanças e informações, com confiança e prestação de contas.",
   },
-];
+] as const;
 
 export function AboutContent() {
   return (
     <>
-      <section className="border-b border-border">
-        <Container className="py-16 sm:py-20 lg:py-24">
-          <MotionDiv variants={fadeInUp} className="max-w-2xl">
-            <Heading as="h1" className="text-balance">
-              Por que criamos o Minha Church
-            </Heading>
-            <p className="mt-5 text-base leading-relaxed text-muted-foreground sm:text-lg">
-              {aboutStory.origin}
-            </p>
-          </MotionDiv>
-        </Container>
-      </section>
+      <MarketingPageHero
+        title="Por que criamos o Minha Church"
+        support={aboutStory.origin}
+      />
 
-      <section className="border-b border-border py-16 sm:py-24">
-        <Container>
-          <MotionSection variants={fadeInUp} className="max-w-2xl">
-            <Heading as="h2">Missão</Heading>
-            <p className="mt-4 leading-relaxed text-muted-foreground">
-              {aboutStory.mission}
-            </p>
-            <p className="mt-4 leading-relaxed text-muted-foreground">
-              {aboutStory.vision}
-            </p>
-          </MotionSection>
-        </Container>
-      </section>
+      <MarketingSection>
+        <MotionSection variants={fadeInUp} className="max-w-2xl">
+          <p className="text-[11px] font-semibold tracking-[0.16em] text-muted-foreground uppercase">
+            Missão
+          </p>
+          <p className="mt-3 text-base leading-relaxed text-foreground sm:text-lg">
+            {aboutStory.mission}
+          </p>
+          <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+            {aboutStory.vision}
+          </p>
+        </MotionSection>
+      </MarketingSection>
 
-      <section className="border-b border-border py-16 sm:py-24">
-        <Container>
-          <MotionSection variants={fadeInUp} className="max-w-2xl">
-            <Heading as="h2">Princípios</Heading>
-            <p className="mt-3 text-muted-foreground">
-              O que guia cada decisão que tomamos.
-            </p>
-          </MotionSection>
+      <MarketingSection>
+        <MarketingSectionIntro
+          title="Princípios"
+          support="O que guia cada decisão que tomamos."
+        />
 
-          <div className="mt-12 divide-y divide-border border-y border-border">
-            {values.map((value, index) => (
-              <MotionDiv
-                key={value.title}
-                variants={fadeInUp}
-                className="grid gap-4 py-8 sm:grid-cols-[4rem_1fr] sm:gap-8"
-              >
-                <span className="font-mono text-sm text-muted-foreground">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-                <div>
-                  <h3 className="text-base font-medium text-foreground">
-                    {value.title}
-                  </h3>
-                  <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-                    {value.description}
-                  </p>
-                </div>
-              </MotionDiv>
-            ))}
-          </div>
-        </Container>
-      </section>
+        <div className="mt-10 divide-y divide-border border-y border-border sm:mt-12">
+          {values.map((value, index) => (
+            <MotionDiv
+              key={value.title}
+              variants={fadeInUp}
+              className="grid gap-2 py-7 sm:grid-cols-[3.5rem_1fr] sm:gap-6 sm:py-8"
+            >
+              <span className="font-mono text-sm text-muted-foreground">
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              <div className="min-w-0 max-w-2xl">
+                <h3 className="text-base font-medium text-foreground">
+                  {value.title}
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  {value.description}
+                </p>
+              </div>
+            </MotionDiv>
+          ))}
+        </div>
+      </MarketingSection>
 
       <CtaBanner
         secondaryLabel="Ver recursos"

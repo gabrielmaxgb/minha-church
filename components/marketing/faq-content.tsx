@@ -1,47 +1,37 @@
-import { Container } from "@/components/layout/container";
+"use client";
+
+import { billingFaq, generalFaq } from "@/constants/faq";
 import { CtaBanner } from "@/components/marketing/cta-banner";
 import { FaqList } from "@/components/marketing/faq-list";
-import { Heading } from "@/components/ui/heading";
-import { billingFaq, generalFaq } from "@/constants/faq";
+import { MarketingPageHero } from "@/components/marketing/marketing-page-hero";
+import {
+  MarketingSection,
+  MarketingSectionIntro,
+} from "@/components/marketing/marketing-section";
+import { MotionDiv } from "@/components/motion/motion-section";
+import { fadeInUp } from "@/lib/motion";
 
 export function FaqContent() {
   return (
     <>
-      <section className="border-b border-border">
-        <Container className="py-16 sm:py-20 lg:py-24">
-          <div className="max-w-2xl">
-            <Heading as="h1" className="text-balance">
-              Perguntas frequentes
-            </Heading>
-            <p className="mt-5 text-base leading-relaxed text-muted-foreground sm:text-lg">
-              Respostas para as dúvidas mais comuns sobre o produto e a
-              cobrança.
-            </p>
-          </div>
-        </Container>
-      </section>
+      <MarketingPageHero
+        title="Perguntas frequentes"
+        support="Respostas para as dúvidas mais comuns sobre o produto e a cobrança."
+      />
 
-      <section className="border-b border-border py-16 sm:py-24">
-        <Container>
-          <div className="max-w-2xl">
-            <Heading as="h2">Produto</Heading>
-            <div className="mt-8">
-              <FaqList items={generalFaq} />
-            </div>
-          </div>
-        </Container>
-      </section>
+      <MarketingSection>
+        <MarketingSectionIntro title="Produto" />
+        <MotionDiv variants={fadeInUp} className="mt-8 max-w-2xl">
+          <FaqList items={generalFaq} />
+        </MotionDiv>
+      </MarketingSection>
 
-      <section className="border-b border-border py-16 sm:py-24">
-        <Container>
-          <div className="max-w-2xl">
-            <Heading as="h2">Preço e pagamento</Heading>
-            <div className="mt-8">
-              <FaqList items={billingFaq} />
-            </div>
-          </div>
-        </Container>
-      </section>
+      <MarketingSection>
+        <MarketingSectionIntro title="Preço e pagamento" />
+        <MotionDiv variants={fadeInUp} className="mt-8 max-w-2xl">
+          <FaqList items={billingFaq} />
+        </MotionDiv>
+      </MarketingSection>
 
       <CtaBanner />
     </>

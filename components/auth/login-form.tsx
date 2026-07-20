@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ArrowRight,
@@ -16,7 +16,6 @@ import { Suspense, useState } from "react";
 import { useForm } from "react-hook-form";
 import { motion, useReducedMotion } from "motion/react";
 
-import { AuthBootSplash } from "@/components/auth/auth-boot-splash";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FormAlert, FormField, FormMessage } from "@/components/ui/form-field";
@@ -35,7 +34,14 @@ import {
   resolvePostLoginRedirect,
 } from "@/constants/routes";
 import { ApiError } from "@/lib/api/client";
-import { clearBootSplashSeed } from "@/lib/auth/boot-splash-bridge";
+import {
+  clearBootSplashLive,
+  clearBootSplashSeed,
+  getBootSplashDefaultLabel,
+  getBootSplashEnteringLabel,
+  setBootSplashLabel,
+  startBootSplash,
+} from "@/lib/auth/boot-splash-bridge";
 import { loginSchema, type LoginFormValues } from "@/lib/validation/schemas";
 import { cn } from "@/lib/utils";
 import { resetAsymptoticProgressSingleton } from "@/hooks/use-asymptotic-progress";
@@ -57,6 +63,7 @@ const welcomePoints = [
 ] as const;
 
 function LoginFormContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const { login, isAuthenticated, isLoading: isAuthLoading, user } = useAuth();
   const shouldReduceMotion = useReducedMotion();
@@ -84,7 +91,7 @@ function LoginFormContent() {
   } = form;
 
   useEffect(() => {
-    if (isAuthLoading || !isAuthenticated || !user) {
+    if (isAuthLoading || !isAuthenticated || !user || isLoading) {
       return;
     }
 
@@ -92,8 +99,9 @@ function LoginFormContent() {
       ? AUTH_ROUTES.changePassword
       : resolvePostLoginRedirect(searchParams.get("redirect"));
 
-    window.location.replace(destination);
-  }, [isAuthenticated, isAuthLoading, user, searchParams]);
+    startBootSplash(getBootSplashDefaultLabel());
+    router.replace(destination);
+  }, [isAuthenticated, isAuthLoading, user, searchParams, router, isLoading]);
 
   async function performLogin(
     loginIdentifierValue: string,
@@ -102,6 +110,7 @@ function LoginFormContent() {
     clearErrors("root");
     setIsLoading(true);
     setLoadingIdentifier(loginIdentifierValue);
+    startBootSplash(getBootSplashEnteringLabel());
 
     try {
       const session = await login({
@@ -113,12 +122,17 @@ function LoginFormContent() {
         ? AUTH_ROUTES.changePassword
         : resolvePostLoginRedirect(searchParams.get("redirect"));
 
-      window.location.replace(destination);
+      // Mesma splash no Host: só o texto dá refresh — arte não remonta.
+      setBootSplashLabel(getBootSplashDefaultLabel());
+      router.replace(destination);
     } catch (loginError) {
       if (
         loginError instanceof ApiError &&
         loginError.code === "EMAIL_VERIFICATION_REQUIRED"
       ) {
+        clearBootSplashLive();
+        clearBootSplashSeed();
+        resetAsymptoticProgressSingleton();
         const email =
           loginError.email?.trim().toLowerCase() ||
           (loginIdentifierValue.includes("@")
@@ -134,6 +148,7 @@ function LoginFormContent() {
             ? loginError.message
             : "Não foi possível entrar. Tente novamente.",
       });
+      clearBootSplashLive();
       clearBootSplashSeed();
       resetAsymptoticProgressSingleton();
       setIsLoading(false);
@@ -149,15 +164,6 @@ function LoginFormContent() {
     setValue("identifier", loginEmail);
     setValue("password", DEMO_PASSWORD);
     await performLogin(loginEmail, DEMO_PASSWORD);
-  }
-
-  if (isLoading) {
-    return (
-      <AuthBootSplash
-        ready={false}
-        label="Entrando na sua igreja…"
-      />
-    );
   }
 
   return (
