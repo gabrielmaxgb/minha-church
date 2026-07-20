@@ -40,7 +40,7 @@ export interface DashboardNavItem {
   access?: "activeAdultMember" | "activeMember";
 }
 
-export type DashboardNavGroupId = "financeiro";
+export type DashboardNavGroupId = "cuidado" | "financeiro";
 
 export interface DashboardNavGroup {
   id: DashboardNavGroupId;
@@ -102,6 +102,7 @@ export const dashboardNavItems: DashboardNavItem[] = [
   },
   {
     label: "Pedidos de oração",
+    shortLabel: "Oração",
     href: AUTH_ROUTES.prayerRequests,
     icon: HandHeart,
     description: "Quadro aberto para a igreja orar junta",
@@ -156,6 +157,17 @@ export const dashboardNavItems: DashboardNavItem[] = [
  */
 export const dashboardNavGroups: DashboardNavGroup[] = [
   {
+    id: "cuidado",
+    label: "Cuidado",
+    icon: HeartPulse,
+    domain: "members",
+    itemHrefs: [
+      AUTH_ROUTES.prayerRequests,
+      AUTH_ROUTES.careRequests,
+      AUTH_ROUTES.pastoralCare,
+    ],
+  },
+  {
     id: "financeiro",
     label: "Financeiro",
     icon: Wallet,
@@ -183,9 +195,7 @@ export const dashboardNavOrder: DashboardNavEntry[] = [
   { type: "item", href: AUTH_ROUTES.members, sectionStart: true },
   { type: "item", href: AUTH_ROUTES.ministries },
   // Cuidado da comunidade
-  { type: "item", href: AUTH_ROUTES.prayerRequests, sectionStart: true },
-  { type: "item", href: AUTH_ROUTES.careRequests },
-  { type: "item", href: AUTH_ROUTES.pastoralCare },
+  { type: "group", id: "cuidado", sectionStart: true },
   // Gestão e olhar da liderança
   { type: "group", id: "financeiro", sectionStart: true },
   { type: "item", href: AUTH_ROUTES.reports },
