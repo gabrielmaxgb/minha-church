@@ -8,6 +8,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/layout/container";
 import { Logo } from "@/components/layout/logo";
+import { Magnetic } from "@/components/marketing/gsap/magnetic";
 import { mainNavLinks } from "@/constants/navigation";
 import { PUBLIC_ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
@@ -43,9 +44,11 @@ export function Header() {
             <Button variant="ghost" size="sm" asChild>
               <Link href={PUBLIC_ROUTES.login}>Entrar</Link>
             </Button>
-            <Button size="sm" asChild>
-              <Link href={PUBLIC_ROUTES.register}>Começar grátis</Link>
-            </Button>
+            <Magnetic>
+              <Button size="sm" asChild>
+                <Link href={PUBLIC_ROUTES.register}>Começar grátis</Link>
+              </Button>
+            </Magnetic>
           </div>
 
           <button

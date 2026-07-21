@@ -5,6 +5,7 @@ import { ArrowRight, Users } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { Magnetic } from "@/components/marketing/gsap/magnetic";
 import { pricing as pricingFallback } from "@/constants/pricing";
 import { usePricing } from "@/lib/api/queries";
 import { PUBLIC_ROUTES } from "@/constants/routes";
@@ -123,12 +124,14 @@ export function PricingCalculator({ period, className }: PricingCalculatorProps)
                 funcionalidades incluídas
               </p>
             </div>
-            <Button asChild className="shrink-0 gap-1.5">
-              <Link href={PUBLIC_ROUTES.register}>
-                Testar 30 dias grátis
-                <ArrowRight className="size-4" />
-              </Link>
-            </Button>
+            <Magnetic>
+              <Button asChild className="shrink-0 gap-1.5">
+                <Link href={PUBLIC_ROUTES.register}>
+                  Testar 30 dias grátis
+                  <ArrowRight className="size-4" />
+                </Link>
+              </Button>
+            </Magnetic>
           </div>
         </div>
 

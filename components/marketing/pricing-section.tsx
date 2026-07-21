@@ -8,6 +8,7 @@ import { billingFaq } from "@/constants/faq";
 import { PUBLIC_ROUTES } from "@/constants/routes";
 import { CtaBanner } from "@/components/marketing/cta-banner";
 import { FaqList } from "@/components/marketing/faq-list";
+import { Magnetic } from "@/components/marketing/gsap/magnetic";
 import { MarketingPageHero } from "@/components/marketing/marketing-page-hero";
 import {
   MarketingSection,
@@ -340,17 +341,21 @@ export function PricingSection() {
                       />
                     </CardContent>
                     <CardFooter>
-                      <Button
-                        className={cn(
-                          "w-full",
-                          tier.highlighted &&
-                            "bg-background text-foreground hover:bg-background/90",
-                        )}
-                        variant={tier.highlighted ? "secondary" : "outline"}
-                        asChild
-                      >
-                        <Link href={PUBLIC_ROUTES.register}>{pricing.cta}</Link>
-                      </Button>
+                      <Magnetic className="w-full">
+                        <Button
+                          className={cn(
+                            "w-full",
+                            tier.highlighted &&
+                              "bg-background text-foreground hover:bg-background/90",
+                          )}
+                          variant={tier.highlighted ? "secondary" : "outline"}
+                          asChild
+                        >
+                          <Link href={PUBLIC_ROUTES.register}>
+                            {pricing.cta}
+                          </Link>
+                        </Button>
+                      </Magnetic>
                     </CardFooter>
                   </Card>
                 </motion.div>

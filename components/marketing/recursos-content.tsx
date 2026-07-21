@@ -7,6 +7,7 @@ import { resourceSections } from "@/constants/features";
 import { PUBLIC_ROUTES } from "@/constants/routes";
 import { CtaBanner } from "@/components/marketing/cta-banner";
 import { FamilyGraphPreview } from "@/components/marketing/family-graph-preview";
+import { Magnetic } from "@/components/marketing/gsap/magnetic";
 import { MarketingPageHero } from "@/components/marketing/marketing-page-hero";
 import {
   MarketingSection,
@@ -26,9 +27,11 @@ export function RecursosContent() {
         support="Do primeiro contato às escalas do culto e aos comunicados da semana — fluxos que a liderança usa de verdade."
       >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <Button size="lg" asChild className="w-full sm:w-auto">
-            <Link href={PUBLIC_ROUTES.register}>Começar grátis</Link>
-          </Button>
+          <Magnetic>
+            <Button size="lg" asChild className="w-full sm:w-auto">
+              <Link href={PUBLIC_ROUTES.register}>Começar grátis</Link>
+            </Button>
+          </Magnetic>
           <a
             href="#membros"
             className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"

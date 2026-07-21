@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 import { Logo } from "@/components/layout/logo";
+import { AuthAtmosphere } from "@/components/marketing/gsap/auth-atmosphere";
 import { PUBLIC_ROUTES } from "@/constants/routes";
 
 export default function AuthLayout({
@@ -10,12 +11,7 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="marketing-atmosphere relative flex min-h-dvh flex-col px-4 py-6 sm:px-6 sm:py-8">
-      <div
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,color-mix(in_srgb,var(--attention)_12%,transparent),transparent_55%)]"
-        aria-hidden
-      />
-
+    <AuthAtmosphere>
       <header className="relative mx-auto flex w-full max-w-6xl items-center justify-center sm:justify-start">
         <Logo />
       </header>
@@ -33,6 +29,6 @@ export default function AuthLayout({
           Voltar para o site
         </Link>
       </footer>
-    </div>
+    </AuthAtmosphere>
   );
 }

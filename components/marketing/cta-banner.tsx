@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import { Container } from "@/components/layout/container";
+import { Magnetic } from "@/components/marketing/gsap/magnetic";
 import { MotionSection } from "@/components/motion/motion-section";
 import { PUBLIC_ROUTES } from "@/constants/routes";
 import { Button } from "@/components/ui/button";
@@ -44,13 +45,15 @@ export function CtaBanner({
             {description}
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Button
-              size="lg"
-              className="w-full bg-background text-foreground hover:bg-background/90 sm:w-auto"
-              asChild
-            >
-              <Link href={primaryHref}>{primaryLabel}</Link>
-            </Button>
+            <Magnetic>
+              <Button
+                size="lg"
+                className="w-full bg-background text-foreground hover:bg-background/90 sm:w-auto"
+                asChild
+              >
+                <Link href={primaryHref}>{primaryLabel}</Link>
+              </Button>
+            </Magnetic>
             {secondaryLabel && secondaryHref ? (
               <Link
                 href={secondaryHref}

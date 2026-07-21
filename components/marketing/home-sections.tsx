@@ -1,23 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Clock3 } from "lucide-react";
+import { Clock3 } from "lucide-react";
 
 import {
   homeBenefits,
   homeFaq,
   homeFlows,
-  homeHero,
   homeHowItWorks,
 } from "@/constants/home";
 import { PUBLIC_ROUTES } from "@/constants/routes";
 import { Container } from "@/components/layout/container";
 import { CtaBanner } from "@/components/marketing/cta-banner";
+import { HomeHeroMotion } from "@/components/marketing/gsap/home-hero-motion";
+import { FloatingGeometry } from "@/components/marketing/gsap/floating-geometry";
+import { SundayChaosOrder } from "@/components/marketing/gsap/sunday-chaos-order";
+import { WordScrub } from "@/components/marketing/gsap/word-scrub";
 import { MotionDiv, MotionSection } from "@/components/motion/motion-section";
 import { ProductShowcase } from "@/components/marketing/product-showcase";
 import { FamilyGraphPreview } from "@/components/marketing/family-graph-preview";
 import { FaqList } from "@/components/marketing/faq-list";
-import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import { fadeInUp } from "@/lib/motion";
 import { domainMark, domainSurface, domainText } from "@/lib/ui/domain-theme";
@@ -143,38 +145,19 @@ function SundayPreviewCard({ className }: { className?: string }) {
 
 export function HeroSection() {
   return (
-    <section className="marketing-atmosphere border-b border-border">
-      <Container className="py-12 sm:py-16 lg:py-20">
-        <MotionDiv variants={fadeInUp} className="mx-auto max-w-2xl text-center lg:mx-0 lg:max-w-xl lg:text-left">
-          <h1 className="hero-display text-balance text-foreground">
-            {homeHero.headline}
-          </h1>
-          <p className="mt-5 text-base leading-relaxed text-muted-foreground sm:text-lg">
-            {homeHero.support}
-          </p>
-          <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start">
-            <Button size="lg" asChild className="w-full sm:w-auto">
-              <Link href={PUBLIC_ROUTES.register}>{homeHero.primaryCta}</Link>
-            </Button>
-            <a
-              href={homeHero.secondaryHref}
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              {homeHero.secondaryCta}
-              <ArrowRight className="size-3.5" aria-hidden />
-            </a>
-          </div>
-          <p className="mt-4 text-sm text-muted-foreground">
-            {homeHero.trialNote}
-          </p>
-        </MotionDiv>
-
-        <MotionDiv variants={fadeInUp} className="mx-auto mt-10 max-w-md lg:hidden">
-          <SundayPreviewCard />
-        </MotionDiv>
+    <section className="marketing-atmosphere relative border-b border-border">
+      <FloatingGeometry />
+      <Container className="relative z-10 py-12 sm:py-16 lg:py-20">
+        <HomeHeroMotion
+          mobilePreview={
+            <div className="mx-auto mt-10 max-w-md lg:hidden">
+              <SundayPreviewCard />
+            </div>
+          }
+        />
       </Container>
 
-      <div className="hidden border-t border-border bg-gradient-to-b from-muted/30 to-background lg:block">
+      <div className="relative z-10 hidden border-t border-border bg-gradient-to-b from-muted/30 to-background lg:block">
         <div className="w-full px-4 py-10 sm:px-6 lg:px-8 xl:py-12">
           <MotionDiv variants={fadeInUp}>
             <p className="mb-5 text-sm text-muted-foreground">
@@ -189,15 +172,12 @@ export function HeroSection() {
 }
 
 export function OperationDemoSection() {
-  // No mobile o card já aparece no hero; aqui reforça a narrativa só no desktop.
+  // Desktop: pin+scrub caos → ordem. Mobile: card already in hero.
   return (
-    <section className="hidden border-b border-border bg-gradient-to-b from-domain-activities-subtle/35 via-background to-background py-16 lg:block lg:py-24">
-      <Container>
-        <MotionSection
-          variants={fadeInUp}
-          className="grid items-center gap-10 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] xl:gap-14"
-        >
-          <div className="max-w-lg">
+    <section className="hidden border-b border-border bg-gradient-to-b from-domain-activities-subtle/35 via-background to-background lg:block">
+      <SundayChaosOrder
+        copy={
+          <>
             <p className="text-[11px] font-semibold tracking-[0.16em] text-domain-activities-foreground uppercase">
               Antes do culto
             </p>
@@ -205,8 +185,9 @@ export function OperationDemoSection() {
               Um domingo organizado, sem correria
             </Heading>
             <p className="mt-4 text-base leading-relaxed text-muted-foreground">
-              Horário, ministério e quem ainda não confirmou — o essencial para
-              abrir as portas com tranquilidade.
+              Horário, ministério e quem ainda não confirmou — o essencial
+              para abrir as portas com tranquilidade. Sem caçar confirmação
+              em grupo de WhatsApp.
             </p>
 
             <ul className="mt-8 space-y-3">
@@ -223,8 +204,9 @@ export function OperationDemoSection() {
                 </li>
               ))}
             </ul>
-          </div>
-
+          </>
+        }
+        card={
           <div className="relative">
             <div
               className="pointer-events-none absolute -inset-6 rounded-[2rem] bg-domain-activities-subtle/50 blur-2xl"
@@ -232,8 +214,8 @@ export function OperationDemoSection() {
             />
             <SundayPreviewCard className="relative mx-auto max-w-md xl:ml-auto xl:mr-0" />
           </div>
-        </MotionSection>
-      </Container>
+        }
+      />
     </section>
   );
 }
@@ -267,12 +249,17 @@ export function FlowsSection() {
   return (
     <section className="border-b border-border py-14 sm:py-20">
       <Container>
-        <MotionSection variants={fadeInUp} className="max-w-2xl">
-          <Heading as="h2">No lugar de planilhas e grupos</Heading>
+        <div className="max-w-2xl">
+          <WordScrub
+            as="h2"
+            className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl leading-snug"
+          >
+            No lugar de planilhas e grupos
+          </WordScrub>
           <p className="mt-3 text-muted-foreground">
             Três fluxos do dia a dia da igreja.
           </p>
-        </MotionSection>
+        </div>
 
         <div className="mt-10 divide-y divide-border border-y border-border sm:mt-12">
           {homeFlows.map((flow, index) => {
