@@ -18,14 +18,10 @@ export const footerNavLinks: NavLink[] = [
   { label: "Sobre", href: PUBLIC_ROUTES.about },
   { label: "FAQ", href: PUBLIC_ROUTES.faq },
   { label: "Segurança", href: PUBLIC_ROUTES.security },
+  { label: "Instalar app", href: PUBLIC_ROUTES.installApp },
   { label: "Termos de Uso", href: PUBLIC_ROUTES.terms },
   { label: "Privacidade", href: PUBLIC_ROUTES.privacy },
   { label: "Adendo LGPD", href: PUBLIC_ROUTES.dpa },
-];
-
-/** Só no mobile — PWA não faz sentido no desktop. */
-export const footerMobileOnlyLinks: NavLink[] = [
-  { label: "Instalar app", href: PUBLIC_ROUTES.installApp },
 ];
 export const siteConfig = {
   name: "Minha Church",

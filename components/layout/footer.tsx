@@ -4,11 +4,7 @@ import { Container } from "@/components/layout/container";
 import { Logo } from "@/components/layout/logo";
 import { Separator } from "@/components/ui/separator";
 import { legalMeta } from "@/constants/legal";
-import {
-  footerMobileOnlyLinks,
-  footerNavLinks,
-  siteConfig,
-} from "@/constants/navigation";
+import { footerNavLinks, siteConfig } from "@/constants/navigation";
 
 export function Footer() {
   const year = new Date().getFullYear();
@@ -30,15 +26,6 @@ export function Footer() {
                 key={link.href}
                 href={link.href}
                 className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-              >
-                {link.label}
-              </Link>
-            ))}
-            {footerMobileOnlyLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-sm text-muted-foreground transition-colors hover:text-foreground lg:hidden"
               >
                 {link.label}
               </Link>

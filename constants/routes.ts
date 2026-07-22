@@ -5,7 +5,7 @@ export const PUBLIC_ROUTES = {
   about: "/sobre",
   faq: "/faq",
   security: "/seguranca",
-  /** Guia de instalação PWA — só faz sentido no celular. */
+  /** Guia de instalação PWA (celular e desktop). */
   installApp: "/instalar",
   terms: "/termos",
   privacy: "/privacidade",
@@ -61,7 +61,7 @@ export const AUTH_ROUTES = {
   settings: "/app/configuracoes",
   settingsChurch: "/app/configuracoes/igreja",
   settingsUser: "/app/configuracoes/usuario",
-  /** Guia de instalação PWA — mobile only. */
+  /** Guia de instalação PWA (celular e desktop). */
   installApp: "/app/instalar",
   changePassword: "/app/alterar-senha",
 } as const;

@@ -1,7 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { Clock3 } from "lucide-react";
+import {
+  Calendar,
+  ChevronRight,
+  ClipboardList,
+  MapPin,
+} from "lucide-react";
 
 import {
   homeBenefits,
@@ -25,120 +30,127 @@ import { fadeInUp } from "@/lib/motion";
 import { domainMark, domainSurface, domainText } from "@/lib/ui/domain-theme";
 import { cn } from "@/lib/utils";
 
-const sundayPending = [
-  { name: "Ana Silva", role: "Vocal", initials: "AS" },
-  { name: "Carlos Mendes", role: "Violão", initials: "CM" },
-  { name: "João Pereira", role: "Recepção", initials: "JP" },
-] as const;
-
 const sundaySignals = [
-  "Horário e local no mesmo lugar",
-  "Ministério e função visíveis",
-  "Quem ainda não respondeu, em destaque",
+  "Prioridades do dia no topo do painel",
+  "Agenda da semana com o próximo culto em destaque",
+  "Escalas pendentes pedem resposta antes do domingo",
 ] as const;
 
+/**
+ * Marketing preview aligned with dashboard home:
+ * prioridades + Agenda da semana (não um mock de lista de pessoas).
+ */
 function SundayPreviewCard({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-2xl border border-domain-activities/25 bg-card shadow-popover",
+        "relative space-y-3 rounded-2xl border border-border bg-muted/30 p-3 shadow-popover sm:p-3.5",
         className,
       )}
+      aria-hidden
     >
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-domain-activities-subtle to-transparent"
-        aria-hidden
-      />
-
-      <div className="relative border-b border-border/70 px-4 py-3 sm:px-5">
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-[11px] font-semibold tracking-[0.14em] text-domain-activities-foreground uppercase">
-            Próximo culto
-          </p>
-          <span className="rounded-full bg-attention-subtle px-2.5 py-0.5 text-[11px] font-medium text-attention-foreground">
-            Em 2 dias
-          </span>
-        </div>
-      </div>
-
-      <div className="relative space-y-4 px-4 py-4 sm:px-5 sm:py-5">
-        <div className="flex items-start gap-3.5">
-          <time
-            dateTime="2026-07-19T19:00"
-            className="flex w-14 shrink-0 flex-col items-center justify-center rounded-xl border border-domain-activities/20 bg-domain-activities-subtle py-2 text-center"
-            aria-label="19 de julho"
-          >
-            <span className="text-[1.45rem] font-semibold leading-none tracking-tight text-foreground">
-              19
-            </span>
-            <span className="mt-1 text-[10px] font-semibold tracking-[0.12em] text-domain-activities-foreground uppercase">
-              Jul
-            </span>
-          </time>
-
-          <div className="min-w-0 flex-1 pt-0.5">
-            <p className="text-lg font-semibold tracking-tight text-foreground">
-              Culto de Domingo
-            </p>
-            <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
-              <span className="inline-flex items-center gap-1 font-medium tabular-nums text-foreground">
-                <Clock3 className="size-3.5 opacity-70" aria-hidden />
-                19:00
+      {/* Prioridades — espelha DashboardPriorities */}
+      <section className="rounded-xl border border-border bg-card p-3.5 sm:p-4">
+        <h2 className="text-sm font-medium text-foreground">
+          2 coisas pedem você hoje
+        </h2>
+        <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">
+          Resolva estas primeiro — o restante pode esperar
+        </p>
+        <ul className="mt-3 space-y-2">
+          <li>
+            <div className="flex items-center gap-3 rounded-xl border border-attention-border bg-gradient-to-br from-attention-subtle via-card to-card px-3 py-3">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-attention-mark text-attention-foreground">
+                <ClipboardList className="size-4" />
               </span>
-              <span className="text-border" aria-hidden>
-                ·
-              </span>
-              <span>Louvor</span>
-              <span className="text-border" aria-hidden>
-                ·
-              </span>
-              <span>Templo principal</span>
-            </p>
-          </div>
-        </div>
-
-        <div className="rounded-xl border border-attention-border bg-attention-subtle/80 p-3.5">
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-sm font-semibold text-attention-foreground">
-              3 ainda não responderam
-            </p>
-            <span
-              className="flex size-2 shrink-0 rounded-full bg-attention-solid"
-              aria-hidden
-            />
-          </div>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            Sem isso, a escala do culto não fecha.
-          </p>
-
-          <ul className="mt-3 space-y-2">
-            {sundayPending.map((person) => (
-              <li
-                key={person.name}
-                className="flex items-center gap-2.5 rounded-lg border border-border/70 bg-card/90 px-2.5 py-2"
-              >
-                <span
-                  className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-semibold tracking-wide text-foreground"
-                  aria-hidden
-                >
-                  {person.initials}
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center gap-2">
+                  <span className="text-[11px] font-medium tabular-nums text-muted-foreground">
+                    1.
+                  </span>
+                  <span className="truncate text-sm font-semibold text-foreground">
+                    2 escalas aguardam sua resposta
+                  </span>
                 </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-foreground">
-                    {person.name}
-                  </p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {person.role}
-                  </p>
-                </div>
-                <span className="shrink-0 rounded-md bg-attention-subtle px-2 py-0.5 text-[11px] font-medium text-attention-foreground">
-                  Aguardando
+                <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+                  Sem isso, o líder não fecha a equipe
                 </span>
-              </li>
-            ))}
-          </ul>
+              </span>
+              <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+            </div>
+          </li>
+        </ul>
+      </section>
+
+      {/* Agenda — espelha DashboardEventsPanel */}
+      <section className="rounded-xl border border-domain-activities/30 bg-gradient-to-br from-domain-activities-subtle via-card to-card">
+        <div className="border-b border-domain-activities/20 px-3.5 py-3 sm:px-4">
+          <h2 className="text-base font-medium text-domain-activities-foreground">
+            Agenda da semana
+          </h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            Próximos cultos e encontros
+          </p>
         </div>
-      </div>
+
+        <ol className="space-y-0.5 p-2">
+          <li className="flex items-center gap-3 rounded-md bg-muted/40 px-2.5 py-2.5">
+            <time
+              dateTime="2026-07-19T19:00"
+              className="flex size-10 shrink-0 flex-col items-center justify-center rounded-md border border-foreground/15 bg-foreground text-center leading-none text-background"
+            >
+              <span className="text-xs font-semibold">19</span>
+              <span className="mt-0.5 text-[9px] font-medium tracking-wide text-background/80 uppercase">
+                Jul
+              </span>
+            </time>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="truncate text-sm font-medium text-foreground">
+                  Culto de Domingo
+                </p>
+                <span className="shrink-0 rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                  Em 2 dias
+                </span>
+              </div>
+              <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                <span className="inline-flex items-center gap-1">
+                  <Calendar className="size-3 shrink-0" />
+                  19:00
+                </span>
+                <span className="inline-flex min-w-0 items-center gap-1">
+                  <MapPin className="size-3 shrink-0" />
+                  <span className="truncate">Templo principal</span>
+                </span>
+                <span className="truncate">Louvor</span>
+              </div>
+            </div>
+          </li>
+          <li className="flex items-center gap-3 rounded-md px-2.5 py-2.5">
+            <time
+              dateTime="2026-07-22T20:00"
+              className="flex size-10 shrink-0 flex-col items-center justify-center rounded-md border border-border bg-card text-center leading-none text-foreground"
+            >
+              <span className="text-xs font-semibold">22</span>
+              <span className="mt-0.5 text-[9px] font-medium tracking-wide text-muted-foreground uppercase">
+                Jul
+              </span>
+            </time>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium text-foreground">
+                Ensaio de louvor
+              </p>
+              <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                <span className="inline-flex items-center gap-1">
+                  <Calendar className="size-3 shrink-0" />
+                  20:00
+                </span>
+                <span className="truncate">Louvor</span>
+              </div>
+            </div>
+          </li>
+        </ol>
+      </section>
     </div>
   );
 }
@@ -185,9 +197,9 @@ export function OperationDemoSection() {
               Um domingo organizado, sem correria
             </Heading>
             <p className="mt-4 text-base leading-relaxed text-muted-foreground">
-              Horário, ministério e quem ainda não confirmou — o essencial
-              para abrir as portas com tranquilidade. Sem caçar confirmação
-              em grupo de WhatsApp.
+              Prioridades do dia e a agenda da semana no mesmo painel — o
+              essencial para abrir as portas com tranquilidade. Sem caçar
+              confirmação em grupo de WhatsApp.
             </p>
 
             <ul className="mt-8 space-y-3">

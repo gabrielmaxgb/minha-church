@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 import {
   Check,
   Download,
+  Monitor,
   MoreVertical,
   Share,
   Smartphone,
@@ -19,7 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const BENEFITS = [
-  "Abra em um toque, direto da tela inicial",
+  "Abra em um toque — celular ou computador",
   "Receba avisos no celular (escala, inscrição…)",
   "Continua funcionando no navegador se preferir",
 ] as const;
@@ -27,18 +28,22 @@ const BENEFITS = [
 export function PwaInstallGuide({ className }: { className?: string }) {
   const [installed, setInstalled] = useState(false);
   const [isIos, setIsIos] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(
     null,
   );
   const [installing, setInstalling] = useState(false);
+  const [hint, setHint] = useState<string | null>(null);
 
   useEffect(() => {
     setInstalled(isStandaloneDisplay());
     setIsIos(isIosDevice());
+    setIsDesktop(window.matchMedia("(min-width: 1024px)").matches);
 
     function onBeforeInstall(event: Event) {
       event.preventDefault();
       setDeferred(event as BeforeInstallPromptEvent);
+      setHint(null);
     }
 
     function onInstalled() {
@@ -56,24 +61,42 @@ export function PwaInstallGuide({ className }: { className?: string }) {
   }, []);
 
   const handleInstall = useCallback(async () => {
-    if (!deferred) {
+    if (deferred) {
+      setInstalling(true);
+      setHint(null);
+      try {
+        await deferred.prompt();
+        await deferred.userChoice;
+      } catch {
+        // user closed the sheet
+      } finally {
+        setInstalling(false);
+        setDeferred(null);
+        if (isStandaloneDisplay()) {
+          setInstalled(true);
+        }
+      }
       return;
     }
 
-    setInstalling(true);
-    try {
-      await deferred.prompt();
-      await deferred.userChoice;
-    } catch {
-      // user closed the sheet
-    } finally {
-      setInstalling(false);
-      setDeferred(null);
-      if (isStandaloneDisplay()) {
-        setInstalled(true);
-      }
+    if (isIos) {
+      setHint(
+        "No iPhone, use Compartilhar → Adicionar à Tela de Início (passos abaixo).",
+      );
+      return;
     }
-  }, [deferred]);
+
+    if (isDesktop) {
+      setHint(
+        "No Chrome ou Edge, use o ícone de instalar na barra de endereço — ou o menu ⋮ → Instalar Minha Church. No Safari: Arquivo → Adicionar ao Dock.",
+      );
+      return;
+    }
+
+    setHint(
+      "Abra o menu do Chrome (⋮) e escolha Instalar app ou Adicionar à tela inicial.",
+    );
+  }, [deferred, isDesktop, isIos]);
 
   if (installed) {
     return (
@@ -86,8 +109,8 @@ export function PwaInstallGuide({ className }: { className?: string }) {
             App já instalado
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-            Você está usando o Minha Church pela tela inicial. Ative as
-            notificações para receber avisos do sino no celular.
+            Você está usando o Minha Church pelo atalho. No celular, ative as
+            notificações para receber avisos do sino.
           </p>
         </div>
         <PushNotificationsPanel />
@@ -95,19 +118,28 @@ export function PwaInstallGuide({ className }: { className?: string }) {
     );
   }
 
+  const sectionTitle = isIos
+    ? "No iPhone (Safari)"
+    : isDesktop
+      ? "No computador"
+      : "No Android (Chrome)";
+
   return (
     <div className={cn("space-y-8", className)}>
       <section className="space-y-3">
         <div className="flex size-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
-          <Smartphone className="size-5" aria-hidden />
+          {isDesktop ? (
+            <Monitor className="size-5" aria-hidden />
+          ) : (
+            <Smartphone className="size-5" aria-hidden />
+          )}
         </div>
         <div>
           <h2 className="text-xl font-semibold tracking-tight text-balance">
             Use o Minha Church como app
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground text-pretty">
-            Instale um atalho na tela inicial — rápido, sem App Store e sem
-            Google Play.
+            Instale um atalho — rápido, sem App Store e sem Google Play.
           </p>
         </div>
         <ul className="space-y-2.5 pt-1">
@@ -126,10 +158,25 @@ export function PwaInstallGuide({ className }: { className?: string }) {
         </ul>
       </section>
 
+      <div className="space-y-2">
+        <Button
+          type="button"
+          className="w-full"
+          disabled={installing}
+          onClick={() => void handleInstall()}
+        >
+          <Download className="size-4" aria-hidden />
+          {installing ? "Abrindo…" : "Instalar"}
+        </Button>
+        {hint ? (
+          <p className="text-xs leading-relaxed text-muted-foreground" role="status">
+            {hint}
+          </p>
+        ) : null}
+      </div>
+
       <section className="space-y-4">
-        <h3 className="text-sm font-semibold tracking-tight">
-          {isIos ? "No iPhone (Safari)" : "No Android (Chrome)"}
-        </h3>
+        <h3 className="text-sm font-semibold tracking-tight">{sectionTitle}</h3>
 
         {isIos ? (
           <ol className="space-y-3">
@@ -150,56 +197,62 @@ export function PwaInstallGuide({ className }: { className?: string }) {
               description="O ícone do Minha Church aparece na tela inicial, como um app."
             />
           </ol>
+        ) : isDesktop ? (
+          <ol className="space-y-3">
+            <Step
+              n={1}
+              icon={<Download className="size-4" aria-hidden />}
+              title="Chrome ou Edge"
+              description="Clique em Instalar acima, se aparecer — ou no ícone ⊕ / instalar na barra de endereço."
+            />
+            <Step
+              n={2}
+              icon={<MoreVertical className="size-4" aria-hidden />}
+              title="Pelo menu"
+              description="Menu ⋮ → Instalar Minha Church (ou Instalar app)."
+            />
+            <Step
+              n={3}
+              title="Safari no Mac"
+              description="Arquivo → Adicionar ao Dock. O app abre em janela própria."
+            />
+          </ol>
         ) : (
-          <div className="space-y-4">
+          <ol className="space-y-3">
             {deferred ? (
-              <Button
-                type="button"
-                className="w-full"
-                disabled={installing}
-                onClick={() => void handleInstall()}
-              >
-                <Download className="size-4" aria-hidden />
-                {installing ? "Abrindo…" : "Instalar agora"}
-              </Button>
-            ) : null}
-
-            <ol className="space-y-3">
-              {deferred ? (
+              <Step
+                n={1}
+                icon={<Download className="size-4" aria-hidden />}
+                title="Toque em Instalar"
+                description="O Chrome abre a confirmação do sistema. Aceite para criar o atalho."
+              />
+            ) : (
+              <>
                 <Step
                   n={1}
-                  icon={<Download className="size-4" aria-hidden />}
-                  title="Toque em Instalar agora"
-                  description="O Chrome abre a confirmação do sistema. Aceite para criar o atalho."
+                  icon={<MoreVertical className="size-4" aria-hidden />}
+                  title="Abra o menu do Chrome"
+                  description="Toque nos três pontinhos no canto superior direito."
                 />
-              ) : (
-                <>
-                  <Step
-                    n={1}
-                    icon={<MoreVertical className="size-4" aria-hidden />}
-                    title="Abra o menu do Chrome"
-                    description="Toque nos três pontinhos no canto superior direito."
-                  />
-                  <Step
-                    n={2}
-                    title="Instalar app / Adicionar à tela inicial"
-                    description="O texto pode variar um pouco conforme a versão do Chrome."
-                  />
-                  <Step
-                    n={3}
-                    title="Confirme a instalação"
-                    description="Pronto — o ícone fica na tela inicial."
-                  />
-                </>
-              )}
-            </ol>
-          </div>
+                <Step
+                  n={2}
+                  title="Instalar app / Adicionar à tela inicial"
+                  description="O texto pode variar um pouco conforme a versão do Chrome."
+                />
+                <Step
+                  n={3}
+                  title="Confirme a instalação"
+                  description="Pronto — o ícone fica na tela inicial."
+                />
+              </>
+            )}
+          </ol>
         )}
       </section>
 
       <p className="text-xs leading-relaxed text-muted-foreground">
-        Precisa estar no navegador do celular (Safari no iPhone, Chrome no
-        Android). Se já instalou, abra pelo ícone da tela inicial.
+        Funciona no navegador do celular e do computador. Se já instalou, abra
+        pelo ícone da tela inicial ou do Dock.
       </p>
     </div>
   );

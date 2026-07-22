@@ -4,26 +4,17 @@ import Link from "next/link";
 
 import { MarketingPageHero } from "@/components/marketing/marketing-page-hero";
 import { MarketingSection } from "@/components/marketing/marketing-section";
-import { MobileOnlyGate } from "@/components/pwa/mobile-only-gate";
 import { PwaInstallGuide } from "@/components/pwa/pwa-install-guide";
 import { Button } from "@/components/ui/button";
-import { Container } from "@/components/layout/container";
 import { PUBLIC_ROUTES } from "@/constants/routes";
 
 export function InstallAppPublicContent() {
   return (
-    <MobileOnlyGate
-      desktopHref={PUBLIC_ROUTES.home}
-      fallback={
-        <Container className="py-16">
-          <p className="text-sm text-muted-foreground">Carregando…</p>
-        </Container>
-      }
-    >
+    <>
       <MarketingPageHero
         eyebrow="Minha Church"
         title="Instalar app"
-        support="Guia rápido para o celular. No computador, use o navegador normalmente."
+        support="Atalho no celular ou no computador — sem App Store e sem loja."
       />
 
       <MarketingSection noBorder>
@@ -39,6 +30,6 @@ export function InstallAppPublicContent() {
           </div>
         </div>
       </MarketingSection>
-    </MobileOnlyGate>
+    </>
   );
 }
