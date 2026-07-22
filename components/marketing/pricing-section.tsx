@@ -5,6 +5,7 @@ import { Check } from "lucide-react";
 import { useState } from "react";
 
 import { billingFaq } from "@/constants/faq";
+import { marketingPitch } from "@/constants/marketing-pitch";
 import { PUBLIC_ROUTES } from "@/constants/routes";
 import { CtaBanner } from "@/components/marketing/cta-banner";
 import { FaqList } from "@/components/marketing/faq-list";
@@ -21,7 +22,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -133,12 +133,10 @@ function IncludedBenefits({
       )}
     >
       <p className="text-center text-lg font-semibold tracking-tight">
-        O mesmo Minha Church em todas as faixas — do primeiro ao último membro
+        {marketingPitch.pricingIncludedBannerTitle}
       </p>
       <p className="mx-auto mt-2 max-w-xl text-center text-sm text-muted-foreground">
-        Escalas, comunicados, ministérios, permissões e cadastro pastoral: tudo
-        liberado em qualquer faixa. A diferença é só quantos membros você
-        gerencia.
+        {marketingPitch.pricingIncludedBannerSupport}
       </p>
       <ul className="mt-6 grid gap-3 sm:grid-cols-2">
         {benefits.map((benefit) => (
@@ -152,7 +150,7 @@ function IncludedBenefits({
         ))}
       </ul>
       <p className="mt-6 text-center text-xs text-muted-foreground">
-        30 dias grátis · sem fidelidade · cancele quando quiser
+        30 dias gratuitos · sem fidelidade · cancele quando quiser
       </p>
     </div>
   );
@@ -200,9 +198,6 @@ function PricingSkeleton() {
             <CardContent>
               <Skeleton className="h-9 w-24" />
             </CardContent>
-            <CardFooter>
-              <Skeleton className="h-10 w-full" />
-            </CardFooter>
           </Card>
         ))}
       </div>
@@ -217,15 +212,8 @@ export function PricingSection() {
   return (
     <>
       <MarketingPageHero
-        title="Investimento justo para o tamanho da sua igreja"
-        support={
-          <>
-            As mesmas ferramentas em todas as faixas — você paga conforme
-            quantos membros cadastra, não por pacote de funcionalidades.{" "}
-            <span className="font-medium text-foreground">30 dias grátis</span>,
-            sem cartão.
-          </>
-        }
+        title="Planos conforme o tamanho da igreja"
+        support={marketingPitch.pricingHero}
       />
 
       <MarketingSection>
@@ -282,8 +270,8 @@ export function PricingSection() {
 
             <MarketingSectionIntro
               className="mx-auto mt-14 text-center"
-              title="Tabela completa por faixa"
-              support="Mesmo produto — você escolhe pela quantidade de membros."
+              title={marketingPitch.pricingTableTitle}
+              support={marketingPitch.pricingTableSupport}
             />
 
             <MotionSection
@@ -333,34 +321,29 @@ export function PricingSection() {
                         {tier.memberRange}
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className="flex-1">
+                    <CardContent className="flex-1 pb-6">
                       <TierPriceComparison
                         tier={tier}
                         period={period}
                         highlighted={tier.highlighted}
                       />
                     </CardContent>
-                    <CardFooter>
-                      <Magnetic className="w-full">
-                        <Button
-                          className={cn(
-                            "w-full",
-                            tier.highlighted &&
-                              "bg-background text-foreground hover:bg-background/90",
-                          )}
-                          variant={tier.highlighted ? "secondary" : "outline"}
-                          asChild
-                        >
-                          <Link href={PUBLIC_ROUTES.register}>
-                            {pricing.cta}
-                          </Link>
-                        </Button>
-                      </Magnetic>
-                    </CardFooter>
                   </Card>
                 </motion.div>
               ))}
             </MotionSection>
+
+            <div className="mt-10 flex flex-col items-center gap-3 text-center">
+              <Magnetic>
+                <Button size="lg" asChild>
+                  <Link href={PUBLIC_ROUTES.register}>{pricing.cta}</Link>
+                </Button>
+              </Magnetic>
+              <p className="max-w-md text-sm text-muted-foreground">
+                A faixa acompanha o número de membros da igreja. Comece o teste
+                gratuito — a cobrança só começa se você continuar.
+              </p>
+            </div>
 
             <IncludedBenefits benefits={pricing.benefits} className="mt-12" />
 
@@ -376,8 +359,8 @@ export function PricingSection() {
       <MarketingSection muted>
         <div className="grid gap-8 lg:grid-cols-[minmax(0,16rem)_minmax(0,1fr)] lg:gap-14">
           <MarketingSectionIntro
-            title="Perguntas sobre cobrança"
-            support="Trial, faixa de membros e ciclo de pagamento."
+            title="Dúvidas sobre cobrança"
+            support={marketingPitch.pricingFaqSupport}
           >
             <p className="mt-4 text-sm text-muted-foreground">
               Mais perguntas? Veja nossa{" "}
@@ -397,8 +380,8 @@ export function PricingSection() {
       </MarketingSection>
 
       <CtaBanner
-        title="30 dias para organizar sua igreja de verdade"
-        description="Use tudo — membros, escalas, comunicados e ministérios. Só escolhe a faixa quando decidir continuar."
+        title={marketingPitch.pricingCtaTitle}
+        description={marketingPitch.ctaDescription}
         primaryLabel="Começar grátis"
         primaryHref={PUBLIC_ROUTES.register}
         secondaryLabel="Ver recursos"

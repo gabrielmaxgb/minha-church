@@ -57,7 +57,8 @@ const welcomePoints = [
   {
     icon: CalendarDays,
     title: "Próximo culto em vista",
-    description: "Agenda, escalas e comunicados — tudo no mesmo lugar.",
+    description:
+      "Escalas, comunicados, finanças e cuidado — tudo no mesmo lugar.",
     tone: "text-attention-foreground bg-attention-subtle",
   },
 ] as const;
@@ -195,7 +196,7 @@ function LoginFormContent() {
                 Que bom te ver de novo
               </h1>
               <p className="max-w-sm text-sm leading-relaxed text-muted-foreground sm:text-base">
-                Entre para ver o próximo culto, as escalas e o que ainda precisa
+                Entre para ver a semana, as escalas, o caixa e o que ainda precisa
                 da sua atenção.
               </p>
             </div>

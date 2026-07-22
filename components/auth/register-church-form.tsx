@@ -12,6 +12,7 @@ import {
   MessageSquare,
   Sparkles,
   Users,
+  Wallet,
 } from "lucide-react";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -38,20 +39,26 @@ const highlights = [
   {
     icon: Users,
     title: "Membros no lugar certo",
-    description: "Cadastro pastoral sem planilha perdida.",
+    description: "Cadastro e famílias sem planilha perdida.",
     tone: "text-foreground bg-muted",
   },
   {
     icon: CalendarDays,
     title: "Escalas com antecedência",
-    description: "Convide, confirme e feche o culto com calma.",
+    description: "Convide, confirme e feche a equipe do culto.",
     tone: "text-attention-foreground bg-attention-subtle",
   },
   {
     icon: MessageSquare,
     title: "Comunicados com histórico",
-    description: "Comunique a igreja sem depender só do WhatsApp.",
+    description: "Avise a igreja sem depender só do WhatsApp.",
     tone: "text-muted-foreground bg-muted/80",
+  },
+  {
+    icon: Wallet,
+    title: "Caixa sob controle",
+    description: "Ofertas online e fechamento do mês no mesmo painel.",
+    tone: "text-domain-finances-foreground bg-domain-finances-subtle",
   },
 ] as const;
 

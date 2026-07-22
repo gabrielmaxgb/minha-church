@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 
 import { AboutContent } from "@/components/marketing/about-content";
+import { marketingPitch } from "@/constants/marketing-pitch";
 
 export const metadata: Metadata = {
   title: "Sobre",
-  description:
-    "Conheça a história, missão e equipe por trás do Minha Church — plataforma de gestão feita para igrejas brasileiras.",
+  description: marketingPitch.siteDescription,
 };
 
 export default function SobrePage() {

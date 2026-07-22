@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Container } from "@/components/layout/container";
 import { Magnetic } from "@/components/marketing/gsap/magnetic";
 import { MotionSection } from "@/components/motion/motion-section";
+import { marketingPitch } from "@/constants/marketing-pitch";
 import { PUBLIC_ROUTES } from "@/constants/routes";
 import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
@@ -23,8 +24,8 @@ interface CtaBannerProps {
 
 /** CTA final — mesmo painel escuro da home (`CtaSection`). */
 export function CtaBanner({
-  title = "Pronto para organizar sua igreja?",
-  description = "30 dias grátis · Sem cartão · Sem instalação.",
+  title = marketingPitch.ctaTitle,
+  description = marketingPitch.ctaDescription,
   primaryLabel = "Começar grátis",
   primaryHref = PUBLIC_ROUTES.register,
   secondaryLabel,

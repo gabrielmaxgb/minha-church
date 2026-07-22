@@ -4,6 +4,7 @@ import {
   BenefitsSection,
   CtaSection,
   FamilyGraphDemoSection,
+  FeatureGallerySection,
   FlowsSection,
   HeroSection,
   HomeFaqSection,
@@ -24,6 +25,7 @@ export default function HomePage() {
       <HeroSection />
       <OperationDemoSection />
       <FamilyGraphDemoSection />
+      <FeatureGallerySection />
       <FlowsSection />
       <ScreensSection />
       <HowItWorksSection />

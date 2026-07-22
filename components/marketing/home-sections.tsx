@@ -14,9 +14,16 @@ import {
   homeFlows,
   homeHowItWorks,
 } from "@/constants/home";
+import { marketingScreens } from "@/constants/marketing-pitch";
 import { PUBLIC_ROUTES } from "@/constants/routes";
 import { Container } from "@/components/layout/container";
 import { CtaBanner } from "@/components/marketing/cta-banner";
+import {
+  CareFeaturePreview,
+  CommunicationFeaturePreview,
+  FinancesFeaturePreview,
+  SchedulesFeaturePreview,
+} from "@/components/marketing/feature-previews";
 import { HomeHeroMotion } from "@/components/marketing/gsap/home-hero-motion";
 import { FloatingGeometry } from "@/components/marketing/gsap/floating-geometry";
 import { SundayChaosOrder } from "@/components/marketing/gsap/sunday-chaos-order";
@@ -317,76 +324,105 @@ export function FlowsSection() {
   );
 }
 
-export function ScreensSection() {
-  const screens = [
-    {
-      title: "A semana",
-      description:
-        "O próximo culto e o que ainda pede a sua atenção — num só lugar.",
-      domain: "home" as const,
-    },
-    {
-      title: "Escalas",
-      description:
-        "Convide, veja quem confirmou e feche a equipe antes da véspera.",
-      domain: "schedules" as const,
-    },
-    {
-      title: "Famílias",
-      description:
-        "Pastoreie com pais, cônjuges e filhos à vista — sem caçar parentesco.",
-      domain: "members" as const,
-    },
-    {
-      title: "Comunicados",
-      description:
-        "Avise a igreja ou o ministério e guarde o histórico do que foi dito.",
-      domain: "communication" as const,
-    },
-    {
-      title: "Finanças",
-      description:
-        "Receba dízimos e ofertas online, registre o caixa e feche o mês.",
-      domain: "finances" as const,
-    },
-    {
-      title: "Cuidado",
-      description:
-        "Pedidos de oração, aconselhamento e quem precisa de atenção pastoral.",
-      domain: "members" as const,
-    },
-    {
-      title: "Ministérios",
-      description:
-        "Áreas de serviço, cargos e permissões — cada líder no que é dele.",
-      domain: "schedules" as const,
-    },
-    {
-      title: "Eventos",
-      description:
-        "Cultos e encontros com data, local e recorrência — agenda clara.",
-      domain: "activities" as const,
-    },
-    {
-      title: "Relatórios",
-      description:
-        "Prestação de contas pronta para a assembleia, sem montar planilha na véspera.",
-      domain: "reports" as const,
-    },
-  ];
+const featureVisuals = [
+  {
+    eyebrow: "Escalas",
+    title: "Feche a equipe antes da véspera",
+    support:
+      "Veja quem confirmou e o que ainda falta — sem caçar gente no WhatsApp.",
+    domain: "schedules" as const,
+    Preview: SchedulesFeaturePreview,
+    reverse: false,
+  },
+  {
+    eyebrow: "Finanças",
+    title: "Receba ofertas e feche o caixa",
+    support:
+      "Fundo com link e QR, entradas do mês e relatório pronto para a assembleia.",
+    domain: "finances" as const,
+    Preview: FinancesFeaturePreview,
+    reverse: true,
+  },
+  {
+    eyebrow: "Comunicados",
+    title: "Avise a igreja e guarde o histórico",
+    support:
+      "Publicação oficial com quem leu — o que foi dito não some no grupo.",
+    domain: "communication" as const,
+    Preview: CommunicationFeaturePreview,
+    reverse: false,
+  },
+  {
+    eyebrow: "Cuidado",
+    title: "Ore junto e acompanhe quem precisa de atenção",
+    support:
+      "Pedidos de oração e aconselhamento no mesmo lugar em que a liderança já trabalha.",
+    domain: "members" as const,
+    Preview: CareFeaturePreview,
+    reverse: true,
+  },
+] as const;
 
+/** Blocos visuais das features mais fortes — mocks fiéis ao painel. */
+export function FeatureGallerySection() {
+  return (
+    <section className="border-b border-border bg-muted/20 py-14 sm:py-20">
+      <Container>
+        <MotionSection variants={fadeInUp} className="max-w-2xl">
+          <Heading as="h2">Na prática, assim</Heading>
+          <p className="mt-3 text-muted-foreground">
+            Recortes do painel — o que a liderança usa de verdade.
+          </p>
+        </MotionSection>
+
+        <div className="mt-12 space-y-16 sm:mt-14 sm:space-y-20">
+          {featureVisuals.map((item) => (
+            <MotionDiv
+              key={item.title}
+              variants={fadeInUp}
+              className={cn(
+                "grid items-center gap-8 lg:grid-cols-2 lg:gap-12",
+                item.reverse && "lg:[&>*:first-child]:order-2",
+              )}
+            >
+              <div className="max-w-md">
+                <p
+                  className={cn(
+                    "text-[11px] font-semibold tracking-[0.16em] uppercase",
+                    domainText[item.domain],
+                  )}
+                >
+                  {item.eyebrow}
+                </p>
+                <Heading as="h3" className="mt-3 text-balance">
+                  {item.title}
+                </Heading>
+                <p className="mt-3 text-base leading-relaxed text-muted-foreground">
+                  {item.support}
+                </p>
+              </div>
+              <item.Preview className="mx-auto w-full max-w-md lg:mx-0 lg:max-w-none" />
+            </MotionDiv>
+          ))}
+        </div>
+      </Container>
+    </section>
+  );
+}
+
+export function ScreensSection() {
   return (
     <section className="border-b border-border py-14 sm:py-20">
       <Container>
         <MotionSection variants={fadeInUp} className="max-w-2xl">
           <Heading as="h2">O que a liderança resolve aqui</Heading>
           <p className="mt-3 text-muted-foreground">
-          Tudo que sua igreja precisa no mesmo lugar.
+            Escala, caixa, comunicado. Fora do WhatsApp e da planilha.
           </p>
         </MotionSection>
 
         <div className="mt-10 grid gap-3 sm:mt-12 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
-          {screens.map((screen) => (
+          {marketingScreens.map((screen) => (
             <MotionDiv
               key={screen.title}
               variants={fadeInUp}

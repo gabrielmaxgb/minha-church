@@ -1,12 +1,20 @@
 "use client";
 
 import Link from "next/link";
+import type { ComponentType } from "react";
 import { ArrowRight } from "lucide-react";
 
 import { resourceSections } from "@/constants/features";
+import { marketingPitch } from "@/constants/marketing-pitch";
 import { PUBLIC_ROUTES } from "@/constants/routes";
 import { CtaBanner } from "@/components/marketing/cta-banner";
 import { FamilyGraphPreview } from "@/components/marketing/family-graph-preview";
+import {
+  CareFeaturePreview,
+  CommunicationFeaturePreview,
+  FinancesFeaturePreview,
+  SchedulesFeaturePreview,
+} from "@/components/marketing/feature-previews";
 import { Magnetic } from "@/components/marketing/gsap/magnetic";
 import { MarketingPageHero } from "@/components/marketing/marketing-page-hero";
 import {
@@ -19,12 +27,23 @@ import { fadeInUp } from "@/lib/motion";
 import { domainMark, domainText } from "@/lib/ui/domain-theme";
 import { cn } from "@/lib/utils";
 
+const sectionPreview: Record<
+  string,
+  { Preview: ComponentType<{ className?: string }>; wide?: boolean }
+> = {
+  membros: { Preview: FamilyGraphPreview, wide: true },
+  escalas: { Preview: SchedulesFeaturePreview },
+  financas: { Preview: FinancesFeaturePreview },
+  comunicacao: { Preview: CommunicationFeaturePreview },
+  cuidado: { Preview: CareFeaturePreview },
+};
+
 export function RecursosContent() {
   return (
     <>
       <MarketingPageHero
         title="A rotina da igreja organizada de ponta a ponta"
-        support="Do primeiro contato às escalas do culto e aos comunicados da semana — fluxos que a liderança usa de verdade."
+        support={marketingPitch.recursosHero}
       >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <Magnetic>
@@ -45,7 +64,7 @@ export function RecursosContent() {
       <MarketingSection>
         <MarketingSectionIntro
           title="No lugar de planilhas e grupos"
-          support="Cada fluxo do dia a dia da igreja, no mesmo lugar."
+          support={marketingPitch.recursosIntro}
         />
 
         <div className="mt-10 divide-y divide-border border-y border-border sm:mt-12">
@@ -84,11 +103,18 @@ export function RecursosContent() {
                     </li>
                   ))}
                 </ul>
-                {section.id === "membros" ? (
-                  <div className="mt-8 max-w-3xl">
-                    <FamilyGraphPreview />
-                  </div>
-                ) : null}
+                {(() => {
+                  const visual = sectionPreview[section.id];
+                  if (!visual) {
+                    return null;
+                  }
+                  const { Preview, wide } = visual;
+                  return (
+                    <div className={cn("mt-8", wide ? "max-w-3xl" : "max-w-md")}>
+                      <Preview />
+                    </div>
+                  );
+                })()}
               </div>
             </MotionDiv>
           ))}

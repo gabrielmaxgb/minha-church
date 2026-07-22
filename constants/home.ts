@@ -1,9 +1,10 @@
 /** Landing home — acolhedora, específica, sem tom corporativo frio. */
 
+import { marketingPitch } from "@/constants/marketing-pitch";
+
 export const homeHero = {
 	headline: "A rotina da igreja em um só lugar",
-	support:
-		"Membros, ministérios, escalas, comunicados e finanças no mesmo painel. Organize a rotina, fortaleça o cuidado.",
+	support: `${marketingPitch.productScope} Organize a rotina, fortaleça o cuidado.`,
 	primaryCta: "Começar grátis",
 	secondaryCta: "Ver como funciona",
 	secondaryHref: "#como-funciona",
@@ -93,6 +94,6 @@ export const homeFaq = [
 	{
 		question: "Para quem é o Minha Church?",
 		answer:
-			"Para pastores, secretários, tesoureiros e líderes de ministério que hoje organizam a semana em planilhas e WhatsApp.",
+			"Para pastores, secretários, tesoureiros e líderes de ministério que hoje organizam membros, escalas, comunicados e finanças em planilhas e WhatsApp.",
 	},
 ] as const;

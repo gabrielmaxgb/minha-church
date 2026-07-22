@@ -5,7 +5,7 @@ import { InstallAppPublicContent } from "@/components/pwa/install-app-public-con
 export const metadata: Metadata = {
   title: "Instalar app",
   description:
-    "Adicione o Minha Church à tela inicial do celular — acesso rápido, sem App Store.",
+    "Instale o Minha Church no celular ou no computador — atalho rápido, sem App Store.",
   robots: {
     index: false,
     follow: true,

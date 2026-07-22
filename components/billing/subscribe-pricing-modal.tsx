@@ -223,7 +223,7 @@ export function SubscribePricingModal({
                   <span className="font-medium text-foreground">
                     {formatMemberCountLabel(memberCount)}
                   </span>{" "}
-                  cadastrados. Por isso sua faixa é{" "}
+                  membros. Por isso a faixa indicada é{" "}
                   {suggestedTier ? (
                     <span className="font-medium text-foreground">
                       {suggestedTier.name}
@@ -231,9 +231,9 @@ export function SubscribePricingModal({
                   ) : (
                     "a indicada abaixo"
                   )}
-                  . Você paga conforme o tamanho da congregação — não por pacote
-                  de funcionalidades. Tudo continua disponível: membros,
-                  ministérios, escalas e comunicados.
+                  . O valor segue o tamanho da congregação — não um pacote de
+                  recursos. Tudo continua disponível: membros, ministérios,
+                  escalas e comunicados.
                 </>
               ) : (
                 <>
@@ -325,7 +325,8 @@ export function SubscribePricingModal({
                     Mesmas funcionalidades em todas as faixas
                   </p>
                   <p className="mx-auto mt-2 max-w-2xl text-center text-sm text-muted-foreground">
-                    A única diferença é quantos membros você gerencia. Sem surpresas,
+                    A única diferença é o número de membros da igreja. Sem
+                    surpresas,
                     sem paywall por recurso — só o tamanho da sua igreja.
                   </p>
                   <ul className="mt-5 grid gap-2.5 sm:grid-cols-2">

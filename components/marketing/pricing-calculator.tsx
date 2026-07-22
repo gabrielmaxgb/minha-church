@@ -36,8 +36,16 @@ export function PricingCalculator({ period, className }: PricingCalculatorProps)
     [memberCount, tiers],
   );
 
-  const monthlyPrice = getTierMonthlyPrice(suggestedTier, period);
+  const displayPrice =
+    period === "yearly"
+      ? suggestedTier.yearlyPrice
+      : suggestedTier.monthlyPrice;
+  const priceSuffix = period === "yearly" ? "/ano" : "/mês";
   const pricePerMember = getPricePerMember(suggestedTier, period);
+  const effectiveMonthly =
+    period === "yearly"
+      ? getTierMonthlyPrice(suggestedTier, "yearly")
+      : null;
 
   return (
     <div
@@ -52,11 +60,11 @@ export function PricingCalculator({ period, className }: PricingCalculatorProps)
         </div>
         <div>
           <p className="text-lg font-semibold tracking-tight">
-            Descubra a faixa da sua igreja
+            Estime a faixa da sua igreja
           </p>
           <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-            Informe quantos membros você costuma cadastrar. Mostramos a faixa e o
-            investimento — sem escolher plano manualmente.
+            Informe quantos membros a igreja tem. Indicamos a faixa e o valor
+            {period === "yearly" ? " anual" : " mensal"} correspondente.
           </p>
         </div>
       </div>
@@ -65,7 +73,7 @@ export function PricingCalculator({ period, className }: PricingCalculatorProps)
         <div>
           <div className="flex items-center justify-between gap-3">
             <label htmlFor="member-count-slider" className="text-sm font-medium">
-              Membros cadastrados
+              Membros da igreja
             </label>
             <span className="rounded-full bg-muted px-2.5 py-0.5 text-sm font-semibold tabular-nums">
               {formatMemberCountLabel(memberCount)}
@@ -114,15 +122,22 @@ export function PricingCalculator({ period, className }: PricingCalculatorProps)
           <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-3xl font-bold tracking-tight tabular-nums">
-                {formatCurrency(monthlyPrice)}
+                {formatCurrency(displayPrice)}
                 <span className="text-base font-normal text-muted-foreground">
-                  /mês
+                  {priceSuffix}
                 </span>
               </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {formatPricePerMember(pricePerMember)} por membro · todas as
-                funcionalidades incluídas
-              </p>
+              {effectiveMonthly !== null ? (
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Equivale a {formatCurrency(effectiveMonthly)}/mês ·{" "}
+                  {formatPricePerMember(pricePerMember)} por membro
+                </p>
+              ) : (
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {formatPricePerMember(pricePerMember)} por membro · todos os
+                  recursos incluídos
+                </p>
+              )}
             </div>
             <Magnetic>
               <Button asChild className="shrink-0 gap-1.5">
