@@ -9,11 +9,13 @@ import {
 } from "lucide-react";
 
 import { StripeBrandInline } from "@/components/brand/stripe-mark";
+import { StripeProcessingFeesNote } from "@/components/dashboard/finances/stripe-processing-fees-note";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FormAlert } from "@/components/ui/form-field";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AUTH_ROUTES, settingsSectionPath } from "@/constants/routes";
+import { STRIPE_BR_DOCS } from "@/constants/stripe-fees-br";
 import type {
   ConnectBalanceAmount,
   ConnectPayout,
@@ -24,6 +26,25 @@ import {
   useConnectPayoutsOverview,
 } from "@/lib/api/queries";
 import { cn, formatCurrency } from "@/lib/utils";
+
+function StripeExternalLink({
+  href,
+  children,
+}: {
+  href: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className="font-medium text-foreground underline underline-offset-2"
+    >
+      {children}
+    </a>
+  );
+}
 
 const PAYOUT_STATUS_LABEL: Record<ConnectPayoutStatus, string> = {
   paid: "No banco",
@@ -169,6 +190,26 @@ export function ConnectPayoutsPanel() {
             </Link>
             .
           </p>
+          <p>
+            <span className="font-medium text-foreground">
+              Bruto ≠ líquido.
+            </span>{" "}
+            Em Contribuições você vê o que a pessoa pagou. Aqui e no banco
+            entram os valores depois da tarifa do <StripeBrandInline />. Minha
+            Church não adiciona taxa por transação neste momento. Veja{" "}
+            <StripeExternalLink href={STRIPE_BR_DOCS.pricing.href}>
+              {STRIPE_BR_DOCS.pricing.label}
+            </StripeExternalLink>
+            ,{" "}
+            <StripeExternalLink href={STRIPE_BR_DOCS.balancesSettlement.href}>
+              {STRIPE_BR_DOCS.balancesSettlement.label}
+            </StripeExternalLink>{" "}
+            e{" "}
+            <StripeExternalLink href={STRIPE_BR_DOCS.payouts.href}>
+              {STRIPE_BR_DOCS.payouts.label}
+            </StripeExternalLink>
+            .
+          </p>
         </div>
       </div>
 
@@ -206,10 +247,13 @@ export function ConnectPayoutsPanel() {
             {formatCurrency(pendingCents / 100)}
           </p>
           <p className="mt-1 inline-flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
-            Ainda processando no <StripeBrandInline /> — ainda não liberado
+            Já líquido (após tarifa) — ainda processando no{" "}
+            <StripeBrandInline />
           </p>
         </div>
       </div>
+
+      <StripeProcessingFeesNote compact />
 
       <section className="space-y-3">
         <div>

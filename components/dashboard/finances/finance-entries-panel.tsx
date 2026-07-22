@@ -432,37 +432,55 @@ export function FinanceEntriesPanel({
       )}
 
       {summary ? (
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-          <div className="rounded-xl border border-border bg-card px-4 py-3">
-            <p className="text-xs text-muted-foreground">Entradas manuais</p>
-            <p className="mt-1 font-medium tabular-nums text-foreground">
-              {formatCurrency(summary.incomeCents / 100)}
-            </p>
+        <div className="space-y-2">
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+            <div className="rounded-xl border border-border bg-card px-4 py-3">
+              <p className="text-xs text-muted-foreground">Entradas manuais</p>
+              <p className="mt-1 font-medium tabular-nums text-foreground">
+                {formatCurrency(summary.incomeCents / 100)}
+              </p>
+            </div>
+            <div className="rounded-xl border border-border bg-card px-4 py-3">
+              <p className="text-xs text-muted-foreground">
+                Contribuições (bruto)
+              </p>
+              <p className="mt-1 font-medium tabular-nums text-foreground">
+                {formatCurrency(summary.onlineDonationCents / 100)}
+              </p>
+            </div>
+            <div className="rounded-xl border border-border bg-card px-4 py-3">
+              <p className="text-xs text-muted-foreground">
+                Inscrições (bruto)
+              </p>
+              <p className="mt-1 font-medium tabular-nums text-foreground">
+                {formatCurrency((summary.eventTicketCents ?? 0) / 100)}
+              </p>
+            </div>
+            <div className="rounded-xl border border-border bg-card px-4 py-3">
+              <p className="text-xs text-muted-foreground">Taxas Stripe</p>
+              <p className="mt-1 font-medium tabular-nums text-foreground">
+                {formatCurrency((summary.processorFeeCents ?? 0) / 100)}
+              </p>
+            </div>
+            <div className="rounded-xl border border-border bg-card px-4 py-3">
+              <p className="text-xs text-muted-foreground">Saídas</p>
+              <p className="mt-1 font-medium tabular-nums text-foreground">
+                {formatCurrency(summary.expenseCents / 100)}
+              </p>
+            </div>
+            <div className="rounded-xl border border-border bg-card px-4 py-3">
+              <p className="text-xs text-muted-foreground">Saldo líquido</p>
+              <p className="mt-1 font-medium tabular-nums text-foreground">
+                {formatCurrency(summary.balanceCents / 100)}
+              </p>
+            </div>
           </div>
-          <div className="rounded-xl border border-border bg-card px-4 py-3">
-            <p className="text-xs text-muted-foreground">Contribuições online</p>
-            <p className="mt-1 font-medium tabular-nums text-foreground">
-              {formatCurrency(summary.onlineDonationCents / 100)}
+          {summary.processorFeesEstimated ? (
+            <p className="text-xs text-muted-foreground">
+              Parte das taxas foi estimada pela tabela pública do Stripe
+              (pagamentos antigos sem fee capturado).
             </p>
-          </div>
-          <div className="rounded-xl border border-border bg-card px-4 py-3">
-            <p className="text-xs text-muted-foreground">Inscrições pagas</p>
-            <p className="mt-1 font-medium tabular-nums text-foreground">
-              {formatCurrency((summary.eventTicketCents ?? 0) / 100)}
-            </p>
-          </div>
-          <div className="rounded-xl border border-border bg-card px-4 py-3">
-            <p className="text-xs text-muted-foreground">Saídas</p>
-            <p className="mt-1 font-medium tabular-nums text-foreground">
-              {formatCurrency(summary.expenseCents / 100)}
-            </p>
-          </div>
-          <div className="rounded-xl border border-border bg-card px-4 py-3">
-            <p className="text-xs text-muted-foreground">Saldo do período</p>
-            <p className="mt-1 font-medium tabular-nums text-foreground">
-              {formatCurrency(summary.balanceCents / 100)}
-            </p>
-          </div>
+          ) : null}
         </div>
       ) : null}
 

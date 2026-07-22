@@ -10,8 +10,8 @@ const WORDMARK_SRC = "/brand/stripe-wordmark.svg";
 type WordmarkSize = "xs" | "sm" | "md";
 
 const WORDMARK_SIZE: Record<WordmarkSize, string> = {
-  /** Inline em frases — altura ~x-height do texto */
-  xs: "h-[13px] w-auto translate-y-px",
+  /** Inline em frases — um pouco maior que o texto ao redor */
+  xs: "h-[1.15em] w-auto min-h-[15px]",
   /** Botões compactos */
   sm: "h-4 w-auto",
   /** Botões / CTAs */
@@ -38,7 +38,7 @@ export function StripeWordmark({
       aria-hidden={title === false ? true : undefined}
       draggable={false}
       className={cn(
-        "inline-block shrink-0 select-none object-contain object-left align-middle",
+        "inline-block shrink-0 select-none object-contain object-left align-baseline",
         WORDMARK_SIZE[size],
         className,
       )}
@@ -77,12 +77,12 @@ export function StripeBrandInline({
   return (
     <span
       className={cn(
-        "inline-flex items-center align-middle leading-none",
+        "relative inline-block translate-y-[0.14em] align-baseline leading-none",
         className,
       )}
     >
       <StripeWordmark
-        className={markClassName}
+        className={cn("align-baseline", markClassName)}
         size={size}
         title="Stripe"
       />

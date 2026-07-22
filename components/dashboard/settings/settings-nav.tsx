@@ -112,7 +112,7 @@ const ALL_ITEMS: SettingsNavItem[] = [
     id: "activity",
     label: "Atividade",
     shortLabel: "Atividade",
-    description: "Histórico de mudanças",
+    description: "Cargos, dinheiro e acessos",
     area: "church",
     icon: History,
   },

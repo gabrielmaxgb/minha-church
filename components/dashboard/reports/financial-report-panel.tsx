@@ -168,27 +168,47 @@ export function FinancialReportPanel() {
             </div>
           </header>
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
             <SummaryTile
-              label="Receitas"
-              value={report.summary.totalIncomeCents}
+              label="Receitas brutas"
+              value={
+                report.summary.totalIncomeGrossCents ??
+                report.summary.totalIncomeCents +
+                  (report.summary.processorFeeCents ?? 0)
+              }
               hint="Manuais + online + ingressos"
+            />
+            <SummaryTile
+              label="Taxas Stripe"
+              value={report.summary.processorFeeCents ?? 0}
+              hint={
+                report.summary.processorFeesEstimated
+                  ? "Parte estimada (tabela pública)"
+                  : "Processamento de pagamento"
+              }
+            />
+            <SummaryTile
+              label="Receitas líquidas"
+              value={report.summary.totalIncomeCents}
+              hint="Bruto menos taxas Stripe"
             />
             <SummaryTile
               label="Despesas"
               value={report.summary.expenseCents}
             />
             <SummaryTile
-              label="Saldo"
+              label="Saldo líquido"
               value={report.summary.balanceCents}
               emphasize
-            />
-            <SummaryTile
-              label="Doações online"
-              value={report.summary.onlineDonationCents}
-              hint="Incluídas nas receitas"
+              hint="Receitas líquidas menos despesas"
             />
           </div>
+          {report.summary.processorFeesEstimated ? (
+            <p className="text-xs text-muted-foreground">
+              Parte das taxas Stripe foi estimada pela tabela pública (pagamentos
+              sem fee capturado).
+            </p>
+          ) : null}
 
           <ReportTable title="Receitas por conta" lines={report.incomeLines} />
           <ReportTable title="Despesas por conta" lines={report.expenseLines} />

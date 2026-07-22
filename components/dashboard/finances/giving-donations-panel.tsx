@@ -414,8 +414,8 @@ export function GivingDonationsPanel({
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-sm text-muted-foreground">
             {memberId
-              ? "Contribuições deste membro."
-              : "Contribuições e inscrições pagas — uma só visão de entradas."}
+              ? "Contribuições deste membro (valor pago pela pessoa)."
+              : "Valores brutos — o que a pessoa pagou. O líquido após a tarifa do Stripe aparece em Repasses."}
           </p>
           {!memberId && source !== "all" ? (
             <Button

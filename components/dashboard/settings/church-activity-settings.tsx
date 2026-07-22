@@ -30,6 +30,19 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
   "church.closure_requested": "Encerramento solicitado",
   "church.closure_cancelled": "Encerramento cancelado",
   "user.account_deleted": "Conta excluída",
+  "connect.onboarding_started": "Recebimentos iniciados",
+  "connect.onboarding_resumed": "Recebimentos retomados",
+  "fiscal_profile.updated": "Perfil fiscal",
+  "giving_fund.created": "Fundo criado",
+  "giving_fund.updated": "Fundo alterado",
+  "giving_fund.deleted": "Fundo excluído",
+  "finance_entry.created": "Lançamento criado",
+  "finance_entry.updated": "Lançamento editado",
+  "finance_entry.deleted": "Lançamento excluído",
+  "financial_period.closed": "Período fechado",
+  "financial_period.reopened": "Período reaberto",
+  "giving_donation.refunded": "Contribuição estornada",
+  "event_ticket.refunded": "Inscrição estornada",
 };
 
 function formatWhen(iso: string) {
@@ -142,8 +155,8 @@ export function ChurchActivitySettings() {
         title="Atividade"
         description={
           retentionDays !== null
-            ? `Histórico de mudanças em cargos e acessos. Retenção: ${retentionDays} dias.`
-            : "Histórico de mudanças em cargos e acessos."
+            ? `Histórico de cargos, acessos, recebimentos e finanças. Retenção: ${retentionDays} dias.`
+            : "Histórico de cargos, acessos, recebimentos e finanças."
         }
       />
 

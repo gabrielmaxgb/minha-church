@@ -789,10 +789,15 @@ export interface FinanceEntryList {
 export interface FinanceEntriesSummary {
   incomeCents: number;
   expenseCents: number;
+  /** Saldo líquido (online já desconta taxas Stripe). */
   balanceCents: number;
+  /** Saldo se online fosse bruto. */
+  balanceGrossCents?: number;
   onlineDonationCents: number;
   /** Presente após o backend passar a agregar inscrições pagas. */
   eventTicketCents?: number;
+  processorFeeCents?: number;
+  processorFeesEstimated?: boolean;
 }
 
 export interface FetchFinanceEntriesParams {

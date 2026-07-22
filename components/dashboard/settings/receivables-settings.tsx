@@ -14,11 +14,12 @@ import {
 } from "lucide-react";
 
 import { StripeBrandInline, StripeWordmark, stripeOutlineButtonClassName } from "@/components/brand/stripe-mark";
+import { SubscribePricingTrigger } from "@/components/billing/subscribe-pricing-trigger";
+import { StripeProcessingFeesNote } from "@/components/dashboard/finances/stripe-processing-fees-note";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FormAlert } from "@/components/ui/form-field";
 import { Skeleton } from "@/components/ui/skeleton";
-import { SubscribePricingTrigger } from "@/components/billing/subscribe-pricing-trigger";
 import { useFeatureLock } from "@/lib/subscription/use-feature-lock";
 import { cn } from "@/lib/utils";
 import {
@@ -415,13 +416,14 @@ function ConnectOnboardingCard({
           </p>
         )}
 
-        <p className="text-xs leading-relaxed text-muted-foreground">
-          O cadastro, a verificação de identidade e o processamento dos
-          pagamentos são feitos com segurança pelo <StripeBrandInline />. As
-          tarifas de processamento são cobradas pelo <StripeBrandInline /> e o
-          Minha Church não adiciona nenhuma taxa por transação neste momento.
-          Pix, cartão e boleto só ficam disponíveis após a aprovação da conta.
-        </p>
+        <div className="space-y-3">
+          <StripeProcessingFeesNote />
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            O cadastro, a verificação de identidade e o processamento dos
+            pagamentos são feitos com segurança pelo <StripeBrandInline />.
+            Pix, cartão e boleto só ficam disponíveis após a aprovação da conta.
+          </p>
+        </div>
       </div>
     </SettingsPanel>
   );

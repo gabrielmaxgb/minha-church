@@ -55,8 +55,14 @@ export interface FinancialReport {
     expenseCents: number;
     onlineDonationCents: number;
     eventTicketCents: number;
+    /** Receitas líquidas (bruto − taxas Stripe). */
     totalIncomeCents: number;
+    totalIncomeGrossCents?: number;
+    processorFeeCents?: number;
+    processorFeesEstimated?: boolean;
+    /** Saldo líquido. */
     balanceCents: number;
+    balanceGrossCents?: number;
   };
   incomeLines: FinancialReportAccountLine[];
   expenseLines: FinancialReportAccountLine[];

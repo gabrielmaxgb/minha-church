@@ -38,7 +38,9 @@ export function FinancesSummaryCards() {
 
   if (isPending) {
     return (
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        <Skeleton className="h-24 rounded-xl" />
+        <Skeleton className="h-24 rounded-xl" />
         <Skeleton className="h-24 rounded-xl" />
         <Skeleton className="h-24 rounded-xl" />
         <Skeleton className="h-24 rounded-xl" />
@@ -48,25 +50,35 @@ export function FinancesSummaryCards() {
   }
 
   const summary = summaryQuery.data;
+  const ledger = ledgerSummary.data;
+  const onlineGross =
+    (ledger?.onlineDonationCents ?? 0) + (ledger?.eventTicketCents ?? 0);
+  const entriesGross = (ledger?.incomeCents ?? 0) + onlineGross;
+  const processorFee = ledger?.processorFeeCents ?? 0;
+  const feesEstimated = Boolean(ledger?.processorFeesEstimated);
+
   const cards = [
     {
-      label: "Entradas (mês)",
-      value: formatCurrency(
-        (ledgerSummary.data?.incomeCents ?? 0) / 100 +
-          (ledgerSummary.data?.onlineDonationCents ?? 0) / 100 +
-          (ledgerSummary.data?.eventTicketCents ?? 0) / 100,
-      ),
+      label: "Entradas brutas",
+      value: formatCurrency(entriesGross / 100),
       hint: "Manuais + contribuições + inscrições",
     },
     {
-      label: "Saídas (mês)",
-      value: formatCurrency((ledgerSummary.data?.expenseCents ?? 0) / 100),
+      label: "Taxas Stripe",
+      value: formatCurrency(processorFee / 100),
+      hint: feesEstimated
+        ? "Parte estimada (tabela pública)"
+        : "Descontadas do saldo líquido",
+    },
+    {
+      label: "Saídas",
+      value: formatCurrency((ledger?.expenseCents ?? 0) / 100),
       hint: "Só lançamentos manuais (gastos)",
     },
     {
-      label: "Saldo (mês)",
-      value: formatCurrency((ledgerSummary.data?.balanceCents ?? 0) / 100),
-      hint: "Entradas menos saídas",
+      label: "Saldo líquido",
+      value: formatCurrency((ledger?.balanceCents ?? 0) / 100),
+      hint: "O que entra na conta após as taxas",
     },
     {
       label: "Fundos ativos",
@@ -95,7 +107,7 @@ export function FinancesSummaryCards() {
           <span className="text-xs">Atualizar</span>
         </Button>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         {cards.map((card) => (
           <div
             key={card.label}

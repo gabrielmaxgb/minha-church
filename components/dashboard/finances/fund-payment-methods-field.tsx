@@ -7,6 +7,10 @@ import Link from "next/link";
 
 import { FormAlert } from "@/components/ui/form-field";
 import { settingsSectionPath } from "@/constants/routes";
+import {
+  STRIPE_BR_DOCS,
+  STRIPE_BR_PUBLIC_FEES,
+} from "@/constants/stripe-fees-br";
 import type {
   ConnectCapabilityStatus,
   ConnectStatus,
@@ -21,24 +25,28 @@ const METHODS: Array<{
   key: MethodKey;
   label: string;
   hint: string;
+  docsHref: string;
   icon: LucideIcon;
 }> = [
   {
     key: "pix",
     label: "Pix",
-    hint: "Liquidação rápida",
+    hint: `Tarifa Stripe ${STRIPE_BR_PUBLIC_FEES.pix.summary}`,
+    docsHref: STRIPE_BR_DOCS.pix.href,
     icon: QrCode,
   },
   {
     key: "card",
     label: "Cartão",
-    hint: "Crédito e débito",
+    hint: `Tarifa Stripe ${STRIPE_BR_PUBLIC_FEES.cardDomestic.summary}`,
+    docsHref: STRIPE_BR_DOCS.pricing.href,
     icon: CreditCard,
   },
   {
     key: "boleto",
     label: "Boleto",
-    hint: "Pagamento bancário",
+    hint: `Tarifa Stripe ${STRIPE_BR_PUBLIC_FEES.boleto.summary}`,
+    docsHref: STRIPE_BR_DOCS.boleto.href,
     icon: Receipt,
   },
 ];
@@ -182,7 +190,23 @@ export function FundPaymentMethodsField({
                     {method.label}
                   </span>
                   <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
-                    {available ? method.hint : "Indisponível na conta"}
+                    {available ? (
+                      <>
+                        {method.hint}
+                        {" · "}
+                        <a
+                          href={method.docsHref}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="font-medium text-foreground underline underline-offset-2"
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          detalhes
+                        </a>
+                      </>
+                    ) : (
+                      "Indisponível na conta"
+                    )}
                   </span>
                 </span>
               </label>
