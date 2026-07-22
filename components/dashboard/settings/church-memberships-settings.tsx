@@ -16,6 +16,7 @@ import {
   useUpdateChurchMembership,
 } from "@/lib/api/queries";
 import { canManageChurchMemberships } from "@/lib/church-memberships/constants";
+import { toastApiError } from "@/lib/ui/toast";
 import { useAuth } from "@/providers/auth-provider";
 import type { ChurchMembership } from "@/types/church-memberships";
 
@@ -26,7 +27,6 @@ import {
   type RoleHolderInfo,
 } from "./membership-role-picker";
 import {
-  SettingsAlert,
   SettingsEmptyState,
   SettingsExpandableRow,
   SettingsFilterPill,
@@ -116,12 +116,10 @@ export function ChurchMembershipsSettings() {
   const transferOwnership = useTransferChurchOwnership();
 
   const [drafts, setDrafts] = useState<Record<string, string[]>>({});
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [savingUserId, setSavingUserId] = useState<string | null>(null);
   const [transferTarget, setTransferTarget] = useState<ChurchMembership | null>(
     null,
   );
-  const [transferError, setTransferError] = useState<string | null>(null);
   const [pendingSingleHolderTransfer, setPendingSingleHolderTransfer] =
     useState<PendingSingleHolderTransfer | null>(null);
   const [search, setSearch] = useState("");
@@ -367,7 +365,6 @@ export function ChurchMembershipsSettings() {
       delete next[membership.userId];
       return next;
     });
-    setErrorMessage(null);
   }
 
   async function saveChanges(membership: ChurchMembership) {
@@ -377,7 +374,6 @@ export function ChurchMembershipsSettings() {
       return;
     }
 
-    setErrorMessage(null);
     setSavingUserId(membership.userId);
 
     try {
@@ -386,11 +382,7 @@ export function ChurchMembershipsSettings() {
         payload: { roleIds: draft },
       });
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível salvar as alterações.",
-      );
+      toastApiError(error, "Não foi possível salvar as alterações.");
     } finally {
       setSavingUserId(null);
     }
@@ -401,9 +393,6 @@ export function ChurchMembershipsSettings() {
       return;
     }
 
-    setTransferError(null);
-    setErrorMessage(null);
-
     try {
       await transferOwnership.mutateAsync({
         userId: transferTarget.userId,
@@ -412,11 +401,7 @@ export function ChurchMembershipsSettings() {
       setTransferTarget(null);
       router.replace(`${AUTH_ROUTES.settings}?section=profile`);
     } catch (error) {
-      setTransferError(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível transferir a propriedade.",
-      );
+      toastApiError(error, "Não foi possível transferir a propriedade.");
     }
   }
 
@@ -474,8 +459,6 @@ export function ChurchMembershipsSettings() {
             : "Quem tem login no painel. Atribua cargos; o dono pode transferir a propriedade."
         }
       />
-
-      {errorMessage && <SettingsAlert message={errorMessage} />}
 
       {isLoading ? (
         <Skeleton className="h-112 w-full rounded-xl" />
@@ -663,7 +646,6 @@ export function ChurchMembershipsSettings() {
                                   Boolean(savingUserId)
                                 }
                                 onClick={() => {
-                                  setTransferError(null);
                                   setTransferTarget(membership);
                                 }}
                                 className="inline-flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-attention-foreground disabled:opacity-50"
@@ -718,10 +700,8 @@ export function ChurchMembershipsSettings() {
       <TransferOwnershipDialog
         membership={transferTarget}
         pending={transferOwnership.isPending}
-        error={transferError}
         onCancel={() => {
           setTransferTarget(null);
-          setTransferError(null);
         }}
         onConfirm={(password) => void handleConfirmTransfer(password)}
       />

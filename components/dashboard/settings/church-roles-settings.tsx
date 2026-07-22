@@ -15,6 +15,7 @@ import {
   useUpdateChurchRole,
 } from "@/lib/api/queries";
 import { canManageChurchRoles, getFirstAccessibleRoute } from "@/lib/permissions";
+import { toastApiError, toastError } from "@/lib/ui/toast";
 import { churchRolePermissionsToUserPermissions } from "@/lib/permissions/role-preview";
 import { useNavAccessOptions } from "@/lib/permissions/use-nav-access-options";
 import {
@@ -33,7 +34,6 @@ import { useAuth } from "@/providers/auth-provider";
 import type { ChurchRole, UpdateChurchRolePayload } from "@/types/church-roles";
 
 import {
-  SettingsAlert,
   SettingsEmptyState,
   SettingsMobileSelectBar,
   SettingsMobileSelectChip,
@@ -127,7 +127,6 @@ export function ChurchRolesSettings() {
   const [newRoleName, setNewRoleName] = useState("");
   const [guideOpen, setGuideOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [roleToDelete, setRoleToDelete] = useState<ChurchRole | null>(null);
   const [permissionConfirm, setPermissionConfirm] = useState<{
@@ -367,7 +366,6 @@ export function ChurchRolesSettings() {
       delete next[role.id];
       return next;
     });
-    setErrorMessage(null);
   }
 
   async function saveChanges(role: ChurchRole) {
@@ -393,14 +391,13 @@ export function ChurchRolesSettings() {
       const trimmedName = nameDraft.trim();
 
       if (!trimmedName) {
-        setErrorMessage("O nome do cargo não pode ficar vazio.");
+        toastError("O nome do cargo não pode ficar vazio.");
         return;
       }
 
       payload.name = trimmedName;
     }
 
-    setErrorMessage(null);
     setIsSaving(true);
 
     try {
@@ -410,11 +407,7 @@ export function ChurchRolesSettings() {
       });
       discardChanges(role);
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível salvar as alterações.",
-      );
+      toastApiError(error, "Não foi possível salvar as alterações.");
     } finally {
       setIsSaving(false);
     }
@@ -429,8 +422,6 @@ export function ChurchRolesSettings() {
       return;
     }
 
-    setErrorMessage(null);
-
     try {
       const created = await createRole.mutateAsync({
         name,
@@ -440,11 +431,7 @@ export function ChurchRolesSettings() {
       setIsCreating(false);
       setSelectedRoleId(created.id);
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível criar o cargo.",
-      );
+      toastApiError(error, "Não foi possível criar o cargo.");
     }
   }
 
@@ -453,7 +440,6 @@ export function ChurchRolesSettings() {
       return;
     }
 
-    setErrorMessage(null);
     setRoleToDelete(role);
   }
 
@@ -463,8 +449,6 @@ export function ChurchRolesSettings() {
     if (!role) {
       return;
     }
-
-    setErrorMessage(null);
 
     try {
       await deleteRole.mutateAsync(role.id);
@@ -476,11 +460,7 @@ export function ChurchRolesSettings() {
 
       setRoleToDelete(null);
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível excluir o cargo.",
-      );
+      toastApiError(error, "Não foi possível excluir o cargo.");
       setRoleToDelete(null);
     }
   }
@@ -515,8 +495,6 @@ export function ChurchRolesSettings() {
         open={guideOpen}
         onClose={() => setGuideOpen(false)}
       />
-
-      {errorMessage && <SettingsAlert message={errorMessage} />}
 
       {isLoading ? (
         <Skeleton className="h-112 w-full rounded-xl" />

@@ -126,10 +126,6 @@ export function CreateMemberContent() {
           <CardContent>
             <FormProvider {...form}>
               <form onSubmit={onSubmit} className="space-y-6" noValidate>
-                {form.formState.errors.root?.message && (
-                  <FormAlert>{form.formState.errors.root.message}</FormAlert>
-                )}
-
                 {memberAccessLocked && (
                   <FormAlert>{MEMBER_ACCESS_LOCKED_REASON}</FormAlert>
                 )}
@@ -176,7 +172,6 @@ export function CreateMemberContent() {
           preview={tierCrossing.preview}
           mode={tierCrossing.mode}
           loading={tierCrossing.loading}
-          error={tierCrossing.error}
           requestSent={tierCrossing.requestSent}
           onConfirm={() => void tierCrossing.confirm()}
           onRequestOwner={() => void tierCrossing.requestOwnerApproval()}

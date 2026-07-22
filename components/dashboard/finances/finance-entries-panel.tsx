@@ -21,6 +21,7 @@ import {
   useGivingFunds,
   useUpdateFinanceEntry,
 } from "@/lib/api/queries";
+import { toastError } from "@/lib/ui/toast";
 import type {
   FinanceEntry,
   FinanceEntryMethod,
@@ -131,7 +132,6 @@ export function FinanceEntriesPanel({
   const [form, setForm] = useState<EntryFormState>(EMPTY_FORM);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [entryToDelete, setEntryToDelete] = useState<FinanceEntry | null>(null);
-  const [formError, setFormError] = useState<string | null>(null);
   const [fundLinkOpen, setFundLinkOpen] = useState(false);
   const [localCategoriesOpen, setLocalCategoriesOpen] = useState(false);
 
@@ -228,7 +228,6 @@ export function FinanceEntriesPanel({
     setForm(EMPTY_FORM);
     setEditingEntry(null);
     setFormOpen(false);
-    setFormError(null);
     setFundLinkOpen(false);
   };
 
@@ -236,7 +235,6 @@ export function FinanceEntriesPanel({
     setEditingEntry(null);
     setForm({ ...EMPTY_FORM, occurredOn: todayIsoDate() });
     setFormOpen(true);
-    setFormError(null);
     setFundLinkOpen(false);
   };
 
@@ -244,7 +242,6 @@ export function FinanceEntriesPanel({
     setEditingEntry(entry);
     setForm(entryToForm(entry));
     setFormOpen(true);
-    setFormError(null);
     setFundLinkOpen(Boolean(entry.fundId));
   };
 
@@ -277,8 +274,6 @@ export function FinanceEntriesPanel({
   };
 
   const handleSubmit = async () => {
-    setFormError(null);
-
     try {
       const payload = buildPayload();
 
@@ -297,12 +292,21 @@ export function FinanceEntriesPanel({
 
       resetForm();
     } catch (error) {
-      setFormError(
+      toastError(
         error instanceof Error
           ? error.message
           : resolvePaymentsError(error, "Não foi possível salvar o lançamento."),
       );
     }
+  };
+
+  const handleExport = () => {
+    exportMutation.mutate(params, {
+      onError: (error) =>
+        toastError(
+          resolvePaymentsError(error, "Não foi possível exportar os lançamentos."),
+        ),
+    });
   };
 
   const handleConfirmDelete = async () => {
@@ -317,6 +321,10 @@ export function FinanceEntriesPanel({
         resetForm();
       }
       setEntryToDelete(null);
+    } catch (error) {
+      toastError(
+        resolvePaymentsError(error, "Não foi possível excluir o lançamento."),
+      );
     } finally {
       setDeletingId(null);
     }
@@ -374,7 +382,7 @@ export function FinanceEntriesPanel({
               variant="outline"
               size="sm"
               disabled={exportMutation.isPending}
-              onClick={() => exportMutation.mutate(params)}
+              onClick={handleExport}
             >
               {exportMutation.isPending ? (
                 <Loader2 className="size-4 animate-spin" />
@@ -410,7 +418,7 @@ export function FinanceEntriesPanel({
               variant="outline"
               size="sm"
               disabled={exportMutation.isPending}
-              onClick={() => exportMutation.mutate(params)}
+              onClick={handleExport}
             >
               {exportMutation.isPending ? (
                 <Loader2 className="size-4 animate-spin" />
@@ -685,8 +693,6 @@ export function FinanceEntriesPanel({
             </FormAlert>
           ) : null}
 
-          {formError ? <FormAlert>{formError}</FormAlert> : null}
-
           <div className="flex flex-wrap gap-2">
             <Button
               type="button"
@@ -702,15 +708,6 @@ export function FinanceEntriesPanel({
           </div>
         </div>
       ) : null}
-
-      {(deleteMutation.isError || exportMutation.isError) && (
-        <FormAlert>
-          {resolvePaymentsError(
-            deleteMutation.error ?? exportMutation.error,
-            "Não foi possível concluir a ação.",
-          )}
-        </FormAlert>
-      )}
 
       <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
         {entries.length === 0 ? (

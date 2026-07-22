@@ -45,6 +45,7 @@ import {
   receivablesHelpChannelLabel,
 } from "@/lib/support/receivables-help";
 import { settingsSectionPath } from "@/constants/routes";
+import { toastError } from "@/lib/ui/toast";
 import { useAuth } from "@/providers/auth-provider";
 import type { BadgeProps } from "@/components/ui/badge";
 
@@ -92,7 +93,6 @@ function ConnectOnboardingCard({
   const resume = useResumeConnectOnboarding();
   const openDashboard = useOpenExpressDashboard();
   const sync = useSyncConnectAccount();
-  const [actionError, setActionError] = useState<string | null>(null);
   const [leavingToStripe, setLeavingToStripe] = useState(false);
 
   const onboardingStatus = status?.onboardingStatus ?? "none";
@@ -116,42 +116,38 @@ function ConnectOnboardingCard({
   const generalHref = settingsSectionPath("general");
 
   const handleStart = async () => {
-    setActionError(null);
     setLeavingToStripe(true);
     try {
       await start.mutateAsync();
     } catch (error) {
       setLeavingToStripe(false);
-      setActionError(resolvePaymentsError(error));
+      toastError(resolvePaymentsError(error));
     }
   };
 
   const handleResume = async () => {
-    setActionError(null);
     setLeavingToStripe(true);
     try {
       await resume.mutateAsync();
     } catch (error) {
       setLeavingToStripe(false);
-      setActionError(resolvePaymentsError(error));
+      toastError(resolvePaymentsError(error));
     }
   };
 
   const handleOpenDashboard = async () => {
-    setActionError(null);
     try {
       await openDashboard.mutateAsync();
     } catch (error) {
-      setActionError(resolvePaymentsError(error));
+      toastError(resolvePaymentsError(error));
     }
   };
 
   const handleSync = async () => {
-    setActionError(null);
     try {
       await sync.mutateAsync();
     } catch (error) {
-      setActionError(resolvePaymentsError(error));
+      toastError(resolvePaymentsError(error));
     }
   };
 
@@ -287,8 +283,6 @@ function ConnectOnboardingCard({
             o suporte para entender os próximos passos.
           </div>
         )}
-
-        {actionError && <FormAlert>{actionError}</FormAlert>}
 
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
           {(onboardingStatus === "none" || onboardingStatus === "created") && (

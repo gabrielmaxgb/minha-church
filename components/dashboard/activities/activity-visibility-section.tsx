@@ -14,6 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useUpdateChurchEvent } from "@/lib/api/queries";
+import { toastApiError } from "@/lib/ui/toast";
 import { canCreateChurchWideActivity } from "@/lib/permissions";
 import { useAuth } from "@/providers/auth-provider";
 import type { ChurchEventDetail } from "@/types/events";
@@ -33,11 +34,9 @@ export function ActivityVisibilitySection({
     permissions !== null && canCreateChurchWideActivity(permissions);
   const updateEvent = useUpdateChurchEvent(event.id);
   const [visibleToChurch, setVisibleToChurch] = useState(event.visibleToChurch);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setVisibleToChurch(event.visibleToChurch);
-    setError(null);
   }, [event.id, event.visibleToChurch]);
 
   if (!canSelectChurchWide) {
@@ -47,15 +46,12 @@ export function ActivityVisibilitySection({
   const dirty = visibleToChurch !== event.visibleToChurch;
 
   async function handleSave() {
-    setError(null);
-
     try {
       await updateEvent.mutateAsync({ visibleToChurch });
     } catch (saveError) {
-      setError(
-        saveError instanceof Error
-          ? saveError.message
-          : "Não foi possível salvar a visibilidade.",
+      toastApiError(
+        saveError,
+        "Não foi possível salvar a visibilidade.",
       );
     }
   }
@@ -98,10 +94,6 @@ export function ActivityVisibilitySection({
             )}
           </div>
         </div>
-
-        {error && (
-          <p className="text-xs text-destructive">{error}</p>
-        )}
       </div>
     );
   }
@@ -118,12 +110,6 @@ export function ActivityVisibilitySection({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {error && (
-          <p className="rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-            {error}
-          </p>
-        )}
-
         <EventFormSection
           title="Quem pode ver"
           description="Eventos só do ministério ficam na aba do ministério. Você pode exibir também na agenda geral."

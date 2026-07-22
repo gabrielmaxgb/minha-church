@@ -6,6 +6,7 @@ import { Loader2, MailCheck, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DashboardBanner } from "@/components/ui/dashboard-banner";
 import { resendVerificationEmailRequest } from "@/lib/api/auth";
+import { toastApiError } from "@/lib/ui/toast";
 import { useAuth } from "@/providers/auth-provider";
 
 export function EmailVerificationBanner() {
@@ -14,7 +15,6 @@ export function EmailVerificationBanner() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [pendingHint, setPendingHint] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   if (!user?.isOwner || user.emailVerified !== false) {
     return null;
@@ -26,18 +26,13 @@ export function EmailVerificationBanner() {
     setIsSending(true);
     setFeedback(null);
     setPendingHint(null);
-    setError(null);
 
     try {
       const response = await resendVerificationEmailRequest(email);
       setFeedback(response.message);
       await reloadSession();
     } catch (submitError) {
-      setError(
-        submitError instanceof Error
-          ? submitError.message
-          : "Não foi possível reenviar o e-mail.",
-      );
+      toastApiError(submitError, "Não foi possível reenviar o e-mail.");
     } finally {
       setIsSending(false);
     }
@@ -45,7 +40,6 @@ export function EmailVerificationBanner() {
 
   async function handleRefreshStatus() {
     setIsRefreshing(true);
-    setError(null);
     setFeedback(null);
     setPendingHint(null);
 
@@ -58,10 +52,9 @@ export function EmailVerificationBanner() {
         );
       }
     } catch (submitError) {
-      setError(
-        submitError instanceof Error
-          ? submitError.message
-          : "Não foi possível atualizar o status. Tente novamente.",
+      toastApiError(
+        submitError,
+        "Não foi possível atualizar o status. Tente novamente.",
       );
     } finally {
       setIsRefreshing(false);
@@ -85,7 +78,6 @@ export function EmailVerificationBanner() {
           {pendingHint ? (
             <p className="mt-1 text-attention-foreground">{pendingHint}</p>
           ) : null}
-          {error ? <p className="mt-1 text-destructive">{error}</p> : null}
         </>
       }
       action={

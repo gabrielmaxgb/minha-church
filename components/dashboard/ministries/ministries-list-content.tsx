@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ministryDetailPath } from "@/constants/routes";
 import { useMinistries } from "@/lib/api/queries";
 import { canManageMinistries } from "@/lib/permissions";
+import { ROLE_PREVIEW_READ_ONLY_REASON } from "@/lib/permissions/role-preview-guard";
 import { useFeatureLock } from "@/lib/subscription/use-feature-lock";
 import { useAuth } from "@/providers/auth-provider";
 
@@ -21,7 +22,12 @@ export function MinistriesListContent() {
   const { data: ministries, isLoading, isError } = useMinistries();
   const [modalOpen, setModalOpen] = useState(false);
   const canManage = permissions ? canManageMinistries(permissions) : false;
-  const { locked, reason } = useFeatureLock();
+  const { locked: subscriptionLocked, reason } = useFeatureLock();
+  const { isPreviewingRole } = useAuth();
+  const writesBlocked = subscriptionLocked || isPreviewingRole;
+  const writeBlockReason = isPreviewingRole
+    ? ROLE_PREVIEW_READ_ONLY_REASON
+    : reason;
 
   const sortedMinistries = [...(ministries ?? [])].sort((a, b) =>
     a.name.localeCompare(b.name, "pt-BR"),
@@ -34,7 +40,7 @@ export function MinistriesListContent() {
           eyebrow="Serviço"
           title="Ministérios"
           description={
-            locked
+            subscriptionLocked
               ? "Visualize os ministérios cadastrados. Assine um plano para gerenciar equipes."
               : canManage
                 ? "Áreas de serviço — cargos, permissões e eventos."
@@ -47,13 +53,13 @@ export function MinistriesListContent() {
                 <Button
                   size="sm"
                   onClick={() => setModalOpen(true)}
-                  disabled={locked}
-                  title={reason ?? undefined}
+                  disabled={writesBlocked}
+                  title={writeBlockReason ?? undefined}
                 >
                   <Plus className="size-4" />
                   Novo ministério
                 </Button>
-                {locked ? (
+                {subscriptionLocked ? (
                   <LockedFeatureHint action="criar ministérios" />
                 ) : null}
               </>
@@ -87,13 +93,13 @@ export function MinistriesListContent() {
                 <Button
                   size="sm"
                   onClick={() => setModalOpen(true)}
-                  disabled={locked}
-                  title={reason ?? undefined}
+                  disabled={writesBlocked}
+                  title={writeBlockReason ?? undefined}
                 >
                   <Plus className="size-4" />
                   Criar primeiro ministério
                 </Button>
-                {locked && <LockedFeatureHint action="criar ministérios" />}
+                {subscriptionLocked && <LockedFeatureHint action="criar ministérios" />}
               </div>
             )}
           </div>
@@ -120,13 +126,13 @@ export function MinistriesListContent() {
                         `${ministry.roles.length} ${ministry.roles.length === 1 ? "cargo" : "cargos"}`}
                     </p>
                   </div>
-                  {!locked && (
+                  {!subscriptionLocked && (
                     <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
                   )}
                 </>
               );
 
-              if (locked) {
+              if (subscriptionLocked) {
                 return (
                   <div
                     key={ministry.id}

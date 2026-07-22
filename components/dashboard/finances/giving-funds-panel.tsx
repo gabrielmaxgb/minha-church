@@ -45,6 +45,7 @@ import type {
 } from "@/lib/api/payments";
 import { isOwnerOnboardingMinimumComplete } from "@/lib/payments/fiscal-profile-completeness";
 import { partitionGivingFundsByAudience } from "@/lib/finances/partition-giving-funds";
+import { toastError, toastSuccess } from "@/lib/ui/toast";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 
@@ -70,8 +71,6 @@ export function GivingFundsPanel() {
     useState<GivingFundPaymentMethods>(EMPTY_METHODS);
   const [methodsFormKey, setMethodsFormKey] = useState(0);
   const [createOpen, setCreateOpen] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [fundToDelete, setFundToDelete] = useState<GivingFund | null>(null);
   const [fundToDeactivate, setFundToDeactivate] = useState<GivingFund | null>(
     null,
@@ -135,26 +134,22 @@ export function GivingFundsPanel() {
     }
 
     const url = `${window.location.origin}${path}`;
-    setError(null);
 
     try {
       await navigator.clipboard.writeText(url);
-      setSuccess("Link copiado.");
+      toastSuccess("Link copiado.");
       setCopiedFundId(fund.id);
       window.setTimeout(() => {
         setCopiedFundId((current) => (current === fund.id ? null : current));
       }, 2000);
     } catch {
-      setError("Não foi possível copiar o link.");
+      toastError("Não foi possível copiar o link.");
     }
   };
 
   const handleCreate = async () => {
-    setError(null);
-    setSuccess(null);
-
     if (!methodsReady) {
-      setError("Selecione pelo menos um meio de pagamento disponível.");
+      toastError("Selecione pelo menos um meio de pagamento disponível.");
       return;
     }
 
@@ -169,9 +164,9 @@ export function GivingFundsPanel() {
       });
       resetCreateForm();
       setCreateOpen(false);
-      setSuccess("Fundo criado.");
+      toastSuccess("Fundo criado.");
     } catch (createError) {
-      setError(
+      toastError(
         resolvePaymentsError(createError, "Não foi possível criar o fundo."),
       );
     }
@@ -182,15 +177,12 @@ export function GivingFundsPanel() {
       return;
     }
 
-    setError(null);
-    setSuccess(null);
-
     try {
       await deleteFund.mutateAsync(fundToDelete.id);
       setFundToDelete(null);
-      setSuccess("Fundo excluído.");
+      toastSuccess("Fundo excluído.");
     } catch (deleteError) {
-      setError(
+      toastError(
         resolvePaymentsError(deleteError, "Não foi possível excluir o fundo."),
       );
     }
@@ -201,8 +193,6 @@ export function GivingFundsPanel() {
       return;
     }
 
-    setError(null);
-    setSuccess(null);
     setTogglingId(fundToDeactivate.id);
 
     try {
@@ -211,9 +201,9 @@ export function GivingFundsPanel() {
         input: { isActive: false },
       });
       setFundToDeactivate(null);
-      setSuccess("Fundo desativado.");
+      toastSuccess("Fundo desativado.");
     } catch (toggleError) {
-      setError(
+      toastError(
         resolvePaymentsError(
           toggleError,
           "Não foi possível desativar o fundo.",
@@ -225,8 +215,6 @@ export function GivingFundsPanel() {
   };
 
   const handleReactivate = async (fund: GivingFund) => {
-    setError(null);
-    setSuccess(null);
     setTogglingId(fund.id);
 
     try {
@@ -234,9 +222,9 @@ export function GivingFundsPanel() {
         fundId: fund.id,
         input: { isActive: true },
       });
-      setSuccess("Fundo reativado.");
+      toastSuccess("Fundo reativado.");
     } catch (toggleError) {
-      setError(
+      toastError(
         resolvePaymentsError(
           toggleError,
           "Não foi possível reativar o fundo.",
@@ -278,9 +266,6 @@ export function GivingFundsPanel() {
         </p>
       </div>
 
-      {error ? <FormAlert>{error}</FormAlert> : null}
-      {success ? <FormAlert variant="success">{success}</FormAlert> : null}
-
       {canManage && isOwner && !profileReady ? (
         <FormAlert>
           <span className="inline-flex flex-wrap items-center gap-x-1 gap-y-1">
@@ -303,7 +288,6 @@ export function GivingFundsPanel() {
             aria-expanded={createOpen}
             onClick={() => {
               setCreateOpen((open) => !open);
-              setError(null);
             }}
             className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-muted/35"
           >
@@ -507,8 +491,6 @@ export function GivingFundsPanel() {
                                 variant="outline"
                                 className="h-9 gap-2 border-domain-finances/25 text-domain-finances-foreground hover:bg-domain-finances-subtle"
                                 onClick={() => {
-                                  setError(null);
-                                  setSuccess(null);
                                   setFundForQr(fund);
                                 }}
                               >
@@ -542,13 +524,9 @@ export function GivingFundsPanel() {
                             }
                             togglingId={togglingId}
                             onDelete={() => {
-                              setError(null);
-                              setSuccess(null);
                               setFundToDelete(fund);
                             }}
                             onDeactivate={() => {
-                              setError(null);
-                              setSuccess(null);
                               setFundToDeactivate(fund);
                             }}
                             onReactivate={() => void handleReactivate(fund)}
@@ -583,13 +561,9 @@ export function GivingFundsPanel() {
                         }
                         togglingId={togglingId}
                         onDelete={() => {
-                          setError(null);
-                          setSuccess(null);
                           setFundToDelete(fund);
                         }}
                         onDeactivate={() => {
-                          setError(null);
-                          setSuccess(null);
                           setFundToDeactivate(fund);
                         }}
                         onReactivate={() => void handleReactivate(fund)}

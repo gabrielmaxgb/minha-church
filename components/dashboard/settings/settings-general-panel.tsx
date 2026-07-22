@@ -17,7 +17,7 @@ import {
   exportChurchData,
   requestChurchClosure,
 } from "@/lib/api/privacy";
-import { ApiError } from "@/lib/api/client";
+import { toastApiError, toastSuccess } from "@/lib/ui/toast";
 import { useFeatureLock } from "@/lib/subscription/use-feature-lock";
 import { useAuth, useTenant } from "@/providers/auth-provider";
 
@@ -34,8 +34,6 @@ export function SettingsGeneralPanel() {
   const { locked } = useFeatureLock();
 
   const [busy, setBusy] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [closureSlug, setClosureSlug] = useState("");
 
   const isOwner = Boolean(user?.isOwner);
@@ -49,20 +47,12 @@ export function SettingsGeneralPanel() {
   ) {
     if (!churchId) return;
     setBusy(key);
-    setError(null);
-    setMessage(null);
     try {
       await action();
-      setMessage(success);
+      toastSuccess(success);
       await reloadSession();
     } catch (err) {
-      setError(
-        err instanceof ApiError
-          ? err.message
-          : err instanceof Error
-            ? err.message
-            : "Não foi possível concluir a ação.",
-      );
+      toastApiError(err, "Não foi possível concluir a ação.");
     } finally {
       setBusy(null);
     }
@@ -76,12 +66,6 @@ export function SettingsGeneralPanel() {
       />
 
       <div className="space-y-6">
-        {(message || error) && (
-          <FormAlert variant={error ? "error" : "success"}>
-            {error ?? message}
-          </FormAlert>
-        )}
-
         <SettingsPanel>
           <div className="border-b border-border/70 px-5 py-4">
             <h3 className="text-sm font-medium">Igreja ativa</h3>

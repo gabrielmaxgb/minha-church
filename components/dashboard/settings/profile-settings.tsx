@@ -9,7 +9,7 @@ import { Controller, useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
-import { FormAlert, FormField } from "@/components/ui/form-field";
+import { FormField } from "@/components/ui/form-field";
 import { FloatingSaveBar } from "@/components/ui/floating-save-bar";
 import { Input } from "@/components/ui/input";
 import { SelectField } from "@/components/ui/select-field";
@@ -32,6 +32,7 @@ import {
   type ProfileFormValues,
 } from "@/lib/validation/schemas";
 import { useAuth, useTenant } from "@/providers/auth-provider";
+import { toastApiError, toastSuccess } from "@/lib/ui/toast";
 import type { Gender, MaritalStatus, Member } from "@/types/members";
 
 import {
@@ -90,7 +91,6 @@ function ProfileSettingsForm({
   const { churchId, church } = useTenant();
   const queryClient = useQueryClient();
   const [isSaving, setIsSaving] = useState(false);
-  const [success, setSuccess] = useState<string | null>(null);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(createProfileSchema(!user.cpf)),
@@ -105,8 +105,6 @@ function ProfileSettingsForm({
     reset,
     watch,
     setValue,
-    setError,
-    clearErrors,
     formState: { errors, isDirty },
   } = form;
 
@@ -114,9 +112,7 @@ function ProfileSettingsForm({
 
   useEffect(() => {
     reset(buildFormValues(user, member));
-    setSuccess(null);
-    clearErrors("root");
-  }, [user, member, reset, clearErrors]);
+  }, [user, member, reset]);
 
   useEffect(() => {
     if (maritalStatus !== "married") {
@@ -125,8 +121,6 @@ function ProfileSettingsForm({
   }, [maritalStatus, setValue]);
 
   const onSubmit = handleSubmit(async (values) => {
-    clearErrors("root");
-    setSuccess(null);
     setIsSaving(true);
 
     try {
@@ -157,14 +151,9 @@ function ProfileSettingsForm({
         });
       }
 
-      setSuccess("Perfil atualizado com sucesso.");
+      toastSuccess("Perfil atualizado com sucesso.");
     } catch (submitError) {
-      setError("root", {
-        message:
-          submitError instanceof Error
-            ? submitError.message
-            : "Não foi possível salvar o perfil.",
-      });
+      toastApiError(submitError, "Não foi possível salvar o perfil.");
     } finally {
       setIsSaving(false);
     }
@@ -176,18 +165,6 @@ function ProfileSettingsForm({
         title="Perfil"
         description="Atualize seus dados pessoais, de contato e endereço."
       />
-
-      {errors.root?.message && (
-        <div className="mb-4">
-          <FormAlert>{errors.root.message}</FormAlert>
-        </div>
-      )}
-
-      {success && (
-        <div className="mb-4">
-          <FormAlert variant="success">{success}</FormAlert>
-        </div>
-      )}
 
       {!hasMemberProfile && (
         <div className="mb-4 rounded-xl border border-border bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
@@ -567,8 +544,6 @@ function ProfileSettingsForm({
         saving={isSaving}
         onDiscard={() => {
           reset(buildFormValues(user, member));
-          setSuccess(null);
-          clearErrors("root");
         }}
         onSave={() => {
           const formEl = document.getElementById(

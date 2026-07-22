@@ -31,6 +31,7 @@ import {
   useUpdateFinanceAccount,
 } from "@/lib/api/queries";
 import type { FinanceAccount, FinanceAccountKind } from "@/lib/api/treasury";
+import { toastError, toastSuccess } from "@/lib/ui/toast";
 import { cn } from "@/lib/utils";
 
 const KIND_LABEL: Record<FinanceAccountKind, string> = {
@@ -62,8 +63,6 @@ export function ChartOfAccountsPanel({
   const [formOpen, setFormOpen] = useState(false);
   const [name, setName] = useState("");
   const [kind, setKind] = useState<FinanceAccountKind>("expense");
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
@@ -89,7 +88,6 @@ export function ChartOfAccountsPanel({
     setFormOpen(false);
     setName("");
     setKind("expense");
-    setError(null);
   };
 
   const cancelEdit = () => {
@@ -98,17 +96,13 @@ export function ChartOfAccountsPanel({
   };
 
   const startEdit = (account: FinanceAccount) => {
-    setError(null);
-    setSuccess(null);
     setEditingId(account.id);
     setEditName(account.name);
   };
 
   const handleCreate = async () => {
-    setError(null);
-    setSuccess(null);
     if (!name.trim()) {
-      setError("Informe o nome da categoria.");
+      toastError("Informe o nome da categoria.");
       return;
     }
     try {
@@ -117,43 +111,41 @@ export function ChartOfAccountsPanel({
         kind,
       });
       resetForm();
-      setSuccess(
+      toastSuccess(
         `${KIND_LABEL[created.kind]} “${created.name}” pronta. Use-a ao lançar no Caixa.`,
       );
     } catch (err) {
-      setError(resolveTreasuryError(err, "Não foi possível criar a categoria."));
+      toastError(
+        resolveTreasuryError(err, "Não foi possível criar a categoria."),
+      );
     }
   };
 
   const handleRename = async (account: FinanceAccount) => {
     const next = editName.trim();
     if (!next) {
-      setError("Informe o nome da categoria.");
+      toastError("Informe o nome da categoria.");
       return;
     }
     if (next === account.name) {
       cancelEdit();
       return;
     }
-    setError(null);
-    setSuccess(null);
     try {
       const updated = await updateMutation.mutateAsync({
         accountId: account.id,
         input: { name: next },
       });
       cancelEdit();
-      setSuccess(`Categoria renomeada para “${updated.name}”.`);
+      toastSuccess(`Categoria renomeada para “${updated.name}”.`);
     } catch (err) {
-      setError(
+      toastError(
         resolveTreasuryError(err, "Não foi possível renomear a categoria."),
       );
     }
   };
 
   const toggleActive = async (account: FinanceAccount) => {
-    setError(null);
-    setSuccess(null);
     setTogglingId(account.id);
     try {
       await updateMutation.mutateAsync({
@@ -161,7 +153,7 @@ export function ChartOfAccountsPanel({
         input: { isActive: !account.isActive },
       });
     } catch (err) {
-      setError(
+      toastError(
         resolveTreasuryError(err, "Não foi possível atualizar a categoria."),
       );
     } finally {
@@ -171,17 +163,15 @@ export function ChartOfAccountsPanel({
 
   const handleConfirmDelete = async () => {
     if (!accountToDelete) return;
-    setError(null);
-    setSuccess(null);
     try {
       await deleteMutation.mutateAsync(accountToDelete.id);
-      setSuccess(`Categoria “${accountToDelete.name}” excluída.`);
+      toastSuccess(`Categoria “${accountToDelete.name}” excluída.`);
       setAccountToDelete(null);
       if (editingId === accountToDelete.id) {
         cancelEdit();
       }
     } catch (err) {
-      setError(
+      toastError(
         resolveTreasuryError(err, "Não foi possível excluir a categoria."),
       );
       setAccountToDelete(null);
@@ -300,8 +290,6 @@ export function ChartOfAccountsPanel({
           aria-expanded={formOpen}
           onClick={() => {
             setFormOpen((open) => !open);
-            setError(null);
-            setSuccess(null);
           }}
           className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-muted/35"
         >
@@ -367,7 +355,6 @@ export function ChartOfAccountsPanel({
                     </SelectField>
                   </FormField>
                 </div>
-                {error ? <FormAlert>{error}</FormAlert> : null}
                 <div className="flex flex-wrap gap-2">
                   <Button
                     type="button"
@@ -396,9 +383,6 @@ export function ChartOfAccountsPanel({
           ) : null}
         </AnimatePresence>
       </div>
-
-      {success ? <FormAlert variant="success">{success}</FormAlert> : null}
-      {!formOpen && error ? <FormAlert>{error}</FormAlert> : null}
 
       <p className="px-0.5 text-xs text-muted-foreground">
         {customActiveCount}{" "}

@@ -18,7 +18,7 @@ export function DashboardAnnouncementsPanel({
   announcements,
   canPublish,
 }: DashboardAnnouncementsPanelProps) {
-  const { writesBlocked } = useTrialWriteGuard();
+  const { writesBlocked, subscriptionLocked } = useTrialWriteGuard();
   const recent = announcements.slice(0, 4);
 
   return (
@@ -58,7 +58,9 @@ export function DashboardAnnouncementsPanel({
                     <Plus className="size-4" />
                     Publicar comunicado
                   </Button>
-                  <LockedFeatureHint action="publicar comunicados" />
+                  {subscriptionLocked ? (
+                    <LockedFeatureHint action="publicar comunicados" />
+                  ) : null}
                 </>
               ) : (
                 <Button size="sm" asChild>

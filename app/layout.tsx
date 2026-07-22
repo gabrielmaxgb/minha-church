@@ -2,11 +2,12 @@ import type { Metadata, Viewport } from "next";
 import { DM_Sans, Geist_Mono, Syne } from "next/font/google";
 
 import { AuthBootSplashHost } from "@/components/auth/auth-boot-splash-host";
-import { AuthProvider } from "@/providers/auth-provider";
-import { QueryProvider } from "@/providers/query-provider";
+import { Toaster } from "@/components/ui/toaster";
 import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
 import { defaultMetadata } from "@/lib/metadata";
 import { IOS_SPLASH_IMAGES } from "@/lib/pwa/ios-splash";
+import { AuthProvider } from "@/providers/auth-provider";
+import { QueryProvider } from "@/providers/query-provider";
 
 import "./globals.css";
 
@@ -107,6 +108,7 @@ export default function RootLayout({
           <AuthProvider>
             <AuthBootSplashHost />
             {children}
+            <Toaster />
           </AuthProvider>
         </QueryProvider>
         <ServiceWorkerRegister />

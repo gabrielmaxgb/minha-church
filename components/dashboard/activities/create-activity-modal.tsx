@@ -13,7 +13,7 @@ import {
   usePaidEventRegistrationGate,
 } from "@/components/dashboard/activities/paid-registration-receivables-gate";
 import { Button } from "@/components/ui/button";
-import { FormAlert, FormField } from "@/components/ui/form-field";
+import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SelectField } from "@/components/ui/select-field";
@@ -52,6 +52,7 @@ import {
   applyBrlCentsMask,
   parseBrlMaskToCents,
 } from "@/lib/utils";
+import { toastError } from "@/lib/ui/toast";
 
 interface CreateActivityModalProps {
   open: boolean;
@@ -94,7 +95,8 @@ export function CreateActivityModal({
 }: CreateActivityModalProps) {
   const titleId = useId();
   const { permissions } = useAuth();
-  const { writesBlocked } = useTrialWriteGuard();
+  const { writesBlocked, subscriptionLocked } = useTrialWriteGuard();
+
   const lockedMinistryId = fixedMinistryId?.trim() || "";
   const initialMinistryId = lockedMinistryId || defaultMinistryId;
   const canList = canListMinistries(permissions);
@@ -270,6 +272,10 @@ export function CreateActivityModal({
   }
 
   if (writesBlocked) {
+    if (!subscriptionLocked) {
+      return null;
+    }
+
     return (
       <TrialExpiredWriteModal
         open
@@ -277,6 +283,20 @@ export function CreateActivityModal({
         action="criar atividades e escalas"
       />
     );
+  }
+
+  function applyMappedApiErrors(message: string) {
+    const mapped = mapActivityFormApiError(message);
+
+    if (mapped.root) {
+      toastError(mapped.root);
+    }
+
+    const { root: _root, ...fieldOnly } = mapped;
+
+    if (Object.keys(fieldOnly).length > 0) {
+      setFormFieldErrors(fieldOnly);
+    }
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -296,9 +316,7 @@ export function CreateActivityModal({
         isAllDayRange(startsAt, endsAt),
       )
     ) {
-      setFormFieldErrors({
-        root: "O fim precisa ser no mesmo dia ou depois do início.",
-      });
+      toastError("O fim precisa ser no mesmo dia ou depois do início.");
       return;
     }
 
@@ -377,11 +395,11 @@ export function CreateActivityModal({
       await createEvent.mutateAsync(payload);
       onClose();
     } catch (submitError) {
-      const message =
+      applyMappedApiErrors(
         submitError instanceof Error
           ? submitError.message
-          : "Não foi possível criar a atividade.";
-      setFormFieldErrors(mapActivityFormApiError(message));
+          : "Não foi possível criar a atividade.",
+      );
     }
   }
 
@@ -699,12 +717,6 @@ export function CreateActivityModal({
           <Separator />
 
           <footer className="flex flex-col gap-3 px-6 py-4">
-            {fieldErrors.root ? (
-              <FormAlert className="sm:ml-auto sm:max-w-md">
-                {fieldErrors.root}
-              </FormAlert>
-            ) : null}
-
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button
               type="button"

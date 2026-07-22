@@ -4,12 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import { Loader2, Shield } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { FormAlert, FormField } from "@/components/ui/form-field";
+import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { useFamilyGraph } from "@/lib/api/queries/use-family-graph";
 import { useRecordParentalConsent } from "@/lib/api/queries/use-members";
 import { PARENTAL_CONSENT_TEXT } from "@/lib/members/parental-consent";
-import { ApiError } from "@/lib/api/client";
+import { toastApiError } from "@/lib/ui/toast";
 import { cn } from "@/lib/utils";
 import type { Member } from "@/types/members";
 
@@ -60,14 +60,12 @@ export function ParentalConsentModal({
   const [guardianName, setGuardianName] = useState("");
   const [guardianEmail, setGuardianEmail] = useState("");
   const [accepted, setAccepted] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) {
       return;
     }
 
-    setError(null);
     setAccepted(false);
     setGuardianEmail("");
     if (parentOptions.length === 1) {
@@ -111,8 +109,6 @@ export function ParentalConsentModal({
     !recordConsent.isPending;
 
   async function handleSubmit() {
-    setError(null);
-
     try {
       const updated = await recordConsent.mutateAsync({
         accepted: true,
@@ -126,13 +122,7 @@ export function ParentalConsentModal({
       onRecorded?.(updated);
       onClose();
     } catch (submitError) {
-      setError(
-        submitError instanceof ApiError
-          ? submitError.message
-          : submitError instanceof Error
-            ? submitError.message
-            : "Não foi possível registrar o consentimento.",
-      );
+      toastApiError(submitError, "Não foi possível registrar o consentimento.");
     }
   }
 
@@ -272,8 +262,6 @@ export function ParentalConsentModal({
               {PARENTAL_CONSENT_TEXT}
             </span>
           </label>
-
-          {error ? <FormAlert>{error}</FormAlert> : null}
         </div>
 
         <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">

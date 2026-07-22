@@ -26,6 +26,7 @@ import {
   usePrayerRequests,
   useTogglePrayerRequestPray,
 } from "@/lib/api/queries";
+import { toastApiError, toastError } from "@/lib/ui/toast";
 import { cn } from "@/lib/utils";
 import type {
   PrayerRequest,
@@ -227,7 +228,6 @@ export function PrayerRequestsContent() {
   const anonymousId = useId();
   const [body, setBody] = useState("");
   const [isAnonymous, setIsAnonymous] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
   const [board, setBoard] = useState<PrayerRequestBoardStatus>("active");
   const [pendingPrayIds, setPendingPrayIds] = useState<Set<string>>(
     () => new Set(),
@@ -252,11 +252,10 @@ export function PrayerRequestsContent() {
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    setFormError(null);
 
     const trimmed = body.trim();
     if (!trimmed) {
-      setFormError("Escreva seu pedido de oração.");
+      toastError("Escreva seu pedido de oração.");
       return;
     }
 
@@ -269,11 +268,7 @@ export function PrayerRequestsContent() {
       setIsAnonymous(false);
       setBoard("active");
     } catch (err) {
-      setFormError(
-        err instanceof Error
-          ? err.message
-          : "Não foi possível publicar o pedido.",
-      );
+      toastApiError(err, "Não foi possível publicar o pedido.");
     }
   }
 
@@ -375,12 +370,6 @@ export function PrayerRequestsContent() {
               )}
             </Button>
           </div>
-
-          {formError ? (
-            <p className="text-sm text-destructive" role="alert">
-              {formError}
-            </p>
-          ) : null}
         </form>
       </section>
 
@@ -491,12 +480,20 @@ export function PrayerRequestsContent() {
                         return next;
                       });
                     },
+                    onError: (prayError) => {
+                      toastApiError(prayError, "Não foi possível registrar a oração.");
+                    },
                   });
                 }}
                 onDelete={async () => {
                   setDeletingId(request.id);
                   try {
                     await deleteRequest.mutateAsync(request.id);
+                  } catch (deleteError) {
+                    toastApiError(
+                      deleteError,
+                      "Não foi possível remover o pedido.",
+                    );
                   } finally {
                     setDeletingId(null);
                   }
@@ -505,6 +502,11 @@ export function PrayerRequestsContent() {
                   setArchivingId(request.id);
                   try {
                     await archiveRequest.mutateAsync(request.id);
+                  } catch (archiveError) {
+                    toastApiError(
+                      archiveError,
+                      "Não foi possível arquivar o pedido.",
+                    );
                   } finally {
                     setArchivingId(null);
                   }

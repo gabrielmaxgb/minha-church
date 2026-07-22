@@ -22,6 +22,7 @@ import {
   useEventSeriesOccurrences,
   useSetEventRosterCollection,
 } from "@/lib/api/queries";
+import { toastApiError, toastError } from "@/lib/ui/toast";
 import { cn } from "@/lib/utils";
 import type { ChurchEventDetail, EventSeriesOccurrence } from "@/types/events";
 
@@ -58,7 +59,6 @@ export function RosterCollectionModal({
   const [year, setYear] = useState(anchorDate.getFullYear());
   const [monthIndex, setMonthIndex] = useState(anchorDate.getMonth());
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open || !event) {
@@ -68,7 +68,6 @@ export function RosterCollectionModal({
     const anchor = new Date(event.startsAt);
     setYear(anchor.getFullYear());
     setMonthIndex(anchor.getMonth());
-    setError(null);
 
     const isSingleOccurrence = !event.recurrenceSeriesId || !event.recurrence;
     setSelectedIds(isSingleOccurrence ? new Set([event.id]) : new Set());
@@ -179,11 +178,9 @@ export function RosterCollectionModal({
       : [event.id];
 
     if (targetIds.length === 0) {
-      setError("Selecione ao menos uma data.");
+      toastError("Selecione ao menos uma data.");
       return;
     }
-
-    setError(null);
 
     try {
       await setCollection.mutateAsync({
@@ -192,11 +189,7 @@ export function RosterCollectionModal({
       });
       onClose();
     } catch (applyError) {
-      setError(
-        applyError instanceof Error
-          ? applyError.message
-          : "Não foi possível abrir a coleta.",
-      );
+      toastApiError(applyError, "Não foi possível abrir a coleta.");
     }
   }
 
@@ -241,15 +234,6 @@ export function RosterCollectionModal({
         </div>
       }
     >
-      {error ? (
-        <div
-          role="alert"
-          className="mb-4 rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive"
-        >
-          {error}
-        </div>
-      ) : null}
-
       {isChurchWide ? (
         <div className="mb-4 rounded-xl border border-domain-members/20 bg-domain-members-subtle/50 px-4 py-3.5 text-sm leading-relaxed text-domain-members-foreground">
           Evento da igreja inteira — quando a coleta estiver aberta,{" "}

@@ -19,7 +19,7 @@ import {
   SettingsPanel,
 } from "@/components/dashboard/settings/settings-shared";
 import { Button } from "@/components/ui/button";
-import { FormAlert, FormField } from "@/components/ui/form-field";
+import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { AUTH_ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
@@ -27,6 +27,7 @@ import {
   changePasswordSchema,
   type ChangePasswordFormValues,
 } from "@/lib/validation/schemas";
+import { toastError } from "@/lib/ui/toast";
 import { useAuth, useRequireAuth } from "@/providers/auth-provider";
 
 type ChangePasswordVariant = "required" | "voluntary";
@@ -126,12 +127,11 @@ export function ChangePasswordContent({
         isRequired ? AUTH_ROUTES.dashboard : AUTH_ROUTES.settings,
       );
     } catch (submitError) {
-      setError("root", {
-        message:
-          submitError instanceof Error
-            ? submitError.message
-            : "Não foi possível alterar a senha.",
-      });
+      toastError(
+        submitError instanceof Error
+          ? submitError.message
+          : "Não foi possível alterar a senha.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -176,8 +176,6 @@ export function ChangePasswordContent({
 
       <form onSubmit={onSubmit} noValidate>
         <div className="space-y-4 px-5 py-5">
-          {errors.root?.message && <FormAlert>{errors.root.message}</FormAlert>}
-
           <FormField
             label={currentLabel}
             htmlFor="current-password"

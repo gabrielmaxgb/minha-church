@@ -15,6 +15,13 @@ interface FormAlertProps {
   className?: string;
 }
 
+/**
+ * Alerta embutido na página — use para estado persistente da tela
+ * (ex.: “não foi possível carregar”, “complete o perfil antes de…”).
+ *
+ * Feedback transitório de ação / retorno de API → `toastError` / `toastSuccess`
+ * em `@/lib/ui/toast`.
+ */
 export function FormAlert({
   variant = "error",
   title,

@@ -1,5 +1,7 @@
 import type { UseFormClearErrors, UseFormSetError } from "react-hook-form";
 
+import { toastError } from "@/lib/ui/toast";
+
 import type { MemberFormValues } from "./form";
 
 const EMAIL_FIELD_PATTERNS = [
@@ -41,5 +43,5 @@ export function applyMemberFormApiError(
     return;
   }
 
-  setError("root", { message });
+  toastError(message);
 }

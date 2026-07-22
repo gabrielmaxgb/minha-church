@@ -9,6 +9,7 @@ import {
   removeRosterRole,
 } from "@/lib/ministries/roster";
 import { useUpdateEventRoleProfile } from "@/lib/api/queries";
+import { toastApiError } from "@/lib/ui/toast";
 import { cn } from "@/lib/utils";
 
 interface EventRoleProfileSectionProps {
@@ -31,19 +32,16 @@ export function EventRoleProfileSection({
   className,
 }: EventRoleProfileSectionProps) {
   const [selectedRoles, setSelectedRoles] = useState(myProfileRoleLabels);
-  const [error, setError] = useState<string | null>(null);
   const updateProfile = useUpdateEventRoleProfile(ministryId);
 
   useEffect(() => {
     setSelectedRoles(myProfileRoleLabels);
-    setError(null);
   }, [profileKey, myProfileRoleLabels.join("|")]);
 
   const hasEventRoles = rosterRoles.length > 0;
   const busy = updateProfile.isPending || disabled;
 
   async function persistRoles(nextRoles: string[]) {
-    setError(null);
     onRolesChange?.(nextRoles);
 
     try {
@@ -54,11 +52,7 @@ export function EventRoleProfileSection({
     } catch (saveError) {
       setSelectedRoles(myProfileRoleLabels);
       onRolesChange?.(myProfileRoleLabels);
-      setError(
-        saveError instanceof Error
-          ? saveError.message
-          : "Não foi possível salvar suas funções.",
-      );
+      toastApiError(saveError, "Não foi possível salvar suas funções.");
     }
   }
 
@@ -111,7 +105,6 @@ export function EventRoleProfileSection({
           );
         })}
       </div>
-      {error && <p className="text-xs text-destructive">{error}</p>}
       {selectedRoles.length === 0 && (
         <p className="text-xs text-muted-foreground">
           Selecione ao menos uma função para marcar disponibilidade.

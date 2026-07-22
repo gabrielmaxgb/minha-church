@@ -13,6 +13,7 @@ import {
   useAssignMembersToMinistry,
   useMembers,
 } from "@/lib/api/queries";
+import { toastApiError, toastError } from "@/lib/ui/toast";
 import { canManageMinistryTeam } from "@/lib/permissions";
 import { useAuth } from "@/providers/auth-provider";
 import type { Ministry, MinistryMember } from "@/types/ministries";
@@ -36,7 +37,6 @@ export function AddMinistryMemberModal({
     ? canManageMinistryTeam(permissions, ministry.id)
     : false;
   const [memberIds, setMemberIds] = useState<string[]>([]);
-  const [error, setError] = useState<string | null>(null);
 
   const { data: membersData, isLoading } = useMembers(
     { limit: 200 },
@@ -91,7 +91,6 @@ export function AddMinistryMemberModal({
   useEffect(() => {
     if (!open) {
       setMemberIds([]);
-      setError(null);
       return;
     }
 
@@ -125,10 +124,9 @@ export function AddMinistryMemberModal({
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setError(null);
 
     if (memberIds.length === 0) {
-      setError("Selecione ao menos um membro.");
+      toastError("Selecione ao menos um membro.");
       return;
     }
 
@@ -148,19 +146,15 @@ export function AddMinistryMemberModal({
       setMemberIds(failed);
 
       if (succeeded.length > 0) {
-        setError(
+        toastError(
           `${succeeded.length} membro${succeeded.length === 1 ? "" : "s"} adicionado${succeeded.length === 1 ? "" : "s"}. ${failed.length} não pôde${failed.length === 1 ? "" : "ram"} ser vinculado${failed.length === 1 ? "" : "s"}.`,
         );
         return;
       }
 
-      setError("Não foi possível adicionar os membros selecionados.");
+      toastError("Não foi possível adicionar os membros selecionados.");
     } catch (submitError) {
-      setError(
-        submitError instanceof Error
-          ? submitError.message
-          : "Não foi possível adicionar os membros.",
-      );
+      toastApiError(submitError, "Não foi possível adicionar os membros.");
     }
   }
 
@@ -220,15 +214,6 @@ export function AddMinistryMemberModal({
 
         <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
           <div className="min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain px-5 py-6 sm:px-8 sm:py-8">
-            {error && (
-              <div
-                role="alert"
-                className="rounded-lg border border-border bg-muted/60 px-3 py-2.5 text-sm"
-              >
-                {error}
-              </div>
-            )}
-
             <div className="space-y-2">
               <div className="flex flex-wrap items-center gap-2">
                 <Label htmlFor="member-typeahead">Membros</Label>
@@ -248,7 +233,6 @@ export function AddMinistryMemberModal({
                 emptyMessage={membersEmptyMessage}
                 loading={isLoading}
                 disabled={assignMembers.isPending}
-                aria-invalid={error === "Selecione ao menos um membro." ? true : undefined}
               />
               <p className="text-xs text-muted-foreground">
                 Busque e selecione várias pessoas para vincular ao ministério.

@@ -12,7 +12,7 @@ import {
   type TierCrossingRequest,
 } from "@/lib/api/billing";
 import { billingKeys } from "@/lib/api/queries/billing.keys";
-import { ApiError } from "@/lib/api/client";
+import { toastApiError } from "@/lib/ui/toast";
 import { formatCurrency } from "@/lib/utils";
 import { useAuth, useTenant } from "@/providers/auth-provider";
 
@@ -25,14 +25,12 @@ export function openTierUpgradeApprovalModal() {
 function OwnerApprovalDialog({
   request,
   loading,
-  error,
   onApprove,
   onDismiss,
   onClose,
 }: {
   request: TierCrossingRequest;
   loading: boolean;
-  error: string | null;
   onApprove: () => void;
   onDismiss: () => void;
   onClose: () => void;
@@ -146,12 +144,6 @@ function OwnerApprovalDialog({
             </div>
           )}
 
-          {error && (
-            <p className="text-sm text-destructive" role="alert">
-              {error}
-            </p>
-          )}
-
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button
               type="button"
@@ -177,7 +169,6 @@ export function TierCrossingOwnerHost() {
   const queryClient = useQueryClient();
   const isOwner = Boolean(user?.isOwner);
   const [open, setOpen] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [autoPrompted, setAutoPrompted] = useState(false);
 
   const pendingQuery = useQuery({
@@ -221,15 +212,10 @@ export function TierCrossingOwnerHost() {
     },
     onSuccess: async () => {
       setOpen(false);
-      setError(null);
       await queryClient.invalidateQueries({ queryKey: billingKeys._def });
     },
     onError: (err) => {
-      setError(
-        err instanceof ApiError
-          ? err.message
-          : "Não foi possível autorizar a faixa.",
-      );
+      toastApiError(err, "Não foi possível autorizar a faixa.");
     },
   });
 
@@ -243,15 +229,10 @@ export function TierCrossingOwnerHost() {
     },
     onSuccess: async () => {
       setOpen(false);
-      setError(null);
       await queryClient.invalidateQueries({ queryKey: billingKeys._def });
     },
     onError: (err) => {
-      setError(
-        err instanceof ApiError
-          ? err.message
-          : "Não foi possível recusar o pedido.",
-      );
+      toastApiError(err, "Não foi possível recusar o pedido.");
     },
   });
 
@@ -265,13 +246,10 @@ export function TierCrossingOwnerHost() {
     <OwnerApprovalDialog
       request={pending}
       loading={loading}
-      error={error}
       onApprove={() => {
-        setError(null);
         approveMutation.mutate();
       }}
       onDismiss={() => {
-        setError(null);
         dismissMutation.mutate();
       }}
       onClose={() => setOpen(false)}

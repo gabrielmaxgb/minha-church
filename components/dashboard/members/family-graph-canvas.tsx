@@ -27,6 +27,7 @@ import { RotateCcw, Trash2, Users, X } from "lucide-react";
 import { MemberDetailButton } from "@/components/dashboard/members/member-detail-link";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { toastApiError } from "@/lib/ui/toast";
 import { routeAroundObstacles } from "@/lib/members/family-graph-edge-route";
 import {
   detectFamilyUnits,
@@ -517,7 +518,6 @@ function FamilyGraphFlow({
     null,
   );
   const [layoutTick, setLayoutTick] = useState(0);
-  const [error, setError] = useState<string | null>(null);
 
   const positionsRef = useRef<Record<string, NodePos>>(loadPositions(familyId));
 
@@ -533,14 +533,12 @@ function FamilyGraphFlow({
     setSelectedId(null);
     setPendingPair(null);
     setSelectedRelationId(null);
-    setError(null);
   }
 
   const handleSelectRelation = useCallback((relationId: string) => {
     setSelectedId(null);
     setPendingPair(null);
     setSelectedRelationId(relationId);
-    setError(null);
   }, []);
 
   const handleEdgeClick = useCallback(
@@ -801,7 +799,6 @@ function FamilyGraphFlow({
     (_event, node) => {
       if (isBusy) return;
       setSelectedRelationId(null);
-      setError(null);
 
       if (!canEdit) {
         setPendingPair(null);
@@ -842,7 +839,6 @@ function FamilyGraphFlow({
   async function chooseRelation(type: MemberRelationType) {
     if (!pendingPair) return;
     try {
-      setError(null);
       await onCreateRelation({
         fromMemberId: pendingPair.fromId,
         toMemberId: pendingPair.toId,
@@ -850,26 +846,17 @@ function FamilyGraphFlow({
       });
       resetSelection();
     } catch (createError) {
-      setError(
-        createError instanceof Error
-          ? createError.message
-          : "Não foi possível criar o vínculo.",
-      );
+      toastApiError(createError, "Não foi possível criar o vínculo.");
     }
   }
 
   async function handleDeleteSelectedRelation() {
     if (!selectedRelationId) return;
     try {
-      setError(null);
       await onDeleteRelation(selectedRelationId);
       resetSelection();
     } catch (deleteError) {
-      setError(
-        deleteError instanceof Error
-          ? deleteError.message
-          : "Não foi possível remover o vínculo.",
-      );
+      toastApiError(deleteError, "Não foi possível remover o vínculo.");
     }
   }
 
@@ -1092,11 +1079,6 @@ function FamilyGraphFlow({
           </div>
         )}
 
-        {error && (
-          <div className="absolute inset-x-3 top-16 z-30 mx-auto max-w-sm rounded-xl border border-destructive/30 bg-white/95 px-4 py-2.5 text-center text-sm text-destructive shadow-popover backdrop-blur-md sm:top-20">
-            {error}
-          </div>
-        )}
     </div>
   );
 }

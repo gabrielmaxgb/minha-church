@@ -11,6 +11,7 @@ import {
 } from "@/lib/api/billing";
 import { ApiError } from "@/lib/api/client";
 import { billingKeys } from "@/lib/api/queries/billing.keys";
+import { toastError } from "@/lib/ui/toast";
 import { useAuth } from "@/providers/auth-provider";
 
 export function countsTowardBillingTier(status: string): boolean {
@@ -28,7 +29,6 @@ export function useTierCrossingGate() {
     null,
   );
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [requestSent, setRequestSent] = useState(false);
 
   const isOwner = Boolean(user?.isOwner);
@@ -36,7 +36,6 @@ export function useTierCrossingGate() {
   const close = useCallback(() => {
     setPreview(null);
     setPendingAction(null);
-    setError(null);
     setLoading(false);
     setRequestSent(false);
     setMode("owner-confirm");
@@ -91,18 +90,17 @@ export function useTierCrossingGate() {
     }
 
     setLoading(true);
-    setError(null);
 
     try {
       await confirmTierCrossing(church.id, preview.projectedTierId);
       await pendingAction();
       close();
     } catch (err) {
-      const message =
+      toastError(
         err instanceof ApiError
           ? err.message
-          : "Não foi possível confirmar a mudança de faixa.";
-      setError(message);
+          : "Não foi possível confirmar a mudança de faixa.",
+      );
     } finally {
       setLoading(false);
     }
@@ -114,7 +112,6 @@ export function useTierCrossingGate() {
     }
 
     setLoading(true);
-    setError(null);
 
     try {
       await requestTierCrossing(church.id, preview.projectedTierId);
@@ -122,11 +119,11 @@ export function useTierCrossingGate() {
       setPendingAction(null);
       await queryClient.invalidateQueries({ queryKey: billingKeys._def });
     } catch (err) {
-      const message =
+      toastError(
         err instanceof ApiError
           ? err.message
-          : "Não foi possível enviar o pedido ao proprietário.";
-      setError(message);
+          : "Não foi possível enviar o pedido ao proprietário.",
+      );
     } finally {
       setLoading(false);
     }
@@ -136,7 +133,6 @@ export function useTierCrossingGate() {
     preview,
     mode,
     loading,
-    error,
     requestSent,
     isOwner,
     runWithTierCrossingCheck,

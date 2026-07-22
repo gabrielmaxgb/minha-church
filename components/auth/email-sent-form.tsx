@@ -14,9 +14,9 @@ import {
 import { motion, useReducedMotion } from "motion/react";
 
 import { Button } from "@/components/ui/button";
-import { FormAlert } from "@/components/ui/form-field";
 import { PUBLIC_ROUTES } from "@/constants/routes";
 import { resendVerificationEmailRequest } from "@/lib/api/auth";
+import { toastApiError, toastSuccess } from "@/lib/ui/toast";
 import { cn } from "@/lib/utils";
 
 const highlights = [
@@ -47,10 +47,6 @@ function EmailSentFormContent() {
   const isFromRegister = from === "register";
   const shouldReduceMotion = useReducedMotion();
   const [isResending, setIsResending] = useState(false);
-  const [feedback, setFeedback] = useState<{
-    variant: "success" | "error";
-    message: string;
-  } | null>(null);
 
   async function handleResend() {
     if (!email) {
@@ -58,19 +54,12 @@ function EmailSentFormContent() {
     }
 
     setIsResending(true);
-    setFeedback(null);
 
     try {
       const response = await resendVerificationEmailRequest(email);
-      setFeedback({ variant: "success", message: response.message });
+      toastSuccess(response.message);
     } catch (resendError) {
-      setFeedback({
-        variant: "error",
-        message:
-          resendError instanceof Error
-            ? resendError.message
-            : "Não foi possível reenviar o e-mail.",
-      });
+      toastApiError(resendError, "Não foi possível reenviar o e-mail.");
     } finally {
       setIsResending(false);
     }
@@ -174,16 +163,6 @@ function EmailSentFormContent() {
               </p>
             </div>
           </div>
-
-          {feedback && (
-            <div className="mb-6">
-              <FormAlert
-                variant={feedback.variant === "success" ? "success" : undefined}
-              >
-                {feedback.message}
-              </FormAlert>
-            </div>
-          )}
 
           <div className="flex flex-col gap-3">
             {email ? (

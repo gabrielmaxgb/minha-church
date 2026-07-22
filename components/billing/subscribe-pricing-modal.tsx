@@ -131,8 +131,7 @@ export function SubscribePricingModal({
 }: SubscribePricingModalProps) {
   const [period, setPeriod] = useState<BillingPeriod>("monthly");
   const { data: pricing, isLoading, isError } = usePricing();
-  const { subscribe, loading, error, canSubscribe, church } =
-    useSubscribeCheckout();
+  const { subscribe, loading, canSubscribe, church } = useSubscribeCheckout();
 
   const memberCount = church?.memberCount ?? 0;
 
@@ -366,11 +365,6 @@ export function SubscribePricingModal({
                   Escolha o ciclo e continue para o pagamento seguro.
                 </p>
               )}
-              {error ? (
-                <p className="text-xs text-destructive" role="alert">
-                  {error}
-                </p>
-              ) : null}
             </div>
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center">
               <Button type="button" variant="outline" onClick={onClose}>

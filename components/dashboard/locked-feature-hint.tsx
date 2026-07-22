@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Lock } from "lucide-react";
 
 import { PUBLIC_ROUTES } from "@/constants/routes";
+import { useAuth } from "@/providers/auth-provider";
 import { cn } from "@/lib/utils";
 
 interface LockedFeatureHintProps {
@@ -13,13 +14,19 @@ interface LockedFeatureHintProps {
 }
 
 /**
- * Explicação curta e amigável exibida perto de um botão de criação bloqueado
- * quando o período de teste expira.
+ * Explicação curta junto a um botão de criação bloqueado por trial/assinatura.
+ * Em pré-visualização de cargo não renderiza (o banner já comunica só-leitura).
  */
 export function LockedFeatureHint({
   className,
   action = "criar novos recursos",
 }: LockedFeatureHintProps) {
+  const { isPreviewingRole } = useAuth();
+
+  if (isPreviewingRole) {
+    return null;
+  }
+
   return (
     <p
       className={cn(

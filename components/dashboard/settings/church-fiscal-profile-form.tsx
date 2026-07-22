@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { ShieldCheck } from "lucide-react";
@@ -12,7 +12,6 @@ import { Input } from "@/components/ui/input";
 import { SelectField } from "@/components/ui/select-field";
 import { cn } from "@/lib/utils";
 import {
-  resolvePaymentsError,
   useUpsertFiscalProfile,
 } from "@/lib/api/queries";
 import type { FiscalProfile } from "@/lib/api/payments";
@@ -22,6 +21,7 @@ import {
   type FiscalProfileFormValues,
 } from "@/lib/validation/schemas";
 import { BR_STATES, formatBrPhoneInput } from "@/lib/geo/br-states";
+import { toastApiError, toastSuccess } from "@/lib/ui/toast";
 import { useAuth } from "@/providers/auth-provider";
 
 import { SettingsPanel } from "./settings-shared";
@@ -60,7 +60,6 @@ export function ChurchFiscalProfileForm({
 }) {
   const { user, church } = useAuth();
   const upsert = useUpsertFiscalProfile();
-  const [success, setSuccess] = useState<string | null>(null);
   const ownerCpfFormatted = user?.cpf ? formatCpfInput(user.cpf) : "";
   const inputsDisabled = upsert.isPending || locked;
 
@@ -78,8 +77,6 @@ export function ChurchFiscalProfileForm({
     watch,
     getValues,
     setValue,
-    setError,
-    clearErrors,
     formState: { errors, isDirty },
   } = form;
 
@@ -87,13 +84,9 @@ export function ChurchFiscalProfileForm({
 
   useEffect(() => {
     reset(buildFiscalValues(profile));
-    setSuccess(null);
   }, [profile, reset]);
 
   const onSubmit = handleSubmit(async (values) => {
-    clearErrors("root");
-    setSuccess(null);
-
     try {
       await upsert.mutateAsync({
         documentType: values.documentType,
@@ -111,14 +104,12 @@ export function ChurchFiscalProfileForm({
         state: values.state,
       });
 
-      setSuccess("Perfil da igreja salvo com sucesso.");
+      toastSuccess("Perfil da igreja salvo com sucesso.");
     } catch (submitError) {
-      setError("root", {
-        message: resolvePaymentsError(
-          submitError,
-          "Não foi possível salvar o perfil da igreja.",
-        ),
-      });
+      toastApiError(
+        submitError,
+        "Não foi possível salvar o perfil da igreja.",
+      );
     }
   });
 
@@ -135,8 +126,6 @@ export function ChurchFiscalProfileForm({
         className="space-y-4"
         noValidate
       >
-        {errors.root?.message && <FormAlert>{errors.root.message}</FormAlert>}
-        {success && <FormAlert variant="success">{success}</FormAlert>}
         {locked && (
           <FormAlert variant="info">
             Sua conta está sem um plano ativo. Você pode consultar os dados da
@@ -454,8 +443,6 @@ export function ChurchFiscalProfileForm({
         saving={upsert.isPending}
         onDiscard={() => {
           reset(buildFiscalValues(profile));
-          setSuccess(null);
-          clearErrors("root");
         }}
         onSave={() => {
           const formEl = document.getElementById(

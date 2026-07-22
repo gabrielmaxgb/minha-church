@@ -7,7 +7,6 @@ import Link from "next/link";
 import { FinanceConfirmDialog } from "@/components/dashboard/finances/finance-confirm-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { FormAlert } from "@/components/ui/form-field";
 import { SelectField } from "@/components/ui/select-field";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AUTH_ROUTES } from "@/constants/routes";
@@ -17,6 +16,7 @@ import {
   useFinancialPeriodStatus,
   useReopenFinancialPeriod,
 } from "@/lib/api/queries";
+import { toastError, toastSuccess } from "@/lib/ui/toast";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 
@@ -48,7 +48,6 @@ export function PeriodCloseBar({ className }: { className?: string }) {
   const [month, setMonth] = useState(initial.month);
   const [confirmClose, setConfirmClose] = useState(false);
   const [confirmReopen, setConfirmReopen] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const statusQuery = useFinancialPeriodStatus(year, month);
   const closeMutation = useCloseFinancialPeriod();
@@ -60,23 +59,27 @@ export function PeriodCloseBar({ className }: { className?: string }) {
   const reportFrom = `${year}-${String(month).padStart(2, "0")}-01`;
 
   const handleClose = async () => {
-    setError(null);
     try {
       await closeMutation.mutateAsync({ year, month });
       setConfirmClose(false);
+      toastSuccess(`Mês de ${monthLabel} fechado.`);
     } catch (err) {
-      setError(resolveTreasuryError(err, "Não foi possível fechar o mês."));
+      toastError(
+        resolveTreasuryError(err, "Não foi possível fechar o mês."),
+      );
       setConfirmClose(false);
     }
   };
 
   const handleReopen = async () => {
-    setError(null);
     try {
       await reopenMutation.mutateAsync({ year, month });
       setConfirmReopen(false);
+      toastSuccess(`Mês de ${monthLabel} reaberto.`);
     } catch (err) {
-      setError(resolveTreasuryError(err, "Não foi possível reabrir o mês."));
+      toastError(
+        resolveTreasuryError(err, "Não foi possível reabrir o mês."),
+      );
       setConfirmReopen(false);
     }
   };
@@ -146,7 +149,6 @@ export function PeriodCloseBar({ className }: { className?: string }) {
                 }. Lançamentos manuais deste mês ficam travados.`
               : "Enquanto o mês estiver aberto, você pode lançar e editar o caixa."}
           </p>
-          {error ? <FormAlert>{error}</FormAlert> : null}
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -163,7 +165,6 @@ export function PeriodCloseBar({ className }: { className?: string }) {
                 size="sm"
                 disabled={reopenMutation.isPending}
                 onClick={() => {
-                  setError(null);
                   setConfirmReopen(true);
                 }}
               >
@@ -180,7 +181,6 @@ export function PeriodCloseBar({ className }: { className?: string }) {
                 size="sm"
                 disabled={closeMutation.isPending}
                 onClick={() => {
-                  setError(null);
                   setConfirmClose(true);
                 }}
               >

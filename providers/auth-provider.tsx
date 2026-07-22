@@ -32,6 +32,7 @@ import {
   persistActiveChurch,
 } from "@/lib/auth/cookies";
 import { terminateSession } from "@/lib/auth/session";
+import { setRolePreviewActive } from "@/lib/permissions/role-preview-guard";
 import { isProtectedAreaPath, PUBLIC_ROUTES } from "@/constants/routes";
 import type { AuthResponse, ChangePasswordPayload, Church, LoginCredentials, RegisterChurchPayload, RegisterChurchResult, UpdateProfilePayload, User, UserPermissions } from "@/types/auth";
 import { isRegisterChurchPending } from "@/types/auth";
@@ -77,7 +78,7 @@ interface AuthContextValue {
   isPreviewingRole: boolean;
   /** Nome do cargo em pré-visualização (para o banner). */
   previewRoleName: string | null;
-  /** Entra no modo "ver como cargo" — sobrescreve permissões e desliga o bypass de owner. */
+  /** Entra no modo "ver como cargo" — sobrescreve permissões, desliga bypass de owner e bloqueia mutações (somente visualização). */
   startRolePreview: (roleName: string, permissions: UserPermissions) => void;
   /** Sai do modo de pré-visualização, voltando às permissões reais. */
   stopRolePreview: () => void;
@@ -323,6 +324,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     clearAuthSession();
+    setRolePreviewActive(false);
+    setPreviewRoleName(null);
+    setPreviewPermissions(null);
     setUser(null);
     setChurch(null);
     setChurches([]);
@@ -379,6 +383,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const startRolePreview = useCallback(
     (roleName: string, rolePermissions: UserPermissions) => {
+      setRolePreviewActive(true);
       setPreviewRoleName(roleName);
       setPreviewPermissions(rolePermissions);
     },
@@ -386,12 +391,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const stopRolePreview = useCallback(() => {
+    setRolePreviewActive(false);
     setPreviewRoleName(null);
     setPreviewPermissions(null);
   }, []);
 
   // Sai da pré-visualização automaticamente ao trocar de igreja (evita estado preso).
   useEffect(() => {
+    setRolePreviewActive(false);
     setPreviewRoleName(null);
     setPreviewPermissions(null);
   }, [church?.id]);

@@ -14,7 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { FormAlert, FormField } from "@/components/ui/form-field";
+import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { PUBLIC_ROUTES } from "@/constants/routes";
 import { forgotPasswordRequest } from "@/lib/api/auth";
@@ -22,10 +22,11 @@ import {
   forgotPasswordSchema,
   type ForgotPasswordFormValues,
 } from "@/lib/validation/schemas";
+import { toastError, toastSuccess } from "@/lib/ui/toast";
 
 export function ForgotPasswordForm() {
   const [isLoading, setIsLoading] = useState(false);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
 
   const form = useForm<ForgotPasswordFormValues>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -36,26 +37,22 @@ export function ForgotPasswordForm() {
   const {
     register,
     handleSubmit,
-    setError,
-    clearErrors,
     formState: { errors },
   } = form;
 
   const onSubmit = handleSubmit(async (values) => {
-    clearErrors("root");
-    setSuccessMessage(null);
     setIsLoading(true);
 
     try {
       const response = await forgotPasswordRequest(values.identifier.trim());
-      setSuccessMessage(response.message);
+      setSent(true);
+      toastSuccess(response.message);
     } catch (submitError) {
-      setError("root", {
-        message:
-          submitError instanceof Error
-            ? submitError.message
-            : "Não foi possível enviar a solicitação. Tente novamente.",
-      });
+      toastError(
+        submitError instanceof Error
+          ? submitError.message
+          : "Não foi possível enviar a solicitação. Tente novamente.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -73,12 +70,6 @@ export function ForgotPasswordForm() {
 
       <form onSubmit={onSubmit} noValidate>
         <CardContent className="space-y-4">
-          {errors.root?.message && <FormAlert>{errors.root.message}</FormAlert>}
-
-          {successMessage && (
-            <FormAlert variant="success">{successMessage}</FormAlert>
-          )}
-
           <FormField
             label="E-mail ou CPF"
             htmlFor="identifier"
@@ -90,7 +81,7 @@ export function ForgotPasswordForm() {
               type="text"
               placeholder="pastor@igreja.com.br ou CPF"
               autoComplete="username"
-              disabled={isLoading || Boolean(successMessage)}
+              disabled={isLoading || sent}
               aria-invalid={errors.identifier ? true : undefined}
               {...register("identifier")}
             />
@@ -101,7 +92,7 @@ export function ForgotPasswordForm() {
           <Button
             type="submit"
             className="w-full"
-            disabled={isLoading || Boolean(successMessage)}
+            disabled={isLoading || sent}
           >
             {isLoading ? "Enviando..." : "Enviar instruções"}
           </Button>

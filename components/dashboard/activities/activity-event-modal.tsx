@@ -67,6 +67,7 @@ import {
   canManageEventRoster,
 } from "@/lib/permissions";
 import { useTrialWriteGuard } from "@/lib/subscription/use-trial-write-guard";
+import { toastApiError, toastError } from "@/lib/ui/toast";
 import {
   applyBrlCentsMask,
   cn,
@@ -96,7 +97,7 @@ export function ActivityEventModal({
   const { user, permissions } = useAuth();
   const canSelectChurchWide =
     permissions !== null && canCreateChurchWideActivity(permissions);
-  const { writesBlocked, guardWrite, paywallAction, closePaywall } =
+  const { writesBlocked, subscriptionLocked, guardWrite, paywallAction, closePaywall } =
     useTrialWriteGuard();
   const { data: event, isLoading, isError } = useChurchEvent(eventId ?? "");
 
@@ -117,7 +118,6 @@ export function ActivityEventModal({
     useState<EventRecurrenceFormState>(
       defaultRecurrenceFormState(new Date().toISOString()),
     );
-  const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [scopeDialog, setScopeDialog] = useState<"edit" | "delete" | null>(null);
 
@@ -191,7 +191,6 @@ export function ActivityEventModal({
       setMode(initialMode);
       setConfirmDelete(false);
       setScopeDialog(null);
-      setError(null);
       return;
     }
 
@@ -228,7 +227,6 @@ export function ActivityEventModal({
     );
     setRecurrence(nextRecurrence);
     setInitialRecurrence(nextRecurrence);
-    setError(null);
     setConfirmDelete(false);
   }, [event, mode]);
 
@@ -242,7 +240,7 @@ export function ActivityEventModal({
       recurrence.repeatMode !== "none" &&
       !recurrence.endDate
     ) {
-      setError("Informe a data final da repetição.");
+      toastError("Informe a data final da repetição.");
       setScopeDialog(null);
       return;
     }
@@ -257,7 +255,7 @@ export function ActivityEventModal({
       priceCents > 0 &&
       priceCents < 500
     ) {
-      setError(
+      toastError(
         "O preço mínimo da inscrição paga é R$ 5,00 (ou deixe vazio para gratuita).",
       );
       setScopeDialog(null);
@@ -274,7 +272,7 @@ export function ActivityEventModal({
       priceCents !== existingPaid;
 
     if (isNewPaidPrice && !canChargePaidRegistration) {
-      setError(
+      toastError(
         "Ative os recebimentos da igreja antes de abrir inscrição paga.",
       );
       setScopeDialog(null);
@@ -325,11 +323,7 @@ export function ActivityEventModal({
         setMode("view");
       }
     } catch (saveError) {
-      setError(
-        saveError instanceof Error
-          ? saveError.message
-          : "Não foi possível salvar a atividade.",
-      );
+      toastApiError(saveError, "Não foi possível salvar a atividade.");
       setScopeDialog(null);
     }
   }
@@ -341,20 +335,14 @@ export function ActivityEventModal({
       onClose();
       onDeleted?.();
     } catch (deleteError) {
-      setError(
-        deleteError instanceof Error
-          ? deleteError.message
-          : "Não foi possível excluir a atividade.",
-      );
+      toastApiError(deleteError, "Não foi possível excluir a atividade.");
       setScopeDialog(null);
     }
   }
 
   function handleSaveClick() {
-    setError(null);
-
     if (!name.trim()) {
-      setError("Informe o nome da atividade.");
+      toastError("Informe o nome da atividade.");
       return;
     }
 
@@ -366,7 +354,7 @@ export function ActivityEventModal({
         isAllDayRange(startsAt, endsAt),
       )
     ) {
-      setError("O fim precisa ser no mesmo dia ou depois do início.");
+      toastError("O fim precisa ser no mesmo dia ou depois do início.");
       return;
     }
 
@@ -375,7 +363,7 @@ export function ActivityEventModal({
       recurrence.repeatMode !== "none" &&
       !recurrence.endDate
     ) {
-      setError("Informe a data final da repetição.");
+      toastError("Informe a data final da repetição.");
       return;
     }
 
@@ -401,6 +389,10 @@ export function ActivityEventModal({
   }
 
   if (writesBlocked && initialMode === "edit") {
+    if (!subscriptionLocked) {
+      return null;
+    }
+
     return (
       <TrialExpiredWriteModal
         open
@@ -468,7 +460,6 @@ export function ActivityEventModal({
                 disabled={isPending}
                 onClick={() => {
                   setConfirmDelete(false);
-                  setError(null);
                   if (initialMode === "edit") {
                     onClose();
                     return;
@@ -594,15 +585,6 @@ export function ActivityEventModal({
           </div>
         ) : (
           <div className="space-y-8">
-            {error ? (
-              <div
-                role="alert"
-                className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive"
-              >
-                {error}
-              </div>
-            ) : null}
-
             <EventFormSection
               title="Informações principais"
               description="Nome, descrição e local."

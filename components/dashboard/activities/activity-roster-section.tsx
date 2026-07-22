@@ -24,6 +24,7 @@ import {
   rosterSlotsToPlan,
   type RosterSlotPlanItem,
 } from "@/lib/ministries/roster";
+import { toastApiError } from "@/lib/ui/toast";
 import { cn } from "@/lib/utils";
 import type { ChurchEventDetail } from "@/types/events";
 
@@ -39,9 +40,7 @@ export function ActivityRosterSection({
   const updateEvent = useUpdateChurchEvent(event.id);
   const setCollection = useSetEventRosterCollection(event.id);
   const [rosterSlotPlan, setRosterSlotPlan] = useState<RosterSlotPlanItem[]>([]);
-  const [slotPlanError, setSlotPlanError] = useState<string | null>(null);
   const [collectionOpen, setCollectionOpen] = useState(false);
-  const [collectionError, setCollectionError] = useState<string | null>(null);
   const [messageOpen, setMessageOpen] = useState(
     Boolean(event.availabilityMessage?.trim()),
   );
@@ -54,7 +53,6 @@ export function ActivityRosterSection({
 
   useEffect(() => {
     setRosterSlotPlan(rosterSlotsToPlan(event.rosterSlots ?? []));
-    setSlotPlanError(null);
   }, [event.id, event.rosterSlots]);
 
   useEffect(() => {
@@ -78,7 +76,6 @@ export function ActivityRosterSection({
     const currentPlan = rosterSlotsToPlan(event.rosterSlots ?? []);
 
     setRosterSlotPlan(nextPlan);
-    setSlotPlanError(null);
 
     if (rosterSlotPlanEqual(nextPlan, currentPlan)) {
       return;
@@ -89,29 +86,19 @@ export function ActivityRosterSection({
         rosterSlotPlan: nextPlan,
       });
     } catch (saveError) {
-      setSlotPlanError(
-        saveError instanceof Error
-          ? saveError.message
-          : "Não foi possível salvar as funções.",
-      );
+      toastApiError(saveError, "Não foi possível salvar as funções.");
       setRosterSlotPlan(currentPlan);
     }
   }
 
   async function handleCloseCollection() {
-    setCollectionError(null);
-
     try {
       await setCollection.mutateAsync({
         rosterOpen: false,
         eventIds: [event.id],
       });
     } catch (closeError) {
-      setCollectionError(
-        closeError instanceof Error
-          ? closeError.message
-          : "Não foi possível fechar a coleta.",
-      );
+      toastApiError(closeError, "Não foi possível fechar a coleta.");
     }
   }
 
@@ -127,11 +114,6 @@ export function ActivityRosterSection({
           description="Opcional — defina as vagas (recepção, mídia, infantil…)."
           icon={ClipboardList}
         >
-          {slotPlanError ? (
-            <p className="mb-3 rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-              {slotPlanError}
-            </p>
-          ) : null}
           <EventRosterSlotsEditor
             value={rosterSlotPlan}
             onChange={(nextPlan) => void handleSlotPlanChange(nextPlan)}
@@ -229,12 +211,6 @@ export function ActivityRosterSection({
               </Button>
             </div>
           </div>
-
-          {collectionError ? (
-            <p className="border-t border-destructive/15 bg-destructive/5 px-4 py-3 text-sm text-destructive sm:px-5">
-              {collectionError}
-            </p>
-          ) : null}
 
           {messageOpen ? (
             <div className="border-t border-border/60 bg-background/60 px-4 py-4 sm:px-5">

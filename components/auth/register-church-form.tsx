@@ -20,7 +20,7 @@ import { motion, useReducedMotion } from "motion/react";
 
 import { BusyOverlay } from "@/components/ui/busy-overlay";
 import { Button } from "@/components/ui/button";
-import { FormAlert, FormField, FormMessage } from "@/components/ui/form-field";
+import { FormField, FormMessage } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import {
   AUTH_ROUTES,
@@ -32,6 +32,7 @@ import {
   registerChurchSchema,
   type RegisterChurchFormValues,
 } from "@/lib/validation/schemas";
+import { toastError } from "@/lib/ui/toast";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 
@@ -121,12 +122,11 @@ export function RegisterChurchForm() {
 
       window.location.replace(AUTH_ROUTES.dashboard);
     } catch (submitError) {
-      setError("root", {
-        message:
-          submitError instanceof Error
-            ? submitError.message
-            : "Não foi possível criar sua igreja. Tente novamente.",
-      });
+      toastError(
+        submitError instanceof Error
+          ? submitError.message
+          : "Não foi possível criar sua igreja. Tente novamente.",
+      );
       setIsLoading(false);
     }
   });
@@ -222,10 +222,6 @@ export function RegisterChurchForm() {
           </div>
 
           <form onSubmit={onSubmit} noValidate className="space-y-4">
-            {errors.root?.message && (
-              <FormAlert>{errors.root.message}</FormAlert>
-            )}
-
             <FormField
               label="Nome da igreja"
               htmlFor="churchName"

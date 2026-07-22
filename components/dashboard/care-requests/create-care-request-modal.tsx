@@ -11,9 +11,9 @@ import {
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
 import { Button } from "@/components/ui/button";
-import { FormAlert } from "@/components/ui/form-field";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateCareRequest } from "@/lib/api/queries";
+import { toastApiError } from "@/lib/ui/toast";
 import { cn } from "@/lib/utils";
 import {
   type CareRequestRecipient,
@@ -69,14 +69,12 @@ export function CreateCareRequestModal({
 
   const [type, setType] = useState<CareRequestType>("counseling");
   const [message, setMessage] = useState("");
-  const [error, setError] = useState<string | null>(null);
   const [phase, setPhase] = useState<"form" | "success">("form");
 
   useEffect(() => {
     if (!open) return;
     setType("counseling");
     setMessage("");
-    setError(null);
     setPhase("form");
   }, [open, recipient?.id]);
 
@@ -119,8 +117,6 @@ export function CreateCareRequestModal({
     event.preventDefault();
     if (!recipient || createRequest.isPending) return;
 
-    setError(null);
-
     try {
       await createRequest.mutateAsync({
         recipientMemberId: recipient.id,
@@ -130,11 +126,7 @@ export function CreateCareRequestModal({
       setPhase("success");
       onCreated?.();
     } catch (submitError) {
-      setError(
-        submitError instanceof Error
-          ? submitError.message
-          : "Não foi possível enviar a solicitação.",
-      );
+      toastApiError(submitError, "Não foi possível enviar a solicitação.");
     }
   }
 
@@ -354,8 +346,6 @@ export function CreateCareRequestModal({
                         className="min-h-[112px]"
                       />
                     </div>
-
-                    {error ? <FormAlert>{error}</FormAlert> : null}
 
                     <p className="text-xs leading-relaxed text-muted-foreground">
                       A pessoa recebe aviso no app e por e-mail (sem o texto da

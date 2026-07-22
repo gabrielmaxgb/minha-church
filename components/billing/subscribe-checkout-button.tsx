@@ -30,7 +30,7 @@ export function SubscribeCheckoutButton({
   size = "sm",
   variant = "default",
 }: SubscribeCheckoutButtonProps) {
-  const { subscribe, loading, error, canSubscribe } = useSubscribeCheckout();
+  const { subscribe, loading, canSubscribe } = useSubscribeCheckout();
 
   if (!canSubscribe) {
     return null;
@@ -68,11 +68,6 @@ export function SubscribeCheckoutButton({
           children
         )}
       </Button>
-      {error ? (
-        <p className="text-xs text-destructive" role="alert">
-          {error}
-        </p>
-      ) : null}
     </div>
   );
 }

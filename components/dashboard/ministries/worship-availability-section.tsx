@@ -21,6 +21,7 @@ import {
   useUpdateEventAvailability,
   useWorshipProfile,
 } from "@/lib/api/queries";
+import { toastApiError } from "@/lib/ui/toast";
 import { cn } from "@/lib/utils";
 import type {
   WorshipAvailabilityEvent,
@@ -214,13 +215,11 @@ export function WorshipAvailabilitySection({
   const { data, isLoading, isError, error } = useWorshipProfile(ministryId);
   const updateAvailability = useUpdateEventAvailability(ministryId);
   const [busyEventId, setBusyEventId] = useState<string | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
 
   async function handleRespond(
     eventId: string,
     payload: EventAvailabilityPayload,
   ) {
-    setActionError(null);
     setBusyEventId(eventId);
 
     try {
@@ -229,10 +228,9 @@ export function WorshipAvailabilitySection({
         status: payload.status,
       });
     } catch (statusError) {
-      setActionError(
-        statusError instanceof Error
-          ? statusError.message
-          : "Não foi possível atualizar sua disponibilidade.",
+      toastApiError(
+        statusError,
+        "Não foi possível atualizar sua disponibilidade.",
       );
     } finally {
       setBusyEventId(null);
@@ -260,12 +258,6 @@ export function WorshipAvailabilitySection({
 
   return (
     <div className="space-y-6">
-      {actionError && (
-        <p className="rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-          {actionError}
-        </p>
-      )}
-
       {data.needsRosterFunctions ? (
         <RosterFunctionsReminder
           ministryId={data.ministryId}

@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  AlertTriangle,
   CheckCircle2,
   Download,
   FileSpreadsheet,
@@ -21,7 +20,6 @@ import {
   requestTierCrossing,
   type TierCrossingPreview,
 } from "@/lib/api/billing";
-import { ApiError } from "@/lib/api/client";
 import { importMembers } from "@/lib/api/queries/members.keys";
 import { billingKeys } from "@/lib/api/queries/billing.keys";
 import { membersKeys } from "@/lib/api/queries";
@@ -37,6 +35,7 @@ import {
   type ParsedSheet,
 } from "@/lib/members/import";
 import { cn } from "@/lib/utils";
+import { toastApiError, toastError } from "@/lib/ui/toast";
 import { useAuth } from "@/providers/auth-provider";
 import { MEMBER_STATUS_LABELS, type MemberStatus } from "@/types/members";
 
@@ -69,14 +68,12 @@ export function ImportMembersDialog({ open, onClose }: ImportMembersDialogProps)
   const [finalResult, setFinalResult] = useState<ImportMembersResult | null>(
     null,
   );
-  const [error, setError] = useState<string | null>(null);
 
   // Estado do modal de mudança de faixa (tier crossing).
   const [tierPreview, setTierPreview] = useState<TierCrossingPreview | null>(
     null,
   );
   const [tierLoading, setTierLoading] = useState(false);
-  const [tierError, setTierError] = useState<string | null>(null);
   const [tierRequestSent, setTierRequestSent] = useState(false);
 
   const reset = useCallback(() => {
@@ -91,10 +88,8 @@ export function ImportMembersDialog({ open, onClose }: ImportMembersDialogProps)
     setValidating(false);
     setImporting(false);
     setFinalResult(null);
-    setError(null);
     setTierPreview(null);
     setTierLoading(false);
-    setTierError(null);
     setTierRequestSent(false);
   }, []);
 
@@ -126,12 +121,11 @@ export function ImportMembersDialog({ open, onClose }: ImportMembersDialogProps)
   }, [open, handleClose]);
 
   const handleFile = useCallback(async (file: File) => {
-    setError(null);
     setParsing(true);
     try {
       const parsed = await parseSpreadsheet(file);
       if (parsed.headers.length === 0 || parsed.rows.length === 0) {
-        setError(
+        toastError(
           "A planilha parece vazia. Confira se a primeira linha tem os títulos das colunas e se há pelo menos uma pessoa.",
         );
         setParsing(false);
@@ -143,7 +137,7 @@ export function ImportMembersDialog({ open, onClose }: ImportMembersDialogProps)
       setDryResult(null);
       setStep("map");
     } catch {
-      setError(
+      toastError(
         "Não consegui ler este arquivo. Use um CSV ou Excel (.xlsx) — de preferência o modelo.",
       );
     } finally {
@@ -167,7 +161,6 @@ export function ImportMembersDialog({ open, onClose }: ImportMembersDialogProps)
     if (!church?.id || !built || built.rows.length === 0) {
       return;
     }
-    setError(null);
     setValidating(true);
     try {
       const result = await importMembers(church.id, {
@@ -177,11 +170,7 @@ export function ImportMembersDialog({ open, onClose }: ImportMembersDialogProps)
       setDryResult(result);
       setStep("preview");
     } catch (err) {
-      setError(
-        err instanceof ApiError
-          ? err.message
-          : "Não foi possível validar a planilha. Tente novamente.",
-      );
+      toastApiError(err, "Não foi possível validar a planilha. Tente novamente.");
     } finally {
       setValidating(false);
     }
@@ -192,7 +181,6 @@ export function ImportMembersDialog({ open, onClose }: ImportMembersDialogProps)
       return;
     }
     setImporting(true);
-    setError(null);
     setTierPreview(null);
     try {
       const result = await importMembers(church.id, {
@@ -206,11 +194,7 @@ export function ImportMembersDialog({ open, onClose }: ImportMembersDialogProps)
         queryClient.invalidateQueries({ queryKey: billingKeys._def }),
       ]);
     } catch (err) {
-      setError(
-        err instanceof ApiError
-          ? err.message
-          : "Não foi possível concluir a importação.",
-      );
+      toastApiError(err, "Não foi possível concluir a importação.");
     } finally {
       setImporting(false);
     }
@@ -239,7 +223,6 @@ export function ImportMembersDialog({ open, onClose }: ImportMembersDialogProps)
     }
 
     setImporting(true);
-    setError(null);
     try {
       const projected = currentActiveMembers + validActiveCount;
       const preview = await fetchTierCrossingPreview(church.id, projected);
@@ -250,15 +233,10 @@ export function ImportMembersDialog({ open, onClose }: ImportMembersDialogProps)
       // Cruza faixa: pede confirmação (dono) ou autorização (equipe) antes de rodar.
       setImporting(false);
       setTierRequestSent(false);
-      setTierError(null);
       setTierPreview(preview);
     } catch (err) {
       setImporting(false);
-      setError(
-        err instanceof ApiError
-          ? err.message
-          : "Não foi possível verificar a faixa do plano.",
-      );
+      toastApiError(err, "Não foi possível verificar a faixa do plano.");
     }
   }, [church, validActiveCount, currentActiveMembers, runImport]);
 
@@ -267,17 +245,12 @@ export function ImportMembersDialog({ open, onClose }: ImportMembersDialogProps)
       return;
     }
     setTierLoading(true);
-    setTierError(null);
     try {
       await confirmTierCrossing(church.id, tierPreview.projectedTierId);
       setTierPreview(null);
       await runImport();
     } catch (err) {
-      setTierError(
-        err instanceof ApiError
-          ? err.message
-          : "Não foi possível confirmar a nova faixa.",
-      );
+      toastApiError(err, "Não foi possível confirmar a nova faixa.");
     } finally {
       setTierLoading(false);
     }
@@ -288,17 +261,12 @@ export function ImportMembersDialog({ open, onClose }: ImportMembersDialogProps)
       return;
     }
     setTierLoading(true);
-    setTierError(null);
     try {
       await requestTierCrossing(church.id, tierPreview.projectedTierId);
       setTierRequestSent(true);
       await queryClient.invalidateQueries({ queryKey: billingKeys._def });
     } catch (err) {
-      setTierError(
-        err instanceof ApiError
-          ? err.message
-          : "Não foi possível avisar o proprietário.",
-      );
+      toastApiError(err, "Não foi possível avisar o proprietário.");
     } finally {
       setTierLoading(false);
     }
@@ -361,13 +329,6 @@ export function ImportMembersDialog({ open, onClose }: ImportMembersDialogProps)
         </header>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
-          {error && (
-            <div className="mb-4 flex items-start gap-2 rounded-xl border border-destructive/25 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-              <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
-              <span>{error}</span>
-            </div>
-          )}
-
           {step === "upload" && (
             <div className="space-y-5">
               <div className="rounded-xl border border-border bg-muted/20 p-4">
@@ -766,13 +727,11 @@ export function ImportMembersDialog({ open, onClose }: ImportMembersDialogProps)
           preview={tierPreview}
           mode={isOwner ? "owner-confirm" : "request-owner"}
           loading={tierLoading}
-          error={tierError}
           requestSent={tierRequestSent}
           onConfirm={() => void handleTierConfirm()}
           onRequestOwner={() => void handleTierRequest()}
           onClose={() => {
             setTierPreview(null);
-            setTierError(null);
           }}
         />
       )}

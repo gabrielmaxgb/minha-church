@@ -11,13 +11,13 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { ApiError } from "@/lib/api/client";
 import {
   fetchGivingDonationReceipt,
   type GivingDonationOutcome,
   type GivingDonationReceipt,
 } from "@/lib/api/payments";
 import { formatBrlFromCents } from "@/components/giving/giving-stripe";
+import { toastApiError } from "@/lib/ui/toast";
 
 const POLL_MS = 1_500;
 const POLL_ATTEMPTS = 6;
@@ -126,7 +126,6 @@ export function GivingThanksPanel({
     donationId && receiptToken ? null : "incomplete",
   );
   const [loading, setLoading] = useState(Boolean(donationId && receiptToken));
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!donationId || !receiptToken) {
@@ -144,7 +143,6 @@ export function GivingThanksPanel({
         if (cancelled) return;
 
         setReceipt(next);
-        setError(null);
 
         if (
           next.outcome === "incomplete" &&
@@ -162,11 +160,7 @@ export function GivingThanksPanel({
         setLoading(false);
       } catch (loadError) {
         if (cancelled) return;
-        setError(
-          loadError instanceof ApiError
-            ? loadError.message
-            : "Não foi possível confirmar o pagamento.",
-        );
+        toastApiError(loadError, "Não foi possível confirmar o pagamento.");
         setOutcome("incomplete");
         setLoading(false);
       }
@@ -230,7 +224,7 @@ export function GivingThanksPanel({
             </h2>
             <div className="mt-6 h-px w-12 bg-[var(--giving-trust)]" />
             <p className="mt-6 text-sm leading-relaxed text-[var(--giving-paper)]/70">
-              {error ?? copy.body}
+              {copy.body}
             </p>
           </>
         )}

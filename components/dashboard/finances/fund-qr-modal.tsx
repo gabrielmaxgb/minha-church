@@ -7,6 +7,7 @@ import QRCode from "qrcode";
 import { ModalPortal } from "@/components/ui/modal-portal";
 import { Button } from "@/components/ui/button";
 import { slugifyFundQrFilename } from "@/lib/finances/fund-qr-filename";
+import { toastError } from "@/lib/ui/toast";
 import { cn } from "@/lib/utils";
 
 type FundQrModalProps = {
@@ -247,7 +248,6 @@ export function FundQrModal({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [exportPreviewUrl, setExportPreviewUrl] = useState<string | null>(null);
   const [busy, setBusy] = useState<"download" | "print" | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const ready = Boolean(previewUrl);
   const description = fundDescription?.trim() || null;
 
@@ -262,7 +262,6 @@ export function FundQrModal({
     let objectUrlToRevoke: string | null = null;
     setPreviewUrl(null);
     setExportPreviewUrl(null);
-    setError(null);
 
     void QRCode.toDataURL(url, {
       errorCorrectionLevel: "M",
@@ -280,7 +279,7 @@ export function FundQrModal({
       })
       .catch(() => {
         if (!cancelled) {
-          setError("Não foi possível gerar o QR code.");
+          toastError("Não foi possível gerar o QR code.");
         }
       });
 
@@ -321,7 +320,6 @@ export function FundQrModal({
 
   const handleDownload = useCallback(async () => {
     setBusy("download");
-    setError(null);
     try {
       const blob = await buildExportPng({
         url,
@@ -336,7 +334,7 @@ export function FundQrModal({
       anchor.click();
       URL.revokeObjectURL(objectUrl);
     } catch {
-      setError("Não foi possível baixar a imagem.");
+      toastError("Não foi possível baixar a imagem.");
     } finally {
       setBusy(null);
     }
@@ -344,7 +342,6 @@ export function FundQrModal({
 
   const handlePrint = useCallback(async () => {
     setBusy("print");
-    setError(null);
     try {
       const blob = await buildExportPng({
         url,
@@ -356,7 +353,7 @@ export function FundQrModal({
       const printWindow = window.open("", "_blank", "noopener,noreferrer");
       if (!printWindow) {
         URL.revokeObjectURL(objectUrl);
-        setError("Permita pop-ups para imprimir o QR.");
+        toastError("Permita pop-ups para imprimir o QR.");
         return;
       }
       printWindow.document.write(`<!doctype html>
@@ -383,7 +380,7 @@ export function FundQrModal({
       printWindow.document.close();
       window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
     } catch {
-      setError("Não foi possível preparar a impressão.");
+      toastError("Não foi possível preparar a impressão.");
     } finally {
       setBusy(null);
     }
@@ -485,7 +482,7 @@ export function FundQrModal({
                       Escaneie para contribuir
                     </p>
                     <div className="mx-auto mt-5 flex size-[180px] items-center justify-center rounded-2xl bg-[#f5f5f2] p-2">
-                      {!ready && !error ? (
+                      {!ready ? (
                         <Loader2
                           className="size-6 animate-spin text-[#101512]/40"
                           aria-hidden
@@ -509,10 +506,6 @@ export function FundQrModal({
                 </div>
               )}
             </div>
-
-            {error ? (
-              <p className="mt-3 text-center text-sm text-destructive">{error}</p>
-            ) : null}
 
             <p className="mt-4 text-center text-xs leading-relaxed text-muted-foreground">
               Mesmo visual da página de contribuição — pronto para imprimir ou

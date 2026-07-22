@@ -1,15 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { SettingsAlert } from "@/components/dashboard/settings/settings-shared";
+import { toastInfo } from "@/lib/ui/toast";
 
 export function CheckoutCancelHandler() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const handledRef = useRef(false);
-  const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (handledRef.current) {
@@ -21,7 +20,7 @@ export function CheckoutCancelHandler() {
     }
 
     handledRef.current = true;
-    setMessage(
+    toastInfo(
       "Checkout cancelado — nenhuma cobrança foi feita. Você pode assinar quando quiser.",
     );
 
@@ -33,13 +32,5 @@ export function CheckoutCancelHandler() {
     router.replace(nextUrl, { scroll: false });
   }, [router, searchParams]);
 
-  if (!message) {
-    return null;
-  }
-
-  return (
-    <SettingsAlert
-      message={message}
-    />
-  );
+  return null;
 }

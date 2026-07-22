@@ -13,6 +13,7 @@ import {
   getPushSupport,
 } from "@/lib/pwa/web-push";
 import { ApiError } from "@/lib/api/client";
+import { toastApiError } from "@/lib/ui/toast";
 import { cn } from "@/lib/utils";
 
 type Status =
@@ -33,7 +34,6 @@ export function PushNotificationsPanel({
 }) {
   const [status, setStatus] = useState<Status>("loading");
   const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     const support = getPushSupport();
@@ -84,20 +84,18 @@ export function PushNotificationsPanel({
   }, [refresh]);
 
   const handleEnable = async () => {
-    setError(null);
     setStatus("busy");
     try {
       await enableWebPush();
       setStatus("on");
       setMessage("Avisos do sino também chegam no celular.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao ativar push.");
+      toastApiError(err, "Falha ao ativar push.");
       await refresh();
     }
   };
 
   const handleDisable = async () => {
-    setError(null);
     setStatus("busy");
     try {
       await disableWebPush();
@@ -106,7 +104,7 @@ export function PushNotificationsPanel({
         "Receba escala, inscrição e outros avisos do inbox mesmo com o app fechado.",
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao desativar push.");
+      toastApiError(err, "Falha ao desativar push.");
       await refresh();
     }
   };
@@ -188,12 +186,6 @@ export function PushNotificationsPanel({
             <p className="inline-flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="size-4 animate-spin" aria-hidden />
               Aguarde…
-            </p>
-          ) : null}
-
-          {error ? (
-            <p className="text-sm text-destructive" role="alert">
-              {error}
             </p>
           ) : null}
         </div>

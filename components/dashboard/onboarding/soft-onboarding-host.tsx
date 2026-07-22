@@ -10,8 +10,9 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { DashboardBanner } from "@/components/ui/dashboard-banner";
 import { DatePicker } from "@/components/ui/date-picker";
-import { FormAlert, FormField } from "@/components/ui/form-field";
+import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
+import { toastError } from "@/lib/ui/toast";
 import { settingsSectionPath } from "@/constants/routes";
 import { formatBrPhoneInput } from "@/lib/geo/br-states";
 import { useFiscalProfile, useMyMember } from "@/lib/api/queries";
@@ -244,7 +245,6 @@ function MemberSoftOnboarding({ showBanner }: { showBanner: boolean }) {
   }, [member, myMember.isError, myMember.isPending]);
 
   const [open, setOpen] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const form = useForm<MemberOnboardingValues>({
     resolver: zodResolver(memberOnboardingSchema),
@@ -292,7 +292,6 @@ function MemberSoftOnboarding({ showBanner }: { showBanner: boolean }) {
   }
 
   const onSubmit = form.handleSubmit(async (values) => {
-    setError(null);
     try {
       await updateProfile({
         phone: values.phone.replace(/\D/g, ""),
@@ -301,7 +300,7 @@ function MemberSoftOnboarding({ showBanner }: { showBanner: boolean }) {
       await myMember.refetch();
       setOpen(false);
     } catch {
-      setError("Não foi possível salvar. Tente de novo.");
+      toastError("Não foi possível salvar. Tente de novo.");
     }
   });
 
@@ -331,7 +330,6 @@ function MemberSoftOnboarding({ showBanner }: { showBanner: boolean }) {
         icon={<UserRound className="size-5" aria-hidden />}
       >
         <form className="space-y-4" onSubmit={onSubmit} noValidate>
-          {error && <FormAlert>{error}</FormAlert>}
           <FormField
             label="WhatsApp"
             htmlFor="member-onboarding-phone"

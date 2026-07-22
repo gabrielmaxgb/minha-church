@@ -15,6 +15,7 @@ import {
   useFamilies,
   useSetMemberFamily,
 } from "@/lib/api/queries";
+import { toastApiError, toastError } from "@/lib/ui/toast";
 
 interface LinkMemberFamilyModalProps {
   memberId: string;
@@ -40,7 +41,6 @@ export function LinkMemberFamilyModal({
   const [mode, setMode] = useState<"existing" | "new">("new");
   const [familyId, setFamilyId] = useState("");
   const [newName, setNewName] = useState("");
-  const [error, setError] = useState<string | null>(null);
 
   const busy = createFamily.isPending || setFamily.isPending;
   const busySteps =
@@ -60,7 +60,6 @@ export function LinkMemberFamilyModal({
     setMode(families.length > 0 ? "existing" : "new");
     setFamilyId(families[0]?.id ?? "");
     setNewName(`Família ${memberName.split(/\s+/)[0] ?? ""}`.trim());
-    setError(null);
   }, [open, families, memberName]);
 
   useEffect(() => {
@@ -81,7 +80,6 @@ export function LinkMemberFamilyModal({
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    setError(null);
 
     try {
       let nextFamilyId = familyId;
@@ -89,13 +87,13 @@ export function LinkMemberFamilyModal({
       if (mode === "new") {
         const name = newName.trim();
         if (name.length < 2) {
-          setError("Informe um nome para a família.");
+          toastError("Informe um nome para a família.");
           return;
         }
         const family = await createFamily.mutateAsync(name);
         nextFamilyId = family.id;
       } else if (!nextFamilyId) {
-        setError("Escolha uma família.");
+        toastError("Escolha uma família.");
         return;
       }
 
@@ -103,11 +101,7 @@ export function LinkMemberFamilyModal({
       onClose();
       router.push(familyGraphPath(nextFamilyId));
     } catch (submitError) {
-      setError(
-        submitError instanceof Error
-          ? submitError.message
-          : "Não foi possível vincular a família.",
-      );
+      toastApiError(submitError, "Não foi possível vincular a família.");
     }
   }
 
@@ -203,12 +197,6 @@ export function LinkMemberFamilyModal({
               </>
             )}
           </div>
-
-          {error ? (
-            <p className="mt-3 text-sm text-destructive" role="alert">
-              {error}
-            </p>
-          ) : null}
 
           <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button

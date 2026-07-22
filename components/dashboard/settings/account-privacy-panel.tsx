@@ -5,11 +5,10 @@ import { useState } from "react";
 import { Download, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { FormAlert } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { MEMBER_RETENTION_DAYS } from "@/constants/legal";
 import { PUBLIC_ROUTES } from "@/constants/routes";
-import { ApiError } from "@/lib/api/client";
+import { toastApiError, toastSuccess } from "@/lib/ui/toast";
 import {
   deleteMyAccount,
   exportMyAccountData,
@@ -27,25 +26,15 @@ export function AccountPrivacyPanel({
   const { logout } = useAuth();
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [password, setPassword] = useState("");
 
   async function run(key: string, fn: () => Promise<void>, ok: string) {
     setBusy(key);
-    setError(null);
-    setMessage(null);
     try {
       await fn();
-      setMessage(ok);
+      toastSuccess(ok);
     } catch (err) {
-      setError(
-        err instanceof ApiError
-          ? err.message
-          : err instanceof Error
-            ? err.message
-            : "Não foi possível concluir a ação.",
-      );
+      toastApiError(err, "Não foi possível concluir a ação.");
     } finally {
       setBusy(null);
     }
@@ -53,12 +42,6 @@ export function AccountPrivacyPanel({
 
   return (
     <div className="space-y-4">
-      {(message || error) && (
-        <FormAlert variant={error ? "error" : "success"}>
-          {error ?? message}
-        </FormAlert>
-      )}
-
       <SettingsPanel>
         <div className="space-y-4 px-5 py-5">
           <div>

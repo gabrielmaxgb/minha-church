@@ -12,6 +12,7 @@ import { AUTH_ROUTES, ministryAvailabilityPath } from "@/constants/routes";
 import { CHURCH_WIDE_SCHEDULE_ID } from "@/lib/events/church-wide-schedule";
 import { useMySchedules } from "@/lib/api/queries";
 import { useRespondToRosterAvailability } from "@/lib/api/queries/use-respond-worship-availability";
+import { toastApiError } from "@/lib/ui/toast";
 import type { EventAvailabilityPayload } from "@/components/dashboard/my-schedule/event-availability-panel";
 import { canListMinistries } from "@/lib/permissions";
 import { useTrialWriteGuard } from "@/lib/subscription/use-trial-write-guard";
@@ -102,7 +103,6 @@ export function MyScheduleMinistryContent({
   const respond = useRespondToRosterAvailability();
   const { writesBlocked } = useTrialWriteGuard();
   const [busyEventId, setBusyEventId] = useState<string | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
 
   const ministry =
     ministryId === CHURCH_WIDE_SCHEDULE_ID
@@ -121,7 +121,6 @@ export function MyScheduleMinistryContent({
       return;
     }
 
-    setActionError(null);
     setBusyEventId(eventId);
 
     try {
@@ -132,11 +131,7 @@ export function MyScheduleMinistryContent({
         roleLabels: payload.roleLabels,
       });
     } catch (error) {
-      setActionError(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível salvar sua resposta.",
-      );
+      toastApiError(error, "Não foi possível salvar sua resposta.");
     } finally {
       setBusyEventId(null);
     }
@@ -191,12 +186,6 @@ export function MyScheduleMinistryContent({
           Minhas escalas
         </Link>
       </Button>
-
-      {actionError && (
-        <p className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-          {actionError}
-        </p>
-      )}
 
       <MinistryScheduleDetail
         ministry={ministry}

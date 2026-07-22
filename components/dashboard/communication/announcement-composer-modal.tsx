@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { Info, Loader2, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import {
   useUpdateAnnouncement,
 } from "@/lib/api/queries";
 import { canListMinistries, canManageCommunication } from "@/lib/permissions";
+import { toastApiError, toastError } from "@/lib/ui/toast";
 import { useAuth } from "@/providers/auth-provider";
 import type {
   Announcement,
@@ -119,7 +120,6 @@ export function AnnouncementComposerModal({
   const { permissions, user } = useAuth();
   const canList = canListMinistries(permissions);
   const canManage = canManageCommunication(permissions, user?.isOwner);
-  const scrollRef = useRef<HTMLDivElement>(null);
 
   const { data: ministries, isLoading: ministriesLoading } = useMinistries({
     enabled: open && (canList || canManage),
@@ -138,7 +138,6 @@ export function AnnouncementComposerModal({
   const [scheduleDate, setScheduleDate] = useState("");
   const [expiryEnabled, setExpiryEnabled] = useState(false);
   const [expiryDate, setExpiryDate] = useState("");
-  const [error, setError] = useState<string | null>(null);
 
   const isPending = createMutation.isPending || updateMutation.isPending;
 
@@ -146,8 +145,6 @@ export function AnnouncementComposerModal({
     if (!open) {
       return;
     }
-
-    setError(null);
 
     if (announcement) {
       setTitle(announcement.title);
@@ -236,22 +233,16 @@ export function AnnouncementComposerModal({
     ministriesLoading ||
     (audienceType === "ministries" && ministryOptions.length === 0);
 
-  const showSubmitError = useCallback((message: string) => {
-    setError(message);
-    scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
-
   const handleSubmit = useCallback(
     async (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
-      setError(null);
 
       const validationError = validateComposerForm(formState, {
         ministriesLoading,
       });
 
       if (validationError) {
-        showSubmitError(validationError);
+        toastError(validationError);
         return;
       }
 
@@ -289,11 +280,7 @@ export function AnnouncementComposerModal({
 
         onClose();
       } catch (submitError) {
-        showSubmitError(
-          submitError instanceof Error
-            ? submitError.message
-            : "Não foi possível salvar o comunicado.",
-        );
+        toastApiError(submitError, "Não foi possível salvar o comunicado.");
       }
     },
     [
@@ -312,7 +299,6 @@ export function AnnouncementComposerModal({
       priority,
       scheduleDate,
       scheduleEnabled,
-      showSubmitError,
       title,
       updateMutation,
     ],
@@ -356,10 +342,7 @@ export function AnnouncementComposerModal({
           noValidate
           className="flex min-h-0 flex-1 flex-col"
         >
-          <div
-            ref={scrollRef}
-            className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5"
-          >
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5">
             <div className="space-y-1.5">
               <Label htmlFor="announcement-title">Título</Label>
               <Input
@@ -431,7 +414,6 @@ export function AnnouncementComposerModal({
                       ? "Nenhum ministério ativo encontrado."
                       : "Você não tem permissão para listar ministérios."
                   }
-                  aria-invalid={Boolean(error) && ministryIds.length === 0}
                 />
                 <p className="text-xs text-muted-foreground">
                   Só verão o comunicado os membros vinculados a esses
@@ -514,15 +496,6 @@ export function AnnouncementComposerModal({
           </div>
 
           <footer className="space-y-3 border-t border-border/70 px-6 py-4">
-            {error && (
-              <p
-                role="alert"
-                className="rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive"
-              >
-                {error}
-              </p>
-            )}
-
             <div className="flex items-center justify-end gap-2">
             <Button
               type="button"

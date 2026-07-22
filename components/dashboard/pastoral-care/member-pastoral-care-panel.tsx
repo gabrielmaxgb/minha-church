@@ -23,6 +23,7 @@ import {
   useMemberPastoralNotes,
   useUpdatePastoralNote,
 } from "@/lib/api/queries";
+import { toastError } from "@/lib/ui/toast";
 import { cn, formatDate } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 import {
@@ -278,7 +279,6 @@ export function MemberPastoralCarePanel({ memberId }: { memberId: string }) {
   const [composerOpen, setComposerOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<PastoralNote | null>(null);
   const [form, setForm] = useState<NoteFormState>(emptyForm);
-  const [formError, setFormError] = useState<string | null>(null);
   const [noteToDelete, setNoteToDelete] = useState<PastoralNote | null>(null);
 
   const notes = notesQuery.data?.items ?? [];
@@ -287,14 +287,12 @@ export function MemberPastoralCarePanel({ memberId }: { memberId: string }) {
   const openCreate = () => {
     setEditingNote(null);
     setForm(emptyForm());
-    setFormError(null);
     setComposerOpen(true);
   };
 
   const openEdit = (note: PastoralNote) => {
     setEditingNote(note);
     setForm(noteToForm(note));
-    setFormError(null);
     setComposerOpen(true);
   };
 
@@ -302,22 +300,20 @@ export function MemberPastoralCarePanel({ memberId }: { memberId: string }) {
     if (isSaving) return;
     setComposerOpen(false);
     setEditingNote(null);
-    setFormError(null);
   };
 
   const submit = async () => {
-    setFormError(null);
     const body = form.body.trim();
     if (!body) {
-      setFormError("Escreva um pouquinho sobre o contato — isso ajuda depois.");
+      toastError("Escreva um pouquinho sobre o contato — isso ajuda depois.");
       return;
     }
     if (!form.occurredOn) {
-      setFormError("Escolha o dia em que isso aconteceu.");
+      toastError("Escolha o dia em que isso aconteceu.");
       return;
     }
     if (form.scheduleFollowUp && !form.followUpOn) {
-      setFormError("Escolha o dia em que você quer lembrar de voltar.");
+      toastError("Escolha o dia em que você quer lembrar de voltar.");
       return;
     }
     if (
@@ -325,9 +321,7 @@ export function MemberPastoralCarePanel({ memberId }: { memberId: string }) {
       form.followUpOn &&
       form.followUpOn < form.occurredOn
     ) {
-      setFormError(
-        "O lembrete precisa ser no mesmo dia do contato ou depois.",
-      );
+      toastError("O lembrete precisa ser no mesmo dia do contato ou depois.");
       return;
     }
 
@@ -357,7 +351,7 @@ export function MemberPastoralCarePanel({ memberId }: { memberId: string }) {
       setEditingNote(null);
       setForm(emptyForm());
     } catch (error) {
-      setFormError(resolvePastoralNotesError(error));
+      toastError(resolvePastoralNotesError(error));
     }
   };
 
@@ -370,7 +364,7 @@ export function MemberPastoralCarePanel({ memberId }: { memberId: string }) {
         closeComposer();
       }
     } catch (error) {
-      setFormError(resolvePastoralNotesError(error));
+      toastError(resolvePastoralNotesError(error));
       setNoteToDelete(null);
     }
   };
@@ -438,10 +432,6 @@ export function MemberPastoralCarePanel({ memberId }: { memberId: string }) {
             onChange={setForm}
             disabled={isSaving}
           />
-
-          {formError ? (
-            <FormAlert className="mt-4">{formError}</FormAlert>
-          ) : null}
 
           <div className="mt-5 flex justify-end">
             <Button

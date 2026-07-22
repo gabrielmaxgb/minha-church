@@ -19,6 +19,7 @@ import {
   useMyMember,
 } from "@/lib/api/queries";
 import { formatCurrency } from "@/lib/utils";
+import { toastError } from "@/lib/ui/toast";
 
 import { SettingsPanel, SettingsSectionHeader } from "./settings-shared";
 
@@ -179,15 +180,6 @@ export function MyContributionsSettings() {
             </SettingsPanel>
           ) : null}
 
-          {cancelSubscription.isError ? (
-            <FormAlert>
-              {resolvePaymentsError(
-                cancelSubscription.error,
-                "Não foi possível cancelar a contribuição mensal.",
-              )}
-            </FormAlert>
-          ) : null}
-
           <SettingsPanel>
             <ul className="divide-y divide-border/70">
               {donations.length === 0 ? (
@@ -273,7 +265,15 @@ export function MyContributionsSettings() {
           onConfirm={() => {
             void cancelSubscription
               .mutateAsync(subscriptionToCancel.id)
-              .then(() => setSubscriptionToCancel(null));
+              .then(() => setSubscriptionToCancel(null))
+              .catch((error) => {
+                toastError(
+                  resolvePaymentsError(
+                    error,
+                    "Não foi possível cancelar a contribuição mensal.",
+                  ),
+                );
+              });
           }}
         />
       ) : null}

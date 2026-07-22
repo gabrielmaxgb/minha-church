@@ -31,6 +31,7 @@ import {
   useRefundEventTicketPurchase,
   useRefundGivingDonation,
 } from "@/lib/api/queries";
+import { toastError } from "@/lib/ui/toast";
 import { cn, formatCurrency } from "@/lib/utils";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -293,12 +294,6 @@ export function GivingDonationsPanel({
     (showDonations && donationsQuery.isError) ||
     (showTickets && ticketsQuery.isError);
 
-  const actionError =
-    refundDonationMutation.error ??
-    refundTicketMutation.error ??
-    exportDonationsMutation.error ??
-    exportTicketsMutation.error;
-
   function resetPages() {
     setDonationPage(1);
     setTicketPage(1);
@@ -312,8 +307,10 @@ export function GivingDonationsPanel({
     try {
       await refundDonationMutation.mutateAsync(donationToRefund.id);
       setDonationToRefund(null);
-    } catch {
-      // Erro já aparece no FormAlert
+    } catch (error) {
+      toastError(
+        resolvePaymentsError(error, "Não foi possível concluir a ação."),
+      );
     }
   }
 
@@ -325,17 +322,29 @@ export function GivingDonationsPanel({
     try {
       await refundTicketMutation.mutateAsync(ticketToRefund.id);
       setTicketToRefund(null);
-    } catch {
-      // Erro já aparece no FormAlert
+    } catch (error) {
+      toastError(
+        resolvePaymentsError(error, "Não foi possível concluir a ação."),
+      );
     }
   }
 
   function handleExport() {
     if (source === "tickets") {
-      exportTicketsMutation.mutate(ticketParams);
+      exportTicketsMutation.mutate(ticketParams, {
+        onError: (error) =>
+          toastError(
+            resolvePaymentsError(error, "Não foi possível exportar."),
+          ),
+      });
       return;
     }
-    exportDonationsMutation.mutate(donationParams);
+    exportDonationsMutation.mutate(donationParams, {
+      onError: (error) =>
+        toastError(
+          resolvePaymentsError(error, "Não foi possível exportar."),
+        ),
+    });
   }
 
   const exportPending =
@@ -522,12 +531,6 @@ export function GivingDonationsPanel({
         </div>
       ) : null}
 
-      {actionError ? (
-        <FormAlert>
-          {resolvePaymentsError(actionError, "Não foi possível concluir a ação.")}
-        </FormAlert>
-      ) : null}
-
       {showDonations ? (
         <section className="space-y-3">
           {source === "all" && !memberId ? (
@@ -543,7 +546,14 @@ export function GivingDonationsPanel({
                 disabled={
                   exportDonationsMutation.isPending || donations.length === 0
                 }
-                onClick={() => exportDonationsMutation.mutate(donationParams)}
+                onClick={() =>
+                  exportDonationsMutation.mutate(donationParams, {
+                    onError: (error) =>
+                      toastError(
+                        resolvePaymentsError(error, "Não foi possível exportar."),
+                      ),
+                  })
+                }
               >
                 {exportDonationsMutation.isPending ? (
                   <Loader2 className="size-3.5 animate-spin" />
@@ -652,7 +662,14 @@ export function GivingDonationsPanel({
                 disabled={
                   exportTicketsMutation.isPending || tickets.length === 0
                 }
-                onClick={() => exportTicketsMutation.mutate(ticketParams)}
+                onClick={() =>
+                  exportTicketsMutation.mutate(ticketParams, {
+                    onError: (error) =>
+                      toastError(
+                        resolvePaymentsError(error, "Não foi possível exportar."),
+                      ),
+                  })
+                }
               >
                 {exportTicketsMutation.isPending ? (
                   <Loader2 className="size-3.5 animate-spin" />

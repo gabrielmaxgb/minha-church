@@ -12,7 +12,6 @@ import type { ChurchMembership } from "@/types/church-memberships";
 interface TransferOwnershipDialogProps {
   membership: ChurchMembership | null;
   pending: boolean;
-  error?: string | null;
   onCancel: () => void;
   onConfirm: (password: string) => void;
 }
@@ -20,7 +19,6 @@ interface TransferOwnershipDialogProps {
 export function TransferOwnershipDialog({
   membership,
   pending,
-  error,
   onCancel,
   onConfirm,
 }: TransferOwnershipDialogProps) {
@@ -129,7 +127,6 @@ export function TransferOwnershipDialog({
                   onConfirm(password);
                 }
               }}
-              aria-invalid={Boolean(error)}
             />
             <button
               type="button"
@@ -145,11 +142,6 @@ export function TransferOwnershipDialog({
               )}
             </button>
           </div>
-          {error && (
-            <p className="text-sm text-destructive" role="alert">
-              {error}
-            </p>
-          )}
         </div>
 
         <div className="mt-5 flex items-center justify-end gap-2">

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { TypeaheadMultiSelect } from "@/components/ui/typeahead-multi-select";
 import { useMembers, useSetMemberFamily } from "@/lib/api/queries";
+import { toastApiError, toastError } from "@/lib/ui/toast";
 import type { FamilyGraphMember } from "@/types/members";
 
 interface FamilyMembersManagerProps {
@@ -25,7 +26,6 @@ export function FamilyMembersManager({
   canEdit,
 }: FamilyMembersManagerProps) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [error, setError] = useState<string | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
 
   const { data: membersData, isLoading } = useMembers(
@@ -63,11 +63,10 @@ export function FamilyMembersManager({
 
   async function handleAdd() {
     if (selectedIds.length === 0) {
-      setError("Selecione ao menos uma pessoa.");
+      toastError("Selecione ao menos uma pessoa.");
       return;
     }
 
-    setError(null);
     const pendingIds = [...selectedIds];
 
     try {
@@ -79,7 +78,7 @@ export function FamilyMembersManager({
       if (result.failedCount > 0) {
         const succeeded = new Set(result.succeededIds);
         setSelectedIds(pendingIds.filter((id) => !succeeded.has(id)));
-        setError(
+        toastError(
           result.firstError
             ? `${result.succeededIds.length} adicionados. ${result.failedCount} falharam: ${result.firstError}`
             : `${result.succeededIds.length} adicionados. ${result.failedCount} não puderam ser vinculados.`,
@@ -89,26 +88,17 @@ export function FamilyMembersManager({
 
       setSelectedIds([]);
     } catch (addError) {
-      setError(
-        addError instanceof Error
-          ? addError.message
-          : "Não foi possível adicionar à família.",
-      );
+      toastApiError(addError, "Não foi possível adicionar à família.");
     }
   }
 
   async function handleRemove(memberId: string) {
-    setError(null);
     setRemovingId(memberId);
 
     try {
       await setFamily.mutateAsync({ memberId, familyId: null });
     } catch (removeError) {
-      setError(
-        removeError instanceof Error
-          ? removeError.message
-          : "Não foi possível remover da família.",
-      );
+      toastApiError(removeError, "Não foi possível remover da família.");
     } finally {
       setRemovingId(null);
     }
@@ -220,12 +210,6 @@ export function FamilyMembersManager({
               : "Adicionar à família"}
           </Button>
         </div>
-      ) : null}
-
-      {error ? (
-        <p className="mt-3 text-sm text-destructive" role="alert">
-          {error}
-        </p>
       ) : null}
     </div>
   );

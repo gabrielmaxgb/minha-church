@@ -14,7 +14,6 @@ interface TierCrossingModalProps {
   preview: TierCrossingPreview;
   mode: TierCrossingModalMode;
   loading?: boolean;
-  error?: string | null;
   requestSent?: boolean;
   onConfirm: () => void;
   onRequestOwner: () => void;
@@ -26,7 +25,6 @@ export function TierCrossingModal({
   preview,
   mode,
   loading = false,
-  error = null,
   requestSent = false,
   onConfirm,
   onRequestOwner,
@@ -178,12 +176,6 @@ export function TierCrossingModal({
                 poderá tentar de novo.
               </p>
             </div>
-          )}
-
-          {error && (
-            <p className="text-sm text-destructive" role="alert">
-              {error}
-            </p>
           )}
 
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">

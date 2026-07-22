@@ -18,6 +18,7 @@ import {
   useGivingSubscriptions,
 } from "@/lib/api/queries";
 import { formatCurrency } from "@/lib/utils";
+import { toastError } from "@/lib/ui/toast";
 
 const SUBSCRIPTION_STATUS_LABEL: Record<string, string> = {
   incomplete: "Aguardando pagamento",
@@ -117,15 +118,6 @@ export function GivingSubscriptionsPanel() {
           </SelectField>
         </label>
       </div>
-
-      {cancelMutation.isError ? (
-        <FormAlert>
-          {resolvePaymentsError(
-            cancelMutation.error,
-            "Não foi possível encerrar a contribuição mensal.",
-          )}
-        </FormAlert>
-      ) : null}
 
       <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
         {subscriptions.length === 0 ? (
@@ -232,7 +224,15 @@ export function GivingSubscriptionsPanel() {
           onConfirm={() => {
             void cancelMutation
               .mutateAsync(subscriptionToCancel.id)
-              .then(() => setSubscriptionToCancel(null));
+              .then(() => setSubscriptionToCancel(null))
+              .catch((error) => {
+                toastError(
+                  resolvePaymentsError(
+                    error,
+                    "Não foi possível encerrar a contribuição mensal.",
+                  ),
+                );
+              });
           }}
         />
       ) : null}

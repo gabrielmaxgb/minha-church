@@ -16,7 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { FormAlert, FormField, FormMessage } from "@/components/ui/form-field";
+import { FormField, FormMessage } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { PUBLIC_ROUTES } from "@/constants/routes";
 import {
@@ -27,6 +27,7 @@ import {
   resetPasswordSchema,
   type ResetPasswordFormValues,
 } from "@/lib/validation/schemas";
+import { toastError } from "@/lib/ui/toast";
 
 function ResetPasswordFormContent() {
   const router = useRouter();
@@ -94,12 +95,11 @@ function ResetPasswordFormContent() {
       await resetPasswordRequest(token, values.newPassword);
       router.push(`${PUBLIC_ROUTES.login}?reset=success`);
     } catch (submitError) {
-      setError("root", {
-        message:
-          submitError instanceof Error
-            ? submitError.message
-            : "Não foi possível redefinir a senha.",
-      });
+      toastError(
+        submitError instanceof Error
+          ? submitError.message
+          : "Não foi possível redefinir a senha.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -146,8 +146,6 @@ function ResetPasswordFormContent() {
 
       <form onSubmit={onSubmit} noValidate>
         <CardContent className="space-y-4">
-          {errors.root?.message && <FormAlert>{errors.root.message}</FormAlert>}
-
           <FormField
             label="Nova senha"
             htmlFor="newPassword"

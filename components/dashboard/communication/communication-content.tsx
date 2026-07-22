@@ -34,7 +34,7 @@ import { ConfirmDeleteAnnouncementDialog } from "./confirm-delete-announcement-d
 export function CommunicationContent() {
   const { permissions, user } = useAuth();
   const canManage = canManageCommunication(permissions, user?.isOwner);
-  const { writesBlocked, blockProps } = useTrialWriteGuard();
+  const { writesBlocked, subscriptionLocked, blockProps } = useTrialWriteGuard();
 
   const [filters, setFilters] = useState<AnnouncementFiltersState>(
     DEFAULT_ANNOUNCEMENT_FILTERS,
@@ -179,7 +179,7 @@ export function CommunicationContent() {
                   Novo comunicado
                 </Button>
               </div>
-              {writesBlocked ? (
+              {subscriptionLocked ? (
                 <LockedFeatureHint action="criar ou editar comunicados" />
               ) : null}
             </>

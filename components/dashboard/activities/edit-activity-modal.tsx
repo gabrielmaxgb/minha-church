@@ -28,7 +28,7 @@ import {
 import { StripeBrandInline } from "@/components/brand/stripe-mark";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { FormAlert, FormField } from "@/components/ui/form-field";
+import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -66,6 +66,7 @@ import {
 import type { ChurchEvent, EventMutationScope } from "@/types/events";
 import { canCreateChurchWideActivity } from "@/lib/permissions";
 import { useAuth } from "@/providers/auth-provider";
+import { toastApiError, toastError } from "@/lib/ui/toast";
 
 interface EditActivityModalProps {
   event: ChurchEvent | null;
@@ -260,6 +261,20 @@ export function EditActivityModal({
     return null;
   }
 
+  function applyMappedApiErrors(message: string) {
+    const mapped = mapActivityFormApiError(message);
+
+    if (mapped.root) {
+      toastError(mapped.root);
+    }
+
+    const { root: _root, ...fieldOnly } = mapped;
+
+    if (Object.keys(fieldOnly).length > 0) {
+      setFormFieldErrors(fieldOnly);
+    }
+  }
+
   async function handleSubmit(submitEvent: React.FormEvent<HTMLFormElement>) {
     submitEvent.preventDefault();
     setFieldErrors({});
@@ -281,9 +296,7 @@ export function EditActivityModal({
         isAllDayRange(startsAt, endsAt),
       )
     ) {
-      setFormFieldErrors({
-        root: "O fim precisa ser no mesmo dia ou depois do início.",
-      });
+      toastError("O fim precisa ser no mesmo dia ou depois do início.");
       return;
     }
 
@@ -373,11 +386,11 @@ export function EditActivityModal({
       });
       onClose();
     } catch (submitError) {
-      const message =
+      applyMappedApiErrors(
         submitError instanceof Error
           ? submitError.message
-          : "Não foi possível salvar a atividade.";
-      setFormFieldErrors(mapActivityFormApiError(message));
+          : "Não foi possível salvar a atividade.",
+      );
     }
   }
 
@@ -389,11 +402,7 @@ export function EditActivityModal({
       onClose();
       onDeleted?.();
     } catch (deleteError) {
-      const message =
-        deleteError instanceof Error
-          ? deleteError.message
-          : "Não foi possível excluir a atividade.";
-      setFormFieldErrors({ root: message });
+      toastApiError(deleteError, "Não foi possível excluir a atividade.");
     }
   }
 
@@ -774,12 +783,6 @@ export function EditActivityModal({
           </div>
 
           <footer className="flex flex-col gap-3 border-t border-border/80 bg-muted/20 px-6 py-5 sm:px-8">
-            {fieldErrors.root ? (
-              <FormAlert className="sm:ml-auto sm:max-w-md">
-                {fieldErrors.root}
-              </FormAlert>
-            ) : null}
-
             <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="hidden text-sm text-muted-foreground sm:block">
               {hasChanges

@@ -1,13 +1,12 @@
 "use client";
 
-import { useState } from "react";
-
 import { EventAvailabilityPanel } from "@/components/dashboard/my-schedule/event-availability-panel";
 import { LockedFeatureHint } from "@/components/dashboard/locked-feature-hint";
 import {
   useUpdateChurchEventAvailability,
   useUpdateEventAvailability,
 } from "@/lib/api/queries";
+import { toastApiError } from "@/lib/ui/toast";
 import { cn } from "@/lib/utils";
 import type { ChurchEventDetail } from "@/types/events";
 
@@ -30,7 +29,6 @@ export function ActivityAvailabilitySection({
   const updateMinistryAvailability = useUpdateEventAvailability(
     event.ministryId ?? "",
   );
-  const [error, setError] = useState<string | null>(null);
 
   const busy =
     updateChurchAvailability.isPending || updateMinistryAvailability.isPending;
@@ -39,8 +37,6 @@ export function ActivityAvailabilitySection({
     status: "available" | "unavailable" | "clear";
     roleLabels: string[];
   }) {
-    setError(null);
-
     try {
       if (event.isChurchWide) {
         await updateChurchAvailability.mutateAsync(payload);
@@ -56,10 +52,9 @@ export function ActivityAvailabilitySection({
         status: payload.status,
       });
     } catch (respondError) {
-      setError(
-        respondError instanceof Error
-          ? respondError.message
-          : "Não foi possível salvar sua disponibilidade.",
+      toastApiError(
+        respondError,
+        "Não foi possível salvar sua disponibilidade.",
       );
     }
   }
@@ -68,12 +63,6 @@ export function ActivityAvailabilitySection({
     <div className={dense ? "h-full" : "space-y-3"}>
       {interactionsDisabled && !dense ? (
         <LockedFeatureHint action="marcar disponibilidade em escalas" />
-      ) : null}
-
-      {error ? (
-        <p className="mb-3 rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-          {error}
-        </p>
       ) : null}
 
       <EventAvailabilityPanel

@@ -117,8 +117,7 @@ export function SubscriptionSettings() {
   const { user, reloadSession } = useAuth();
   const { data, isPending, isError, refetch } = useSubscriptionSummary();
   const { data: pricingData } = usePricing();
-  const { openPortal, loading: portalLoading, error: portalError } =
-    useBillingPortalAction();
+  const { openPortal, loading: portalLoading } = useBillingPortalAction();
 
   // Espelha status de assinatura na sessão (topbar/banners) quando o summary muda.
   // Deps só nos campos — reloadSession é estável (church via ref no AuthProvider).
@@ -335,10 +334,6 @@ export function SubscriptionSettings() {
                 )}
             </div>
           </SettingsPanel>
-
-          {portalError && (
-            <p className="text-sm text-destructive">{portalError}</p>
-          )}
 
           <SubscriptionInvoicesSection
             enabled={

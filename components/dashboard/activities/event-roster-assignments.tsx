@@ -25,6 +25,7 @@ import {
   resolveChurchWideCandidateRoleLabels,
   type EventAvailabilityStatus,
 } from "@/lib/ministries/roster";
+import { toastApiError, toastError } from "@/lib/ui/toast";
 import { cn } from "@/lib/utils";
 import type { ChurchEventDetail } from "@/types/events";
 
@@ -79,7 +80,6 @@ export function EventRosterAssignments({
   const upsertRoster = useUpsertEventRoster(event.id);
   const removeRoster = useRemoveEventRoster(event.id);
   const [selectedRoles, setSelectedRoles] = useState<Record<string, string>>({});
-  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<RosterCandidateFilter>("all");
 
@@ -159,18 +159,15 @@ export function EventRosterAssignments({
       ...current,
       [memberId]: roleLabel,
     }));
-    setError(null);
   }
 
   async function handleAdd(memberId: string, roleLabels: string[]) {
     const roleLabel = resolveSelectedRole(memberId, roleLabels);
 
     if (!roleLabel) {
-      setError("Selecione uma função antes de adicionar.");
+      toastError("Selecione uma função antes de adicionar.");
       return;
     }
-
-    setError(null);
 
     try {
       await upsertRoster.mutateAsync({ memberId, roleLabel });
@@ -180,25 +177,15 @@ export function EventRosterAssignments({
         return next;
       });
     } catch (addError) {
-      setError(
-        addError instanceof Error
-          ? addError.message
-          : "Não foi possível adicionar à escala.",
-      );
+      toastApiError(addError, "Não foi possível adicionar à escala.");
     }
   }
 
   async function handleRemove(assignmentMemberId: string) {
-    setError(null);
-
     try {
       await removeRoster.mutateAsync(assignmentMemberId);
     } catch (removeError) {
-      setError(
-        removeError instanceof Error
-          ? removeError.message
-          : "Não foi possível remover da escala.",
-      );
+      toastApiError(removeError, "Não foi possível remover da escala.");
     }
   }
 
@@ -480,12 +467,6 @@ export function EventRosterAssignments({
         !embedded && "space-y-5",
       )}
     >
-      {error ? (
-        <p className="rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-          {error}
-        </p>
-      ) : null}
-
       {canManage ? (
         <div className="grid gap-4 lg:grid-cols-2 lg:gap-5">
           <div className="min-w-0">{assignedPanel}</div>

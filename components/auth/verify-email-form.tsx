@@ -16,9 +16,9 @@ import {
 import { motion, useReducedMotion } from "motion/react";
 
 import { Button } from "@/components/ui/button";
-import { FormAlert } from "@/components/ui/form-field";
 import { AUTH_ROUTES, PUBLIC_ROUTES } from "@/constants/routes";
 import { verifyEmailRequest } from "@/lib/api/auth";
+import { toastError, toastSuccess } from "@/lib/ui/toast";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 
@@ -53,6 +53,7 @@ function VerifyEmailFormContent() {
   );
   const [message, setMessage] = useState<string | null>(null);
   const attemptedTokenRef = useRef<string | null>(null);
+  const lastToastRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!token) {
@@ -101,6 +102,25 @@ function VerifyEmailFormContent() {
       cancelled = true;
     };
   }, [token, reloadSession]);
+
+  useEffect(() => {
+    if (status === "loading" || !message) {
+      return;
+    }
+
+    const toastKey = `${status}:${message}`;
+    if (lastToastRef.current === toastKey) {
+      return;
+    }
+    lastToastRef.current = toastKey;
+
+    if (status === "success") {
+      toastSuccess(message);
+      return;
+    }
+
+    toastError(message);
+  }, [status, message]);
 
   const panelTitle =
     status === "loading"
@@ -239,16 +259,6 @@ function VerifyEmailFormContent() {
               </p>
             </div>
           </div>
-
-          {message && status !== "loading" && (
-            <div className="mb-6">
-              <FormAlert
-                variant={status === "success" ? "success" : undefined}
-              >
-                {message}
-              </FormAlert>
-            </div>
-          )}
 
           <div className="flex flex-col gap-3">
             {status === "success" && !isAuthenticated && (

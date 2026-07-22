@@ -22,10 +22,9 @@ import {
   STRIPE_ELEMENTS_FONTS,
 } from "@/components/giving/giving-stripe";
 import { Button } from "@/components/ui/button";
-import { FormAlert, FormField } from "@/components/ui/form-field";
+import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { givingFundPath, PUBLIC_ROUTES } from "@/constants/routes";
-import { ApiError } from "@/lib/api/client";
 import {
   createGivingCheckout,
   type GivingCheckoutSession,
@@ -37,6 +36,7 @@ import {
   parseBrlMaskToCents,
 } from "@/lib/utils";
 import { resolveGivingStripeError } from "@/lib/payments/giving-stripe-errors";
+import { toastApiError, toastError } from "@/lib/ui/toast";
 import { useAuth } from "@/providers/auth-provider";
 
 export function GivingCheckoutForm({ fund }: { fund: PublicGivingFund }) {
@@ -53,7 +53,6 @@ export function GivingCheckoutForm({ fund }: { fund: PublicGivingFund }) {
   const [payerName, setPayerName] = useState("");
   const [payerEmail, setPayerEmail] = useState("");
   const [contributeAnonymously, setContributeAnonymously] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   const [recurring, setRecurring] = useState(false);
   const [session, setSession] = useState<GivingCheckoutSession | null>(null);
@@ -90,13 +89,12 @@ export function GivingCheckoutForm({ fund }: { fund: PublicGivingFund }) {
 
   const handleStartCheckout = async () => {
     if (!amountValid) {
-      setError(
+      toastError(
         `Informe um valor entre ${formatBrlFromCents(fund.minAmountCents)} e ${formatBrlFromCents(fund.maxAmountCents)}.`,
       );
       return;
     }
 
-    setError(null);
     setStarting(true);
 
     try {
@@ -113,11 +111,7 @@ export function GivingCheckoutForm({ fund }: { fund: PublicGivingFund }) {
       });
       setSession(next);
     } catch (startError) {
-      setError(
-        startError instanceof ApiError
-          ? startError.message
-          : "Não foi possível iniciar o pagamento.",
-      );
+      toastApiError(startError, "Não foi possível iniciar o pagamento.");
     } finally {
       setStarting(false);
     }
@@ -229,8 +223,6 @@ export function GivingCheckoutForm({ fund }: { fund: PublicGivingFund }) {
             />
           </div>
         </FormField>
-
-        {error && <FormAlert>{error}</FormAlert>}
 
         {!linkToMember ? (
           <>
@@ -427,7 +419,6 @@ function ConfirmPaymentForm({
   const stripe = useStripe();
   const elements = useElements();
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const handlePay = async () => {
     if (!stripe || !elements) {
@@ -435,7 +426,6 @@ function ConfirmPaymentForm({
     }
 
     setSubmitting(true);
-    setError(null);
 
     const returnUrl = `${window.location.origin}${givingFundPath(fund.churchSlug, fund.fundSlug)}/obrigado?donationId=${encodeURIComponent(donationId)}&rt=${encodeURIComponent(receiptToken)}`;
 
@@ -447,7 +437,7 @@ function ConfirmPaymentForm({
     });
 
     if (result.error) {
-      setError(resolveGivingStripeError(result.error));
+      toastError(resolveGivingStripeError(result.error));
       setSubmitting(false);
       return;
     }
@@ -457,7 +447,6 @@ function ConfirmPaymentForm({
 
   return (
     <div className="space-y-4">
-      {error && <FormAlert>{error}</FormAlert>}
       <PaymentElement options={{ layout: "tabs" }} />
       <Button
         type="button"

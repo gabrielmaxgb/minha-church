@@ -1,4 +1,6 @@
 import { clearAuthSession, getStoredChurchId } from "@/lib/auth/cookies";
+import { getRolePreviewWriteBlock } from "@/lib/permissions/role-preview-guard";
+import { toastError } from "@/lib/ui/toast";
 
 export interface ApiRequestOptions extends RequestInit {
 	churchId?: string | null;
@@ -98,6 +100,12 @@ export async function apiClient<T>(
 	endpoint: string,
 	options: ApiRequestOptions = {},
 ): Promise<T> {
+	const previewBlock = getRolePreviewWriteBlock(endpoint, options.method);
+	if (previewBlock) {
+		toastError(previewBlock.message);
+		throw new ApiError(previewBlock.message, 403, previewBlock.code);
+	}
+
 	const url = `${getApiBaseUrl()}${endpoint}`;
 	const tenantId = options.churchId ?? getStoredChurchId();
 

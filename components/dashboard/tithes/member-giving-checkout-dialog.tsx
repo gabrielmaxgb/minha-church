@@ -22,10 +22,9 @@ import {
   STRIPE_ELEMENTS_FONTS,
 } from "@/components/giving/giving-stripe";
 import { Button } from "@/components/ui/button";
-import { FormAlert, FormField } from "@/components/ui/form-field";
+import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { AUTH_ROUTES } from "@/constants/routes";
-import { ApiError } from "@/lib/api/client";
 import type {
   GivingCheckoutSession,
   MemberGivingFund,
@@ -37,6 +36,7 @@ import {
   parseBrlMaskToCents,
 } from "@/lib/utils";
 import { resolveGivingStripeError } from "@/lib/payments/giving-stripe-errors";
+import { toastApiError, toastError } from "@/lib/ui/toast";
 import { useAuth } from "@/providers/auth-provider";
 
 import "@/app/doar/giving.css";
@@ -53,7 +53,6 @@ export function MemberGivingCheckoutDialog({
   const [amountMasked, setAmountMasked] = useState(() =>
     formatBrlCentsMask(5_000),
   );
-  const [error, setError] = useState<string | null>(null);
   const [recurring, setRecurring] = useState(false);
   const [session, setSession] = useState<GivingCheckoutSession | null>(null);
 
@@ -88,13 +87,11 @@ export function MemberGivingCheckoutDialog({
 
   const handleStart = async () => {
     if (!amountValid) {
-      setError(
+      toastError(
         `Informe um valor entre ${formatBrlFromCents(fund.minAmountCents)} e ${formatBrlFromCents(fund.maxAmountCents)}.`,
       );
       return;
     }
-
-    setError(null);
 
     try {
       const next = await createCheckout.mutateAsync({
@@ -104,11 +101,7 @@ export function MemberGivingCheckoutDialog({
       });
       setSession(next);
     } catch (startError) {
-      setError(
-        startError instanceof ApiError
-          ? startError.message
-          : "Não foi possível iniciar o pagamento.",
-      );
+      toastApiError(startError, "Não foi possível iniciar o pagamento.");
     }
   };
 
@@ -216,8 +209,6 @@ export function MemberGivingCheckoutDialog({
                     />
                   </div>
                 </FormField>
-
-                {error ? <FormAlert>{error}</FormAlert> : null}
 
                 {fund.paymentMethods.card ? (
                   <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border/70 bg-muted/20 px-3 py-3 text-sm transition-colors hover:bg-muted/35">
@@ -371,7 +362,6 @@ function MemberConfirmPaymentForm({
   const stripe = useStripe();
   const elements = useElements();
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const handlePay = async () => {
     if (!stripe || !elements) {
@@ -379,7 +369,6 @@ function MemberConfirmPaymentForm({
     }
 
     setSubmitting(true);
-    setError(null);
 
     const returnUrl = `${window.location.origin}${AUTH_ROUTES.tithesOfferings}/obrigado?donationId=${encodeURIComponent(donationId)}&rt=${encodeURIComponent(receiptToken)}`;
 
@@ -391,7 +380,7 @@ function MemberConfirmPaymentForm({
     });
 
     if (result.error) {
-      setError(resolveGivingStripeError(result.error));
+      toastError(resolveGivingStripeError(result.error));
       setSubmitting(false);
       return;
     }
@@ -402,7 +391,6 @@ function MemberConfirmPaymentForm({
 
   return (
     <div className="space-y-4">
-      {error ? <FormAlert>{error}</FormAlert> : null}
       <PaymentElement options={{ layout: "tabs" }} />
       <Button
         type="button"

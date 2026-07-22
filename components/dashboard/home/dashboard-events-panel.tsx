@@ -34,7 +34,7 @@ export function DashboardEventsPanel({
   onCreateActivity,
 }: DashboardEventsPanelProps) {
   const upcoming = events.slice(0, 6);
-  const { writesBlocked, blockProps } = useTrialWriteGuard();
+  const { writesBlocked, subscriptionLocked, blockProps } = useTrialWriteGuard();
 
   return (
     <section className="rounded-xl border border-domain-activities/30 bg-gradient-to-br from-domain-activities-subtle via-card to-card">
@@ -71,7 +71,7 @@ export function DashboardEventsPanel({
                   <Plus className="size-4" />
                   Criar evento
                 </Button>
-                {writesBlocked && (
+                {subscriptionLocked && (
                   <LockedFeatureHint action="criar eventos" />
                 )}
               </div>

@@ -30,7 +30,6 @@ import { Badge } from "@/components/ui/badge";
 import { BusyOverlay } from "@/components/ui/busy-overlay";
 import { Button } from "@/components/ui/button";
 import { FloatingSaveBar } from "@/components/ui/floating-save-bar";
-import { FormAlert } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { familyGraphPath } from "@/constants/routes";
 import {
@@ -51,6 +50,7 @@ import {
   type MemberFormValues,
 } from "@/lib/members/form";
 import { applyMemberFormApiError } from "@/lib/members/form-api-errors";
+import { toastApiError } from "@/lib/ui/toast";
 import {
   isMinorMember,
   needsParentalConsentBeforeReceive,
@@ -61,7 +61,6 @@ import { formatDate } from "@/lib/utils";
 import type { Member, MemberAccountCredentials } from "@/types/members";
 import { MEMBER_STATUS_LABELS } from "@/types/members";
 import { useAuth } from "@/providers/auth-provider";
-import { ApiError } from "@/lib/api/client";
 
 export type MemberDetailSection = "profile" | "ministries";
 
@@ -242,7 +241,6 @@ export function MemberExpandedPanel({
   const [confirmName, setConfirmName] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [familyLinkOpen, setFamilyLinkOpen] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [pendingStatusChange, setPendingStatusChange] =
     useState<MemberFormValues | null>(null);
   const [createdAccount, setCreatedAccount] = useState<{
@@ -251,7 +249,6 @@ export function MemberExpandedPanel({
   } | null>(null);
   const [consentModalOpen, setConsentModalOpen] = useState(false);
   const [receiveAfterConsent, setReceiveAfterConsent] = useState(false);
-  const [consentError, setConsentError] = useState<string | null>(null);
 
   const form = useForm<MemberFormValues>({
     resolver: zodResolver(createMemberFormSchema()),
@@ -274,7 +271,6 @@ export function MemberExpandedPanel({
   useEffect(() => {
     form.reset(memberToFormValues(member));
     setConfirmName("");
-    setDeleteError(null);
     setPendingStatusChange(null);
     form.clearErrors("root");
   }, [member, form]);
@@ -376,8 +372,6 @@ export function MemberExpandedPanel({
   }
 
   async function handleReceiveMember() {
-    setConsentError(null);
-
     if (needsConsent) {
       setReceiveAfterConsent(true);
       setConsentModalOpen(true);
@@ -387,18 +381,11 @@ export function MemberExpandedPanel({
     try {
       await runReceiveMember();
     } catch (error) {
-      setConsentError(
-        error instanceof ApiError
-          ? error.message
-          : error instanceof Error
-            ? error.message
-            : "Não foi possível receber o membro.",
-      );
+      toastApiError(error, "Não foi possível receber o membro.");
     }
   }
 
   async function handleConsentRecorded() {
-    setConsentError(null);
     if (!receiveAfterConsent) {
       return;
     }
@@ -407,12 +394,9 @@ export function MemberExpandedPanel({
     try {
       await runReceiveMember();
     } catch (error) {
-      setConsentError(
-        error instanceof ApiError
-          ? error.message
-          : error instanceof Error
-            ? error.message
-            : "Consentimento registrado, mas não foi possível receber o membro.",
+      toastApiError(
+        error,
+        "Consentimento registrado, mas não foi possível receber o membro.",
       );
     }
   }
@@ -422,17 +406,11 @@ export function MemberExpandedPanel({
       return;
     }
 
-    setDeleteError(null);
-
     try {
       await deleteMember.mutateAsync();
       onDeleted?.();
     } catch (submitError) {
-      setDeleteError(
-        submitError instanceof Error
-          ? submitError.message
-          : "Não foi possível excluir o cadastro.",
-      );
+      toastApiError(submitError, "Não foi possível excluir o cadastro.");
     }
   }
 
@@ -539,14 +517,10 @@ export function MemberExpandedPanel({
                 variant="ghost"
                 disabled={writesBlocked || revokeConsent.isPending}
                 onClick={() => {
-                  setConsentError(null);
                   void revokeConsent.mutateAsync().catch((error: unknown) => {
-                    setConsentError(
-                      error instanceof ApiError
-                        ? error.message
-                        : error instanceof Error
-                          ? error.message
-                          : "Não foi possível revogar o consentimento.",
+                    toastApiError(
+                      error,
+                      "Não foi possível revogar o consentimento.",
                     );
                   });
                 }}
@@ -571,8 +545,6 @@ export function MemberExpandedPanel({
               liberar login no painel, registre o consentimento parental.
             </p>
           ) : null}
-
-          {consentError ? <FormAlert>{consentError}</FormAlert> : null}
 
           <ReadOnlyDetails member={member} showMinistries={false} />
         </div>
@@ -611,7 +583,6 @@ export function MemberExpandedPanel({
             preview={tierCrossing.preview}
             mode={tierCrossing.mode}
             loading={tierCrossing.loading}
-            error={tierCrossing.error}
             requestSent={tierCrossing.requestSent}
             onConfirm={() => void tierCrossing.confirm()}
             onRequestOwner={() => void tierCrossing.requestOwnerApproval()}
@@ -662,10 +633,6 @@ export function MemberExpandedPanel({
             Cancelar
           </Button>
         </div>
-
-        {form.formState.errors.root?.message && (
-          <FormAlert>{form.formState.errors.root.message}</FormAlert>
-        )}
 
         <MemberForm
           disabled={isPending}
@@ -748,8 +715,6 @@ export function MemberExpandedPanel({
           </div>
         )}
 
-        {consentError ? <FormAlert>{consentError}</FormAlert> : null}
-
         <ParentalConsentModal
           member={member}
           open={consentModalOpen}
@@ -761,8 +726,6 @@ export function MemberExpandedPanel({
             void handleConsentRecorded();
           }}
         />
-
-        {deleteError && <FormAlert>{deleteError}</FormAlert>}
 
         {!writesBlocked && (
         <section className="rounded-lg border border-destructive/20 bg-destructive/5 p-5 sm:p-6">
@@ -918,7 +881,6 @@ export function MemberExpandedPanel({
           preview={tierCrossing.preview}
           mode={tierCrossing.mode}
           loading={tierCrossing.loading}
-          error={tierCrossing.error}
           requestSent={tierCrossing.requestSent}
           onConfirm={() => void tierCrossing.confirm()}
           onRequestOwner={() => void tierCrossing.requestOwnerApproval()}

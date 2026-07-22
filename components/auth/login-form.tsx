@@ -18,7 +18,7 @@ import { motion, useReducedMotion } from "motion/react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { FormAlert, FormField, FormMessage } from "@/components/ui/form-field";
+import { FormField, FormMessage } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import {
   DEMO_ACCOUNTS,
@@ -43,6 +43,7 @@ import {
   startBootSplash,
 } from "@/lib/auth/boot-splash-bridge";
 import { loginSchema, type LoginFormValues } from "@/lib/validation/schemas";
+import { toastError, toastSuccess } from "@/lib/ui/toast";
 import { cn } from "@/lib/utils";
 import { resetAsymptoticProgressSingleton } from "@/hooks/use-asymptotic-progress";
 import { useAuth } from "@/providers/auth-provider";
@@ -76,6 +77,13 @@ function LoginFormContent() {
   const [demoOpen, setDemoOpen] = useState(false);
   const passwordResetSuccess = searchParams.get("reset") === "success";
 
+  useEffect(() => {
+    if (!passwordResetSuccess) {
+      return;
+    }
+    toastSuccess("Senha redefinida com sucesso. Faça login com sua nova senha.");
+  }, [passwordResetSuccess]);
+
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { identifier: "", password: "" },
@@ -86,8 +94,6 @@ function LoginFormContent() {
     register,
     handleSubmit,
     setValue,
-    setError,
-    clearErrors,
     formState: { errors },
   } = form;
 
@@ -108,7 +114,6 @@ function LoginFormContent() {
     loginIdentifierValue: string,
     loginPassword: string,
   ) {
-    clearErrors("root");
     setIsLoading(true);
     setLoadingIdentifier(loginIdentifierValue);
     startBootSplash(getBootSplashEnteringLabel());
@@ -143,12 +148,11 @@ function LoginFormContent() {
         return;
       }
 
-      setError("root", {
-        message:
-          loginError instanceof Error
-            ? loginError.message
-            : "Não foi possível entrar. Tente novamente.",
-      });
+      toastError(
+        loginError instanceof Error
+          ? loginError.message
+          : "Não foi possível entrar. Tente novamente.",
+      );
       clearBootSplashLive();
       clearBootSplashSeed();
       resetAsymptoticProgressSingleton();
@@ -240,16 +244,6 @@ function LoginFormContent() {
           </div>
 
           <form onSubmit={onSubmit} noValidate className="space-y-4">
-            {passwordResetSuccess && (
-              <FormAlert variant="success">
-                Senha redefinida com sucesso. Faça login com sua nova senha.
-              </FormAlert>
-            )}
-
-            {errors.root?.message && (
-              <FormAlert>{errors.root.message}</FormAlert>
-            )}
-
             <FormField
               label="E-mail ou CPF"
               htmlFor="identifier"

@@ -5,7 +5,6 @@ import { Loader2, Trash2 } from "lucide-react";
 
 import { MinistryRoleToggles } from "@/components/dashboard/ministries/ministry-role-toggles";
 import { Button } from "@/components/ui/button";
-import { FormAlert } from "@/components/ui/form-field";
 import { Label } from "@/components/ui/label";
 import { SelectField } from "@/components/ui/select-field";
 import {
@@ -13,6 +12,7 @@ import {
   useMemberMinistryRemoval,
   useMinistries,
 } from "@/lib/api/queries";
+import { toastApiError, toastError } from "@/lib/ui/toast";
 import type { Member, MemberMinistryLink } from "@/types/members";
 
 interface MemberMinistriesSectionProps {
@@ -90,8 +90,6 @@ export function MemberMinistriesSection({
 }: MemberMinistriesSectionProps) {
   const [newMinistryId, setNewMinistryId] = useState("");
   const [newRoleIds, setNewRoleIds] = useState<string[]>([]);
-  const [actionError, setActionError] = useState<string | null>(null);
-
   const { data: ministries, isLoading } = useMinistries();
   const assignMinistry = useMemberMinistryAssignment(member.id);
   const removeMinistry = useMemberMinistryRemoval(member.id);
@@ -120,43 +118,29 @@ export function MemberMinistriesSection({
     link: MemberMinistryLink,
     ministryRoleIds: string[],
   ) {
-    setActionError(null);
-
     try {
       await assignMinistry.mutateAsync({
         ministryId: link.ministryId,
         ministryRoleIds,
       });
     } catch (error) {
-      setActionError(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível atualizar os cargos.",
-      );
+      toastApiError(error, "Não foi possível atualizar os cargos.");
     }
   }
 
   async function handleRemove(ministryId: string) {
-    setActionError(null);
-
     try {
       await removeMinistry.mutateAsync(ministryId);
     } catch (error) {
-      setActionError(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível remover o vínculo com o ministério.",
-      );
+      toastApiError(error, "Não foi possível remover o vínculo com o ministério.");
     }
   }
 
   async function handleAddMinistry() {
     if (!newMinistryId) {
-      setActionError("Selecione um ministério.");
+      toastError("Selecione um ministério.");
       return;
     }
-
-    setActionError(null);
 
     try {
       await assignMinistry.mutateAsync({
@@ -166,11 +150,7 @@ export function MemberMinistriesSection({
       setNewMinistryId("");
       setNewRoleIds([]);
     } catch (error) {
-      setActionError(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível vincular ao ministério.",
-      );
+      toastApiError(error, "Não foi possível vincular ao ministério.");
     }
   }
 
@@ -184,8 +164,6 @@ export function MemberMinistriesSection({
           </p>
         </div>
       )}
-
-      {actionError && <FormAlert>{actionError}</FormAlert>}
 
       {isLoading && (
         <p className="text-sm text-muted-foreground">Carregando ministérios...</p>

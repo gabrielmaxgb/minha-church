@@ -117,7 +117,7 @@ export function ActivitiesContent() {
   }, [calendarEvents, listEvents]);
 
   const canCreate = permissions ? canCreateAnyActivity(permissions) : false;
-  const { writesBlocked, blockProps } = useTrialWriteGuard();
+  const { writesBlocked, subscriptionLocked, blockProps } = useTrialWriteGuard();
 
   const sortedEvents = useMemo(
     () => collapseRecurringEventsForList(listEvents ?? []),
@@ -161,7 +161,7 @@ export function ActivitiesContent() {
                   <Plus className="size-4" />
                   Novo evento
                 </Button>
-                {writesBlocked ? (
+                {subscriptionLocked ? (
                   <LockedFeatureHint action="criar ou editar eventos" />
                 ) : null}
               </>

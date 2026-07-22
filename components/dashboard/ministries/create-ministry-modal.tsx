@@ -7,7 +7,7 @@ import { useForm, useWatch } from "react-hook-form";
 
 import { BusyOverlay } from "@/components/ui/busy-overlay";
 import { Button } from "@/components/ui/button";
-import { FormAlert, FormField } from "@/components/ui/form-field";
+import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,6 +19,7 @@ import {
   type CreateMinistryFormValues,
 } from "@/lib/validation/schemas";
 import { cn } from "@/lib/utils";
+import { toastApiError } from "@/lib/ui/toast";
 
 interface CreateMinistryModalProps {
   open: boolean;
@@ -32,7 +33,7 @@ export function CreateMinistryModal({ open, onClose }: CreateMinistryModalProps)
   const descriptionId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
   const createMinistry = useCreateMinistry();
-  const { writesBlocked } = useTrialWriteGuard();
+  const { writesBlocked, subscriptionLocked } = useTrialWriteGuard();
 
   const form = useForm<CreateMinistryFormValues>({
     resolver: zodResolver(createMinistrySchema),
@@ -44,7 +45,6 @@ export function CreateMinistryModal({ open, onClose }: CreateMinistryModalProps)
     register,
     handleSubmit,
     reset,
-    setError,
     clearErrors,
     formState: { errors },
   } = form;
@@ -87,6 +87,10 @@ export function CreateMinistryModal({ open, onClose }: CreateMinistryModalProps)
   }
 
   if (writesBlocked) {
+    if (!subscriptionLocked) {
+      return null;
+    }
+
     return (
       <TrialExpiredWriteModal
         open
@@ -97,8 +101,6 @@ export function CreateMinistryModal({ open, onClose }: CreateMinistryModalProps)
   }
 
   const onSubmit = handleSubmit(async (values) => {
-    clearErrors("root");
-
     try {
       await createMinistry.mutateAsync({
         name: values.name.trim(),
@@ -107,12 +109,10 @@ export function CreateMinistryModal({ open, onClose }: CreateMinistryModalProps)
 
       onClose();
     } catch (submitError) {
-      setError("root", {
-        message:
-          submitError instanceof Error
-            ? submitError.message
-            : "Não foi possível criar o ministério. Tente novamente.",
-      });
+      toastApiError(
+        submitError,
+        "Não foi possível criar o ministério. Tente novamente.",
+      );
     }
   });
 
@@ -188,8 +188,6 @@ export function CreateMinistryModal({ open, onClose }: CreateMinistryModalProps)
 
         <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col" noValidate>
           <div className="space-y-5 overflow-y-auto px-6 py-5">
-            {errors.root?.message && <FormAlert>{errors.root.message}</FormAlert>}
-
             <FormField
               label="Nome do ministério"
               htmlFor="create-ministry-name"

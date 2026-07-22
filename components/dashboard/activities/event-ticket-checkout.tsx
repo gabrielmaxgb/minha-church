@@ -30,7 +30,6 @@ import {
   STRIPE_ELEMENTS_FONTS,
 } from "@/components/giving/giving-stripe";
 import { Button } from "@/components/ui/button";
-import { FormAlert } from "@/components/ui/form-field";
 import { activityDetailPath } from "@/constants/routes";
 import { ApiError } from "@/lib/api/client";
 import {
@@ -40,6 +39,7 @@ import {
 import { eventsKeys, registerForFreeEvent } from "@/lib/api/queries/events.keys";
 import { eventRegistrationCopy } from "@/lib/events/member-response-copy";
 import { resolveGivingStripeError } from "@/lib/payments/giving-stripe-errors";
+import { toastApiError, toastError } from "@/lib/ui/toast";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 import type { ChurchEventDetail } from "@/types/events";
@@ -77,7 +77,6 @@ export function EventTicketCheckout({
 
   const [open, setOpen] = useState(false);
   const [session, setSession] = useState<GivingCheckoutSession | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   const [localStatus, setLocalStatus] = useState<TicketStatus | null>(null);
 
@@ -118,7 +117,6 @@ export function EventTicketCheckout({
   const handleClose = () => {
     setOpen(false);
     setSession(null);
-    setError(null);
   };
 
   useEffect(() => {
@@ -151,7 +149,6 @@ export function EventTicketCheckout({
       return;
     }
 
-    setError(null);
     setStarting(true);
     try {
       if (!isPaid) {
@@ -172,12 +169,11 @@ export function EventTicketCheckout({
         invalidateTicketQueries();
         return;
       }
-      setError(
-        startError instanceof ApiError
-          ? startError.message
-          : isPaid
-            ? "Não foi possível iniciar o pagamento da inscrição."
-            : "Não foi possível confirmar a inscrição.",
+      toastApiError(
+        startError,
+        isPaid
+          ? "Não foi possível iniciar o pagamento da inscrição."
+          : "Não foi possível confirmar a inscrição.",
       );
     } finally {
       setStarting(false);
@@ -238,7 +234,6 @@ export function EventTicketCheckout({
             flush={flush}
             action={
               <div className="space-y-2">
-                {error ? <FormAlert>{error}</FormAlert> : null}
                 <Button
                   type="button"
                   size="sm"
@@ -298,11 +293,6 @@ export function EventTicketCheckout({
                       ? eventRegistrationCopy.subtitlePaid
                       : eventRegistrationCopy.subtitleFree}
                 </p>
-                {error ? (
-                  <div className="mt-2">
-                    <FormAlert>{error}</FormAlert>
-                  </div>
-                ) : null}
                 <Button
                   type="button"
                   size="sm"
@@ -530,7 +520,6 @@ function EventTicketConfirmForm({
   const stripe = useStripe();
   const elements = useElements();
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const handlePay = async () => {
     if (!stripe || !elements) {
@@ -538,7 +527,6 @@ function EventTicketConfirmForm({
     }
 
     setSubmitting(true);
-    setError(null);
 
     const returnUrl = `${window.location.origin}${returnPath}?${TICKET_PAID_QUERY}=ok&ticketId=${encodeURIComponent(ticketId)}`;
 
@@ -550,7 +538,7 @@ function EventTicketConfirmForm({
     });
 
     if (result.error) {
-      setError(resolveGivingStripeError(result.error));
+      toastError(resolveGivingStripeError(result.error));
       setSubmitting(false);
       return;
     }
@@ -560,7 +548,6 @@ function EventTicketConfirmForm({
 
   return (
     <div className="space-y-4">
-      {error ? <FormAlert>{error}</FormAlert> : null}
       <PaymentElement options={{ layout: "tabs" }} />
       <Button
         type="button"
