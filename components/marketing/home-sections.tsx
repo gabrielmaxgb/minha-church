@@ -268,13 +268,19 @@ export function FlowsSection() {
             No lugar de planilhas e grupos
           </WordScrub>
           <p className="mt-3 text-muted-foreground">
-            Três fluxos do dia a dia da igreja.
+            Fluxos do dia a dia da igreja — no mesmo lugar.
           </p>
         </div>
 
         <div className="mt-10 divide-y divide-border border-y border-border sm:mt-12">
           {homeFlows.map((flow, index) => {
-            const domains = ["members", "schedules", "communication"] as const;
+            const domains = [
+              "members",
+              "schedules",
+              "communication",
+              "finances",
+              "members",
+            ] as const;
             const domain = domains[index] ?? "home";
 
             return (
@@ -315,18 +321,57 @@ export function ScreensSection() {
   const screens = [
     {
       title: "A semana",
-      description: "Próximo culto e o que ainda precisa da sua atenção.",
+      description:
+        "O próximo culto e o que ainda pede a sua atenção — num só lugar.",
       domain: "home" as const,
     },
     {
       title: "Escalas",
-      description: "Quem foi convidado, quem confirmou e o que ainda falta.",
+      description:
+        "Convide, veja quem confirmou e feche a equipe antes da véspera.",
       domain: "schedules" as const,
     },
     {
       title: "Famílias",
-      description: "Grafo de parentesco — o mesmo que você abre no cadastro.",
+      description:
+        "Pastoreie com pais, cônjuges e filhos à vista — sem caçar parentesco.",
       domain: "members" as const,
+    },
+    {
+      title: "Comunicados",
+      description:
+        "Avise a igreja ou o ministério e guarde o histórico do que foi dito.",
+      domain: "communication" as const,
+    },
+    {
+      title: "Finanças",
+      description:
+        "Receba dízimos e ofertas online, registre o caixa e feche o mês.",
+      domain: "finances" as const,
+    },
+    {
+      title: "Cuidado",
+      description:
+        "Pedidos de oração, aconselhamento e quem precisa de atenção pastoral.",
+      domain: "members" as const,
+    },
+    {
+      title: "Ministérios",
+      description:
+        "Áreas de serviço, cargos e permissões — cada líder no que é dele.",
+      domain: "schedules" as const,
+    },
+    {
+      title: "Eventos",
+      description:
+        "Cultos e encontros com data, local e recorrência — agenda clara.",
+      domain: "activities" as const,
+    },
+    {
+      title: "Relatórios",
+      description:
+        "Prestação de contas pronta para a assembleia, sem montar planilha na véspera.",
+      domain: "reports" as const,
     },
   ];
 
@@ -334,13 +379,13 @@ export function ScreensSection() {
     <section className="border-b border-border py-14 sm:py-20">
       <Container>
         <MotionSection variants={fadeInUp} className="max-w-2xl">
-          <Heading as="h2">O que você encontra por aqui</Heading>
+          <Heading as="h2">O que a liderança resolve aqui</Heading>
           <p className="mt-3 text-muted-foreground">
-            As telas que a liderança usa na rotina.
+          Tudo que sua igreja precisa no mesmo lugar.
           </p>
         </MotionSection>
 
-        <div className="mt-10 grid gap-3 sm:mt-12 sm:grid-cols-3 sm:gap-4">
+        <div className="mt-10 grid gap-3 sm:mt-12 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
           {screens.map((screen) => (
             <MotionDiv
               key={screen.title}

@@ -26,6 +26,16 @@ export const homeFlows = [
 		description:
 			"Publique comunicados para toda a igreja ou para grupos específicos com facilidade.",
 	},
+	{
+		title: "Receba ofertas e feche o caixa",
+		description:
+			"Dízimos e doações online, livro-caixa e relatório do mês — sem planilha paralela.",
+	},
+	{
+		title: "Cuide de quem pede atenção",
+		description:
+			"Pedidos de oração, aconselhamento e notas pastorais — o cuidado da igreja no mesmo lugar.",
+	},
 ] as const;
 
 export const homeHowItWorks = [
@@ -42,7 +52,7 @@ export const homeHowItWorks = [
 	{
 		title: "Organize a semana",
 		description:
-			"Agenda, escalas e comunicados juntos — prontos para o próximo culto.",
+			"Agenda, escalas, comunicados e finanças juntos — prontos para o próximo culto.",
 	},
 ] as const;
 

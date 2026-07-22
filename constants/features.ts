@@ -22,7 +22,7 @@ export const homeFeatures: FeatureHighlight[] = [
     icon: Users,
     items: [
       "Cadastro pastoral",
-      "Grafo de família",
+      "Família ligada no mesmo mapa",
       "Histórico de status e vínculos",
       "Status ativo, visitante ou inativo",
     ],
@@ -60,7 +60,7 @@ export const resourceSections = [
       "Cadastre e acompanhe cada pessoa com histórico pastoral, contato e status — a referência da comunidade.",
     items: [
       "Cadastro com dados pessoais e de contato",
-      "Grafo de família com vínculos de parentesco",
+      "Família no mesmo mapa — pais, cônjuges e filhos",
       "Histórico de status, datas e vínculos ministeriais",
       "Status: visitante, ativo ou inativo",
       "Vínculo com ministérios e cargos",
@@ -96,9 +96,9 @@ export const resourceSections = [
   {
     id: "financas",
     domain: "finances" as const,
-    title: "Recebimentos e prestação de contas",
+    title: "Receba ofertas e feche o caixa",
     description:
-      "Receba dízimos e doações online, registre o caixa, feche o mês e exporte o relatório para a assembleia.",
+      "Dízimos e doações online, livro-caixa e relatório do mês — sem planilha paralela.",
     items: [
       "Fundos de cobrança e página pública de doação",
       "Plano de contas e livro-caixa",
@@ -116,6 +116,30 @@ export const resourceSections = [
       "Segmentação por ministério",
       "Histórico de publicações",
       "Leitura pela equipe",
+    ],
+  },
+  {
+    id: "cuidado",
+    domain: "members" as const,
+    title: "Cuide de quem pede atenção",
+    description:
+      "Oração, aconselhamento e notas pastorais — o cuidado da igreja no mesmo lugar.",
+    items: [
+      "Pedidos de oração abertos à comunidade",
+      "Aconselhamentos e visitas",
+      "Acompanhamento pastoral com notas",
+    ],
+  },
+  {
+    id: "ministerios",
+    domain: "schedules" as const,
+    title: "Ministérios com cargos e permissões",
+    description:
+      "Áreas de serviço organizadas — cada líder vê e faz só o que é dele.",
+    items: [
+      "Ministérios e equipes",
+      "Cargos com permissões",
+      "Quem serve em cada área",
     ],
   },
 ];
