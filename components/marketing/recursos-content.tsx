@@ -23,7 +23,7 @@ export function RecursosContent() {
   return (
     <>
       <MarketingPageHero
-        title="A rotina da igreja, organizada de ponta a ponta"
+        title="A rotina da igreja organizada de ponta a ponta"
         support="Do primeiro contato às escalas do culto e aos comunicados da semana — fluxos que a liderança usa de verdade."
       >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">

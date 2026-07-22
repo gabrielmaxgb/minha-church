@@ -32,8 +32,8 @@ import { cn } from "@/lib/utils";
 
 const sundaySignals = [
   "Prioridades do dia no topo do painel",
-  "Agenda da semana com o próximo culto em destaque",
-  "Escalas pendentes pedem resposta antes do domingo",
+  "Agenda da semana com so próximos eventos em destaque",
+  "Suas escalas organizadas antes dos eventos.",
 ] as const;
 
 /**
@@ -241,11 +241,10 @@ export function FamilyGraphDemoSection() {
             Cadastro pastoral
           </p>
           <Heading as="h2" className="mt-3 text-balance">
-            Família como grafo, não como lista
+            Pastoreie com a família à vista
           </Heading>
           <p className="mt-4 text-base leading-relaxed text-muted-foreground">
-            Pais, cônjuges e filhos ligados de forma visual — o diferencial
-            para pastorear com contexto, sem caçar parentesco em planilha.
+            Pais, cônjuges e filhos no mesmo mapa — nunca foi tão fácil lembrar quem é parente de quem.
           </p>
         </MotionSection>
 

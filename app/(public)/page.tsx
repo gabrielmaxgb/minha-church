@@ -14,7 +14,7 @@ import {
 import { siteConfig } from "@/constants/navigation";
 
 export const metadata: Metadata = {
-  title: "A rotina da igreja, em um só lugar",
+  title: "A rotina da igreja em um só lugar",
   description: siteConfig.description,
 };
 
