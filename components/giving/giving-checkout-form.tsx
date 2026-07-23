@@ -95,6 +95,14 @@ export function GivingCheckoutForm({ fund }: { fund: PublicGivingFund }) {
       return;
     }
 
+    if (recurring && !linkToMember && !payerEmail.trim()) {
+      toastError(
+        "Para contribuir todo mês, digite seu e-mail. Mandamos o link para cancelar e um canal para falar com a igreja.",
+      );
+      document.getElementById("payer-email")?.focus();
+      return;
+    }
+
     setStarting(true);
 
     try {
@@ -236,14 +244,29 @@ export function GivingCheckoutForm({ fund }: { fund: PublicGivingFund }) {
               />
             </FormField>
 
-            <FormField label="E-mail para comprovante" htmlFor="payer-email">
+            <FormField
+              label={
+                recurring
+                  ? "E-mail para gerenciar a mensal"
+                  : "E-mail para comprovante"
+              }
+              htmlFor="payer-email"
+              required={recurring}
+              hint={
+                recurring
+                  ? "Obrigatório. Enviamos o link para cancelar a cobrança e, se precisar, falar com a igreja."
+                  : undefined
+              }
+            >
               <Input
                 id="payer-email"
                 type="email"
                 value={payerEmail}
                 onChange={(event) => setPayerEmail(event.target.value)}
-                placeholder="Opcional"
+                placeholder={recurring ? "seu@email.com" : "Opcional"}
                 disabled={starting}
+                required={recurring}
+                autoComplete="email"
               />
             </FormField>
 
@@ -285,8 +308,9 @@ export function GivingCheckoutForm({ fund }: { fund: PublicGivingFund }) {
                 Contribuir mensalmente
               </span>
               <span className="mt-0.5 block text-muted-foreground">
-                Cobrança recorrente no cartão de crédito. Pix e boleto ficam só
-                na doação avulsa.
+                Cobrança recorrente no cartão. Pix e boleto ficam só na doação
+                avulsa. Com o e-mail, você recebe o link para cancelar ou falar
+                com a igreja depois.
               </span>
             </span>
           </label>
@@ -390,6 +414,8 @@ function CheckoutPaymentStep({
             fund={fund}
             donationId={session.donationId}
             receiptToken={session.receiptToken}
+            subscriptionId={session.subscriptionId}
+            manageToken={session.manageToken}
           />
         </Elements>
 
@@ -411,10 +437,14 @@ function ConfirmPaymentForm({
   fund,
   donationId,
   receiptToken,
+  subscriptionId,
+  manageToken,
 }: {
   fund: PublicGivingFund;
   donationId: string;
   receiptToken: string;
+  subscriptionId?: string | null;
+  manageToken?: string | null;
 }) {
   const stripe = useStripe();
   const elements = useElements();
@@ -427,7 +457,15 @@ function ConfirmPaymentForm({
 
     setSubmitting(true);
 
-    const returnUrl = `${window.location.origin}${givingFundPath(fund.churchSlug, fund.fundSlug)}/obrigado?donationId=${encodeURIComponent(donationId)}&rt=${encodeURIComponent(receiptToken)}`;
+    const params = new URLSearchParams({
+      donationId,
+      rt: receiptToken,
+    });
+    if (subscriptionId && manageToken) {
+      params.set("sub", subscriptionId);
+      params.set("mt", manageToken);
+    }
+    const returnUrl = `${window.location.origin}${givingFundPath(fund.churchSlug, fund.fundSlug)}/obrigado?${params.toString()}`;
 
     const result = await stripe.confirmPayment({
       elements,

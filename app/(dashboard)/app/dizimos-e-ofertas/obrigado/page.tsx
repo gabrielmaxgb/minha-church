@@ -9,11 +9,16 @@ import { AUTH_ROUTES, settingsSectionPath } from "@/constants/routes";
 import "@/app/doar/giving.css";
 
 type PageProps = {
-  searchParams: Promise<{ donationId?: string; rt?: string }>;
+  searchParams: Promise<{
+    donationId?: string;
+    rt?: string;
+    sub?: string;
+    mt?: string;
+  }>;
 };
 
 export default function TithesOfferingsThanksPage({ searchParams }: PageProps) {
-  const { donationId, rt } = use(searchParams);
+  const { donationId, rt, sub, mt } = use(searchParams);
 
   return (
     <DashboardPage title="Contribuição">
@@ -21,6 +26,8 @@ export default function TithesOfferingsThanksPage({ searchParams }: PageProps) {
         <GivingThanksPanel
           donationId={donationId}
           receiptToken={rt}
+          subscriptionId={sub}
+          manageToken={mt}
           backHref={AUTH_ROUTES.tithesOfferings}
           backLabel="Voltar aos fundos"
           retryHref={AUTH_ROUTES.tithesOfferings}

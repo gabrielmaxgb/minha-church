@@ -1,6 +1,5 @@
 import { clearAuthSession, getStoredChurchId } from "@/lib/auth/cookies";
 import { getRolePreviewWriteBlock } from "@/lib/permissions/role-preview-guard";
-import { toastError } from "@/lib/ui/toast";
 
 export interface ApiRequestOptions extends RequestInit {
 	churchId?: string | null;
@@ -102,7 +101,11 @@ export async function apiClient<T>(
 ): Promise<T> {
 	const previewBlock = getRolePreviewWriteBlock(endpoint, options.method);
 	if (previewBlock) {
-		toastError(previewBlock.message);
+		// Evita importar sonner no grafo RSC (SSR público, ex.: /doar).
+		if (typeof window !== "undefined") {
+			const { toastError } = await import("@/lib/ui/toast");
+			toastError(previewBlock.message);
+		}
 		throw new ApiError(previewBlock.message, 403, previewBlock.code);
 	}
 

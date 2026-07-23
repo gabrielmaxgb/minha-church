@@ -10,7 +10,12 @@ import "@/app/doar/giving.css";
 
 type PageProps = {
   params: Promise<{ churchSlug: string; fundSlug: string }>;
-  searchParams: Promise<{ donationId?: string; rt?: string }>;
+  searchParams: Promise<{
+    donationId?: string;
+    rt?: string;
+    sub?: string;
+    mt?: string;
+  }>;
 };
 
 export const metadata = createPageMetadata({
@@ -23,7 +28,7 @@ export default async function GivingThanksPage({
   searchParams,
 }: PageProps) {
   const { churchSlug, fundSlug } = await params;
-  const { donationId, rt } = await searchParams;
+  const { donationId, rt, sub, mt } = await searchParams;
   const fundHref = givingFundPath(churchSlug, fundSlug);
 
   return (
@@ -31,6 +36,8 @@ export default async function GivingThanksPage({
       <GivingThanksPanel
         donationId={donationId}
         receiptToken={rt}
+        subscriptionId={sub}
+        manageToken={mt}
         className="w-full overflow-hidden rounded-2xl border border-border bg-card shadow-xs"
         backHref={PUBLIC_ROUTES.home}
         backLabel="Voltar ao site"

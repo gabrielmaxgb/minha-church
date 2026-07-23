@@ -17,6 +17,7 @@ import {
   type GivingDonationReceipt,
 } from "@/lib/api/payments";
 import { formatBrlFromCents } from "@/components/giving/giving-stripe";
+import { givingSubscriptionManagePath } from "@/constants/routes";
 import { toastApiError } from "@/lib/ui/toast";
 
 const POLL_MS = 1_500;
@@ -99,6 +100,8 @@ function OutcomeIcon({ kind }: { kind: Copy["icon"] }) {
 export function GivingThanksPanel({
   donationId,
   receiptToken,
+  subscriptionId: subscriptionIdProp,
+  manageToken: manageTokenProp,
   backHref,
   backLabel,
   retryHref,
@@ -111,6 +114,8 @@ export function GivingThanksPanel({
 }: {
   donationId: string | null | undefined;
   receiptToken: string | null | undefined;
+  subscriptionId?: string | null;
+  manageToken?: string | null;
   backHref: string;
   backLabel: string;
   retryHref?: string;
@@ -184,6 +189,17 @@ export function GivingThanksPanel({
   const showSecondary =
     resolvedOutcome === "succeeded" && secondaryHref && secondaryLabel;
 
+  const manageSubscriptionId =
+    subscriptionIdProp ?? receipt?.subscriptionId ?? null;
+  const manageToken = manageTokenProp ?? receipt?.manageToken ?? null;
+  const manageHref =
+    manageSubscriptionId && manageToken
+      ? givingSubscriptionManagePath(manageSubscriptionId, manageToken)
+      : null;
+  const showManage =
+    Boolean(manageHref) &&
+    (resolvedOutcome === "succeeded" || resolvedOutcome === "processing");
+
   return (
     <div
       className={
@@ -226,12 +242,23 @@ export function GivingThanksPanel({
             <p className="mt-6 text-sm leading-relaxed text-[var(--giving-paper)]/70">
               {copy.body}
             </p>
+            {showManage ? (
+              <p className="mt-4 text-sm leading-relaxed text-[var(--giving-paper)]/70">
+                Contribuição mensal: guarde o e-mail com o link para cancelar, ou
+                use o botão abaixo.
+              </p>
+            ) : null}
           </>
         )}
       </div>
       <div className="flex flex-col gap-3 px-7 py-6 sm:px-9">
-        {showPrimary ? (
+        {showManage && manageHref ? (
           <Button asChild className="w-full sm:w-auto">
+            <Link href={manageHref}>Gerenciar ou cancelar mensal</Link>
+          </Button>
+        ) : null}
+        {showPrimary ? (
+          <Button asChild className="w-full sm:w-auto" variant={showManage ? "outline" : "default"}>
             <Link href={primaryHref}>{primaryLabel}</Link>
           </Button>
         ) : null}

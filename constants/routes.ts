@@ -80,8 +80,25 @@ export function ministryAvailabilityPath(ministryId: string): string {
   return `${ministryDetailPath(ministryId)}?section=availability#${ROSTER_PROFILE_SECTION_ID}`;
 }
 
-export function memberDetailPath(memberId: string): string {
-  return `${AUTH_ROUTES.members}/${memberId}`;
+export function memberDetailPath(
+  memberId: string,
+  options?: {
+    /** Aba da ficha. Preferimos query `tab=` (mais estável que hash no App Router). */
+    tab?: "cadastro" | "ministerios" | "acompanhamento" | "contribuicoes";
+    /** Origem para o botão voltar. */
+    from?: "acompanhamento" | "membros";
+  },
+): string {
+  const base = `${AUTH_ROUTES.members}/${memberId}`;
+  const params = new URLSearchParams();
+  if (options?.from === "acompanhamento") {
+    params.set("from", "acompanhamento");
+  }
+  if (options?.tab) {
+    params.set("tab", options.tab);
+  }
+  const query = params.toString();
+  return `${base}${query ? `?${query}` : ""}`;
 }
 
 export function familyGraphPath(familyId: string): string {
@@ -99,6 +116,14 @@ export function activitiesCalendarPath(dateKey: string): string {
 
 export function givingFundPath(churchSlug: string, fundSlug: string): string {
   return `/doar/${encodeURIComponent(churchSlug)}/${encodeURIComponent(fundSlug)}`;
+}
+
+/** Página pública para o doador gerenciar/cancelar contribuição mensal. */
+export function givingSubscriptionManagePath(
+  subscriptionId: string,
+  token: string,
+): string {
+  return `/doar/mensal/${encodeURIComponent(subscriptionId)}?token=${encodeURIComponent(token)}`;
 }
 
 export function settingsSectionPath(

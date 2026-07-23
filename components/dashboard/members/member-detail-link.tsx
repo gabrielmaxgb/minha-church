@@ -9,13 +9,18 @@ import { canAccessMembers } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 
+type MemberDetailHrefOptions = {
+  tab?: "cadastro" | "ministerios" | "acompanhamento" | "contribuicoes";
+  from?: "acompanhamento" | "membros";
+};
+
 type MemberDetailButtonProps = {
   memberId: string | null | undefined;
   memberName?: string | null;
   className?: string;
   /** Preferir quando o botão fica dentro de outro controle clicável. */
   stopPropagation?: boolean;
-};
+} & MemberDetailHrefOptions;
 
 /**
  * Botão discreto para abrir a ficha do membro.
@@ -26,6 +31,8 @@ export function MemberDetailButton({
   memberName,
   className,
   stopPropagation = false,
+  tab,
+  from,
 }: MemberDetailButtonProps) {
   const { permissions } = useAuth();
 
@@ -49,7 +56,7 @@ export function MemberDetailButton({
       title={label}
     >
       <Link
-        href={memberDetailPath(memberId)}
+        href={memberDetailPath(memberId, { tab, from })}
         aria-label={label}
         onClick={
           stopPropagation
@@ -70,7 +77,7 @@ type MemberNameLinkProps = {
   children: React.ReactNode;
   className?: string;
   stopPropagation?: boolean;
-};
+} & MemberDetailHrefOptions;
 
 /**
  * Nome como link para a ficha, quando o usuário tem permissão.
@@ -81,6 +88,8 @@ export function MemberNameLink({
   children,
   className,
   stopPropagation = false,
+  tab,
+  from,
 }: MemberNameLinkProps) {
   const { permissions } = useAuth();
 
@@ -90,7 +99,7 @@ export function MemberNameLink({
 
   return (
     <Link
-      href={memberDetailPath(memberId)}
+      href={memberDetailPath(memberId, { tab, from })}
       className={cn(
         "rounded-sm text-foreground underline-offset-2 transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
         className,

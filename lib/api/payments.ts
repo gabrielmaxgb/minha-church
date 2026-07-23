@@ -463,6 +463,8 @@ export interface GivingCheckoutSession {
   /** Token de recibo (obrigatório para GET público do recibo). */
   receiptToken: string;
   subscriptionId?: string | null;
+  /** Token longo para gerenciar/cancelar contribuição mensal. */
+  manageToken?: string | null;
   mode?: "payment" | "subscription";
   clientSecret: string;
   stripeAccountId: string;
@@ -525,6 +527,72 @@ export interface GivingDonationReceipt {
   amountCents: number;
   currency: string;
   fundName: string;
+  subscriptionId?: string | null;
+  manageToken?: string | null;
+}
+
+export type GivingSubscriptionContactReason =
+  | "cancel_help"
+  | "verify_cancel"
+  | "other";
+
+export interface PublicGivingSubscription {
+  id: string;
+  churchName: string;
+  churchSlug: string;
+  fundName: string;
+  fundSlug: string;
+  amountCents: number;
+  currency: string;
+  status: string;
+  payerName: string | null;
+  payerEmail: string | null;
+  canceledAt: string | null;
+  createdAt: string;
+  manageToken: string;
+}
+
+export async function fetchPublicGivingSubscription(
+  subscriptionId: string,
+  token: string,
+): Promise<PublicGivingSubscription> {
+  return apiClient<PublicGivingSubscription>(
+    `/public/giving/subscriptions/${encodeURIComponent(subscriptionId)}?token=${encodeURIComponent(token)}`,
+    { skipAuth: true },
+  );
+}
+
+export async function cancelPublicGivingSubscription(
+  subscriptionId: string,
+  token: string,
+): Promise<PublicGivingSubscription> {
+  return apiClient<PublicGivingSubscription>(
+    `/public/giving/subscriptions/${encodeURIComponent(subscriptionId)}/cancel?token=${encodeURIComponent(token)}`,
+    {
+      method: "POST",
+      skipAuth: true,
+    },
+  );
+}
+
+export async function contactPublicGivingSubscription(
+  subscriptionId: string,
+  token: string,
+  input: {
+    reason: GivingSubscriptionContactReason;
+    message: string;
+    name?: string;
+    replyEmail?: string;
+  },
+): Promise<{ ok: true }> {
+  return apiClient<{ ok: true }>(
+    `/public/giving/subscriptions/${encodeURIComponent(subscriptionId)}/contact?token=${encodeURIComponent(token)}`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+      skipAuth: true,
+    },
+  );
 }
 
 export async function fetchGivingDonationReceipt(

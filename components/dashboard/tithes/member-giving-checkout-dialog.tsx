@@ -335,6 +335,8 @@ function MemberPaymentStep({
           <MemberConfirmPaymentForm
             donationId={session.donationId}
             receiptToken={session.receiptToken}
+            subscriptionId={session.subscriptionId}
+            manageToken={session.manageToken}
           />
         </Elements>
 
@@ -355,9 +357,13 @@ function MemberPaymentStep({
 function MemberConfirmPaymentForm({
   donationId,
   receiptToken,
+  subscriptionId,
+  manageToken,
 }: {
   donationId: string;
   receiptToken: string;
+  subscriptionId?: string | null;
+  manageToken?: string | null;
 }) {
   const stripe = useStripe();
   const elements = useElements();
@@ -370,7 +376,15 @@ function MemberConfirmPaymentForm({
 
     setSubmitting(true);
 
-    const returnUrl = `${window.location.origin}${AUTH_ROUTES.tithesOfferings}/obrigado?donationId=${encodeURIComponent(donationId)}&rt=${encodeURIComponent(receiptToken)}`;
+    const params = new URLSearchParams({
+      donationId,
+      rt: receiptToken,
+    });
+    if (subscriptionId && manageToken) {
+      params.set("sub", subscriptionId);
+      params.set("mt", manageToken);
+    }
+    const returnUrl = `${window.location.origin}${AUTH_ROUTES.tithesOfferings}/obrigado?${params.toString()}`;
 
     const result = await stripe.confirmPayment({
       elements,

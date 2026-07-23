@@ -1,7 +1,19 @@
 "use client";
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { Calendar, Clock, Eye, FileText, Loader2, MapPin, Repeat, Ticket, X } from "lucide-react";
+import {
+  Calendar,
+  ChevronDown,
+  Clock,
+  Eye,
+  FileText,
+  Loader2,
+  MapPin,
+  Repeat,
+  SlidersHorizontal,
+  Ticket,
+  X,
+} from "lucide-react";
 
 import { ActivityScheduleFields } from "@/components/dashboard/activities/activity-schedule-fields";
 import { EventFormSection } from "@/components/dashboard/activities/event-form-section";
@@ -50,6 +62,7 @@ import {
 } from "@/lib/activities/datetime";
 import {
   applyBrlCentsMask,
+  cn,
   parseBrlMaskToCents,
 } from "@/lib/utils";
 import { toastError } from "@/lib/ui/toast";
@@ -570,23 +583,35 @@ export function CreateActivityModal({
               />
             </EventFormSection>
 
-            <div className="rounded-xl border border-border/80">
+            <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
               <button
                 type="button"
-                className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-medium text-foreground transition-colors hover:bg-muted/40"
+                className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-muted/35"
                 aria-expanded={showMoreOptions}
                 onClick={() => setShowMoreOptions((current) => !current)}
               >
-                <span>Mais opções</span>
-                <span className="text-sm font-normal text-muted-foreground">
-                  {showMoreOptions
-                    ? "Ocultar"
-                    : "Inscrição, repetição e destaque"}
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-muted/40 text-muted-foreground">
+                  <SlidersHorizontal className="size-4" aria-hidden />
                 </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-semibold tracking-tight text-foreground">
+                    Mais opções
+                  </span>
+                  <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
+                    Inscrição, repetição e destaque
+                  </span>
+                </span>
+                <ChevronDown
+                  className={cn(
+                    "size-4 shrink-0 text-muted-foreground transition-transform duration-200",
+                    showMoreOptions && "rotate-180",
+                  )}
+                  aria-hidden
+                />
               </button>
 
               {showMoreOptions ? (
-                <div className="space-y-8 border-t border-border/80 px-4 py-5">
+                <div className="space-y-8 border-t border-border/70 bg-muted/10 px-4 py-5 sm:px-5">
                   <div className="space-y-2">
                     <Label htmlFor="activity-highlight-note">
                       Recado em destaque

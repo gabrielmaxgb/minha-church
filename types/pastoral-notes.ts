@@ -50,6 +50,8 @@ export interface PastoralCareSummary {
   recentNotes: PastoralNote[];
   thresholds: {
     withoutContactDays: number;
+    /** Dias à frente incluídos na lista de retornos (além de vencidos/hoje). */
+    followUpHorizonDays?: number;
   };
 }
 

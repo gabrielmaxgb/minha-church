@@ -242,27 +242,25 @@ function NoteFormFields({
             })}
           </div>
 
-          {form.scheduleFollowUp ? (
-            <div className="space-y-1.5 pt-1">
-              <p className="text-sm text-muted-foreground">
-                Ou escolha outra data:
-              </p>
-              <div className="max-w-48">
-                <DatePicker
-                  id="pastoral-note-follow-up"
-                  value={form.followUpOn}
-                  disabled={disabled}
-                  onChange={(followUpOn) =>
-                    onChange({
-                      ...form,
-                      scheduleFollowUp: true,
-                      followUpOn,
-                    })
-                  }
-                />
-              </div>
+          <div className="space-y-1.5 pt-1">
+            <p className="text-sm text-muted-foreground">
+              Ou escolha outra data:
+            </p>
+            <div className="max-w-48">
+              <DatePicker
+                id="pastoral-note-follow-up"
+                value={form.followUpOn}
+                disabled={disabled}
+                onChange={(followUpOn) =>
+                  onChange({
+                    ...form,
+                    scheduleFollowUp: true,
+                    followUpOn,
+                  })
+                }
+              />
             </div>
-          ) : null}
+          </div>
         </div>
       </div>
     </div>

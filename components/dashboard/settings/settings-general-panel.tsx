@@ -21,6 +21,7 @@ import { toastApiError, toastSuccess } from "@/lib/ui/toast";
 import { useFeatureLock } from "@/lib/subscription/use-feature-lock";
 import { useAuth, useTenant } from "@/providers/auth-provider";
 
+import { ChurchClosureBackupDialog } from "./church-closure-backup-dialog";
 import { ChurchFiscalProfileForm } from "./church-fiscal-profile-form";
 import {
   SettingsPanel,
@@ -35,6 +36,8 @@ export function SettingsGeneralPanel() {
 
   const [busy, setBusy] = useState<string | null>(null);
   const [closureSlug, setClosureSlug] = useState("");
+  const [closureBackupOpen, setClosureBackupOpen] = useState(false);
+  const [closureDownloaded, setClosureDownloaded] = useState(false);
 
   const isOwner = Boolean(user?.isOwner);
   const needsDpa = isOwner && church && !church.dpaAccepted;
@@ -50,6 +53,46 @@ export function SettingsGeneralPanel() {
     try {
       await action();
       toastSuccess(success);
+      await reloadSession();
+    } catch (err) {
+      toastApiError(err, "Não foi possível concluir a ação.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  function openClosureBackup() {
+    setClosureDownloaded(false);
+    setClosureBackupOpen(true);
+  }
+
+  function closeClosureBackup() {
+    if (busy === "export" || busy === "closure") return;
+    setClosureBackupOpen(false);
+  }
+
+  async function downloadForClosure() {
+    if (!churchId) return;
+    setBusy("export");
+    try {
+      await exportChurchData(churchId);
+      setClosureDownloaded(true);
+      toastSuccess("Cópia baixada.");
+    } catch (err) {
+      toastApiError(err, "Não foi possível baixar a cópia.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function confirmClosure() {
+    if (!churchId) return;
+    setBusy("closure");
+    try {
+      await requestChurchClosure(churchId, closureSlug.trim());
+      setClosureBackupOpen(false);
+      setClosureSlug("");
+      toastSuccess("Encerramento solicitado.");
       await reloadSession();
     } catch (err) {
       toastApiError(err, "Não foi possível concluir a ação.");
@@ -155,10 +198,13 @@ export function SettingsGeneralPanel() {
           <SettingsPanel>
             <div className="space-y-4 px-5 py-5">
               <div>
-                <h3 className="text-sm font-medium">Exportar dados da igreja</h3>
+                <h3 className="text-sm font-medium">
+                  Baixar cópia dos dados da igreja
+                </h3>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Baixa um JSON com membros, famílias, ministérios e comunicados
-                  (sem segredos de pagamento).
+                  Salva no computador membros, famílias, ministérios e
+                  comunicados. Não inclui dados de pagamento. Faça isso antes de
+                  encerrar a igreja, se quiser guardar um backup.
                 </p>
               </div>
               <Button
@@ -171,12 +217,12 @@ export function SettingsGeneralPanel() {
                     async () => {
                       await exportChurchData(churchId!);
                     },
-                    "Exportação iniciada.",
+                    "Cópia baixada.",
                   )
                 }
               >
                 <Download className="size-4" />
-                Baixar pacote JSON
+                Baixar cópia
               </Button>
             </div>
           </SettingsPanel>
@@ -200,7 +246,7 @@ export function SettingsGeneralPanel() {
                               )
                             : "—"
                         }). Você pode cancelar neste período.`
-                      : `Solicita o encerramento. Mantemos os dados por ${MEMBER_RETENTION_DAYS} dias e depois anonimizamos. Exporte antes. Digite o slug da igreja para confirmar.`}
+                      : `Solicita o encerramento. Mantemos os dados por ${MEMBER_RETENTION_DAYS} dias e depois anonimizamos. Digite o slug da igreja para confirmar.`}
                   </p>
                 </div>
               </div>
@@ -247,18 +293,7 @@ export function SettingsGeneralPanel() {
                       !churchId ||
                       closureSlug.trim() !== (church?.slug ?? "")
                     }
-                    onClick={() =>
-                      runAction(
-                        "closure",
-                        async () => {
-                          await requestChurchClosure(
-                            churchId!,
-                            closureSlug.trim(),
-                          );
-                        },
-                        "Encerramento solicitado.",
-                      )
-                    }
+                    onClick={openClosureBackup}
                   >
                     Encerrar igreja
                   </Button>
@@ -268,6 +303,17 @@ export function SettingsGeneralPanel() {
           </SettingsPanel>
         ) : null}
       </div>
+
+      <ChurchClosureBackupDialog
+        open={closureBackupOpen}
+        churchName={church?.name ?? "esta igreja"}
+        downloading={busy === "export"}
+        closing={busy === "closure"}
+        downloaded={closureDownloaded}
+        onCancel={closeClosureBackup}
+        onDownload={downloadForClosure}
+        onConfirmClose={confirmClosure}
+      />
     </div>
   );
 }

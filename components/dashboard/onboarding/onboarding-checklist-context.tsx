@@ -21,6 +21,7 @@ import {
   MEMBER_CREATE_ROUTE,
   settingsSectionPath,
 } from "@/constants/routes";
+import { fetchPushStatus } from "@/lib/api/push";
 import {
   useConnectStatus,
   useDashboardSummary,
@@ -29,6 +30,7 @@ import {
   useMinistries,
 } from "@/lib/api/queries";
 import { isOwnerOnboardingMinimumComplete } from "@/lib/payments/fiscal-profile-completeness";
+import { getPushSupport } from "@/lib/pwa/web-push";
 import { useAuth } from "@/providers/auth-provider";
 
 interface OnboardingChecklistContextValue {
@@ -79,6 +81,44 @@ export function OnboardingChecklistProvider({
   });
   const { data: connectStatus } = useConnectStatus();
   const { data: fiscalProfile, isPending: fiscalPending } = useFiscalProfile();
+
+  const [open, setOpen] = useState(false);
+  const [pushNotificationsOn, setPushNotificationsOn] = useState(false);
+
+  useEffect(() => {
+    if (!isOwner) return;
+
+    let cancelled = false;
+
+    async function checkPush() {
+      const support = getPushSupport();
+      if (!support.ok) {
+        if (!cancelled) setPushNotificationsOn(false);
+        return;
+      }
+
+      try {
+        const remote = await fetchPushStatus();
+        const permission =
+          typeof Notification !== "undefined"
+            ? Notification.permission
+            : "default";
+        if (!cancelled) {
+          setPushNotificationsOn(
+            Boolean(remote.enabled && permission === "granted"),
+          );
+        }
+      } catch {
+        if (!cancelled) setPushNotificationsOn(false);
+      }
+    }
+
+    void checkPush();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOwner, open]);
 
   const isStatusReady =
     !summaryPending &&
@@ -163,6 +203,17 @@ export function OnboardingChecklistProvider({
       optional: true,
     });
 
+    list.push({
+      id: "activate-notifications",
+      title: "Ative as notificações",
+      description:
+        "Receba avisos de escala, inscrição e comunicados no celular, mesmo com o app fechado.",
+      actionLabel: "Ativar notificações",
+      href: AUTH_ROUTES.installApp,
+      done: pushNotificationsOn,
+      optional: true,
+    });
+
     if (isOwner) {
       list.push({
         id: "activate-receivables",
@@ -185,12 +236,11 @@ export function OnboardingChecklistProvider({
     hasExtraMember,
     hasMinistry,
     isOwner,
+    pushNotificationsOn,
     receivablesActive,
   ]);
 
   const completedCount = steps.filter((step) => step.done).length;
-
-  const [open, setOpen] = useState(false);
 
   const handleClose = useCallback(() => {
     setOpen(false);

@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   HandCoins,
@@ -44,17 +44,31 @@ const TAB_HASH: Record<MemberDetailTab, string> = {
   contribuicoes: "contribuicoes",
 };
 
-function tabFromHash(hash: string): MemberDetailTab | null {
-  const value = hash.replace(/^#/, "");
-  if (
+function isMemberDetailTab(value: string | null | undefined): value is MemberDetailTab {
+  return (
     value === "cadastro" ||
     value === "ministerios" ||
     value === "acompanhamento" ||
     value === "contribuicoes"
-  ) {
-    return value;
-  }
-  return null;
+  );
+}
+
+function tabFromHash(hash: string): MemberDetailTab | null {
+  // Aceita `#acompanhamento` e limpa lixo tipo `#acompanhamento#acompanhamento`.
+  const value = hash.replace(/^#/, "").split(/[#?&]/)[0]?.trim() ?? "";
+  return isMemberDetailTab(value) ? value : null;
+}
+
+function replaceMemberTabUrl(tab: MemberDetailTab) {
+  if (typeof window === "undefined") return;
+  const url = new URL(window.location.href);
+  url.hash = TAB_HASH[tab];
+  // URL API normaliza — nunca concatena hash em cima de hash.
+  window.history.replaceState(
+    null,
+    "",
+    `${url.pathname}${url.search}${url.hash}`,
+  );
 }
 
 interface MemberDetailContentProps {
@@ -63,6 +77,9 @@ interface MemberDetailContentProps {
 
 export function MemberDetailContent({ memberId }: MemberDetailContentProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const fromAcompanhamento = searchParams.get("from") === "acompanhamento";
+  const tabFromQuery = searchParams.get("tab");
   const { permissions, user } = useAuth();
   const canManage = permissions ? canManageMembers(permissions) : false;
   const canSeeContributions = Boolean(
@@ -70,15 +87,28 @@ export function MemberDetailContent({ memberId }: MemberDetailContentProps) {
       permissions?.finances.access ||
       permissions?.finances.manage,
   );
+  const permissionsReady = permissions !== null;
   const canSeePastoralCare =
-    permissions !== null &&
+    permissionsReady &&
     hasRoutePermission(permissions, "pastoralCare", {
       isOwner: Boolean(user?.isOwner),
     });
   const { data: member, isLoading, isError, error } = useMember(memberId);
 
-  const [tab, setTab] = useState<MemberDetailTab>("cadastro");
+  const resolveInitialTab = (): MemberDetailTab => {
+    if (typeof window !== "undefined") {
+      const fromHash = tabFromHash(window.location.hash);
+      if (fromHash) return fromHash;
+    }
+    if (isMemberDetailTab(tabFromQuery)) return tabFromQuery;
+    if (fromAcompanhamento) return "acompanhamento";
+    return "cadastro";
+  };
+
+  const [tab, setTab] = useState<MemberDetailTab>(resolveInitialTab);
   const [isEditing, setIsEditing] = useState(false);
+  /** Garante reaplicar a aba correta a cada chegada nesta ficha (mesma URL / soft nav). */
+  const entryKeyRef = useRef<string | null>(null);
 
   const availableTabs = useMemo(() => {
     const tabs: Array<{
@@ -127,10 +157,7 @@ export function MemberDetailContent({ memberId }: MemberDetailContentProps) {
       if (isEditing && next !== "cadastro") {
         return;
       }
-      if (
-        next === "acompanhamento" &&
-        !canSeePastoralCare
-      ) {
+      if (next === "acompanhamento" && !canSeePastoralCare) {
         return;
       }
       if (next === "contribuicoes" && !canSeeContributions) {
@@ -138,55 +165,99 @@ export function MemberDetailContent({ memberId }: MemberDetailContentProps) {
       }
 
       setTab(next);
-      if (replaceHash && typeof window !== "undefined") {
-        const url = `${window.location.pathname}${window.location.search}#${TAB_HASH[next]}`;
-        window.history.replaceState(null, "", url);
+      if (replaceHash) {
+        replaceMemberTabUrl(next);
       }
     },
     [canSeeContributions, canSeePastoralCare, isEditing],
   );
 
+  // Nova visita à ficha (ou troca de membro): recalcula a aba de entrada.
   useEffect(() => {
-    if (typeof window === "undefined") {
+    entryKeyRef.current = null;
+  }, [memberId]);
+
+  // Ao abrir a ficha, aplica tab da query/`from`/hash — sem brigar com clique manual depois.
+  useEffect(() => {
+    if (!permissionsReady || isEditing) return;
+    if (typeof window === "undefined") return;
+
+    const entryKey = `${memberId}?${searchParams.toString()}`;
+    const isNewEntry = entryKeyRef.current !== entryKey;
+
+    if ((window.location.hash.match(/#/g)?.length ?? 0) > 1) {
+      const fallback =
+        (isMemberDetailTab(tabFromQuery) ? tabFromQuery : null) ??
+        tabFromHash(window.location.hash) ??
+        (fromAcompanhamento ? "acompanhamento" : "cadastro");
+      replaceMemberTabUrl(fallback);
+    }
+
+    if (!isNewEntry) return;
+
+    const desired =
+      (isMemberDetailTab(tabFromQuery) ? tabFromQuery : null) ??
+      tabFromHash(window.location.hash) ??
+      (fromAcompanhamento ? "acompanhamento" : null);
+
+    if (!desired) {
+      entryKeyRef.current = entryKey;
       return;
     }
+    // Ainda sem permissão: não marca a entrada como aplicada — tenta de novo quando liberar.
+    if (desired === "acompanhamento" && !canSeePastoralCare) return;
+    if (desired === "contribuicoes" && !canSeeContributions) return;
+
+    entryKeyRef.current = entryKey;
+    setTab(desired);
+    replaceMemberTabUrl(desired);
+  }, [
+    memberId,
+    searchParams,
+    tabFromQuery,
+    fromAcompanhamento,
+    permissionsReady,
+    canSeePastoralCare,
+    canSeeContributions,
+    isEditing,
+  ]);
+
+  useEffect(() => {
+    return () => {
+      entryKeyRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
 
     const applyHash = () => {
       const fromHash = tabFromHash(window.location.hash);
-      if (!fromHash) {
-        return;
-      }
-      if (fromHash === "acompanhamento" && !canSeePastoralCare) {
-        return;
-      }
-      if (fromHash === "contribuicoes" && !canSeeContributions) {
-        return;
-      }
-      if (isEditing && fromHash !== "cadastro") {
-        return;
-      }
+      if (!fromHash) return;
+      if (fromHash === "acompanhamento" && !canSeePastoralCare) return;
+      if (fromHash === "contribuicoes" && !canSeeContributions) return;
+      if (isEditing && fromHash !== "cadastro") return;
       setTab(fromHash);
     };
 
-    applyHash();
     window.addEventListener("hashchange", applyHash);
     return () => window.removeEventListener("hashchange", applyHash);
   }, [canSeeContributions, canSeePastoralCare, isEditing]);
 
   useEffect(() => {
+    // Não derruba "acompanhamento" enquanto permissões ainda carregam.
+    if (!permissionsReady) return;
     if (!availableTabs.some((item) => item.id === tab)) {
       setTab("cadastro");
+      replaceMemberTabUrl("cadastro");
     }
-  }, [availableTabs, tab]);
+  }, [availableTabs, tab, permissionsReady]);
 
   const handleEditingChange = useCallback((editing: boolean) => {
     setIsEditing(editing);
     if (editing) {
       setTab("cadastro");
-      if (typeof window !== "undefined") {
-        const url = `${window.location.pathname}${window.location.search}#${TAB_HASH.cadastro}`;
-        window.history.replaceState(null, "", url);
-      }
+      replaceMemberTabUrl("cadastro");
     }
   }, []);
 
@@ -229,11 +300,15 @@ export function MemberDetailContent({ memberId }: MemberDetailContentProps) {
   return (
     <div className="space-y-6">
       <Link
-        href={AUTH_ROUTES.members}
+        href={
+          fromAcompanhamento ? AUTH_ROUTES.pastoralCare : AUTH_ROUTES.members
+        }
         className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
         <ArrowLeft className="size-4" />
-        Voltar para membros
+        {fromAcompanhamento
+          ? "Voltar para acompanhamento"
+          : "Voltar para membros"}
       </Link>
 
       <Card>
