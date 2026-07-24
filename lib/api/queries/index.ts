@@ -47,6 +47,12 @@ export {
   useEventTicketRegistrations,
 } from "@/lib/api/queries/use-church-events";
 export {
+  useCreateEventNote,
+  useDeleteEventNote,
+  useEventNotes,
+  useUpdateEventNote,
+} from "@/lib/api/queries/use-event-notes";
+export {
 	useCreateChurchEvent,
 	useDeleteChurchEvent,
 	useRemoveEventRoster,

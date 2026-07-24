@@ -24,6 +24,7 @@ import { ActivityAvailabilitySection } from "@/components/dashboard/activities/a
 import { ActivityEventModal } from "@/components/dashboard/activities/activity-event-modal";
 import { ActivityOccurrenceNav } from "@/components/dashboard/activities/activity-occurrence-nav";
 import { ActivityRosterSection } from "@/components/dashboard/activities/activity-roster-section";
+import { EventNotesPanel } from "@/components/dashboard/activities/event-notes-panel";
 import { EventRegistrationOpenBadge } from "@/components/dashboard/activities/event-registration-open-badge";
 import { EventRosterPublicCard } from "@/components/dashboard/activities/event-roster-assignments";
 import { EventTicketCheckout } from "@/components/dashboard/activities/event-ticket-checkout";
@@ -655,6 +656,11 @@ export function ActivityDetailContent({ eventId }: ActivityDetailContentProps) {
           {showPublicRoster ? (
             <EventRosterPublicCard event={event} dense />
           ) : null}
+
+          <EventNotesPanel
+            eventId={event.id}
+            interactionsDisabled={writesBlocked || ministryInactive}
+          />
         </div>
       </div>
 

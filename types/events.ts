@@ -125,3 +125,42 @@ export interface UpdateChurchEventPayload {
   recurrence?: EventRecurrenceInput | null;
   scope?: EventMutationScope;
 }
+
+export type EventNoteVisibility = "public" | "private";
+
+export interface EventNoteRoleOption {
+  id: string;
+  name: string;
+  color: string | null;
+}
+
+export interface EventNote {
+  id: string;
+  eventId: string;
+  body: string;
+  visibility: EventNoteVisibility;
+  authorUserId: string;
+  authorName: string;
+  roles: EventNoteRoleOption[];
+  canEdit: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EventNotesList {
+  notes: EventNote[];
+  canCreate: boolean;
+  roleOptions: EventNoteRoleOption[];
+}
+
+export interface CreateEventNotePayload {
+  body: string;
+  visibility: EventNoteVisibility;
+  roleIds?: string[];
+}
+
+export interface UpdateEventNotePayload {
+  body?: string;
+  visibility?: EventNoteVisibility;
+  roleIds?: string[];
+}

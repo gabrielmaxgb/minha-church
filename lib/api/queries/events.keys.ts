@@ -5,9 +5,13 @@ import type {
 	ChurchEvent,
 	ChurchEventDetail,
 	CreateChurchEventPayload,
+	EventNotesList,
+	EventNote,
 	EventSeriesOccurrence,
 	EventTicketRegistrationsResponse,
 	UpdateChurchEventPayload,
+	CreateEventNotePayload,
+	UpdateEventNotePayload,
 } from "@/types/events";
 import type { EventRosterAssignment } from "@/types/ministries";
 
@@ -195,6 +199,61 @@ async function setEventRosterCollection(
 	);
 }
 
+async function fetchEventNotes(
+	churchId: string,
+	eventId: string,
+): Promise<EventNotesList> {
+	return apiClient<EventNotesList>(
+		buildTenantPath(churchId, `/events/${eventId}/notes`),
+		{ churchId },
+	);
+}
+
+async function createEventNote(
+	churchId: string,
+	eventId: string,
+	payload: CreateEventNotePayload,
+): Promise<EventNote> {
+	return apiClient<EventNote>(
+		buildTenantPath(churchId, `/events/${eventId}/notes`),
+		{
+			churchId,
+			method: "POST",
+			body: JSON.stringify(payload),
+		},
+	);
+}
+
+async function updateEventNote(
+	churchId: string,
+	eventId: string,
+	noteId: string,
+	payload: UpdateEventNotePayload,
+): Promise<EventNote> {
+	return apiClient<EventNote>(
+		buildTenantPath(churchId, `/events/${eventId}/notes/${noteId}`),
+		{
+			churchId,
+			method: "PATCH",
+			body: JSON.stringify(payload),
+		},
+	);
+}
+
+async function deleteEventNote(
+	churchId: string,
+	eventId: string,
+	noteId: string,
+): Promise<void> {
+	await apiClient<void>(
+		buildTenantPath(churchId, `/events/${eventId}/notes/${noteId}`),
+		{
+			churchId,
+			method: "DELETE",
+		},
+	);
+}
+
 export const eventsKeys = createQueryKeys("events", {
 	list: (churchId: string, params: ListChurchEventsParams = {}) => ({
 		queryKey: [churchId, params],
@@ -212,13 +271,20 @@ export const eventsKeys = createQueryKeys("events", {
 		queryKey: [churchId, eventId, "ticket-registrations"],
 		queryFn: () => fetchEventTicketRegistrations(churchId, eventId),
 	}),
+	notes: (churchId: string, eventId: string) => ({
+		queryKey: [churchId, eventId, "notes"],
+		queryFn: () => fetchEventNotes(churchId, eventId),
+	}),
 });
 
 export {
 	createChurchEvent,
+	createEventNote,
 	deleteChurchEvent,
+	deleteEventNote,
 	fetchChurchEvent,
 	fetchChurchEvents,
+	fetchEventNotes,
 	fetchEventSeriesOccurrences,
 	fetchEventTicketRegistrations,
 	registerForFreeEvent,
@@ -226,7 +292,13 @@ export {
 	setEventRosterCollection,
 	updateChurchEvent,
 	updateChurchEventAvailability,
+	updateEventNote,
 	upsertEventRoster,
 };
 
-export type { CreateChurchEventPayload, UpdateChurchEventPayload };
+export type {
+	CreateChurchEventPayload,
+	CreateEventNotePayload,
+	UpdateChurchEventPayload,
+	UpdateEventNotePayload,
+};

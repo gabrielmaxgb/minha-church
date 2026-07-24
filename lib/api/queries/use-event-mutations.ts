@@ -23,10 +23,11 @@ import type { EventRosterAssignment } from "@/types/ministries";
 function useInvalidateEvents() {
 	const queryClient = useQueryClient();
 
-	return async () => {
-		await queryClient.invalidateQueries({ queryKey: eventsKeys._def });
-		await queryClient.invalidateQueries({ queryKey: ministriesKeys._def });
-		await queryClient.invalidateQueries({ queryKey: queries.dashboard._def });
+	// Não await: mutateAsync/isPending não deve esperar o refetch da lista.
+	return () => {
+		void queryClient.invalidateQueries({ queryKey: eventsKeys._def });
+		void queryClient.invalidateQueries({ queryKey: ministriesKeys._def });
+		void queryClient.invalidateQueries({ queryKey: queries.dashboard._def });
 	};
 }
 
