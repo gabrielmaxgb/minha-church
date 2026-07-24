@@ -557,95 +557,95 @@ export function ActivityDetailContent({ eventId }: ActivityDetailContentProps) {
 
           {showActionRail ? (
             <div className="overflow-hidden rounded-2xl border border-border/80 bg-border/70 shadow-xs">
-              <div className="grid gap-px sm:grid-cols-2">
-                {hasRegistration ? (
-                  <div
-                    className={cn(
-                      "bg-card",
-                      !showAvailabilityPanel &&
-                        !showManagerActions &&
-                        "sm:col-span-2",
-                    )}
-                  >
-                    <Suspense
-                      fallback={<Skeleton className="h-24 w-full rounded-none" />}
-                    >
-                      <EventTicketCheckout
-                        eventId={event.id}
-                        priceCents={
-                          hasPaidTicket ? event.priceCents! : null
-                        }
-                        eventName={event.name}
-                        myTicketStatus={event.myTicketStatus ?? null}
-                        dense
-                        flush
-                      />
-                    </Suspense>
+              <div
+                className={cn(
+                  "grid gap-px",
+                  (hasRegistration || canManage) &&
+                    (showAvailabilityPanel || canManageRoster) &&
+                    "sm:grid-cols-2",
+                )}
+              >
+                {hasRegistration || canManage ? (
+                  <div className="grid gap-px">
+                    {hasRegistration ? (
+                      <div className="bg-card">
+                        <Suspense
+                          fallback={
+                            <Skeleton className="h-24 w-full rounded-none" />
+                          }
+                        >
+                          <EventTicketCheckout
+                            eventId={event.id}
+                            priceCents={
+                              hasPaidTicket ? event.priceCents! : null
+                            }
+                            eventName={event.name}
+                            myTicketStatus={event.myTicketStatus ?? null}
+                            dense
+                            flush
+                          />
+                        </Suspense>
+                      </div>
+                    ) : null}
+
+                    {canManage ? (
+                      <div className="bg-card">
+                        <RegistrationManagerCard
+                          event={event}
+                          bare
+                          isToggling={updateEvent.isPending}
+                          onViewList={() => setRegistrationsOpen(true)}
+                          onToggle={() =>
+                            guardWrite("gerenciar inscrições", () => {
+                              void toggleRegistration();
+                            })
+                          }
+                        />
+                        {registrationToggleError ? (
+                          <p className="border-t border-border/60 px-4 py-2 text-xs text-destructive">
+                            {registrationToggleError}
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : null}
                   </div>
                 ) : null}
 
-                {showAvailabilityPanel ? (
-                  <div
-                    className={cn(
-                      "bg-card",
-                      !hasRegistration &&
-                        !showManagerActions &&
-                        "sm:col-span-2",
-                    )}
-                  >
-                    <ActivityAvailabilitySection
-                      event={event}
-                      interactionsDisabled={writesBlocked}
-                      registrationAlsoOpen={hasRegistration}
-                      dense
-                      flush
-                    />
-                  </div>
-                ) : null}
+                {showAvailabilityPanel || canManageRoster ? (
+                  <div className="grid gap-px">
+                    {showAvailabilityPanel ? (
+                      <div className="bg-card">
+                        <ActivityAvailabilitySection
+                          event={event}
+                          interactionsDisabled={writesBlocked}
+                          registrationAlsoOpen={hasRegistration}
+                          dense
+                          flush
+                        />
+                      </div>
+                    ) : null}
 
-                {canManageRoster ? (
-                  <div
-                    className={cn(
-                      "bg-card",
-                      canManage && !showAvailabilityPanel && "sm:row-span-2",
-                    )}
-                  >
-                    <ScopeActionCard
-                      icon={ClipboardList}
-                      title="Escala"
-                      description={
-                        event.rosterOpen
-                          ? "Coleta aberta — monte a equipe e acompanhe respostas."
-                          : "Monte a equipe e abra a coleta quando quiser."
-                      }
-                      meta={`${assignedCount} na escala · ${availableCount} disponível${availableCount === 1 ? "" : "eis"}`}
-                      actionLabel="Gerenciar escala"
-                      onAction={() =>
-                        guardWrite("gerenciar escalas", () => setRosterOpen(true))
-                      }
-                      tone={event.rosterOpen ? "open" : "default"}
-                      bare
-                    />
-                  </div>
-                ) : null}
-
-                {canManage ? (
-                  <div className="bg-card">
-                    <RegistrationManagerCard
-                      event={event}
-                      bare
-                      isToggling={updateEvent.isPending}
-                      onViewList={() => setRegistrationsOpen(true)}
-                      onToggle={() =>
-                        guardWrite("gerenciar inscrições", () => {
-                          void toggleRegistration();
-                        })
-                      }
-                    />
-                    {registrationToggleError ? (
-                      <p className="border-t border-border/60 px-4 py-2 text-xs text-destructive">
-                        {registrationToggleError}
-                      </p>
+                    {canManageRoster ? (
+                      <div className="bg-card">
+                        <ScopeActionCard
+                          icon={ClipboardList}
+                          title="Escala"
+                          description={
+                            event.rosterOpen
+                              ? "Coleta aberta — monte a equipe e acompanhe respostas."
+                              : "Monte a equipe e abra a coleta quando quiser."
+                          }
+                          meta={`${assignedCount} na escala · ${availableCount} disponível${availableCount === 1 ? "" : "eis"}`}
+                          actionLabel="Gerenciar escala"
+                          onAction={() =>
+                            guardWrite("gerenciar escalas", () =>
+                              setRosterOpen(true),
+                            )
+                          }
+                          tone={event.rosterOpen ? "open" : "default"}
+                          bare
+                        />
+                      </div>
                     ) : null}
                   </div>
                 ) : null}

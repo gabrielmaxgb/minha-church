@@ -20,13 +20,20 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
+import {
+  EventNoteEditor,
+  EventNoteHtml,
+} from "@/components/dashboard/activities/event-note-editor";
 import {
   useCreateEventNote,
   useDeleteEventNote,
   useEventNotes,
   useUpdateEventNote,
 } from "@/lib/api/queries/use-event-notes";
+import {
+  emptyEventNoteHtml,
+  isEventNoteBodyEmpty,
+} from "@/lib/events/event-note-html";
 import { cn } from "@/lib/utils";
 import { toastApiError, toastSuccess } from "@/lib/ui/toast";
 import type { EventNote, EventNoteVisibility } from "@/types/events";
@@ -76,7 +83,6 @@ export function EventNotesPanel({
   const lastSavedBodyRef = useRef<string | null>(null);
   const savingRef = useRef(false);
   const pendingRetryRef = useRef(false);
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const updateNoteAsyncRef = useRef(updateNote.mutateAsync);
   const toastedSaveErrorRef = useRef(false);
 
@@ -229,7 +235,6 @@ export function EventNotesPanel({
     setFormError(null);
     setSaveState("saved");
     lastSavedBodyRef.current = note.body;
-    requestAnimationFrame(() => textareaRef.current?.focus());
   }
 
   async function closeComposer() {
@@ -237,8 +242,7 @@ export function EventNotesPanel({
     await flushSaveRef.current();
 
     const noteId = activeNoteIdRef.current;
-    const currentBody = bodyRef.current.trim();
-    if (noteId && !currentBody) {
+    if (noteId && isEventNoteBodyEmpty(bodyRef.current)) {
       try {
         await deleteNote.mutateAsync(noteId);
       } catch {
@@ -274,17 +278,16 @@ export function EventNotesPanel({
 
     try {
       const note = await createNote.mutateAsync({
-        body: "",
+        body: emptyEventNoteHtml(),
         visibility,
         ...(visibility === "private" ? { roleIds } : {}),
       });
       setActiveNoteId(note.id);
-      setBody("");
-      lastSavedBodyRef.current = "";
+      setBody(emptyEventNoteHtml());
+      lastSavedBodyRef.current = emptyEventNoteHtml();
       setPhase("writing");
       setSaveState("saved");
       setFormError(null);
-      requestAnimationFrame(() => textareaRef.current?.focus());
     } catch (err) {
       toastApiError(err, "Não foi possível criar a nota.");
     }
@@ -549,17 +552,14 @@ export function EventNotesPanel({
                       </p>
                     </div>
 
-                    <Textarea
-                      ref={textareaRef}
-                      value={body}
-                      onChange={(event) => onBodyChange(event.target.value)}
+                    <EventNoteEditor
+                      key={activeNoteId ?? "draft"}
+                      initialHtml={body}
+                      onChange={onBodyChange}
                       onBlur={() => {
                         clearSaveTimer();
                         void flushSaveRef.current();
                       }}
-                      placeholder="Escreva o que quiser registrar neste evento…"
-                      rows={8}
-                      className="min-h-40 resize-y"
                     />
 
                     <div className="flex justify-end">
@@ -662,11 +662,7 @@ export function EventNotesPanel({
                       </div>
                     ) : null}
                   </div>
-                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
-                    {preview.trim() ? preview : (
-                      <span className="text-muted-foreground">Rascunho vazio</span>
-                    )}
-                  </p>
+                  <EventNoteHtml html={preview} />
                 </li>
               );
             })}
